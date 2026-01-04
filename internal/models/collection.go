@@ -1,0 +1,26 @@
+package models
+
+// Collection represents a grouping/category for organizing works
+type Collection struct {
+	CollID         int64   `json:"collID" db:"collID"`
+	CollectionName string  `json:"collectionName" db:"collection_name"`
+	IsStatus       *string `json:"isStatus,omitempty" db:"is_status"`
+	Type           *string `json:"type,omitempty" db:"type"`
+	CreatedAt      string  `json:"createdAt" db:"created_at"`
+	ModifiedAt     string  `json:"modifiedAt" db:"modified_at"`
+}
+
+// CollectionView extends Collection with computed fields
+type CollectionView struct {
+	Collection
+	StatusList string `json:"statusList" db:"status_list"`
+	NItems     int    `json:"nItems" db:"n_items"`
+}
+
+// CollectionDetail is the join table between Collections and Works
+type CollectionDetail struct {
+	ID             int64   `json:"id" db:"id"`
+	CollID         int64   `json:"collID" db:"collID"`
+	WorkID         int64   `json:"workID" db:"workID"`
+	CollectionName *string `json:"collectionName,omitempty" db:"collection_name"`
+}

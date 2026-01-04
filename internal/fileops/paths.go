@@ -1,0 +1,164 @@
+package fileops
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"works/internal/models"
+)
+
+var Extensions = []string{".rtf", ".docx", ".txt", ""}
+
+type Config struct {
+	BaseFolderPath       string
+	PDFPreviewPath       string
+	SubmissionExportPath string
+	TemplateFolderPath   string
+}
+
+func DefaultConfig() Config {
+	home, _ := os.UserHomeDir()
+	return Config{
+		BaseFolderPath:       filepath.Join(home, "Documents", "Home"),
+		PDFPreviewPath:       filepath.Join(home, "Development", "databases", "support", "dbSubmissions"),
+		SubmissionExportPath: filepath.Join(home, "Desktop", "Submissions"),
+		TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "00 New Work"),
+	}
+}
+
+type FileOps struct {
+	Config Config
+}
+
+func New(cfg Config) *FileOps {
+	return &FileOps{Config: cfg}
+}
+
+func derefString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func (f *FileOps) GeneratePath(w *models.Work) string {
+	year := derefString(w.Year)
+	folder := f.GetMainFolder(w.Type, year, w.Status)
+	qualityMark := GetQualityMark(w.Quality)
+	sanitizedTitle := strings.ReplaceAll(w.Title, "/", "~")
+	filename := fmt.Sprintf("%s%s - %s - %s", qualityMark, w.Type, year, sanitizedTitle)
+	return folder + filename
+}
+
+func (f *FileOps) GetFullPath(w *models.Work) string {
+	return filepath.Join(f.Config.BaseFolderPath, f.GeneratePath(w))
+}
+
+func (f *FileOps) GetFilename(partialPath string) string {
+	return filepath.Join(f.Config.BaseFolderPath, partialPath)
+}
+
+func (f *FileOps) GetMainFolder(workType, year, status string) string {
+	if strings.Contains(workType, "Idea") {
+		return "35 Open Ideas/"
+	}
+
+	switch workType {
+	case "Travel":
+		return "100 Travel/"
+	case "Book":
+		return "100 Books/"
+	}
+
+	if status == "Published" {
+		return "150 Published/"
+	}
+
+	activeStatuses := map[string]bool{
+		"Focus": true, "Active": true, "Out": true, "Working": true,
+	}
+	if activeStatuses[status] {
+		yearNum, _ := strconv.Atoi(year)
+		if yearNum < 2016 {
+			return GetMainType(workType) + "/"
+		}
+		return "34 Current Work/"
+	}
+
+	return GetMainType(workType) + "/"
+}
+
+func GetMainType(workType string) string {
+	if strings.Contains(workType, "Idea") {
+		return "35 Open Ideas"
+	}
+
+	specialCases := map[string]string{
+		"Travel":   "100 Travel",
+		"Flash":    "100 Flash Fiction",
+		"Micro":    "100 Micro",
+		"Story":    "100 Stories",
+		"Research": "100 Research",
+	}
+
+	if folder, ok := specialCases[workType]; ok {
+		return folder
+	}
+
+	return "100 " + workType + "s"
+}
+
+func GetQualityMark(quality string) string {
+	marks := map[string]string{
+		"Best":    "aa",
+		"Better":  "a",
+		"Good":    "b",
+		"Okay":    "c",
+		"Poor":    "d",
+		"Bad":     "e",
+		"Worst":   "f",
+		"Unknown": "z",
+	}
+
+	if mark, ok := marks[quality]; ok {
+		return mark
+	}
+	return "c"
+}
+
+func FileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func FindFileWithExtension(basePath string) (string, error) {
+	for _, ext := range Extensions {
+		path := basePath + ext
+		if FileExists(path) {
+			return path, nil
+		}
+	}
+	return "", fmt.Errorf("no file found at %s with any extension", basePath)
+}
+
+func (f *FileOps) CheckPath(w *models.Work) string {
+	generatedPath := f.GetFullPath(w)
+	storedPath := filepath.Join(f.Config.BaseFolderPath, derefString(w.Path))
+
+	if generatedPath == storedPath {
+		return ""
+	}
+
+	if _, err := FindFileWithExtension(generatedPath); err == nil {
+		return ""
+	}
+
+	if _, err := FindFileWithExtension(storedPath); err == nil {
+		return "name changed"
+	}
+
+	return "file missing"
+}

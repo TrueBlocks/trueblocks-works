@@ -1,0 +1,41 @@
+package models
+
+type Work struct {
+	WorkID      int64   `json:"workID" db:"workID"`
+	Title       string  `json:"title" db:"title"`
+	Type        string  `json:"type" db:"type"`
+	Year        *string `json:"year,omitempty" db:"year"`
+	Status      string  `json:"status" db:"status"`
+	Quality     string  `json:"quality" db:"quality"`
+	DocType     string  `json:"docType" db:"doc_type"`
+	Path        *string `json:"path,omitempty" db:"path"`
+	Draft       *string `json:"draft,omitempty" db:"draft"`
+	NWords      *int    `json:"nWords,omitempty" db:"n_words"`
+	CourseName  *string `json:"courseName,omitempty" db:"course_name"`
+	IsBlog      *string `json:"isBlog,omitempty" db:"is_blog"`
+	IsPrinted   *string `json:"isPrinted,omitempty" db:"is_printed"`
+	IsProsePoem *string `json:"isProsePoem,omitempty" db:"is_prose_poem"`
+	IsRevised   *string `json:"isRevised,omitempty" db:"is_revised"`
+	Mark        *string `json:"mark,omitempty" db:"mark"`
+	AccessDate  *string `json:"accessDate,omitempty" db:"access_date"`
+	CreatedAt   string  `json:"createdAt" db:"created_at"`
+	ModifiedAt  string  `json:"modifiedAt" db:"modified_at"`
+}
+
+type WorkView struct {
+	Work
+	AgeDays        *int    `json:"ageDays,omitempty" db:"age_days"`
+	NSubmissions   int     `json:"nSubmissions" db:"n_submissions"`
+	CollectionList *string `json:"collectionList,omitempty" db:"collection_list"`
+}
+
+func (w *Work) GeneratedPath() string {
+	if w.Year == nil || w.Title == "" || w.Type == "" {
+		return ""
+	}
+	qualityMark := ""
+	if w.Quality == "Best" || w.Quality == "Better" {
+		qualityMark = "@ "
+	}
+	return qualityMark + w.Type + " - " + *w.Year + " - " + w.Title + "." + w.DocType
+}

@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["src", "src/**/__tests__/*", "**/*.test.ts", "**/*.test.tsx", "vite.config.ts"],
+  "exclude": ["wailsjs", "wailsjs/**", "**/wailsjs", "**/wailsjs/**", "node_modules"]
+}

@@ -54,7 +54,8 @@ set -x GOPATH $HOME/go
 ## 4. Critical Workflow
 
 - **DO NOT RUN YARN COMMANDS** unless explicitly requested by the user
-- **EXCEPTION**: Validation commands (`yarn lint; and yarn test`) acceptable after major changes
+- **EXCEPTION**: Validation commands (`yarn lint --fix; and yarn test`) acceptable after major changes
+- **ALWAYS use `--fix`** when running lint commands — never run lint without it
 - **Read file contents first** before editing — files change between requests
 - **After backend changes**: Run `wails generate module` to update TypeScript bindings
 - **File deletion**: Use `rm -f` for files, `rm -R` for folders, ask confirmation first
@@ -180,7 +181,14 @@ If caught: "I cannot implement code changes while in design mode."
 - No JavaScript files — always `.ts` or `.tsx`
 - No class components — functional components only
 - No React imports (implicitly available)
-- Use `Log` from `@utils` instead of console.log
+- **NEVER use `console.log` or `console.error`** — use Wails logging from `@utils`:
+  - `Log()` for info messages
+  - `LogErr()` for errors
+  - `LogDbg()` for debug
+  - `LogWarn()` for warnings
+
+### Go Backend
+- Use Wails `runtime.Log*` functions, never `fmt.Println` for user-facing logs
 
 ---
 
@@ -238,7 +246,7 @@ works/
 yarn start      # wails dev (development with hot reload)
 yarn build      # wails build (production binary)
 yarn test       # run all tests
-yarn lint       # run linter
+yarn lint --fix # run linter with auto-fix (ALWAYS use --fix)
 yarn test:go    # Go tests only
 yarn test:frontend  # frontend tests only
 ```

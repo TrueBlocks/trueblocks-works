@@ -1,0 +1,139 @@
+package fileops
+
+import (
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"works/internal/models"
+)
+
+func derefStringOps(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func (f *FileOps) OpenDocument(w *models.Work) error {
+	filePath, err := FindFileWithExtension(f.GetFilename(derefStringOps(w.Path)))
+	if err != nil {
+		return fmt.Errorf("file not found: %w", err)
+	}
+	cmd := exec.Command("open", filePath)
+	return cmd.Run()
+}
+
+func (f *FileOps) MoveFile(w *models.Work) (string, error) {
+	currentPath := f.GetFilename(derefStringOps(w.Path))
+	newPath := f.GetFullPath(w)
+
+	sourcePath, err := FindFileWithExtension(currentPath)
+	if err != nil {
+		return "", fmt.Errorf("source file not found: %w", err)
+	}
+
+	ext := filepath.Ext(sourcePath)
+	destPath := newPath + ext
+
+	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+		return "", fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	if err := os.Rename(sourcePath, destPath); err != nil {
+		return "", fmt.Errorf("failed to move file: %w", err)
+	}
+
+	now := time.Now()
+	if err := os.Chtimes(destPath, now, now); err != nil {
+		return "", fmt.Errorf("failed to update timestamp: %w", err)
+	}
+
+	relativePath := f.GeneratePath(w)
+	return relativePath, nil
+}
+
+func (f *FileOps) CopyToSubmissions(w *models.Work) (string, error) {
+	sourcePath, err := FindFileWithExtension(f.GetFilename(derefStringOps(w.Path)))
+	if err != nil {
+		return "", fmt.Errorf("source file not found: %w", err)
+	}
+
+	ext := filepath.Ext(sourcePath)
+	destPath := filepath.Join(f.Config.SubmissionExportPath, w.Title+ext)
+
+	if err := os.MkdirAll(f.Config.SubmissionExportPath, 0755); err != nil {
+		return "", fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	if err := copyFile(sourcePath, destPath); err != nil {
+		return "", fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	return destPath, nil
+}
+
+func copyFile(src, dst string) error {
+	source, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destination.Close()
+
+	_, err = io.Copy(destination, source)
+	return err
+}
+
+func (f *FileOps) PrintFile(w *models.Work) error {
+	filePath, err := FindFileWithExtension(f.GetFilename(derefStringOps(w.Path)))
+	if err != nil {
+		return fmt.Errorf("file not found: %w", err)
+	}
+	cmd := exec.Command("lpr", filePath)
+	return cmd.Run()
+}
+
+func (f *FileOps) GetTemplatePath(workType string) string {
+	if strings.Contains(workType, "Poem") {
+		return filepath.Join(f.Config.TemplateFolderPath, "00 Poem Template.rtf")
+	}
+	return filepath.Join(f.Config.TemplateFolderPath, "00 Prose Template.rtf")
+}
+
+func (f *FileOps) CreateWorkFile(w *models.Work) error {
+	destPath := f.GetFullPath(w) + ".rtf"
+
+	if FileExists(destPath) {
+		return nil
+	}
+
+	templatePath := f.GetTemplatePath(w.Type)
+	if !FileExists(templatePath) {
+		return fmt.Errorf("template file not found: %s", templatePath)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	if err := copyFile(templatePath, destPath); err != nil {
+		return fmt.Errorf("failed to copy template: %w", err)
+	}
+
+	now := time.Now()
+	if err := os.Chtimes(destPath, now, now); err != nil {
+		return fmt.Errorf("failed to update timestamp: %w", err)
+	}
+
+	return nil
+}

@@ -1,0 +1,682 @@
+export namespace backup {
+	
+	export class BackupInfo {
+	    name: string;
+	    path: string;
+	    size: number;
+	    // Go type: time
+	    createdAt: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new BackupInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.path = source["path"];
+	        this.size = source["size"];
+	        this.createdAt = this.convertValues(source["createdAt"], null);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace fileops {
+	
+	export class Config {
+	    BaseFolderPath: string;
+	    PDFPreviewPath: string;
+	    SubmissionExportPath: string;
+	    TemplateFolderPath: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Config(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.BaseFolderPath = source["BaseFolderPath"];
+	        this.PDFPreviewPath = source["PDFPreviewPath"];
+	        this.SubmissionExportPath = source["SubmissionExportPath"];
+	        this.TemplateFolderPath = source["TemplateFolderPath"];
+	    }
+	}
+
+}
+
+export namespace main {
+	
+	export class EnumLists {
+	    statusList: string[];
+	    qualityList: string[];
+	    workTypeList: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new EnumLists(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.statusList = source["statusList"];
+	        this.qualityList = source["qualityList"];
+	        this.workTypeList = source["workTypeList"];
+	    }
+	}
+	export class PathCheckResult {
+	    generatedPath: string;
+	    storedPath: string;
+	    status: string;
+	    fileExists: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PathCheckResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.generatedPath = source["generatedPath"];
+	        this.storedPath = source["storedPath"];
+	        this.status = source["status"];
+	        this.fileExists = source["fileExists"];
+	    }
+	}
+	export class WorkUpdateResult {
+	    work?: models.Work;
+	    fileMoved: boolean;
+	    oldPath?: string;
+	    newPath?: string;
+	    moveError?: string;
+	    collUpdated: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkUpdateResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.work = this.convertValues(source["work"], models.Work);
+	        this.fileMoved = source["fileMoved"];
+	        this.oldPath = source["oldPath"];
+	        this.newPath = source["newPath"];
+	        this.moveError = source["moveError"];
+	        this.collUpdated = source["collUpdated"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace models {
+	
+	export class Collection {
+	    collID: number;
+	    collectionName: string;
+	    isStatus?: string;
+	    type?: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Collection(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.collID = source["collID"];
+	        this.collectionName = source["collectionName"];
+	        this.isStatus = source["isStatus"];
+	        this.type = source["type"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	    }
+	}
+	export class CollectionDetail {
+	    id: number;
+	    collID: number;
+	    workID: number;
+	    collectionName?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionDetail(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.collID = source["collID"];
+	        this.workID = source["workID"];
+	        this.collectionName = source["collectionName"];
+	    }
+	}
+	export class JournalNote {
+	    id: number;
+	    orgID: number;
+	    type?: string;
+	    note?: string;
+	    modifiedDate?: string;
+	    createdAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new JournalNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.orgID = source["orgID"];
+	        this.type = source["type"];
+	        this.note = source["note"];
+	        this.modifiedDate = source["modifiedDate"];
+	        this.createdAt = source["createdAt"];
+	    }
+	}
+	export class NoteSearchResult {
+	    noteID: number;
+	    entityType: string;
+	    entityID: number;
+	    entityName: string;
+	    noteType?: string;
+	    note: string;
+	    createdAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NoteSearchResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.noteID = source["noteID"];
+	        this.entityType = source["entityType"];
+	        this.entityID = source["entityID"];
+	        this.entityName = source["entityName"];
+	        this.noteType = source["noteType"];
+	        this.note = source["note"];
+	        this.createdAt = source["createdAt"];
+	    }
+	}
+	export class Organization {
+	    orgID: number;
+	    name: string;
+	    otherName?: string;
+	    url?: string;
+	    otherURL?: string;
+	    status: string;
+	    type: string;
+	    timing?: string;
+	    submissionTypes?: string;
+	    accepts?: string;
+	    myInterest?: string;
+	    ranking?: number;
+	    source?: string;
+	    websiteMenu?: string;
+	    duotropeNum?: number;
+	    nPushFiction: number;
+	    nPushNonfiction: number;
+	    nPushPoetry: number;
+	    contestEnds?: string;
+	    contestFee?: string;
+	    contestPrize?: string;
+	    contestPrize2?: string;
+	    dateAdded?: string;
+	    dateModified?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Organization(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.orgID = source["orgID"];
+	        this.name = source["name"];
+	        this.otherName = source["otherName"];
+	        this.url = source["url"];
+	        this.otherURL = source["otherURL"];
+	        this.status = source["status"];
+	        this.type = source["type"];
+	        this.timing = source["timing"];
+	        this.submissionTypes = source["submissionTypes"];
+	        this.accepts = source["accepts"];
+	        this.myInterest = source["myInterest"];
+	        this.ranking = source["ranking"];
+	        this.source = source["source"];
+	        this.websiteMenu = source["websiteMenu"];
+	        this.duotropeNum = source["duotropeNum"];
+	        this.nPushFiction = source["nPushFiction"];
+	        this.nPushNonfiction = source["nPushNonfiction"];
+	        this.nPushPoetry = source["nPushPoetry"];
+	        this.contestEnds = source["contestEnds"];
+	        this.contestFee = source["contestFee"];
+	        this.contestPrize = source["contestPrize"];
+	        this.contestPrize2 = source["contestPrize2"];
+	        this.dateAdded = source["dateAdded"];
+	        this.dateModified = source["dateModified"];
+	    }
+	}
+	export class OrganizationWithNotes {
+	    orgID: number;
+	    name: string;
+	    otherName?: string;
+	    url?: string;
+	    otherURL?: string;
+	    status: string;
+	    type: string;
+	    timing?: string;
+	    submissionTypes?: string;
+	    accepts?: string;
+	    myInterest?: string;
+	    ranking?: number;
+	    source?: string;
+	    websiteMenu?: string;
+	    duotropeNum?: number;
+	    nPushFiction: number;
+	    nPushNonfiction: number;
+	    nPushPoetry: number;
+	    contestEnds?: string;
+	    contestFee?: string;
+	    contestPrize?: string;
+	    contestPrize2?: string;
+	    dateAdded?: string;
+	    dateModified?: string;
+	    notes?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OrganizationWithNotes(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.orgID = source["orgID"];
+	        this.name = source["name"];
+	        this.otherName = source["otherName"];
+	        this.url = source["url"];
+	        this.otherURL = source["otherURL"];
+	        this.status = source["status"];
+	        this.type = source["type"];
+	        this.timing = source["timing"];
+	        this.submissionTypes = source["submissionTypes"];
+	        this.accepts = source["accepts"];
+	        this.myInterest = source["myInterest"];
+	        this.ranking = source["ranking"];
+	        this.source = source["source"];
+	        this.websiteMenu = source["websiteMenu"];
+	        this.duotropeNum = source["duotropeNum"];
+	        this.nPushFiction = source["nPushFiction"];
+	        this.nPushNonfiction = source["nPushNonfiction"];
+	        this.nPushPoetry = source["nPushPoetry"];
+	        this.contestEnds = source["contestEnds"];
+	        this.contestFee = source["contestFee"];
+	        this.contestPrize = source["contestPrize"];
+	        this.contestPrize2 = source["contestPrize2"];
+	        this.dateAdded = source["dateAdded"];
+	        this.dateModified = source["dateModified"];
+	        this.notes = source["notes"];
+	    }
+	}
+	export class SearchResult {
+	    entityType: string;
+	    entityID: number;
+	    title: string;
+	    subtitle?: string;
+	    snippet?: string;
+	    rank: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entityType = source["entityType"];
+	        this.entityID = source["entityID"];
+	        this.title = source["title"];
+	        this.subtitle = source["subtitle"];
+	        this.snippet = source["snippet"];
+	        this.rank = source["rank"];
+	    }
+	}
+	export class Submission {
+	    submissionID: number;
+	    workID: number;
+	    orgID: number;
+	    draft: string;
+	    submissionDate?: string;
+	    submissionType?: string;
+	    queryDate?: string;
+	    responseDate?: string;
+	    responseType?: string;
+	    contestName?: string;
+	    cost?: number;
+	    userID?: string;
+	    password?: string;
+	    webAddress?: string;
+	    mark?: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Submission(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.submissionID = source["submissionID"];
+	        this.workID = source["workID"];
+	        this.orgID = source["orgID"];
+	        this.draft = source["draft"];
+	        this.submissionDate = source["submissionDate"];
+	        this.submissionType = source["submissionType"];
+	        this.queryDate = source["queryDate"];
+	        this.responseDate = source["responseDate"];
+	        this.responseType = source["responseType"];
+	        this.contestName = source["contestName"];
+	        this.cost = source["cost"];
+	        this.userID = source["userID"];
+	        this.password = source["password"];
+	        this.webAddress = source["webAddress"];
+	        this.mark = source["mark"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	    }
+	}
+	export class SubmissionView {
+	    submissionID: number;
+	    workID: number;
+	    orgID: number;
+	    draft: string;
+	    submissionDate?: string;
+	    submissionType?: string;
+	    queryDate?: string;
+	    responseDate?: string;
+	    responseType?: string;
+	    contestName?: string;
+	    cost?: number;
+	    userID?: string;
+	    password?: string;
+	    webAddress?: string;
+	    mark?: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	    titleOfWork: string;
+	    journalName: string;
+	    journalStatus: string;
+	    decisionPending: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SubmissionView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.submissionID = source["submissionID"];
+	        this.workID = source["workID"];
+	        this.orgID = source["orgID"];
+	        this.draft = source["draft"];
+	        this.submissionDate = source["submissionDate"];
+	        this.submissionType = source["submissionType"];
+	        this.queryDate = source["queryDate"];
+	        this.responseDate = source["responseDate"];
+	        this.responseType = source["responseType"];
+	        this.contestName = source["contestName"];
+	        this.cost = source["cost"];
+	        this.userID = source["userID"];
+	        this.password = source["password"];
+	        this.webAddress = source["webAddress"];
+	        this.mark = source["mark"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	        this.titleOfWork = source["titleOfWork"];
+	        this.journalName = source["journalName"];
+	        this.journalStatus = source["journalStatus"];
+	        this.decisionPending = source["decisionPending"];
+	    }
+	}
+	export class Work {
+	    workID: number;
+	    title: string;
+	    type: string;
+	    year?: string;
+	    status: string;
+	    quality: string;
+	    docType: string;
+	    path?: string;
+	    draft?: string;
+	    nWords?: number;
+	    courseName?: string;
+	    isBlog?: string;
+	    isPrinted?: string;
+	    isProsePoem?: string;
+	    isRevised?: string;
+	    mark?: string;
+	    accessDate?: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Work(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workID = source["workID"];
+	        this.title = source["title"];
+	        this.type = source["type"];
+	        this.year = source["year"];
+	        this.status = source["status"];
+	        this.quality = source["quality"];
+	        this.docType = source["docType"];
+	        this.path = source["path"];
+	        this.draft = source["draft"];
+	        this.nWords = source["nWords"];
+	        this.courseName = source["courseName"];
+	        this.isBlog = source["isBlog"];
+	        this.isPrinted = source["isPrinted"];
+	        this.isProsePoem = source["isProsePoem"];
+	        this.isRevised = source["isRevised"];
+	        this.mark = source["mark"];
+	        this.accessDate = source["accessDate"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	    }
+	}
+	export class WorkNote {
+	    id: number;
+	    workID: number;
+	    type?: string;
+	    note?: string;
+	    modifiedDate?: string;
+	    createdAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkNote(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.workID = source["workID"];
+	        this.type = source["type"];
+	        this.note = source["note"];
+	        this.modifiedDate = source["modifiedDate"];
+	        this.createdAt = source["createdAt"];
+	    }
+	}
+
+}
+
+export namespace settings {
+	
+	export class Settings {
+	    baseFolderPath: string;
+	    pdfPreviewPath: string;
+	    submissionExportPath: string;
+	    templateFolderPath: string;
+	    libreOfficePath?: string;
+	    setupCompleted: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Settings(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.baseFolderPath = source["baseFolderPath"];
+	        this.pdfPreviewPath = source["pdfPreviewPath"];
+	        this.submissionExportPath = source["submissionExportPath"];
+	        this.templateFolderPath = source["templateFolderPath"];
+	        this.libreOfficePath = source["libreOfficePath"];
+	        this.setupCompleted = source["setupCompleted"];
+	    }
+	}
+
+}
+
+export namespace state {
+	
+	export class SortColumn {
+	    column: string;
+	    direction: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SortColumn(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.column = source["column"];
+	        this.direction = source["direction"];
+	    }
+	}
+	export class ViewSort {
+	    primary: SortColumn;
+	    secondary: SortColumn;
+	
+	    static createFrom(source: any = {}) {
+	        return new ViewSort(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.primary = this.convertValues(source["primary"], SortColumn);
+	        this.secondary = this.convertValues(source["secondary"], SortColumn);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class AppState {
+	    lastWorkID?: number;
+	    lastOrgID?: number;
+	    lastCollectionID?: number;
+	    lastSubmissionID?: number;
+	    worksFilter?: string;
+	    orgsFilter?: string;
+	    orgsStatusFilter?: string[];
+	    submissionsFilter?: string;
+	    collectionsFilter?: string;
+	    lastRoute?: string;
+	    sidebarCollapsed: boolean;
+	    previewPanelWidth?: number;
+	    windowX?: number;
+	    windowY?: number;
+	    windowWidth?: number;
+	    windowHeight?: number;
+	    viewSorts?: Record<string, ViewSort>;
+	
+	    static createFrom(source: any = {}) {
+	        return new AppState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.lastWorkID = source["lastWorkID"];
+	        this.lastOrgID = source["lastOrgID"];
+	        this.lastCollectionID = source["lastCollectionID"];
+	        this.lastSubmissionID = source["lastSubmissionID"];
+	        this.worksFilter = source["worksFilter"];
+	        this.orgsFilter = source["orgsFilter"];
+	        this.orgsStatusFilter = source["orgsStatusFilter"];
+	        this.submissionsFilter = source["submissionsFilter"];
+	        this.collectionsFilter = source["collectionsFilter"];
+	        this.lastRoute = source["lastRoute"];
+	        this.sidebarCollapsed = source["sidebarCollapsed"];
+	        this.previewPanelWidth = source["previewPanelWidth"];
+	        this.windowX = source["windowX"];
+	        this.windowY = source["windowY"];
+	        this.windowWidth = source["windowWidth"];
+	        this.windowHeight = source["windowHeight"];
+	        this.viewSorts = this.convertValues(source["viewSorts"], ViewSort, true);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+
+}
+

@@ -81,6 +81,24 @@ export namespace main {
 	        this.workTypeList = source["workTypeList"];
 	    }
 	}
+	export class ExportResult {
+	    table: string;
+	    count: number;
+	    success: boolean;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.table = source["table"];
+	        this.count = source["count"];
+	        this.success = source["success"];
+	        this.error = source["error"];
+	    }
+	}
 	export class PathCheckResult {
 	    generatedPath: string;
 	    storedPath: string;
@@ -97,6 +115,20 @@ export namespace main {
 	        this.storedPath = source["storedPath"];
 	        this.status = source["status"];
 	        this.fileExists = source["fileExists"];
+	    }
+	}
+	export class TableInfo {
+	    name: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new TableInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.count = source["count"];
 	    }
 	}
 	export class WorkUpdateResult {
@@ -547,6 +579,7 @@ export namespace settings {
 	    submissionExportPath: string;
 	    templateFolderPath: string;
 	    libreOfficePath?: string;
+	    exportFolderPath?: string;
 	    setupCompleted: boolean;
 	
 	    static createFrom(source: any = {}) {
@@ -560,6 +593,7 @@ export namespace settings {
 	        this.submissionExportPath = source["submissionExportPath"];
 	        this.templateFolderPath = source["templateFolderPath"];
 	        this.libreOfficePath = source["libreOfficePath"];
+	        this.exportFolderPath = source["exportFolderPath"];
 	        this.setupCompleted = source["setupCompleted"];
 	    }
 	}

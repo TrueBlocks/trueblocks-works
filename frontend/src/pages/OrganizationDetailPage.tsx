@@ -49,13 +49,10 @@ export function OrganizationDetailPage() {
     loadData();
   }, [loadData]);
 
-  const handleDeleteSubmission = useCallback(
-    async (subId: number) => {
-      await DeleteSubmission(subId);
-      setSubmissions((prev) => prev.filter((s) => s.submissionID !== subId));
-    },
-    []
-  );
+  const handleDeleteSubmission = useCallback(async (subId: number) => {
+    await DeleteSubmission(subId);
+    setSubmissions((prev) => prev.filter((s) => s.submissionID !== subId));
+  }, []);
 
   const handleAddNote = useCallback(
     async (noteText: string) => {

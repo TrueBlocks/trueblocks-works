@@ -6,3 +6,4 @@ export { SubmissionsPage } from './SubmissionsPage';
 export { SubmissionDetailPage } from './SubmissionDetailPage';
 export { CollectionsPage } from './CollectionsPage';
 export { SettingsPage } from './SettingsPage';
+export { ExportPage } from './ExportPage';

@@ -13,6 +13,7 @@ type Settings struct {
 	SubmissionExportPath string `json:"submissionExportPath"`
 	TemplateFolderPath   string `json:"templateFolderPath"`
 	LibreOfficePath      string `json:"libreOfficePath,omitempty"`
+	ExportFolderPath     string `json:"exportFolderPath,omitempty"`
 	SetupCompleted       bool   `json:"setupCompleted"`
 }
 

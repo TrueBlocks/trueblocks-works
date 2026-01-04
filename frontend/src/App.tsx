@@ -14,6 +14,7 @@ import { SubmissionsPage } from '@/pages/SubmissionsPage';
 import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage';
 import { CollectionsPage } from '@/pages/CollectionsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { ExportPage } from '@/pages/ExportPage';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { GetAppState, IsFirstRun, SaveWindowGeometry, SetLastRoute } from '@wailsjs/go/main/App';
 
@@ -125,6 +126,7 @@ function App() {
             <Route path="/submissions" element={<SubmissionsPage />} />
             <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
             <Route path="/collections" element={<CollectionsPage />} />
+            <Route path="/export" element={<ExportPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </AppShell.Main>

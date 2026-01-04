@@ -326,11 +326,7 @@ export function SubmissionDetailPage() {
                         >
                           <IconTrash size={14} />
                         </ActionIcon>
-                        <ActionIcon
-                          variant="subtle"
-                          size="sm"
-                          onClick={() => handleEditNote(note)}
-                        >
+                        <ActionIcon variant="subtle" size="sm" onClick={() => handleEditNote(note)}>
                           <IconEdit size={14} />
                         </ActionIcon>
                       </Group>
@@ -389,11 +385,7 @@ export function SubmissionDetailPage() {
                         >
                           <IconTrash size={14} />
                         </ActionIcon>
-                        <ActionIcon
-                          variant="subtle"
-                          size="sm"
-                          onClick={() => handleEditNote(note)}
-                        >
+                        <ActionIcon variant="subtle" size="sm" onClick={() => handleEditNote(note)}>
                           <IconEdit size={14} />
                         </ActionIcon>
                       </Group>

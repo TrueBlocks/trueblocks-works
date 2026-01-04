@@ -1,6 +1,14 @@
 import { Group, Title, Text, Divider, Stack } from '@mantine/core';
 import { NavLink, useLocation } from 'react-router-dom';
-import { IconBook2, IconBuilding, IconSend, IconFolder, IconSettings } from '@tabler/icons-react';
+import {
+  IconBook2,
+  IconBuilding,
+  IconSend,
+  IconFolder,
+  IconSettings,
+  IconDownload,
+  IconReportAnalytics,
+} from '@tabler/icons-react';
 
 const navItems = [
   { path: '/works', label: 'Works', icon: IconBook2 },
@@ -54,6 +62,8 @@ function Links() {
       <div>{navItems.map(renderLink)}</div>
       <div>
         <Divider my="sm" />
+        {renderLink({ path: '/reports', label: 'Reports', icon: IconReportAnalytics })}
+        {renderLink({ path: '/export', label: 'Export', icon: IconDownload })}
         {renderLink({ path: '/settings', label: 'Settings', icon: IconSettings })}
       </div>
     </Stack>

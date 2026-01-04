@@ -82,6 +82,10 @@ export function DetectLibreOffice() {
   return window['go']['main']['App']['DetectLibreOffice']();
 }
 
+export function ExportAllTables() {
+  return window['go']['main']['App']['ExportAllTables']();
+}
+
 export function ExportToSubmissions(arg1) {
   return window['go']['main']['App']['ExportToSubmissions'](arg1);
 }
@@ -112,6 +116,14 @@ export function GetDuotropeURL(arg1) {
 
 export function GetEnumLists() {
   return window['go']['main']['App']['GetEnumLists']();
+}
+
+export function GetExportFolderPath() {
+  return window['go']['main']['App']['GetExportFolderPath']();
+}
+
+export function GetExportTables() {
+  return window['go']['main']['App']['GetExportTables']();
 }
 
 export function GetFileConfig() {
@@ -206,6 +218,10 @@ export function OpenDuotrope(arg1) {
   return window['go']['main']['App']['OpenDuotrope'](arg1);
 }
 
+export function OpenExportFolder() {
+  return window['go']['main']['App']['OpenExportFolder']();
+}
+
 export function OpenOrgOtherURL(arg1) {
   return window['go']['main']['App']['OpenOrgOtherURL'](arg1);
 }
@@ -248,6 +264,10 @@ export function Search(arg1, arg2) {
 
 export function SearchNotesByText(arg1) {
   return window['go']['main']['App']['SearchNotesByText'](arg1);
+}
+
+export function SelectExportFolder() {
+  return window['go']['main']['App']['SelectExportFolder']();
 }
 
 export function SetCollectionsFilter(arg1) {

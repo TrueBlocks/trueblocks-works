@@ -47,6 +47,8 @@ export function DeleteWorkNote(arg1:number):Promise<void>;
 
 export function DetectLibreOffice():Promise<string>;
 
+export function ExportAllTables():Promise<Array<main.ExportResult>>;
+
 export function ExportToSubmissions(arg1:number):Promise<string>;
 
 export function GeneratePath(arg1:number):Promise<string>;
@@ -62,6 +64,10 @@ export function GetCollections():Promise<Array<models.Collection>>;
 export function GetDuotropeURL(arg1:number):Promise<string>;
 
 export function GetEnumLists():Promise<main.EnumLists>;
+
+export function GetExportFolderPath():Promise<string>;
+
+export function GetExportTables():Promise<Array<main.TableInfo>>;
 
 export function GetFileConfig():Promise<fileops.Config>;
 
@@ -109,6 +115,8 @@ export function OpenDocument(arg1:number):Promise<void>;
 
 export function OpenDuotrope(arg1:number):Promise<void>;
 
+export function OpenExportFolder():Promise<void>;
+
 export function OpenOrgOtherURL(arg1:number):Promise<void>;
 
 export function OpenOrgURL(arg1:number):Promise<void>;
@@ -130,6 +138,8 @@ export function SaveWindowGeometry(arg1:number,arg2:number,arg3:number,arg4:numb
 export function Search(arg1:string,arg2:number):Promise<Array<models.SearchResult>>;
 
 export function SearchNotesByText(arg1:string):Promise<Array<models.NoteSearchResult>>;
+
+export function SelectExportFolder():Promise<string>;
 
 export function SetCollectionsFilter(arg1:string):Promise<void>;
 

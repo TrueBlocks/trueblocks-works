@@ -15,7 +15,6 @@ import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage';
 import { CollectionsPage } from '@/pages/CollectionsPage';
 import { CollectionDetailPage } from '@/pages/CollectionDetailPage';
 import { SettingsPage } from '@/pages/SettingsPage';
-import { ExportPage } from '@/pages/ExportPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import {
@@ -215,7 +214,6 @@ function App() {
             <Route path="/collections" element={<CollectionsPage />} />
             <Route path="/collections/:id" element={<CollectionDetailPage />} />
             <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/export" element={<ExportPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </AppShell.Main>

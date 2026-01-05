@@ -6,7 +6,6 @@ import {
   IconSend,
   IconFolder,
   IconSettings,
-  IconDownload,
   IconReportAnalytics,
 } from '@tabler/icons-react';
 
@@ -63,7 +62,6 @@ function Links() {
       <div>
         <Divider my="sm" />
         {renderLink({ path: '/reports', label: 'Reports', icon: IconReportAnalytics })}
-        {renderLink({ path: '/export', label: 'Export', icon: IconDownload })}
         {renderLink({ path: '/settings', label: 'Settings', icon: IconSettings })}
       </div>
     </Stack>

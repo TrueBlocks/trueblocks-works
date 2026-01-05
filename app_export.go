@@ -125,7 +125,7 @@ func (a *App) exportTable(name, exportPath string, fn exportFunc) ExportResult {
 }
 
 func (a *App) exportWorks() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT workID, title, type, year, status, quality, doc_type, path, draft, n_words, course_name, is_blog, is_printed, is_prose_poem, is_revised, mark, access_date, created_at, modified_at FROM Works ORDER BY workID`)
+	rows, err := a.db.Conn().Query(`SELECT workID, title, type, year, status, quality, doc_type, path, draft, n_words, course_name, attributes, access_date, created_at, modified_at FROM Works ORDER BY workID`)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -134,10 +134,10 @@ func (a *App) exportWorks() (interface{}, int, error) {
 	var records []map[string]interface{}
 	for rows.Next() {
 		var workID int64
-		var title, workType, year, status, quality, docType, path, draft, courseName, isBlog, isPrinted, isProsePoem, isRevised, mark, accessDate, createdAt, modifiedAt *string
+		var title, workType, year, status, quality, docType, path, draft, courseName, attributes, accessDate, createdAt, modifiedAt *string
 		var nWords *int
 
-		err := rows.Scan(&workID, &title, &workType, &year, &status, &quality, &docType, &path, &draft, &nWords, &courseName, &isBlog, &isPrinted, &isProsePoem, &isRevised, &mark, &accessDate, &createdAt, &modifiedAt)
+		err := rows.Scan(&workID, &title, &workType, &year, &status, &quality, &docType, &path, &draft, &nWords, &courseName, &attributes, &accessDate, &createdAt, &modifiedAt)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -145,15 +145,14 @@ func (a *App) exportWorks() (interface{}, int, error) {
 		records = append(records, map[string]interface{}{
 			"workID": workID, "title": title, "type": workType, "year": year, "status": status,
 			"quality": quality, "docType": docType, "path": path, "draft": draft, "nWords": nWords,
-			"courseName": courseName, "isBlog": isBlog, "isPrinted": isPrinted, "isProsePoem": isProsePoem,
-			"isRevised": isRevised, "mark": mark, "accessDate": accessDate,
+			"courseName": courseName, "attributes": attributes, "accessDate": accessDate,
 		})
 	}
 	return records, len(records), nil
 }
 
 func (a *App) exportOrganizations() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, date_added, date_modified FROM Organizations ORDER BY orgID`)
+	rows, err := a.db.Conn().Query(`SELECT orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, date_modified FROM Organizations ORDER BY orgID`)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -163,10 +162,10 @@ func (a *App) exportOrganizations() (interface{}, int, error) {
 	for rows.Next() {
 		var orgID int64
 		var name string
-		var otherName, url, otherURL, status, orgType, timing, submissionTypes, accepts, myInterest, source, websiteMenu, contestEnds, contestFee, contestPrize, contestPrize2, dateAdded, dateModified *string
+		var otherName, url, otherURL, status, orgType, timing, submissionTypes, accepts, myInterest, source, websiteMenu, contestEnds, contestFee, contestPrize, contestPrize2, attributes, dateAdded, dateModified *string
 		var ranking, duotropeNum, nPushFiction, nPushNonfiction, nPushPoetry *int
 
-		err := rows.Scan(&orgID, &name, &otherName, &url, &otherURL, &status, &orgType, &timing, &submissionTypes, &accepts, &myInterest, &ranking, &source, &websiteMenu, &duotropeNum, &nPushFiction, &nPushNonfiction, &nPushPoetry, &contestEnds, &contestFee, &contestPrize, &contestPrize2, &dateAdded, &dateModified)
+		err := rows.Scan(&orgID, &name, &otherName, &url, &otherURL, &status, &orgType, &timing, &submissionTypes, &accepts, &myInterest, &ranking, &source, &websiteMenu, &duotropeNum, &nPushFiction, &nPushNonfiction, &nPushPoetry, &contestEnds, &contestFee, &contestPrize, &contestPrize2, &attributes, &dateAdded, &dateModified)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -178,13 +177,14 @@ func (a *App) exportOrganizations() (interface{}, int, error) {
 			"websiteMenu": websiteMenu, "duotropeNum": duotropeNum, "nPushFiction": nPushFiction,
 			"nPushNonfiction": nPushNonfiction, "nPushPoetry": nPushPoetry, "contestEnds": contestEnds,
 			"contestFee": contestFee, "contestPrize": contestPrize, "contestPrize2": contestPrize2,
+			"attributes": attributes,
 		})
 	}
 	return records, len(records), nil
 }
 
 func (a *App) exportSubmissions() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT submissionID, workID, orgID, draft, submission_date, submission_type, query_date, response_date, response_type, contest_name, cost, user_id, password, web_address, mark, created_at, modified_at FROM Submissions ORDER BY submissionID`)
+	rows, err := a.db.Conn().Query(`SELECT submissionID, workID, orgID, draft, submission_date, submission_type, query_date, response_date, response_type, contest_name, cost, user_id, password, web_address, attributes, created_at, modified_at FROM Submissions ORDER BY submissionID`)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -193,10 +193,10 @@ func (a *App) exportSubmissions() (interface{}, int, error) {
 	var records []map[string]interface{}
 	for rows.Next() {
 		var submissionID, workID, orgID int64
-		var draft, submissionDate, submissionType, queryDate, responseDate, responseType, contestName, userID, password, webAddress, mark, createdAt, modifiedAt *string
+		var draft, submissionDate, submissionType, queryDate, responseDate, responseType, contestName, userID, password, webAddress, attributes, createdAt, modifiedAt *string
 		var cost *float64
 
-		err := rows.Scan(&submissionID, &workID, &orgID, &draft, &submissionDate, &submissionType, &queryDate, &responseDate, &responseType, &contestName, &cost, &userID, &password, &webAddress, &mark, &createdAt, &modifiedAt)
+		err := rows.Scan(&submissionID, &workID, &orgID, &draft, &submissionDate, &submissionType, &queryDate, &responseDate, &responseType, &contestName, &cost, &userID, &password, &webAddress, &attributes, &createdAt, &modifiedAt)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -206,14 +206,14 @@ func (a *App) exportSubmissions() (interface{}, int, error) {
 			"submissionDate": submissionDate, "submissionType": submissionType, "queryDate": queryDate,
 			"responseDate": responseDate, "responseType": responseType, "contestName": contestName,
 			"cost": cost, "userID": userID, "password": password, "webAddress": webAddress,
-			"mark": mark,
+			"attributes": attributes,
 		})
 	}
 	return records, len(records), nil
 }
 
 func (a *App) exportCollections() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT collID, collection_name, is_status, type, created_at, modified_at FROM Collections ORDER BY collID`)
+	rows, err := a.db.Conn().Query(`SELECT collID, collection_name, is_status, type, attributes, created_at, modified_at FROM Collections ORDER BY collID`)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -223,16 +223,16 @@ func (a *App) exportCollections() (interface{}, int, error) {
 	for rows.Next() {
 		var collID int64
 		var collectionName string
-		var isStatus, collType, createdAt, modifiedAt *string
+		var isStatus, collType, attributes, createdAt, modifiedAt *string
 
-		err := rows.Scan(&collID, &collectionName, &isStatus, &collType, &createdAt, &modifiedAt)
+		err := rows.Scan(&collID, &collectionName, &isStatus, &collType, &attributes, &createdAt, &modifiedAt)
 		if err != nil {
 			return nil, 0, err
 		}
 
 		records = append(records, map[string]interface{}{
 			"collID": collID, "collectionName": collectionName, "isStatus": isStatus,
-			"type": collType,
+			"type": collType, "attributes": attributes,
 		})
 	}
 	return records, len(records), nil

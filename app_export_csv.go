@@ -43,13 +43,13 @@ func (a *App) exportWorksCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	// Header matches original exactly
-	header := []string{"CourseName", "DocType", "Draft", "isBlog", "isPrinted", "isProsePoem", "isRevised", "Mark", "Path", "Quality", "Status", "Title", "Type", "nWords", "workID", "accessDate"}
+	// Header matches original format with attributes field
+	header := []string{"CourseName", "DocType", "Draft", "Attributes", "Path", "Quality", "Status", "Title", "Type", "nWords", "workID", "accessDate"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
-	rows, err := a.db.Conn().Query(`SELECT course_name, doc_type, draft, is_blog, is_printed, is_prose_poem, is_revised, mark, path, quality, status, title, type, n_words, workID, access_date FROM Works`)
+	rows, err := a.db.Conn().Query(`SELECT course_name, doc_type, draft, attributes, path, quality, status, title, type, n_words, workID, access_date FROM Works`)
 	if err != nil {
 		return 0, err
 	}
@@ -57,11 +57,11 @@ func (a *App) exportWorksCSV(importsPath string) (int, error) {
 
 	var records [][]string
 	for rows.Next() {
-		var courseName, docType, draft, isBlog, isPrinted, isProsePoem, isRevised, mark, path, quality, status, title, workType, accessDate *string
+		var courseName, docType, draft, attributes, path, quality, status, title, workType, accessDate *string
 		var nWords *int
 		var workID int64
 
-		if err := rows.Scan(&courseName, &docType, &draft, &isBlog, &isPrinted, &isProsePoem, &isRevised, &mark, &path, &quality, &status, &title, &workType, &nWords, &workID, &accessDate); err != nil {
+		if err := rows.Scan(&courseName, &docType, &draft, &attributes, &path, &quality, &status, &title, &workType, &nWords, &workID, &accessDate); err != nil {
 			return 0, err
 		}
 
@@ -69,11 +69,7 @@ func (a *App) exportWorksCSV(importsPath string) (int, error) {
 			strPtrToCSV(courseName),
 			strPtrToCSV(docType),
 			strPtrToCSV(draft),
-			strPtrToCSV(isBlog),
-			strPtrToCSV(isPrinted),
-			strPtrToCSV(isProsePoem),
-			strPtrToCSV(isRevised),
-			strPtrToCSV(mark),
+			strPtrToCSV(attributes),
 			strPtrToCSV(path),
 			strPtrToCSV(quality),
 			strPtrToCSV(status),
@@ -111,15 +107,13 @@ func (a *App) exportOrganizationsCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	// Header matches original exactly (note typo "Doutrope" preserved)
-	// Note: "Mark" column exists in original CSV but not in DB schema - export as empty
-	// Note: "Date Modified" removed - not needed for round-trip
-	header := []string{"Accepts", "Contest Fee", "Contest Prize", "Contest Prize 2", "Mark", "My Interest", "Name", "Other Name", "Other URL", "Source", "Status", "Submission Types", "Timing", "Type", "URL", "Website Menu", "Doutrope Num", "nPushFiction", "nPushNonFiction", "nPushPoetry", "orgID", "Ranking", "Contest Ends", "Date Added"}
+	// Header matches original exactly (note typo "Doutrope" preserved) plus new attributes field
+	header := []string{"Accepts", "Contest Fee", "Contest Prize", "Contest Prize 2", "Attributes", "My Interest", "Name", "Other Name", "Other URL", "Source", "Status", "Submission Types", "Timing", "Type", "URL", "Website Menu", "Doutrope Num", "nPushFiction", "nPushNonFiction", "nPushPoetry", "orgID", "Ranking", "Contest Ends", "Date Added"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
-	rows, err := a.db.Conn().Query(`SELECT accepts, contest_fee, contest_prize, contest_prize_2, my_interest, name, other_name, other_url, source, status, submission_types, timing, type, url, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, orgID, ranking, contest_ends, date_added FROM Organizations`)
+	rows, err := a.db.Conn().Query(`SELECT accepts, contest_fee, contest_prize, contest_prize_2, attributes, my_interest, name, other_name, other_url, source, status, submission_types, timing, type, url, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, orgID, ranking, contest_ends, date_added FROM Organizations`)
 	if err != nil {
 		return 0, err
 	}
@@ -127,12 +121,12 @@ func (a *App) exportOrganizationsCSV(importsPath string) (int, error) {
 
 	var records [][]string
 	for rows.Next() {
-		var accepts, contestFee, contestPrize, contestPrize2, myInterest, otherName, otherURL, source, status, submissionTypes, timing, orgType, url, websiteMenu, contestEnds, dateAdded *string
+		var accepts, contestFee, contestPrize, contestPrize2, attributes, myInterest, otherName, otherURL, source, status, submissionTypes, timing, orgType, url, websiteMenu, contestEnds, dateAdded *string
 		var name string
 		var duotropeNum, nPushFiction, nPushNonfiction, nPushPoetry, ranking *int
 		var orgID int64
 
-		if err := rows.Scan(&accepts, &contestFee, &contestPrize, &contestPrize2, &myInterest, &name, &otherName, &otherURL, &source, &status, &submissionTypes, &timing, &orgType, &url, &websiteMenu, &duotropeNum, &nPushFiction, &nPushNonfiction, &nPushPoetry, &orgID, &ranking, &contestEnds, &dateAdded); err != nil {
+		if err := rows.Scan(&accepts, &contestFee, &contestPrize, &contestPrize2, &attributes, &myInterest, &name, &otherName, &otherURL, &source, &status, &submissionTypes, &timing, &orgType, &url, &websiteMenu, &duotropeNum, &nPushFiction, &nPushNonfiction, &nPushPoetry, &orgID, &ranking, &contestEnds, &dateAdded); err != nil {
 			return 0, err
 		}
 
@@ -141,7 +135,7 @@ func (a *App) exportOrganizationsCSV(importsPath string) (int, error) {
 			strPtrToCSV(contestFee),
 			strPtrToCSV(contestPrize),
 			strPtrToCSV(contestPrize2),
-			"", // Mark column not in DB, export as empty
+			strPtrToCSV(attributes),
 			strPtrToCSV(myInterest),
 			name,
 			strPtrToCSV(otherName),
@@ -189,13 +183,13 @@ func (a *App) exportSubmissionsCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	// Header matches original exactly
-	header := []string{"Contest Name", "Draft", "Mark", "Password", "Response Type", "Submission Type", "User ID", "Web Address", "Cost", "orgID", "submissionID", "workID", "Query Date", "Response Date", "Submission Date"}
+	// Header matches original exactly plus new attributes field
+	header := []string{"Contest Name", "Draft", "Attributes", "Password", "Response Type", "Submission Type", "User ID", "Web Address", "Cost", "orgID", "submissionID", "workID", "Query Date", "Response Date", "Submission Date"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
-	rows, err := a.db.Conn().Query(`SELECT contest_name, draft, mark, password, response_type, submission_type, user_id, web_address, cost, orgID, submissionID, workID, query_date, response_date, submission_date FROM Submissions`)
+	rows, err := a.db.Conn().Query(`SELECT contest_name, draft, attributes, password, response_type, submission_type, user_id, web_address, cost, orgID, submissionID, workID, query_date, response_date, submission_date FROM Submissions`)
 	if err != nil {
 		return 0, err
 	}
@@ -203,18 +197,18 @@ func (a *App) exportSubmissionsCSV(importsPath string) (int, error) {
 
 	var records [][]string
 	for rows.Next() {
-		var contestName, draft, mark, password, responseType, submissionType, userID, webAddress, queryDate, responseDate, submissionDate *string
+		var contestName, draft, attributes, password, responseType, submissionType, userID, webAddress, queryDate, responseDate, submissionDate *string
 		var cost *float64
 		var orgID, submissionID, workID int64
 
-		if err := rows.Scan(&contestName, &draft, &mark, &password, &responseType, &submissionType, &userID, &webAddress, &cost, &orgID, &submissionID, &workID, &queryDate, &responseDate, &submissionDate); err != nil {
+		if err := rows.Scan(&contestName, &draft, &attributes, &password, &responseType, &submissionType, &userID, &webAddress, &cost, &orgID, &submissionID, &workID, &queryDate, &responseDate, &submissionDate); err != nil {
 			return 0, err
 		}
 
 		record := []string{
 			strPtrToCSV(contestName),
 			strPtrToCSV(draft),
-			strPtrToCSV(mark),
+			strPtrToCSV(attributes),
 			strPtrToCSV(password),
 			strPtrToCSV(responseType),
 			strPtrToCSV(submissionType),
@@ -255,15 +249,15 @@ func (a *App) exportCollectionsCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	// Header matches original exactly
-	header := []string{"Collection Name", "isStatus", "Type", "Collection ID", "statusList", "nItems"}
+	// Header matches original exactly plus new attributes field
+	header := []string{"Collection Name", "isStatus", "Type", "Attributes", "Collection ID", "statusList", "nItems"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
 	// Note: statusList is derived from isStatus, nItems is computed from CollectionDetails count
 	rows, err := a.db.Conn().Query(`
-		SELECT c.collection_name, c.is_status, c.type, c.collID,
+		SELECT c.collection_name, c.is_status, c.type, c.attributes, c.collID,
 			CASE WHEN c.is_status = 'yes' THEN c.collection_name ELSE 'None' END as statusList,
 			COALESCE((SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID), 0) as nItems
 		FROM Collections c`)
@@ -275,12 +269,12 @@ func (a *App) exportCollectionsCSV(importsPath string) (int, error) {
 	var records [][]string
 	for rows.Next() {
 		var collectionName string
-		var isStatus, collType *string
+		var isStatus, collType, attributes *string
 		var collID int64
 		var statusList string
 		var nItems int
 
-		if err := rows.Scan(&collectionName, &isStatus, &collType, &collID, &statusList, &nItems); err != nil {
+		if err := rows.Scan(&collectionName, &isStatus, &collType, &attributes, &collID, &statusList, &nItems); err != nil {
 			return 0, err
 		}
 
@@ -293,6 +287,7 @@ func (a *App) exportCollectionsCSV(importsPath string) (int, error) {
 			collectionName,
 			strPtrToCSV(isStatus),
 			strPtrToCSV(collType),
+			strPtrToCSV(attributes),
 			strconv.FormatInt(collID, 10),
 			statusList,
 			nItemsStr,

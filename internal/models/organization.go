@@ -24,6 +24,7 @@ type Organization struct {
 	ContestFee     *string `json:"contestFee,omitempty" db:"contest_fee"`
 	ContestPrize   *string `json:"contestPrize,omitempty" db:"contest_prize"`
 	ContestPrize2  *string `json:"contestPrize2,omitempty" db:"contest_prize_2"`
+	Attributes     string  `json:"attributes" db:"attributes"`
 	DateAdded      *string `json:"dateAdded,omitempty" db:"date_added"`
 	DateModified   *string `json:"dateModified,omitempty" db:"date_modified"`
 }

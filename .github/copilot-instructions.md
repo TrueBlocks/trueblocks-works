@@ -275,6 +275,128 @@ row := db.QueryRow(query, id)
 
 ---
 
+## 17a. SQLite Migration Safety (CRITICAL)
+
+> **Warning**: Migrations can cause **permanent data loss**. Follow these rules exactly.
+
+### What Went Wrong (January 2026 Incident)
+
+A migration to drop columns from the Works table caused data loss:
+1. Migration dropped the Works table
+2. Migration failed BEFORE renaming Works_new → Works
+3. Result: 1749 records lost, recovered from backup
+
+**Root causes:**
+- Migration was NOT wrapped in a transaction
+- Views (WorksView, SubmissionsView) depended on Works table
+- SQLite's integrity check failed after DROP TABLE but before RENAME
+
+### SQLite Column Drop Pattern
+
+SQLite doesn't support `ALTER TABLE DROP COLUMN` (well). The safe pattern is:
+1. Drop ALL views that reference the table
+2. Create new table with desired schema
+3. Copy data from old table to new table
+4. Drop old table
+5. Rename new table to original name
+6. Recreate ALL views
+
+### Mandatory Migration Rules
+
+1. **ALWAYS wrap migrations in transactions**
+   ```go
+   func migrateXxx(tx *sql.Tx) error {
+       // All operations use tx.Exec(), not db.conn.Exec()
+   }
+   ```
+
+2. **ALWAYS disable foreign keys inside transactions**
+   ```go
+   tx.Exec(`PRAGMA foreign_keys = OFF`)
+   // ... migration work ...
+   // foreign_keys automatically re-enabled after transaction
+   ```
+
+3. **ALWAYS use idempotent statements**
+   ```go
+   tx.Exec(`DROP VIEW IF EXISTS ViewName`)
+   tx.Exec(`DROP TABLE IF EXISTS TableName_new`)
+   ```
+
+4. **ALWAYS find ALL dependent views BEFORE writing migration**
+   ```fish
+   sqlite3 ~/.works/works.db "SELECT name, sql FROM sqlite_master WHERE type='view'"
+   ```
+   Then grep for the table name in each view's SQL.
+
+5. **ALWAYS verify data counts before and after**
+   ```fish
+   # Before migration
+   sqlite3 ~/.works/works.db "SELECT COUNT(*) FROM TableName"
+   
+   # After migration
+   sqlite3 ~/.works/works.db "SELECT COUNT(*) FROM TableName"
+   ```
+
+6. **NEVER run `yarn start` to test a destructive migration**
+   - First, copy the database: `cp ~/.works/works.db ~/.works/works_test.db`
+   - Test against the copy
+   - Only run against production after confirming success
+
+### Migration Template (Table Recreation)
+
+```go
+func migrateDropColumns(tx *sql.Tx) error {
+    // 1. Drop ALL dependent views (find these FIRST!)
+    _, _ = tx.Exec(`DROP VIEW IF EXISTS TableView`)
+    _, _ = tx.Exec(`DROP VIEW IF EXISTS OtherDependentView`)
+    
+    // 2. Clean up any failed previous attempt
+    _, _ = tx.Exec(`DROP TABLE IF EXISTS Table_new`)
+    
+    // 3. Create new table with desired schema
+    _, err := tx.Exec(`CREATE TABLE Table_new (...)`)
+    if err != nil {
+        return fmt.Errorf("create Table_new: %w", err)
+    }
+    
+    // 4. Copy data
+    _, err = tx.Exec(`INSERT INTO Table_new (...) SELECT ... FROM Table`)
+    if err != nil {
+        return fmt.Errorf("copy data: %w", err)
+    }
+    
+    // 5. Drop old table
+    _, err = tx.Exec(`DROP TABLE Table`)
+    if err != nil {
+        return fmt.Errorf("drop old table: %w", err)
+    }
+    
+    // 6. Rename new table
+    _, err = tx.Exec(`ALTER TABLE Table_new RENAME TO Table`)
+    if err != nil {
+        return fmt.Errorf("rename table: %w", err)
+    }
+    
+    // 7. Recreate ALL views
+    _, err = tx.Exec(`CREATE VIEW TableView AS ...`)
+    if err != nil {
+        return fmt.Errorf("recreate view: %w", err)
+    }
+    
+    return nil
+}
+```
+
+### Recovery
+
+If data is lost, restore from backup:
+```fish
+cp ~/.works/backups/works_YYYY-MM-DD_HH-MM-SS_pre-reimport.db ~/.works/works.db
+```
+
+---
+
 ## 18. File Paths
 
 - All paths are **macOS paths** — no Windows consideration
@@ -341,4 +463,4 @@ Modes:
 
 ---
 
-*Last updated: January 3, 2026*
+*Last updated: January 5, 2026*

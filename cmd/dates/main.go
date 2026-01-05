@@ -159,8 +159,7 @@ type missingResult struct {
 func getAllWorks(database *db.DB) ([]models.Work, error) {
 	rows, err := database.Conn().Query(`
 		SELECT workID, title, type, year, status, quality, doc_type, path, draft, 
-		       n_words, course_name, is_blog, is_printed, is_prose_poem, is_revised, 
-		       mark, access_date, created_at, modified_at
+		       n_words, course_name, attributes, access_date, created_at, modified_at
 		FROM Works
 	`)
 	if err != nil {
@@ -173,8 +172,8 @@ func getAllWorks(database *db.DB) ([]models.Work, error) {
 		var w models.Work
 		err := rows.Scan(
 			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.DocType,
-			&w.Path, &w.Draft, &w.NWords, &w.CourseName, &w.IsBlog, &w.IsPrinted,
-			&w.IsProsePoem, &w.IsRevised, &w.Mark, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
+			&w.Path, &w.Draft, &w.NWords, &w.CourseName, &w.Attributes,
+			&w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
 		)
 		if err != nil {
 			return nil, err

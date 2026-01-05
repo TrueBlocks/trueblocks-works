@@ -13,13 +13,13 @@ func (db *DB) CreateSubmission(s *models.Submission) error {
 	query := `INSERT INTO Submissions (
 		workID, orgID, draft, submission_date, submission_type,
 		query_date, response_date, response_type, contest_name,
-		cost, user_id, password, web_address, mark, created_at, modified_at
+		cost, user_id, password, web_address, attributes, created_at, modified_at
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
 		s.WorkID, s.OrgID, s.Draft, s.SubmissionDate, s.SubmissionType,
 		s.QueryDate, s.ResponseDate, s.ResponseType, s.ContestName,
-		s.Cost, s.UserID, s.Password, s.WebAddress, s.Mark, now, now,
+		s.Cost, s.UserID, s.Password, s.WebAddress, s.Attributes, now, now,
 	)
 	if err != nil {
 		return fmt.Errorf("insert submission: %w", err)
@@ -38,7 +38,7 @@ func (db *DB) CreateSubmission(s *models.Submission) error {
 func (db *DB) GetSubmission(id int64) (*models.Submission, error) {
 	query := `SELECT submissionID, workID, orgID, draft, submission_date,
 		submission_type, query_date, response_date, response_type,
-		contest_name, cost, user_id, password, web_address, mark,
+		contest_name, cost, user_id, password, web_address, attributes,
 		created_at, modified_at
 		FROM Submissions WHERE submissionID = ?`
 
@@ -47,7 +47,7 @@ func (db *DB) GetSubmission(id int64) (*models.Submission, error) {
 		&s.SubmissionID, &s.WorkID, &s.OrgID, &s.Draft, &s.SubmissionDate,
 		&s.SubmissionType, &s.QueryDate, &s.ResponseDate, &s.ResponseType,
 		&s.ContestName, &s.Cost, &s.UserID, &s.Password, &s.WebAddress,
-		&s.Mark, &s.CreatedAt, &s.ModifiedAt,
+		&s.Attributes, &s.CreatedAt, &s.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -63,13 +63,13 @@ func (db *DB) UpdateSubmission(s *models.Submission) error {
 	query := `UPDATE Submissions SET
 		workID=?, orgID=?, draft=?, submission_date=?, submission_type=?,
 		query_date=?, response_date=?, response_type=?, contest_name=?,
-		cost=?, user_id=?, password=?, web_address=?, mark=?, modified_at=?
+		cost=?, user_id=?, password=?, web_address=?, attributes=?, modified_at=?
 		WHERE submissionID=?`
 
 	_, err := db.conn.Exec(query,
 		s.WorkID, s.OrgID, s.Draft, s.SubmissionDate, s.SubmissionType,
 		s.QueryDate, s.ResponseDate, s.ResponseType, s.ContestName,
-		s.Cost, s.UserID, s.Password, s.WebAddress, s.Mark, now, s.SubmissionID,
+		s.Cost, s.UserID, s.Password, s.WebAddress, s.Attributes, now, s.SubmissionID,
 	)
 	if err != nil {
 		return fmt.Errorf("update submission: %w", err)
@@ -92,7 +92,7 @@ func (db *DB) DeleteSubmission(id int64) error {
 func (db *DB) ListSubmissions() ([]models.Submission, error) {
 	query := `SELECT submissionID, workID, orgID, draft, submission_date,
 		submission_type, query_date, response_date, response_type,
-		contest_name, cost, user_id, password, web_address, mark,
+		contest_name, cost, user_id, password, web_address, attributes,
 		created_at, modified_at
 		FROM Submissions ORDER BY submission_date DESC`
 
@@ -109,7 +109,7 @@ func (db *DB) ListSubmissions() ([]models.Submission, error) {
 			&s.SubmissionID, &s.WorkID, &s.OrgID, &s.Draft, &s.SubmissionDate,
 			&s.SubmissionType, &s.QueryDate, &s.ResponseDate, &s.ResponseType,
 			&s.ContestName, &s.Cost, &s.UserID, &s.Password, &s.WebAddress,
-			&s.Mark, &s.CreatedAt, &s.ModifiedAt,
+			&s.Attributes, &s.CreatedAt, &s.ModifiedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan submission: %w", err)
@@ -122,7 +122,7 @@ func (db *DB) ListSubmissions() ([]models.Submission, error) {
 func (db *DB) ListSubmissionsByWork(workID int64) ([]models.Submission, error) {
 	query := `SELECT submissionID, workID, orgID, draft, submission_date,
 		submission_type, query_date, response_date, response_type,
-		contest_name, cost, user_id, password, web_address, mark,
+		contest_name, cost, user_id, password, web_address, attributes,
 		created_at, modified_at
 		FROM Submissions WHERE workID = ? ORDER BY submission_date DESC`
 
@@ -139,7 +139,7 @@ func (db *DB) ListSubmissionsByWork(workID int64) ([]models.Submission, error) {
 			&s.SubmissionID, &s.WorkID, &s.OrgID, &s.Draft, &s.SubmissionDate,
 			&s.SubmissionType, &s.QueryDate, &s.ResponseDate, &s.ResponseType,
 			&s.ContestName, &s.Cost, &s.UserID, &s.Password, &s.WebAddress,
-			&s.Mark, &s.CreatedAt, &s.ModifiedAt,
+			&s.Attributes, &s.CreatedAt, &s.ModifiedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan submission: %w", err)
@@ -153,7 +153,7 @@ func (db *DB) ListSubmissionViewsByWork(workID int64) ([]models.SubmissionView, 
 	query := `SELECT 
 		s.submissionID, s.workID, s.orgID, s.draft, s.submission_date,
 		s.submission_type, s.query_date, s.response_date, s.response_type,
-		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.mark,
+		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.attributes,
 		s.created_at, s.modified_at,
 		COALESCE(w.title, '') as title_of_work,
 		COALESCE(o.name, '') as journal_name,
@@ -178,7 +178,7 @@ func (db *DB) ListSubmissionViewsByWork(workID int64) ([]models.SubmissionView, 
 			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.Draft, &v.SubmissionDate,
 			&v.SubmissionType, &v.QueryDate, &v.ResponseDate, &v.ResponseType,
 			&v.ContestName, &v.Cost, &v.UserID, &v.Password, &v.WebAddress,
-			&v.Mark, &v.CreatedAt, &v.ModifiedAt,
+			&v.Attributes, &v.CreatedAt, &v.ModifiedAt,
 			&v.TitleOfWork, &v.JournalName, &v.JournalStatus, &v.DecisionPending,
 		)
 		if err != nil {
@@ -193,7 +193,7 @@ func (db *DB) ListSubmissionViewsByOrg(orgID int64) ([]models.SubmissionView, er
 	query := `SELECT 
 		s.submissionID, s.workID, s.orgID, s.draft, s.submission_date,
 		s.submission_type, s.query_date, s.response_date, s.response_type,
-		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.mark,
+		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.attributes,
 		s.created_at, s.modified_at,
 		COALESCE(w.title, '') as title_of_work,
 		COALESCE(o.name, '') as journal_name,
@@ -218,7 +218,7 @@ func (db *DB) ListSubmissionViewsByOrg(orgID int64) ([]models.SubmissionView, er
 			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.Draft, &v.SubmissionDate,
 			&v.SubmissionType, &v.QueryDate, &v.ResponseDate, &v.ResponseType,
 			&v.ContestName, &v.Cost, &v.UserID, &v.Password, &v.WebAddress,
-			&v.Mark, &v.CreatedAt, &v.ModifiedAt,
+			&v.Attributes, &v.CreatedAt, &v.ModifiedAt,
 			&v.TitleOfWork, &v.JournalName, &v.JournalStatus, &v.DecisionPending,
 		)
 		if err != nil {
@@ -233,7 +233,7 @@ func (db *DB) ListAllSubmissionViews() ([]models.SubmissionView, error) {
 	query := `SELECT 
 		s.submissionID, s.workID, s.orgID, s.draft, s.submission_date,
 		s.submission_type, s.query_date, s.response_date, s.response_type,
-		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.mark,
+		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.attributes,
 		s.created_at, s.modified_at,
 		COALESCE(w.title, '') as title_of_work,
 		COALESCE(o.name, '') as journal_name,
@@ -257,7 +257,7 @@ func (db *DB) ListAllSubmissionViews() ([]models.SubmissionView, error) {
 			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.Draft, &v.SubmissionDate,
 			&v.SubmissionType, &v.QueryDate, &v.ResponseDate, &v.ResponseType,
 			&v.ContestName, &v.Cost, &v.UserID, &v.Password, &v.WebAddress,
-			&v.Mark, &v.CreatedAt, &v.ModifiedAt,
+			&v.Attributes, &v.CreatedAt, &v.ModifiedAt,
 			&v.TitleOfWork, &v.JournalName, &v.JournalStatus, &v.DecisionPending,
 		)
 		if err != nil {

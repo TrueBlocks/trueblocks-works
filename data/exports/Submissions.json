@@ -2,10 +2,10 @@
   "count": 246,
   "records": [
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1601,
       "password": null,
       "queryDate": null,
@@ -19,10 +19,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1601,
       "password": null,
       "queryDate": null,
@@ -36,10 +36,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1601,
       "password": null,
       "queryDate": null,
@@ -53,10 +53,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1601,
       "password": null,
       "queryDate": null,
@@ -70,10 +70,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1601,
       "password": null,
       "queryDate": null,
@@ -87,10 +87,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1488,
       "password": null,
       "queryDate": null,
@@ -104,10 +104,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1488,
       "password": null,
       "queryDate": null,
@@ -121,10 +121,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1488,
       "password": null,
       "queryDate": null,
@@ -138,10 +138,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1488,
       "password": null,
       "queryDate": null,
@@ -155,10 +155,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1488,
       "password": null,
       "queryDate": null,
@@ -172,10 +172,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1329,
       "password": null,
       "queryDate": null,
@@ -189,10 +189,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1329,
       "password": null,
       "queryDate": null,
@@ -206,10 +206,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1329,
       "password": null,
       "queryDate": null,
@@ -223,10 +223,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1329,
       "password": null,
       "queryDate": null,
@@ -240,10 +240,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1329,
       "password": null,
       "queryDate": null,
@@ -257,10 +257,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1699,
       "password": null,
       "queryDate": null,
@@ -274,10 +274,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1699,
       "password": null,
       "queryDate": null,
@@ -291,10 +291,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1699,
       "password": null,
       "queryDate": null,
@@ -308,10 +308,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1304,
       "password": null,
       "queryDate": null,
@@ -325,10 +325,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1304,
       "password": null,
       "queryDate": null,
@@ -342,10 +342,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1304,
       "password": null,
       "queryDate": null,
@@ -359,10 +359,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1304,
       "password": null,
       "queryDate": null,
@@ -376,10 +376,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1304,
       "password": null,
       "queryDate": null,
@@ -393,10 +393,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1673,
       "password": null,
       "queryDate": null,
@@ -410,10 +410,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1673,
       "password": null,
       "queryDate": null,
@@ -427,10 +427,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1673,
       "password": null,
       "queryDate": null,
@@ -444,10 +444,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1673,
       "password": null,
       "queryDate": null,
@@ -461,10 +461,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1673,
       "password": null,
       "queryDate": null,
@@ -478,10 +478,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1644,
       "password": null,
       "queryDate": null,
@@ -495,10 +495,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1644,
       "password": null,
       "queryDate": null,
@@ -512,10 +512,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1644,
       "password": null,
       "queryDate": null,
@@ -529,10 +529,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1644,
       "password": null,
       "queryDate": null,
@@ -546,10 +546,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1644,
       "password": null,
       "queryDate": null,
@@ -563,10 +563,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -580,10 +580,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -597,10 +597,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -614,10 +614,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -631,10 +631,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -648,10 +648,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1680,
       "password": null,
       "queryDate": null,
@@ -665,10 +665,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1680,
       "password": null,
       "queryDate": null,
@@ -682,10 +682,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1680,
       "password": null,
       "queryDate": null,
@@ -699,10 +699,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1680,
       "password": null,
       "queryDate": null,
@@ -716,10 +716,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1680,
       "password": null,
       "queryDate": null,
@@ -733,10 +733,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1295,
       "password": null,
       "queryDate": null,
@@ -750,10 +750,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1295,
       "password": null,
       "queryDate": null,
@@ -767,10 +767,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1295,
       "password": null,
       "queryDate": null,
@@ -784,10 +784,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1295,
       "password": null,
       "queryDate": null,
@@ -801,10 +801,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1295,
       "password": null,
       "queryDate": null,
@@ -818,10 +818,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1437,
       "password": null,
       "queryDate": null,
@@ -835,10 +835,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1437,
       "password": null,
       "queryDate": null,
@@ -852,10 +852,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1437,
       "password": null,
       "queryDate": null,
@@ -869,10 +869,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1437,
       "password": null,
       "queryDate": null,
@@ -886,10 +886,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1437,
       "password": null,
       "queryDate": null,
@@ -903,10 +903,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1413,
       "password": null,
       "queryDate": null,
@@ -920,10 +920,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1413,
       "password": null,
       "queryDate": null,
@@ -937,10 +937,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1413,
       "password": null,
       "queryDate": null,
@@ -954,10 +954,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1413,
       "password": null,
       "queryDate": null,
@@ -971,10 +971,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1413,
       "password": null,
       "queryDate": null,
@@ -988,10 +988,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1566,
       "password": null,
       "queryDate": null,
@@ -1005,10 +1005,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1566,
       "password": null,
       "queryDate": null,
@@ -1022,10 +1022,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1566,
       "password": null,
       "queryDate": null,
@@ -1039,10 +1039,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1566,
       "password": null,
       "queryDate": null,
@@ -1056,10 +1056,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1566,
       "password": null,
       "queryDate": null,
@@ -1073,10 +1073,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -1090,10 +1090,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -1107,10 +1107,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -1124,10 +1124,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -1141,10 +1141,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1504,
       "password": null,
       "queryDate": null,
@@ -1158,10 +1158,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1115,
       "password": null,
       "queryDate": null,
@@ -1175,10 +1175,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1115,
       "password": null,
       "queryDate": null,
@@ -1192,10 +1192,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1115,
       "password": null,
       "queryDate": null,
@@ -1209,10 +1209,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1115,
       "password": null,
       "queryDate": null,
@@ -1226,10 +1226,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1115,
       "password": null,
       "queryDate": null,
@@ -1243,10 +1243,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1536,
       "password": null,
       "queryDate": null,
@@ -1260,10 +1260,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1536,
       "password": null,
       "queryDate": null,
@@ -1277,10 +1277,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1536,
       "password": null,
       "queryDate": null,
@@ -1294,10 +1294,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1536,
       "password": null,
       "queryDate": null,
@@ -1311,10 +1311,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1536,
       "password": null,
       "queryDate": null,
@@ -1328,10 +1328,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1338,
       "password": null,
       "queryDate": null,
@@ -1345,10 +1345,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1338,
       "password": null,
       "queryDate": null,
@@ -1362,10 +1362,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1338,
       "password": null,
       "queryDate": null,
@@ -1379,10 +1379,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1338,
       "password": null,
       "queryDate": null,
@@ -1396,10 +1396,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1338,
       "password": null,
       "queryDate": null,
@@ -1413,10 +1413,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1430,10 +1430,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1447,10 +1447,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1464,10 +1464,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1481,10 +1481,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1498,10 +1498,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1047,
       "password": null,
       "queryDate": null,
@@ -1515,10 +1515,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1047,
       "password": null,
       "queryDate": null,
@@ -1532,10 +1532,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1047,
       "password": null,
       "queryDate": null,
@@ -1549,10 +1549,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1047,
       "password": null,
       "queryDate": null,
@@ -1566,10 +1566,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1047,
       "password": null,
       "queryDate": null,
@@ -1583,10 +1583,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1281,
       "password": null,
       "queryDate": null,
@@ -1600,10 +1600,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1281,
       "password": null,
       "queryDate": null,
@@ -1617,10 +1617,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1281,
       "password": null,
       "queryDate": null,
@@ -1634,10 +1634,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1281,
       "password": null,
       "queryDate": null,
@@ -1651,10 +1651,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1281,
       "password": null,
       "queryDate": null,
@@ -1668,10 +1668,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1148,
       "password": null,
       "queryDate": null,
@@ -1685,10 +1685,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1148,
       "password": null,
       "queryDate": null,
@@ -1702,10 +1702,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1148,
       "password": null,
       "queryDate": null,
@@ -1719,10 +1719,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1148,
       "password": null,
       "queryDate": null,
@@ -1736,10 +1736,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1148,
       "password": null,
       "queryDate": null,
@@ -1753,10 +1753,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1540,
       "password": null,
       "queryDate": null,
@@ -1770,10 +1770,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1540,
       "password": null,
       "queryDate": null,
@@ -1787,10 +1787,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1540,
       "password": null,
       "queryDate": null,
@@ -1804,10 +1804,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1540,
       "password": null,
       "queryDate": null,
@@ -1821,10 +1821,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1540,
       "password": null,
       "queryDate": null,
@@ -1838,10 +1838,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1589,
       "password": null,
       "queryDate": null,
@@ -1855,10 +1855,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1589,
       "password": null,
       "queryDate": null,
@@ -1872,10 +1872,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1589,
       "password": null,
       "queryDate": null,
@@ -1889,10 +1889,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1589,
       "password": null,
       "queryDate": null,
@@ -1906,10 +1906,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1589,
       "password": null,
       "queryDate": null,
@@ -1923,10 +1923,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1940,10 +1940,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1957,10 +1957,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1974,10 +1974,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -1991,10 +1991,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1739,
       "password": null,
       "queryDate": null,
@@ -2008,10 +2008,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1242,
       "password": null,
       "queryDate": null,
@@ -2025,10 +2025,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1242,
       "password": null,
       "queryDate": null,
@@ -2042,10 +2042,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1242,
       "password": null,
       "queryDate": null,
@@ -2059,10 +2059,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1242,
       "password": null,
       "queryDate": null,
@@ -2076,10 +2076,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1242,
       "password": null,
       "queryDate": null,
@@ -2093,10 +2093,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1339,
       "password": null,
       "queryDate": null,
@@ -2110,10 +2110,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1339,
       "password": null,
       "queryDate": null,
@@ -2127,10 +2127,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1339,
       "password": null,
       "queryDate": null,
@@ -2144,10 +2144,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1339,
       "password": null,
       "queryDate": null,
@@ -2161,10 +2161,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1339,
       "password": null,
       "queryDate": null,
@@ -2178,10 +2178,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1060,
       "password": null,
       "queryDate": null,
@@ -2195,10 +2195,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1060,
       "password": null,
       "queryDate": null,
@@ -2212,10 +2212,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1060,
       "password": null,
       "queryDate": null,
@@ -2229,10 +2229,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1060,
       "password": null,
       "queryDate": null,
@@ -2246,10 +2246,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1060,
       "password": null,
       "queryDate": null,
@@ -2263,10 +2263,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1399,
       "password": null,
       "queryDate": null,
@@ -2280,10 +2280,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1399,
       "password": null,
       "queryDate": null,
@@ -2297,10 +2297,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1399,
       "password": null,
       "queryDate": null,
@@ -2314,10 +2314,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1399,
       "password": null,
       "queryDate": null,
@@ -2331,10 +2331,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1399,
       "password": null,
       "queryDate": null,
@@ -2348,10 +2348,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1099,
       "password": null,
       "queryDate": null,
@@ -2365,10 +2365,10 @@
       "workID": 22035
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1099,
       "password": null,
       "queryDate": null,
@@ -2382,10 +2382,10 @@
       "workID": 21205
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1099,
       "password": null,
       "queryDate": null,
@@ -2399,10 +2399,10 @@
       "workID": 21588
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1099,
       "password": null,
       "queryDate": null,
@@ -2416,10 +2416,10 @@
       "workID": 22055
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1099,
       "password": null,
       "queryDate": null,
@@ -2433,10 +2433,10 @@
       "workID": 21822
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1686,
       "password": null,
       "queryDate": null,
@@ -2450,10 +2450,10 @@
       "workID": 21669
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1686,
       "password": null,
       "queryDate": null,
@@ -2467,10 +2467,10 @@
       "workID": 21743
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1506,
       "password": null,
       "queryDate": null,
@@ -2484,10 +2484,10 @@
       "workID": 22042
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1216,
       "password": null,
       "queryDate": null,
@@ -2501,10 +2501,10 @@
       "workID": 22042
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1816,
       "password": null,
       "queryDate": null,
@@ -2518,10 +2518,10 @@
       "workID": 21503
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1426,
       "password": "meriam",
       "queryDate": null,
@@ -2535,10 +2535,10 @@
       "workID": 21233
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1129,
       "password": null,
       "queryDate": null,
@@ -2552,10 +2552,10 @@
       "workID": 21188
     },
     {
+      "attributes": "",
       "contestName": "Marguerite McGlinn Prize for Fiction",
       "cost": null,
       "draft": "13th",
-      "mark": null,
       "orgID": 1564,
       "password": null,
       "queryDate": null,
@@ -2569,10 +2569,10 @@
       "workID": 21188
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1014,
       "password": null,
       "queryDate": null,
@@ -2586,10 +2586,10 @@
       "workID": 21489
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1265,
       "password": null,
       "queryDate": null,
@@ -2603,10 +2603,10 @@
       "workID": 22069
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1418,
       "password": null,
       "queryDate": null,
@@ -2620,10 +2620,10 @@
       "workID": 21181
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "5th",
-      "mark": null,
       "orgID": 1150,
       "password": null,
       "queryDate": null,
@@ -2637,10 +2637,10 @@
       "workID": 21907
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1418,
       "password": null,
       "queryDate": null,
@@ -2654,10 +2654,10 @@
       "workID": 21918
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1418,
       "password": null,
       "queryDate": null,
@@ -2671,10 +2671,10 @@
       "workID": 21211
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1579,
       "password": null,
       "queryDate": null,
@@ -2688,10 +2688,10 @@
       "workID": 22047
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1593,
       "password": null,
       "queryDate": null,
@@ -2705,10 +2705,10 @@
       "workID": 22047
     },
     {
+      "attributes": "",
       "contestName": "The Normal Prize -- POETRY",
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1541,
       "password": null,
       "queryDate": null,
@@ -2722,10 +2722,10 @@
       "workID": 22047
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1810,
       "password": null,
       "queryDate": null,
@@ -2739,10 +2739,10 @@
       "workID": 22047
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1579,
       "password": null,
       "queryDate": null,
@@ -2756,10 +2756,10 @@
       "workID": 21890
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1593,
       "password": null,
       "queryDate": null,
@@ -2773,10 +2773,10 @@
       "workID": 21890
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1687,
       "password": null,
       "queryDate": null,
@@ -2790,10 +2790,10 @@
       "workID": 21890
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1541,
       "password": null,
       "queryDate": null,
@@ -2807,10 +2807,10 @@
       "workID": 21890
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1541,
       "password": null,
       "queryDate": null,
@@ -2824,10 +2824,10 @@
       "workID": 21800
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1593,
       "password": null,
       "queryDate": null,
@@ -2841,10 +2841,10 @@
       "workID": 21800
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1687,
       "password": null,
       "queryDate": null,
@@ -2858,10 +2858,10 @@
       "workID": 21800
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1579,
       "password": null,
       "queryDate": null,
@@ -2875,10 +2875,10 @@
       "workID": 21800
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1593,
       "password": null,
       "queryDate": null,
@@ -2892,10 +2892,10 @@
       "workID": 21441
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1687,
       "password": null,
       "queryDate": null,
@@ -2909,10 +2909,10 @@
       "workID": 21441
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1541,
       "password": null,
       "queryDate": null,
@@ -2926,10 +2926,10 @@
       "workID": 21441
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1593,
       "password": null,
       "queryDate": null,
@@ -2943,10 +2943,10 @@
       "workID": 21347
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1687,
       "password": null,
       "queryDate": null,
@@ -2960,10 +2960,10 @@
       "workID": 21347
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1541,
       "password": null,
       "queryDate": null,
@@ -2977,10 +2977,10 @@
       "workID": 21347
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1418,
       "password": null,
       "queryDate": null,
@@ -2994,10 +2994,10 @@
       "workID": 21696
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1418,
       "password": null,
       "queryDate": null,
@@ -3011,10 +3011,10 @@
       "workID": 21390
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1371,
       "password": "bigM",
       "queryDate": null,
@@ -3028,10 +3028,10 @@
       "workID": 21438
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1208,
       "password": null,
       "queryDate": null,
@@ -3045,10 +3045,10 @@
       "workID": 21031
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1208,
       "password": null,
       "queryDate": null,
@@ -3062,10 +3062,10 @@
       "workID": 21030
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1016,
       "password": null,
       "queryDate": null,
@@ -3079,10 +3079,10 @@
       "workID": 22185
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1208,
       "password": null,
       "queryDate": null,
@@ -3096,10 +3096,10 @@
       "workID": 21668
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1208,
       "password": null,
       "queryDate": null,
@@ -3113,10 +3113,10 @@
       "workID": 3007
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": 0,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1124,
       "password": null,
       "queryDate": null,
@@ -3130,10 +3130,10 @@
       "workID": 21350
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1044,
       "password": null,
       "queryDate": null,
@@ -3147,10 +3147,10 @@
       "workID": 21176
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1044,
       "password": null,
       "queryDate": null,
@@ -3164,10 +3164,10 @@
       "workID": 21176
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1208,
       "password": null,
       "queryDate": null,
@@ -3181,10 +3181,10 @@
       "workID": 3006
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": "1",
       "orgID": 1608,
       "password": null,
       "queryDate": null,
@@ -3198,10 +3198,10 @@
       "workID": 21732
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": 3,
       "draft": "6th",
-      "mark": "1",
       "orgID": 1700,
       "password": null,
       "queryDate": "6/1/2013",
@@ -3215,10 +3215,10 @@
       "workID": 21914
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "8th",
-      "mark": null,
       "orgID": 1750,
       "password": null,
       "queryDate": null,
@@ -3232,10 +3232,10 @@
       "workID": 21027
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "8th",
-      "mark": null,
       "orgID": 1750,
       "password": null,
       "queryDate": null,
@@ -3249,10 +3249,10 @@
       "workID": 21438
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": "1",
       "orgID": 1750,
       "password": null,
       "queryDate": null,
@@ -3266,10 +3266,10 @@
       "workID": 3026
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1751,
       "password": null,
       "queryDate": null,
@@ -3283,10 +3283,10 @@
       "workID": 22077
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": 22,
       "draft": "7th",
-      "mark": null,
       "orgID": 1752,
       "password": null,
       "queryDate": "6/1/2013",
@@ -3300,10 +3300,10 @@
       "workID": 22120
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1371,
       "password": null,
       "queryDate": null,
@@ -3317,10 +3317,10 @@
       "workID": 3502
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1068,
       "password": null,
       "queryDate": null,
@@ -3334,10 +3334,10 @@
       "workID": 21233
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": 25,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1815,
       "password": null,
       "queryDate": null,
@@ -3351,10 +3351,10 @@
       "workID": 3532
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1753,
       "password": null,
       "queryDate": "5/1/2013",
@@ -3368,10 +3368,10 @@
       "workID": 3517
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1753,
       "password": null,
       "queryDate": "5/1/2013",
@@ -3385,10 +3385,10 @@
       "workID": 3511
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": 25,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1754,
       "password": null,
       "queryDate": "9/1/2013",
@@ -3402,10 +3402,10 @@
       "workID": 3532
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1811,
       "password": null,
       "queryDate": null,
@@ -3419,10 +3419,10 @@
       "workID": 3532
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1229,
       "password": null,
       "queryDate": null,
@@ -3436,10 +3436,10 @@
       "workID": 3511
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1229,
       "password": null,
       "queryDate": null,
@@ -3453,10 +3453,10 @@
       "workID": 3517
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1229,
       "password": null,
       "queryDate": null,
@@ -3470,10 +3470,10 @@
       "workID": 22052
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1817,
       "password": null,
       "queryDate": null,
@@ -3487,10 +3487,10 @@
       "workID": 3534
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1817,
       "password": null,
       "queryDate": null,
@@ -3504,10 +3504,10 @@
       "workID": 22047
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1817,
       "password": null,
       "queryDate": null,
@@ -3521,10 +3521,10 @@
       "workID": 21347
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1817,
       "password": null,
       "queryDate": null,
@@ -3538,10 +3538,10 @@
       "workID": 21632
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1817,
       "password": null,
       "queryDate": null,
@@ -3555,10 +3555,10 @@
       "workID": 21600
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1817,
       "password": null,
       "queryDate": null,
@@ -3572,10 +3572,10 @@
       "workID": 3026
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1817,
       "password": null,
       "queryDate": null,
@@ -3589,10 +3589,10 @@
       "workID": 3057
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1751,
       "password": null,
       "queryDate": null,
@@ -3606,10 +3606,10 @@
       "workID": 3554
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1778,
       "password": null,
       "queryDate": null,
@@ -3623,10 +3623,10 @@
       "workID": 3532
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1235,
       "password": null,
       "queryDate": "8/17/2013",
@@ -3640,10 +3640,10 @@
       "workID": 21922
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1492,
       "password": null,
       "queryDate": "9/15/2013",
@@ -3657,10 +3657,10 @@
       "workID": 3511
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1492,
       "password": null,
       "queryDate": "9/15/2013",
@@ -3674,10 +3674,10 @@
       "workID": 21593
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1492,
       "password": null,
       "queryDate": "9/15/2013",
@@ -3691,10 +3691,10 @@
       "workID": 21769
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1492,
       "password": null,
       "queryDate": "9/15/2013",
@@ -3708,10 +3708,10 @@
       "workID": 3057
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1821,
       "password": null,
       "queryDate": null,
@@ -3725,10 +3725,10 @@
       "workID": 3601
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1822,
       "password": null,
       "queryDate": null,
@@ -3742,10 +3742,10 @@
       "workID": 3511
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1822,
       "password": null,
       "queryDate": null,
@@ -3759,10 +3759,10 @@
       "workID": 21593
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1822,
       "password": null,
       "queryDate": null,
@@ -3776,10 +3776,10 @@
       "workID": 21769
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1822,
       "password": null,
       "queryDate": null,
@@ -3793,10 +3793,10 @@
       "workID": 3057
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "7th",
-      "mark": null,
       "orgID": 1823,
       "password": null,
       "queryDate": "3/3/2014",
@@ -3810,10 +3810,10 @@
       "workID": 3026
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "5th",
-      "mark": null,
       "orgID": 1823,
       "password": null,
       "queryDate": "3/3/2014",
@@ -3827,10 +3827,10 @@
       "workID": 21603
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1823,
       "password": null,
       "queryDate": "3/3/2014",
@@ -3844,10 +3844,10 @@
       "workID": 21922
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1824,
       "password": null,
       "queryDate": "10/15/2013",
@@ -3861,10 +3861,10 @@
       "workID": 21336
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1825,
       "password": null,
       "queryDate": "4/1/2014",
@@ -3878,10 +3878,10 @@
       "workID": 21549
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1532,
       "password": null,
       "queryDate": null,
@@ -3895,10 +3895,10 @@
       "workID": 21593
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1532,
       "password": null,
       "queryDate": null,
@@ -3912,10 +3912,10 @@
       "workID": 21602
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1532,
       "password": null,
       "queryDate": null,
@@ -3929,10 +3929,10 @@
       "workID": 21266
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1826,
       "password": null,
       "queryDate": null,
@@ -3946,10 +3946,10 @@
       "workID": 22052
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "8th",
-      "mark": null,
       "orgID": 1826,
       "password": null,
       "queryDate": null,
@@ -3963,10 +3963,10 @@
       "workID": 22120
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "5th",
-      "mark": null,
       "orgID": 1235,
       "password": null,
       "queryDate": null,
@@ -3980,10 +3980,10 @@
       "workID": 21202
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1537,
       "password": null,
       "queryDate": null,
@@ -3997,10 +3997,10 @@
       "workID": 3532
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "5th",
-      "mark": null,
       "orgID": 1827,
       "password": null,
       "queryDate": null,
@@ -4014,10 +4014,10 @@
       "workID": 22185
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "1st",
-      "mark": null,
       "orgID": 1818,
       "password": null,
       "queryDate": null,
@@ -4031,10 +4031,10 @@
       "workID": 21146
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1828,
       "password": null,
       "queryDate": "8/25/2015",
@@ -4048,10 +4048,10 @@
       "workID": 3604
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "6th",
-      "mark": null,
       "orgID": 1118,
       "password": null,
       "queryDate": "9/18/2015",
@@ -4065,10 +4065,10 @@
       "workID": 21233
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1830,
       "password": null,
       "queryDate": "1/14/2016",
@@ -4082,10 +4082,10 @@
       "workID": 3532
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "10th",
-      "mark": null,
       "orgID": 1831,
       "password": null,
       "queryDate": null,
@@ -4099,10 +4099,10 @@
       "workID": 3691
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "4th",
-      "mark": null,
       "orgID": 1399,
       "password": "Meriam123",
       "queryDate": null,
@@ -4116,10 +4116,10 @@
       "workID": 3511
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1833,
       "password": null,
       "queryDate": null,
@@ -4133,10 +4133,10 @@
       "workID": 3769
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "3rd",
-      "mark": null,
       "orgID": 1833,
       "password": null,
       "queryDate": null,
@@ -4150,10 +4150,10 @@
       "workID": 3848
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2nd",
-      "mark": null,
       "orgID": 1834,
       "password": null,
       "queryDate": "5/6/2016",
@@ -4167,10 +4167,10 @@
       "workID": 3949
     },
     {
+      "attributes": "",
       "contestName": null,
       "cost": null,
       "draft": "2",
-      "mark": null,
       "orgID": 1835,
       "password": null,
       "queryDate": null,

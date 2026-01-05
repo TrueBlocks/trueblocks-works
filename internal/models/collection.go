@@ -6,6 +6,7 @@ type Collection struct {
 	CollectionName string  `json:"collectionName" db:"collection_name"`
 	IsStatus       *string `json:"isStatus,omitempty" db:"is_status"`
 	Type           *string `json:"type,omitempty" db:"type"`
+	Attributes     string  `json:"attributes" db:"attributes"`
 	CreatedAt      string  `json:"createdAt" db:"created_at"`
 	ModifiedAt     string  `json:"modifiedAt" db:"modified_at"`
 }

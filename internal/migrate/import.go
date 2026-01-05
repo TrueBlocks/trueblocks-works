@@ -43,6 +43,28 @@ func parseIntPtr(s string) *int {
 	return &v
 }
 
+const yesValue = "yes"
+
+func buildAttributesFromRow(row map[string]string) string {
+	if attrs := row["Attributes"]; attrs != "" {
+		return attrs
+	}
+	var attrs []string
+	if row["isBlog"] == yesValue {
+		attrs = append(attrs, "blog")
+	}
+	if row["isPrinted"] == yesValue {
+		attrs = append(attrs, "printed")
+	}
+	if row["isProsePoem"] == yesValue {
+		attrs = append(attrs, "prose_poem")
+	}
+	if row["isRevised"] == yesValue {
+		attrs = append(attrs, "revised")
+	}
+	return strings.Join(attrs, ",")
+}
+
 func strPtr(s string) *string {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -148,9 +170,9 @@ func (i *Importer) ReimportCollections() error {
 	for _, row := range rows {
 		collID := parseInt(row["Collection ID"])
 		query := `INSERT OR REPLACE INTO Collections 
-			(collID, collection_name, is_status, type, modified_at) 
-			VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
-		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["isStatus"]), strPtr(row["Type"]))
+			(collID, collection_name, is_status, type, attributes, modified_at) 
+			VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["isStatus"]), strPtr(row["Type"]), row["Attributes"])
 		if err != nil {
 			return fmt.Errorf("reimport collection %d: %w", collID, err)
 		}
@@ -167,11 +189,12 @@ func (i *Importer) ReimportWorks() error {
 		workID := parseInt(row["workID"])
 		path := row["Path"]
 		year := extractYearFromPath(path)
+		attributes := buildAttributesFromRow(row)
 		query := `INSERT OR REPLACE INTO Works 
 			(workID, title, type, year, status, quality, doc_type, path, draft, n_words, 
-			 course_name, is_blog, is_printed, is_prose_poem, is_revised, mark, access_date, modified_at) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-		_, err := i.db.Conn().Exec(query, workID, row["Title"], row["Type"], year, row["Status"], row["Quality"], row["DocType"], strPtr(path), strPtr(row["Draft"]), parseIntPtr(row["nWords"]), strPtr(row["CourseName"]), strPtr(row["isBlog"]), strPtr(row["isPrinted"]), strPtr(row["isProsePoem"]), strPtr(row["isRevised"]), strPtr(row["Mark"]), strPtr(row["accessDate"]))
+			 course_name, attributes, access_date, modified_at) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+		_, err := i.db.Conn().Exec(query, workID, row["Title"], row["Type"], year, row["Status"], row["Quality"], row["DocType"], strPtr(path), strPtr(row["Draft"]), parseIntPtr(row["nWords"]), strPtr(row["CourseName"]), attributes, strPtr(row["accessDate"]))
 		if err != nil {
 			return fmt.Errorf("reimport work %d: %w", workID, err)
 		}
@@ -189,9 +212,9 @@ func (i *Importer) ReimportOrganizations() error {
 		query := `INSERT OR REPLACE INTO Organizations 
 			(orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, 
 			 my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, 
-			 n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, date_added, date_modified) 
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-		_, err := i.db.Conn().Exec(query, orgID, row["Name"], strPtr(row["Other Name"]), strPtr(row["URL"]), strPtr(row["Other URL"]), row["Status"], row["Type"], strPtr(row["Timing"]), strPtr(row["Submission Types"]), strPtr(row["Accepts"]), strPtr(row["My Interest"]), parseIntPtr(row["Ranking"]), strPtr(row["Source"]), strPtr(row["Website Menu"]), parseIntPtr(row["Doutrope Num"]), int(parseInt(row["nPushFiction"])), int(parseInt(row["nPushNonFiction"])), int(parseInt(row["nPushPoetry"])), strPtr(row["Contest Ends"]), strPtr(row["Contest Fee"]), strPtr(row["Contest Prize"]), strPtr(row["Contest Prize 2"]), strPtr(row["Date Added"]))
+			 n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, date_modified) 
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+		_, err := i.db.Conn().Exec(query, orgID, row["Name"], strPtr(row["Other Name"]), strPtr(row["URL"]), strPtr(row["Other URL"]), row["Status"], row["Type"], strPtr(row["Timing"]), strPtr(row["Submission Types"]), strPtr(row["Accepts"]), strPtr(row["My Interest"]), parseIntPtr(row["Ranking"]), strPtr(row["Source"]), strPtr(row["Website Menu"]), parseIntPtr(row["Doutrope Num"]), int(parseInt(row["nPushFiction"])), int(parseInt(row["nPushNonFiction"])), int(parseInt(row["nPushPoetry"])), strPtr(row["Contest Ends"]), strPtr(row["Contest Fee"]), strPtr(row["Contest Prize"]), strPtr(row["Contest Prize 2"]), row["Attributes"], strPtr(row["Date Added"]))
 		if err != nil {
 			return fmt.Errorf("reimport org %d: %w", orgID, err)
 		}
@@ -214,9 +237,9 @@ func (i *Importer) ReimportSubmissions() error {
 		}
 		query := `INSERT OR REPLACE INTO Submissions 
 			(submissionID, workID, orgID, draft, submission_date, submission_type, query_date, 
-			 response_date, response_type, contest_name, cost, user_id, password, web_address, mark, modified_at) 
+			 response_date, response_type, contest_name, cost, user_id, password, web_address, attributes, modified_at) 
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-		_, err := i.db.Conn().Exec(query, subID, parseInt(row["workID"]), parseInt(row["orgID"]), row["Draft"], strPtr(row["Submission Date"]), strPtr(row["Submission Type"]), strPtr(row["Query Date"]), strPtr(row["Response Date"]), strPtr(row["Response Type"]), strPtr(row["Contest Name"]), cost, strPtr(row["User ID"]), strPtr(row["Password"]), strPtr(row["Web Address"]), strPtr(row["Mark"]))
+		_, err := i.db.Conn().Exec(query, subID, parseInt(row["workID"]), parseInt(row["orgID"]), row["Draft"], strPtr(row["Submission Date"]), strPtr(row["Submission Type"]), strPtr(row["Query Date"]), strPtr(row["Response Date"]), strPtr(row["Response Type"]), strPtr(row["Contest Name"]), cost, strPtr(row["User ID"]), strPtr(row["Password"]), strPtr(row["Web Address"]), row["Attributes"])
 		if err != nil {
 			return fmt.Errorf("reimport submission %d: %w", subID, err)
 		}
@@ -243,8 +266,8 @@ func (i *Importer) ImportCollections() error {
 	}
 	for _, row := range rows {
 		collID := parseInt(row["Collection ID"])
-		query := "INSERT OR IGNORE INTO Collections (collID, collection_name, is_status, type) VALUES (?, ?, ?, ?)"
-		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["isStatus"]), strPtr(row["Type"]))
+		query := "INSERT OR IGNORE INTO Collections (collID, collection_name, is_status, type, attributes) VALUES (?, ?, ?, ?, ?)"
+		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["isStatus"]), strPtr(row["Type"]), row["Attributes"])
 		if err != nil {
 			return fmt.Errorf("insert collection %d: %w", collID, err)
 		}
@@ -261,8 +284,9 @@ func (i *Importer) ImportWorks() error {
 		workID := parseInt(row["workID"])
 		path := row["Path"]
 		year := extractYearFromPath(path)
-		query := "INSERT INTO Works (workID, title, type, year, status, quality, doc_type, path, draft, n_words, course_name, is_blog, is_printed, is_prose_poem, is_revised, mark, access_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-		_, err := i.db.Conn().Exec(query, workID, row["Title"], row["Type"], year, row["Status"], row["Quality"], row["DocType"], strPtr(path), strPtr(row["Draft"]), parseIntPtr(row["nWords"]), strPtr(row["CourseName"]), strPtr(row["isBlog"]), strPtr(row["isPrinted"]), strPtr(row["isProsePoem"]), strPtr(row["isRevised"]), strPtr(row["Mark"]), strPtr(row["accessDate"]))
+		attributes := buildAttributesFromRow(row)
+		query := "INSERT INTO Works (workID, title, type, year, status, quality, doc_type, path, draft, n_words, course_name, attributes, access_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		_, err := i.db.Conn().Exec(query, workID, row["Title"], row["Type"], year, row["Status"], row["Quality"], row["DocType"], strPtr(path), strPtr(row["Draft"]), parseIntPtr(row["nWords"]), strPtr(row["CourseName"]), attributes, strPtr(row["accessDate"]))
 		if err != nil {
 			return fmt.Errorf("insert work %d: %w", workID, err)
 		}
@@ -277,8 +301,8 @@ func (i *Importer) ImportOrganizations() error {
 	}
 	for _, row := range rows {
 		orgID := parseInt(row["orgID"])
-		query := "INSERT INTO Organizations (orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, date_added, date_modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-		_, err := i.db.Conn().Exec(query, orgID, row["Name"], strPtr(row["Other Name"]), strPtr(row["URL"]), strPtr(row["Other URL"]), row["Status"], row["Type"], strPtr(row["Timing"]), strPtr(row["Submission Types"]), strPtr(row["Accepts"]), strPtr(row["My Interest"]), parseIntPtr(row["Ranking"]), strPtr(row["Source"]), strPtr(row["Website Menu"]), parseIntPtr(row["Doutrope Num"]), int(parseInt(row["nPushFiction"])), int(parseInt(row["nPushNonFiction"])), int(parseInt(row["nPushPoetry"])), strPtr(row["Contest Ends"]), strPtr(row["Contest Fee"]), strPtr(row["Contest Prize"]), strPtr(row["Contest Prize 2"]), strPtr(row["Date Added"]), strPtr(row["Date Modified"]))
+		query := "INSERT INTO Organizations (orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, date_modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		_, err := i.db.Conn().Exec(query, orgID, row["Name"], strPtr(row["Other Name"]), strPtr(row["URL"]), strPtr(row["Other URL"]), row["Status"], row["Type"], strPtr(row["Timing"]), strPtr(row["Submission Types"]), strPtr(row["Accepts"]), strPtr(row["My Interest"]), parseIntPtr(row["Ranking"]), strPtr(row["Source"]), strPtr(row["Website Menu"]), parseIntPtr(row["Doutrope Num"]), int(parseInt(row["nPushFiction"])), int(parseInt(row["nPushNonFiction"])), int(parseInt(row["nPushPoetry"])), strPtr(row["Contest Ends"]), strPtr(row["Contest Fee"]), strPtr(row["Contest Prize"]), strPtr(row["Contest Prize 2"]), row["Attributes"], strPtr(row["Date Added"]), strPtr(row["Date Modified"]))
 		if err != nil {
 			return fmt.Errorf("insert org %d: %w", orgID, err)
 		}
@@ -299,8 +323,8 @@ func (i *Importer) ImportSubmissions() error {
 				cost = &v
 			}
 		}
-		query := "INSERT INTO Submissions (submissionID, workID, orgID, draft, submission_date, submission_type, query_date, response_date, response_type, contest_name, cost, user_id, password, web_address, mark) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-		_, err := i.db.Conn().Exec(query, subID, parseInt(row["workID"]), parseInt(row["orgID"]), row["Draft"], strPtr(row["Submission Date"]), strPtr(row["Submission Type"]), strPtr(row["Query Date"]), strPtr(row["Response Date"]), strPtr(row["Response Type"]), strPtr(row["Contest Name"]), cost, strPtr(row["User ID"]), strPtr(row["Password"]), strPtr(row["Web Address"]), strPtr(row["Mark"]))
+		query := "INSERT INTO Submissions (submissionID, workID, orgID, draft, submission_date, submission_type, query_date, response_date, response_type, contest_name, cost, user_id, password, web_address, attributes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		_, err := i.db.Conn().Exec(query, subID, parseInt(row["workID"]), parseInt(row["orgID"]), row["Draft"], strPtr(row["Submission Date"]), strPtr(row["Submission Type"]), strPtr(row["Query Date"]), strPtr(row["Response Date"]), strPtr(row["Response Type"]), strPtr(row["Contest Name"]), cost, strPtr(row["User ID"]), strPtr(row["Password"]), strPtr(row["Web Address"]), row["Attributes"])
 		if err != nil {
 			return fmt.Errorf("insert submission %d: %w", subID, err)
 		}

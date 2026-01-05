@@ -2,186 +2,217 @@
   "count": 31,
   "records": [
     {
+      "attributes": "",
       "collID": 90,
       "collectionName": "Out",
       "isStatus": "yes",
       "type": "Process"
     },
     {
+      "attributes": "",
       "collID": 10010,
       "collectionName": "Focus",
       "isStatus": "yes",
       "type": "Active"
     },
     {
+      "attributes": "",
       "collID": 10020,
       "collectionName": "Active",
       "isStatus": "yes",
       "type": "Active"
     },
     {
+      "attributes": "",
       "collID": 10030,
       "collectionName": "Working",
       "isStatus": "yes",
       "type": "Active"
     },
     {
+      "attributes": "",
       "collID": 10040,
       "collectionName": "Resting",
       "isStatus": "yes",
       "type": "Active"
     },
     {
+      "attributes": "",
       "collID": 10050,
       "collectionName": "Waiting",
       "isStatus": "yes",
       "type": "Active"
     },
     {
+      "attributes": "",
       "collID": 10170,
       "collectionName": "Genji Sequence",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 20010,
       "collectionName": "Gestating",
       "isStatus": "yes",
       "type": "Process"
     },
     {
+      "attributes": "",
       "collID": 30020,
       "collectionName": "Math Essays",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 30040,
       "collectionName": "Papers",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 30050,
       "collectionName": "Freewrite",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 30060,
       "collectionName": "365 Challenge",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 30070,
       "collectionName": "Evernote",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 30080,
       "collectionName": "VoiceMemos",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 30090,
       "collectionName": "Travel Journals",
       "isStatus": null,
       "type": "Actgive"
     },
     {
+      "attributes": "",
       "collID": 40010,
       "collectionName": "Spiral",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 40020,
       "collectionName": "Blooming Glen",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 40030,
       "collectionName": "Doylestown",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 40040,
       "collectionName": "Sea Isle City",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 40050,
       "collectionName": "Storey Cotton",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 40060,
       "collectionName": "Troop Movements",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 50010,
       "collectionName": "Poetry 2008 and Earlier",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 50020,
       "collectionName": "Poetry 2009 and 2010",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 50030,
       "collectionName": "Prose 2010 and Earlier",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 50040,
       "collectionName": "Prose and Poetry 2011",
       "isStatus": null,
       "type": "Book"
     },
     {
+      "attributes": "",
       "collID": 50050,
       "collectionName": "May 2015",
       "isStatus": null,
       "type": "Other"
     },
     {
+      "attributes": "",
       "collID": 60010,
       "collectionName": "Sleeping",
       "isStatus": "yes",
       "type": "Dead"
     },
     {
+      "attributes": "",
       "collID": 60020,
       "collectionName": "Dying",
       "isStatus": "yes",
       "type": "Dead"
     },
     {
+      "attributes": "",
       "collID": 60030,
       "collectionName": "Dead",
       "isStatus": "yes",
       "type": "Dead"
     },
     {
+      "attributes": "",
       "collID": 70010,
       "collectionName": "Published",
       "isStatus": "yes",
       "type": "Process"
     },
     {
+      "attributes": "",
       "collID": 70020,
       "collectionName": "Done",
       "isStatus": "yes",

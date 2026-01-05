@@ -25,11 +25,7 @@ export interface Work {
   draft?: string;
   nWords?: number;
   courseName?: string;
-  isBlog?: string;
-  isPrinted?: string;
-  isProsePoem?: string;
-  isRevised?: string;
-  mark?: string;
+  attributes: string;
   accessDate?: string;
   createdAt?: string;
   modifiedAt?: string;
@@ -65,6 +61,7 @@ export interface Organization {
   contestFee?: string;
   contestPrize?: string;
   contestPrize2?: string;
+  attributes: string;
   dateAdded?: string;
   dateModified?: string;
 }
@@ -89,7 +86,7 @@ export interface Submission {
   userId?: string;
   password?: string;
   webAddress?: string;
-  mark?: string;
+  attributes: string;
   createdAt?: string;
   modifiedAt?: string;
 }
@@ -105,6 +102,7 @@ export interface Collection {
   collectionName: string;
   isStatus?: string;
   type?: CollectionType;
+  attributes: string;
   createdAt?: string;
   modifiedAt?: string;
 }

@@ -301,6 +301,7 @@ export namespace models {
 	    collectionName: string;
 	    isStatus?: string;
 	    type?: string;
+	    attributes: string;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -314,6 +315,7 @@ export namespace models {
 	        this.collectionName = source["collectionName"];
 	        this.isStatus = source["isStatus"];
 	        this.type = source["type"];
+	        this.attributes = source["attributes"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }
@@ -409,6 +411,7 @@ export namespace models {
 	    contestFee?: string;
 	    contestPrize?: string;
 	    contestPrize2?: string;
+	    attributes: string;
 	    dateAdded?: string;
 	    dateModified?: string;
 	
@@ -440,6 +443,7 @@ export namespace models {
 	        this.contestFee = source["contestFee"];
 	        this.contestPrize = source["contestPrize"];
 	        this.contestPrize2 = source["contestPrize2"];
+	        this.attributes = source["attributes"];
 	        this.dateAdded = source["dateAdded"];
 	        this.dateModified = source["dateModified"];
 	    }
@@ -467,6 +471,7 @@ export namespace models {
 	    contestFee?: string;
 	    contestPrize?: string;
 	    contestPrize2?: string;
+	    attributes: string;
 	    dateAdded?: string;
 	    dateModified?: string;
 	    nSubmissions: number;
@@ -500,6 +505,7 @@ export namespace models {
 	        this.contestFee = source["contestFee"];
 	        this.contestPrize = source["contestPrize"];
 	        this.contestPrize2 = source["contestPrize2"];
+	        this.attributes = source["attributes"];
 	        this.dateAdded = source["dateAdded"];
 	        this.dateModified = source["dateModified"];
 	        this.nSubmissions = source["nSubmissions"];
@@ -543,7 +549,7 @@ export namespace models {
 	    userID?: string;
 	    password?: string;
 	    webAddress?: string;
-	    mark?: string;
+	    attributes: string;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -567,7 +573,7 @@ export namespace models {
 	        this.userID = source["userID"];
 	        this.password = source["password"];
 	        this.webAddress = source["webAddress"];
-	        this.mark = source["mark"];
+	        this.attributes = source["attributes"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }
@@ -587,7 +593,7 @@ export namespace models {
 	    userID?: string;
 	    password?: string;
 	    webAddress?: string;
-	    mark?: string;
+	    attributes: string;
 	    createdAt: string;
 	    modifiedAt: string;
 	    titleOfWork: string;
@@ -615,7 +621,7 @@ export namespace models {
 	        this.userID = source["userID"];
 	        this.password = source["password"];
 	        this.webAddress = source["webAddress"];
-	        this.mark = source["mark"];
+	        this.attributes = source["attributes"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.titleOfWork = source["titleOfWork"];
@@ -636,11 +642,7 @@ export namespace models {
 	    draft?: string;
 	    nWords?: number;
 	    courseName?: string;
-	    isBlog?: string;
-	    isPrinted?: string;
-	    isProsePoem?: string;
-	    isRevised?: string;
-	    mark?: string;
+	    attributes: string;
 	    accessDate?: string;
 	    createdAt: string;
 	    modifiedAt: string;
@@ -662,11 +664,7 @@ export namespace models {
 	        this.draft = source["draft"];
 	        this.nWords = source["nWords"];
 	        this.courseName = source["courseName"];
-	        this.isBlog = source["isBlog"];
-	        this.isPrinted = source["isPrinted"];
-	        this.isProsePoem = source["isProsePoem"];
-	        this.isRevised = source["isRevised"];
-	        this.mark = source["mark"];
+	        this.attributes = source["attributes"];
 	        this.accessDate = source["accessDate"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];

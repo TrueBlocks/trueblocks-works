@@ -16,7 +16,7 @@ type Submission struct {
 	UserID         *string  `json:"userID,omitempty" db:"user_id"`
 	Password       *string  `json:"password,omitempty" db:"password"`
 	WebAddress     *string  `json:"webAddress,omitempty" db:"web_address"`
-	Mark           *string  `json:"mark,omitempty" db:"mark"`
+	Attributes     string   `json:"attributes" db:"attributes"`
 	CreatedAt      string   `json:"createdAt" db:"created_at"`
 	ModifiedAt     string   `json:"modifiedAt" db:"modified_at"`
 }

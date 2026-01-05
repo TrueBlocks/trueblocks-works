@@ -11,11 +11,11 @@ import (
 func (db *DB) CreateCollection(c *models.Collection) error {
 	now := time.Now().Format(time.RFC3339)
 	query := `INSERT INTO Collections (
-		collection_name, is_status, type, created_at, modified_at
-	) VALUES (?, ?, ?, ?, ?)`
+		collection_name, is_status, type, attributes, created_at, modified_at
+	) VALUES (?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
-		c.CollectionName, c.IsStatus, c.Type, now, now,
+		c.CollectionName, c.IsStatus, c.Type, c.Attributes, now, now,
 	)
 	if err != nil {
 		return fmt.Errorf("insert collection: %w", err)
@@ -32,13 +32,13 @@ func (db *DB) CreateCollection(c *models.Collection) error {
 }
 
 func (db *DB) GetCollection(id int64) (*models.Collection, error) {
-	query := `SELECT collID, collection_name, is_status, type,
+	query := `SELECT collID, collection_name, is_status, type, attributes,
 		created_at, modified_at
 		FROM Collections WHERE collID = ?`
 
 	c := &models.Collection{}
 	err := db.conn.QueryRow(query, id).Scan(
-		&c.CollID, &c.CollectionName, &c.IsStatus, &c.Type,
+		&c.CollID, &c.CollectionName, &c.IsStatus, &c.Type, &c.Attributes,
 		&c.CreatedAt, &c.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
@@ -53,11 +53,11 @@ func (db *DB) GetCollection(id int64) (*models.Collection, error) {
 func (db *DB) UpdateCollection(c *models.Collection) error {
 	now := time.Now().Format(time.RFC3339)
 	query := `UPDATE Collections SET
-		collection_name = ?, is_status = ?, type = ?, modified_at = ?
+		collection_name = ?, is_status = ?, type = ?, attributes = ?, modified_at = ?
 		WHERE collID = ?`
 
 	_, err := db.conn.Exec(query,
-		c.CollectionName, c.IsStatus, c.Type, now, c.CollID,
+		c.CollectionName, c.IsStatus, c.Type, c.Attributes, now, c.CollID,
 	)
 	if err != nil {
 		return fmt.Errorf("update collection: %w", err)
@@ -67,7 +67,7 @@ func (db *DB) UpdateCollection(c *models.Collection) error {
 }
 
 func (db *DB) ListCollections() ([]models.Collection, error) {
-	query := `SELECT collID, collection_name, is_status, type,
+	query := `SELECT collID, collection_name, is_status, type, attributes,
 		created_at, modified_at
 		FROM Collections ORDER BY collection_name`
 
@@ -81,7 +81,7 @@ func (db *DB) ListCollections() ([]models.Collection, error) {
 	for rows.Next() {
 		var c models.Collection
 		err := rows.Scan(
-			&c.CollID, &c.CollectionName, &c.IsStatus, &c.Type,
+			&c.CollID, &c.CollectionName, &c.IsStatus, &c.Type, &c.Attributes,
 			&c.CreatedAt, &c.ModifiedAt,
 		)
 		if err != nil {
@@ -142,8 +142,7 @@ func (db *DB) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 
 func (db *DB) GetCollectionWorks(collID int64) ([]models.Work, error) {
 	query := `SELECT w.workID, w.title, w.type, w.year, w.status, w.quality, w.doc_type,
-		w.path, w.draft, w.n_words, w.course_name, w.is_blog, w.is_printed,
-		w.is_prose_poem, w.is_revised, w.mark, w.access_date, w.created_at, w.modified_at
+		w.path, w.draft, w.n_words, w.course_name, w.attributes, w.access_date, w.created_at, w.modified_at
 		FROM Works w
 		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
 		WHERE cd.collID = ?
@@ -161,8 +160,7 @@ func (db *DB) GetCollectionWorks(collID int64) ([]models.Work, error) {
 		err := rows.Scan(
 			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
 			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
-			&w.IsBlog, &w.IsPrinted, &w.IsProsePoem, &w.IsRevised,
-			&w.Mark, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
+			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan work: %w", err)
@@ -202,13 +200,13 @@ func (db *DB) ReorderCollectionWorks(collID int64, workIDs []int64) error {
 func (db *DB) GetOrCreateDefaultCollection() (*models.Collection, error) {
 	const defaultName = "New Works"
 
-	query := `SELECT collID, collection_name, is_status, type,
+	query := `SELECT collID, collection_name, is_status, type, attributes,
 		created_at, modified_at
 		FROM Collections WHERE collection_name = ?`
 
 	c := &models.Collection{}
 	err := db.conn.QueryRow(query, defaultName).Scan(
-		&c.CollID, &c.CollectionName, &c.IsStatus, &c.Type,
+		&c.CollID, &c.CollectionName, &c.IsStatus, &c.Type, &c.Attributes,
 		&c.CreatedAt, &c.ModifiedAt,
 	)
 	if err == nil {

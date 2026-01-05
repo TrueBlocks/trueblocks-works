@@ -837,7 +837,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.fourwaybooks.com/",
       "websiteMenu": null
     },
@@ -1005,7 +1005,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.gulfcoastmag.org/",
       "websiteMenu": null
     },
@@ -2277,7 +2277,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.tupelopress.org/",
       "websiteMenu": null
     },
@@ -3189,7 +3189,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.thediagram.com/",
       "websiteMenu": null
     },
@@ -3381,7 +3381,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://myweb.nmu.edu/~passages/",
       "websiteMenu": null
     },
@@ -3405,7 +3405,7 @@
       "status": "Open",
       "submissionTypes": "online\u000bsnail mail",
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://indianareview.org/",
       "websiteMenu": null
     },
@@ -5874,7 +5874,7 @@
       "otherURL": "http://emreview.submishmash.com/submit",
       "ranking": null,
       "source": "FFC",
-      "status": "Open",
+      "status": "Defunct",
       "submissionTypes": null,
       "timing": "Biannual",
       "type": "Journal",
@@ -7605,7 +7605,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.review.gsu.edu/",
       "websiteMenu": null
     },
@@ -7893,7 +7893,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.upress.pitt.edu/upressIndex.aspx",
       "websiteMenu": null
     },
@@ -8421,7 +8421,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://craborchardreview.siuc.edu/",
       "websiteMenu": null
     },
@@ -10149,7 +10149,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://poetryinternational.sdsu.edu/",
       "websiteMenu": null
     },
@@ -11853,7 +11853,7 @@
       "status": "Open",
       "submissionTypes": "snail mail",
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.utulsa.edu/nimrod/",
       "websiteMenu": null
     },
@@ -11877,7 +11877,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.omnidawn.com/contest/poetry-contests.htm",
       "websiteMenu": null
     },
@@ -12597,7 +12597,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.wwu.edu/bhreview/",
       "websiteMenu": null
     },
@@ -12837,7 +12837,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.fishpublishing.com/index.php",
       "websiteMenu": null
     },
@@ -13173,7 +13173,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://floridareview.cah.ucf.edu/",
       "websiteMenu": null
     },
@@ -14493,7 +14493,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal",
+      "type": "Anthology",
       "url": "http://silverboomerbooks.com/",
       "websiteMenu": null
     },
@@ -14805,7 +14805,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.cutbankonline.org/",
       "websiteMenu": null
     },
@@ -15333,7 +15333,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.anhinga.org/",
       "websiteMenu": null
     },
@@ -15501,7 +15501,7 @@
       "status": "Open",
       "submissionTypes": "online\u000bsnail mail",
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.pshares.org/",
       "websiteMenu": null
     },
@@ -16773,7 +16773,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Contest",
+      "type": "Journal",
       "url": "http://www.slopeeditions.org",
       "websiteMenu": null
     },
@@ -17829,7 +17829,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Magazine",
+      "type": "Journal",
       "url": null,
       "websiteMenu": null
     },
@@ -17949,7 +17949,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal",
+      "type": "Anthology",
       "url": null,
       "websiteMenu": null
     },
@@ -18045,7 +18045,7 @@
       "status": "Open",
       "submissionTypes": null,
       "timing": null,
-      "type": "Journal, Gallery Opening",
+      "type": "Journal",
       "url": "https://www.facebook.com/events/541040716050805/",
       "websiteMenu": null
     },

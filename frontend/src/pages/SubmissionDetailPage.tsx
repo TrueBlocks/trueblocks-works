@@ -10,8 +10,7 @@ import {
   GetOrganization,
   DeleteSubmission,
   SearchNotesByText,
-  DeleteWorkNote,
-  DeleteJournalNote,
+  DeleteNote,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { ResponseBadge } from '@/components';
@@ -89,11 +88,7 @@ export function SubmissionDetailPage() {
   const handleDeleteNote = useCallback(
     async (note: models.NoteSearchResult, isWorkNote: boolean) => {
       try {
-        if (note.entityType === 'work') {
-          await DeleteWorkNote(note.noteID);
-        } else {
-          await DeleteJournalNote(note.noteID);
-        }
+        await DeleteNote(note.noteID);
         if (isWorkNote) {
           setWorkNotes((prev) => prev.filter((n) => n.noteID !== note.noteID));
         } else {

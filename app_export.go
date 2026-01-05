@@ -31,8 +31,7 @@ func (a *App) GetExportTables() ([]TableInfo, error) {
 		{"Submissions", "SELECT COUNT(*) FROM Submissions"},
 		{"Collections", "SELECT COUNT(*) FROM Collections"},
 		{"CollectionDetails", "SELECT COUNT(*) FROM CollectionDetails"},
-		{"WorkNotes", "SELECT COUNT(*) FROM WorkNotes"},
-		{"JournalNotes", "SELECT COUNT(*) FROM JournalNotes"},
+		{"Notes", "SELECT COUNT(*) FROM Notes"},
 	}
 
 	result := make([]TableInfo, 0, len(tables))
@@ -83,13 +82,17 @@ func (a *App) ExportAllTables() ([]ExportResult, error) {
 
 	var results []ExportResult
 
+	// Export JSON files to configured export folder
 	results = append(results, a.exportTable("Works", exportPath, a.exportWorks))
 	results = append(results, a.exportTable("Organizations", exportPath, a.exportOrganizations))
 	results = append(results, a.exportTable("Submissions", exportPath, a.exportSubmissions))
 	results = append(results, a.exportTable("Collections", exportPath, a.exportCollections))
 	results = append(results, a.exportTable("CollectionDetails", exportPath, a.exportCollectionDetails))
-	results = append(results, a.exportTable("WorkNotes", exportPath, a.exportWorkNotes))
-	results = append(results, a.exportTable("JournalNotes", exportPath, a.exportJournalNotes))
+	results = append(results, a.exportTable("Notes", exportPath, a.exportNotes))
+
+	// Also export CSV files to imports folder (for round-trip)
+	csvResults := a.ExportAllCSV()
+	results = append(results, csvResults...)
 
 	return results, nil
 }
@@ -143,7 +146,7 @@ func (a *App) exportWorks() (interface{}, int, error) {
 			"workID": workID, "title": title, "type": workType, "year": year, "status": status,
 			"quality": quality, "docType": docType, "path": path, "draft": draft, "nWords": nWords,
 			"courseName": courseName, "isBlog": isBlog, "isPrinted": isPrinted, "isProsePoem": isProsePoem,
-			"isRevised": isRevised, "mark": mark, "accessDate": accessDate, "createdAt": createdAt, "modifiedAt": modifiedAt,
+			"isRevised": isRevised, "mark": mark, "accessDate": accessDate,
 		})
 	}
 	return records, len(records), nil
@@ -175,7 +178,6 @@ func (a *App) exportOrganizations() (interface{}, int, error) {
 			"websiteMenu": websiteMenu, "duotropeNum": duotropeNum, "nPushFiction": nPushFiction,
 			"nPushNonfiction": nPushNonfiction, "nPushPoetry": nPushPoetry, "contestEnds": contestEnds,
 			"contestFee": contestFee, "contestPrize": contestPrize, "contestPrize2": contestPrize2,
-			"dateAdded": dateAdded, "dateModified": dateModified,
 		})
 	}
 	return records, len(records), nil
@@ -204,7 +206,7 @@ func (a *App) exportSubmissions() (interface{}, int, error) {
 			"submissionDate": submissionDate, "submissionType": submissionType, "queryDate": queryDate,
 			"responseDate": responseDate, "responseType": responseType, "contestName": contestName,
 			"cost": cost, "userID": userID, "password": password, "webAddress": webAddress,
-			"mark": mark, "createdAt": createdAt, "modifiedAt": modifiedAt,
+			"mark": mark,
 		})
 	}
 	return records, len(records), nil
@@ -230,7 +232,7 @@ func (a *App) exportCollections() (interface{}, int, error) {
 
 		records = append(records, map[string]interface{}{
 			"collID": collID, "collectionName": collectionName, "isStatus": isStatus,
-			"type": collType, "createdAt": createdAt, "modifiedAt": modifiedAt,
+			"type": collType,
 		})
 	}
 	return records, len(records), nil
@@ -254,57 +256,28 @@ func (a *App) exportCollectionDetails() (interface{}, int, error) {
 		}
 
 		records = append(records, map[string]interface{}{
-			"id": id, "collID": collID, "workID": workID, "collectionName": collectionName,
+			"collID": collID, "workID": workID, "collectionName": collectionName,
 		})
 	}
 	return records, len(records), nil
 }
 
-func (a *App) exportWorkNotes() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT id, workID, type, note, modified_date, created_at FROM WorkNotes ORDER BY id`)
+func (a *App) exportNotes() (interface{}, int, error) {
+	notes, err := a.db.GetAllNotes()
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
 
-	var records []map[string]interface{}
-	for rows.Next() {
-		var id, workID int64
-		var noteType, note, modifiedDate, createdAt *string
-
-		err := rows.Scan(&id, &workID, &noteType, &note, &modifiedDate, &createdAt)
-		if err != nil {
-			return nil, 0, err
-		}
-
+	records := make([]map[string]interface{}, 0, len(notes))
+	for _, n := range notes {
 		records = append(records, map[string]interface{}{
-			"id": id, "workID": workID, "type": noteType, "note": note,
-			"modifiedDate": modifiedDate, "createdAt": createdAt,
-		})
-	}
-	return records, len(records), nil
-}
-
-func (a *App) exportJournalNotes() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT id, orgID, type, note, modified_date, created_at FROM JournalNotes ORDER BY id`)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer rows.Close()
-
-	var records []map[string]interface{}
-	for rows.Next() {
-		var id, orgID int64
-		var noteType, note, modifiedDate, createdAt *string
-
-		err := rows.Scan(&id, &orgID, &noteType, &note, &modifiedDate, &createdAt)
-		if err != nil {
-			return nil, 0, err
-		}
-
-		records = append(records, map[string]interface{}{
-			"id": id, "orgID": orgID, "type": noteType, "note": note,
-			"modifiedDate": modifiedDate, "createdAt": createdAt,
+			"id":           n.ID,
+			"entityType":   n.EntityType,
+			"entityID":     n.EntityID,
+			"type":         n.Type,
+			"note":         n.Note,
+			"modifiedDate": n.ModifiedDate,
+			"createdAt":    n.CreatedAt,
 		})
 	}
 	return records, len(records), nil

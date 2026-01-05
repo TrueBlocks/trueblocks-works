@@ -1,21 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { Title, Table, TextInput, Group, Text, Stack, ActionIcon, Tooltip } from '@mantine/core';
-import { IconSearch, IconWorld, IconBook } from '@tabler/icons-react';
+import { Table, Group, ActionIcon, Tooltip } from '@mantine/core';
+import { IconWorld, IconBook } from '@tabler/icons-react';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import {
   GetAppState,
   GetOrganizationsWithNotes,
+  GetOrgsFilterOptions,
   SetOrgsStatusFilter,
+  SetOrgsTypeFilter,
+  SetOrgsTimingFilter,
+  SetOrgsSubmissionsFilter,
+  SetOrgsPushcartsFilter,
+  SetOrgsFilter,
   UpdateOrganization,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { OrgStatusBadge, SortableHeader, ColumnFilterPopover } from '@/components';
-import { useTableSort, ViewSort } from '@/hooks';
-import { Log, LogErr } from '@/utils';
-
-const STATUS_OPTIONS = ['Open', 'Boring', 'Defunct'] as const;
-const DEFAULT_STATUSES = ['Open', 'Boring'];
+import {
+  OrgStatusBadge,
+  DataTable,
+  Column,
+  ColumnFilterPopover,
+  NumericFilterPopover,
+} from '@/components';
+import { ViewSort } from '@/hooks';
+import { Log, LogErr, matchesFilter, matchesNumericFilter, intersectFilter } from '@/utils';
 
 const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown => {
   if (column === 'nPushcarts') {
@@ -26,33 +35,142 @@ const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown
 
 export function OrganizationsPage() {
   const [orgs, setOrgs] = useState<models.OrganizationWithNotes[]>([]);
-  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [showStatuses, setShowStatuses] = useState<Set<string>>(new Set(DEFAULT_STATUSES));
+  const [initialSearch, setInitialSearch] = useState('');
+  const [initialSort, setInitialSort] = useState<ViewSort | undefined>(undefined);
   const navigate = useNavigate();
 
-  const { handleColumnClick, getSortInfo, sortData, setInitialSort } =
-    useTableSort<models.OrganizationWithNotes>('organizations', undefined, getOrgValue);
+  // Filter state
+  const [showStatuses, setShowStatuses] = useState<Set<string>>(new Set());
+  const [showTypes, setShowTypes] = useState<Set<string>>(new Set());
+  const [showTimings, setShowTimings] = useState<Set<string>>(new Set());
+  const [submissionsMin, setSubmissionsMin] = useState<number | undefined>(undefined);
+  const [submissionsMax, setSubmissionsMax] = useState<number | undefined>(undefined);
+  const [pushcartsMin, setPushcartsMin] = useState<number | undefined>(undefined);
+  const [pushcartsMax, setPushcartsMax] = useState<number | undefined>(undefined);
 
-  const toggleStatus = (status: string) => {
+  // Available options from backend
+  const [availableStatuses, setAvailableStatuses] = useState<string[]>([]);
+  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  const [availableTimings, setAvailableTimings] = useState<string[]>([]);
+
+  // Status filter callbacks
+  const toggleStatus = useCallback((status: string) => {
     setShowStatuses((prev) => {
       const next = new Set(prev);
-      if (next.has(status)) {
-        next.delete(status);
-      } else {
-        next.add(status);
-      }
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
       SetOrgsStatusFilter(Array.from(next));
       return next;
     });
-  };
+  }, []);
 
-  const cycleOrgStatus = (org: models.OrganizationWithNotes, e: React.MouseEvent) => {
+  const selectAllStatuses = useCallback(() => {
+    setShowStatuses(new Set(availableStatuses));
+    SetOrgsStatusFilter(availableStatuses);
+  }, [availableStatuses]);
+
+  const selectNoneStatuses = useCallback(() => {
+    setShowStatuses(new Set());
+    SetOrgsStatusFilter([]);
+  }, []);
+
+  const selectOnlyStatus = useCallback((status: string) => {
+    setShowStatuses(new Set([status]));
+    SetOrgsStatusFilter([status]);
+  }, []);
+
+  // Type filter callbacks
+  const toggleType = useCallback((type: string) => {
+    setShowTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      SetOrgsTypeFilter(Array.from(next));
+      return next;
+    });
+  }, []);
+
+  const selectAllTypes = useCallback(() => {
+    setShowTypes(new Set(availableTypes));
+    SetOrgsTypeFilter(availableTypes);
+  }, [availableTypes]);
+
+  const selectNoneTypes = useCallback(() => {
+    setShowTypes(new Set());
+    SetOrgsTypeFilter([]);
+  }, []);
+
+  const selectOnlyType = useCallback((type: string) => {
+    setShowTypes(new Set([type]));
+    SetOrgsTypeFilter([type]);
+  }, []);
+
+  // Timing filter callbacks
+  const toggleTiming = useCallback((timing: string) => {
+    setShowTimings((prev) => {
+      const next = new Set(prev);
+      if (next.has(timing)) next.delete(timing);
+      else next.add(timing);
+      SetOrgsTimingFilter(Array.from(next));
+      return next;
+    });
+  }, []);
+
+  const selectAllTimings = useCallback(() => {
+    setShowTimings(new Set(availableTimings));
+    SetOrgsTimingFilter(availableTimings);
+  }, [availableTimings]);
+
+  const selectNoneTimings = useCallback(() => {
+    setShowTimings(new Set());
+    SetOrgsTimingFilter([]);
+  }, []);
+
+  const selectOnlyTiming = useCallback((timing: string) => {
+    setShowTimings(new Set([timing]));
+    SetOrgsTimingFilter([timing]);
+  }, []);
+
+  // Submissions filter callback
+  const handleSubmissionsFilterChange = useCallback(
+    (min: number | undefined, max: number | undefined) => {
+      setSubmissionsMin(min);
+      setSubmissionsMax(max);
+      SetOrgsSubmissionsFilter(min ?? null, max ?? null);
+    },
+    []
+  );
+
+  // Pushcarts filter callback
+  const handlePushcartsFilterChange = useCallback(
+    (min: number | undefined, max: number | undefined) => {
+      setPushcartsMin(min);
+      setPushcartsMax(max);
+      SetOrgsPushcartsFilter(min ?? null, max ?? null);
+    },
+    []
+  );
+
+  const cycleOrgStatus = useCallback((org: models.OrganizationWithNotes, e: React.MouseEvent) => {
     e.stopPropagation();
-    const currentIndex = STATUS_OPTIONS.indexOf(org.status as (typeof STATUS_OPTIONS)[number]);
-    const nextIndex = (currentIndex + 1) % STATUS_OPTIONS.length;
-    const newStatus = STATUS_OPTIONS[nextIndex];
+    const statusOrder = ['Open', 'Boring', 'Defunct'];
+    const currentIndex = statusOrder.indexOf(org.status || 'Open');
+    const nextIndex = (currentIndex + 1) % statusOrder.length;
+    const newStatus = statusOrder[nextIndex];
     const oldStatus = org.status;
+
+    // Ensure the new status is included in the filter so the row doesn't disappear
+    setShowStatuses((prev) => {
+      if (prev.has(newStatus)) return prev;
+      const next = new Set(prev);
+      next.add(newStatus);
+      SetOrgsStatusFilter(Array.from(next));
+      return next;
+    });
+
+    // Also add to available options if not present
+    setAvailableStatuses((prev) => (prev.includes(newStatus) ? prev : [...prev, newStatus]));
 
     setOrgs((prev) => prev.map((o) => (o.orgID === org.orgID ? { ...o, status: newStatus } : o)));
 
@@ -60,16 +178,43 @@ export function OrganizationsPage() {
     UpdateOrganization(updatedOrg as models.Organization).catch(() => {
       setOrgs((prev) => prev.map((o) => (o.orgID === org.orgID ? { ...o, status: oldStatus } : o)));
     });
-  };
+  }, []);
 
   useEffect(() => {
-    Promise.all([GetOrganizationsWithNotes(), GetAppState()])
-      .then(([data, appState]) => {
+    Promise.all([GetOrganizationsWithNotes(), GetAppState(), GetOrgsFilterOptions()])
+      .then(([data, appState, filterOptions]) => {
         Log('Organizations loaded:', data?.length || 0);
         setOrgs(data || []);
-        if (appState?.orgsStatusFilter?.length) {
-          setShowStatuses(new Set(appState.orgsStatusFilter));
+
+        // Set available options from backend
+        setAvailableStatuses(filterOptions.statuses || []);
+        setAvailableTypes(filterOptions.types || []);
+        setAvailableTimings(filterOptions.timings || []);
+
+        // Restore persisted search
+        if (appState?.orgsFilter) {
+          setInitialSearch(appState.orgsFilter);
         }
+
+        // Set filters: intersect persisted with available (defaults to all if no valid persisted)
+        setShowStatuses(intersectFilter(appState?.orgsStatusFilter, filterOptions.statuses || []));
+        setShowTypes(intersectFilter(appState?.orgsTypeFilter, filterOptions.types || []));
+        setShowTimings(intersectFilter(appState?.orgsTimingFilter, filterOptions.timings || []));
+
+        // Restore numeric filters
+        if (appState?.orgsSubmissionsMin !== undefined && appState?.orgsSubmissionsMin !== null) {
+          setSubmissionsMin(appState.orgsSubmissionsMin);
+        }
+        if (appState?.orgsSubmissionsMax !== undefined && appState?.orgsSubmissionsMax !== null) {
+          setSubmissionsMax(appState.orgsSubmissionsMax);
+        }
+        if (appState?.orgsPushcartsMin !== undefined && appState?.orgsPushcartsMin !== null) {
+          setPushcartsMin(appState.orgsPushcartsMin);
+        }
+        if (appState?.orgsPushcartsMax !== undefined && appState?.orgsPushcartsMax !== null) {
+          setPushcartsMax(appState.orgsPushcartsMax);
+        }
+
         if (appState?.viewSorts?.organizations) {
           const vs = appState.viewSorts.organizations;
           setInitialSort({
@@ -88,140 +233,222 @@ export function OrganizationsPage() {
         LogErr('Failed to load organizations:', err);
       })
       .finally(() => setLoading(false));
-  }, [setInitialSort]);
+  }, []);
 
-  const filtered = orgs.filter(
-    (o) =>
-      o.name.toLowerCase().includes(search.toLowerCase()) && showStatuses.has(o.status || 'Open')
+  const filterFn = useCallback(
+    (org: models.OrganizationWithNotes, search: string) => {
+      const pushcarts = org.nPushFiction + org.nPushNonfiction + org.nPushPoetry;
+      return (
+        org.name.toLowerCase().includes(search.toLowerCase()) &&
+        matchesFilter(showStatuses, org.status) &&
+        matchesFilter(showTypes, org.type) &&
+        matchesFilter(showTimings, org.timing) &&
+        matchesNumericFilter(org.nSubmissions, submissionsMin, submissionsMax) &&
+        matchesNumericFilter(pushcarts, pushcartsMin, pushcartsMax)
+      );
+    },
+    [
+      showStatuses,
+      showTypes,
+      showTimings,
+      submissionsMin,
+      submissionsMax,
+      pushcartsMin,
+      pushcartsMax,
+    ]
   );
 
-  const sorted = sortData(filtered);
+  const columns: Column<models.OrganizationWithNotes>[] = useMemo(
+    () => [
+      { key: 'orgID', label: 'ID', width: '5%', render: (o) => o.orgID },
+      { key: 'name', label: 'Name', width: '25%', render: (o) => o.name },
+      {
+        key: 'type',
+        label: 'Type',
+        width: '10%',
+        render: (o) => o.type,
+        filterElement: (
+          <ColumnFilterPopover
+            options={availableTypes}
+            selected={showTypes}
+            onChange={toggleType}
+            onSelectAll={selectAllTypes}
+            onSelectNone={selectNoneTypes}
+            onSelectOnly={selectOnlyType}
+            label="Type"
+          />
+        ),
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        width: '10%',
+        render: (o) => (
+          <Tooltip label="Click to cycle status">
+            <div
+              style={{ cursor: 'pointer', display: 'inline-block' }}
+              onClick={(e) => cycleOrgStatus(o, e)}
+            >
+              <OrgStatusBadge status={o.status} />
+            </div>
+          </Tooltip>
+        ),
+        filterElement: (
+          <ColumnFilterPopover
+            options={availableStatuses}
+            selected={showStatuses}
+            onChange={toggleStatus}
+            onSelectAll={selectAllStatuses}
+            onSelectNone={selectNoneStatuses}
+            onSelectOnly={selectOnlyStatus}
+            label="Status"
+          />
+        ),
+      },
+      {
+        key: 'timing',
+        label: 'Timing',
+        width: '10%',
+        render: (o) => o.timing || '-',
+        filterElement: (
+          <ColumnFilterPopover
+            options={availableTimings}
+            selected={showTimings}
+            onChange={toggleTiming}
+            onSelectAll={selectAllTimings}
+            onSelectNone={selectNoneTimings}
+            onSelectOnly={selectOnlyTiming}
+            label="Timing"
+          />
+        ),
+      },
+      {
+        key: 'nSubmissions',
+        label: 'Subs',
+        width: '8%',
+        render: (o) => o.nSubmissions || '-',
+        filterElement: (
+          <NumericFilterPopover
+            min={submissionsMin}
+            max={submissionsMax}
+            onChange={handleSubmissionsFilterChange}
+            label="Submissions"
+          />
+        ),
+      },
+      {
+        key: 'nPushcarts',
+        label: 'Pushcarts',
+        width: '8%',
+        render: (o) => o.nPushFiction + o.nPushNonfiction + o.nPushPoetry || '-',
+        filterElement: (
+          <NumericFilterPopover
+            min={pushcartsMin}
+            max={pushcartsMax}
+            onChange={handlePushcartsFilterChange}
+            label="Pushcarts"
+          />
+        ),
+      },
+      {
+        key: 'notes',
+        label: 'Notes',
+        width: '20%',
+        render: (o) => (
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'block',
+            }}
+          >
+            {o.notes || '-'}
+          </span>
+        ),
+      },
+    ],
+    [
+      availableStatuses,
+      availableTypes,
+      availableTimings,
+      cycleOrgStatus,
+      showStatuses,
+      toggleStatus,
+      selectAllStatuses,
+      selectNoneStatuses,
+      selectOnlyStatus,
+      showTypes,
+      toggleType,
+      selectAllTypes,
+      selectNoneTypes,
+      selectOnlyType,
+      showTimings,
+      toggleTiming,
+      selectAllTimings,
+      selectNoneTimings,
+      selectOnlyTiming,
+      submissionsMin,
+      submissionsMax,
+      handleSubmissionsFilterChange,
+      pushcartsMin,
+      pushcartsMax,
+      handlePushcartsFilterChange,
+    ]
+  );
 
-  const columns = [
-    { key: 'name', label: 'Name', width: '30%' },
-    { key: 'type', label: 'Type', width: '10%' },
-    { key: 'status', label: 'Status', width: '10%' },
-    { key: 'timing', label: 'Timing', width: '10%' },
-    { key: 'nPushcarts', label: 'Pushcarts', width: '10%' },
-    { key: 'notes', label: 'Notes', width: '20%' },
-  ];
+  const renderExtraCells = useCallback(
+    (org: models.OrganizationWithNotes) => (
+      <Table.Td>
+        <Group gap="xs">
+          <Tooltip label="Open website">
+            <ActionIcon
+              variant="subtle"
+              disabled={!org.url}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (org.url) BrowserOpenURL(org.url);
+              }}
+            >
+              <IconWorld size={16} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Open Duotrope">
+            <ActionIcon
+              variant="subtle"
+              disabled={!org.duotropeNum}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (org.duotropeNum) {
+                  BrowserOpenURL(`https://duotrope.com/listing/${org.duotropeNum}`);
+                }
+              }}
+            >
+              <IconBook size={16} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+      </Table.Td>
+    ),
+    []
+  );
 
   return (
-    <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Organizations</Title>
-        <TextInput
-          placeholder="Search organizations..."
-          leftSection={<IconSearch size={16} />}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          w={300}
-        />
-      </Group>
-
-      {loading ? (
-        <Text>Loading...</Text>
-      ) : (
-        <Table striped highlightOnHover style={{ tableLayout: 'fixed', width: '100%' }}>
-          <Table.Thead>
-            <Table.Tr>
-              {columns.map((col) => {
-                const sortInfo = getSortInfo(col.key);
-                return (
-                  <SortableHeader
-                    key={col.key}
-                    label={col.label}
-                    column={col.key}
-                    level={sortInfo.level}
-                    direction={sortInfo.direction}
-                    onClick={handleColumnClick}
-                    style={{ width: col.width }}
-                    filterElement={
-                      col.key === 'status' ? (
-                        <ColumnFilterPopover
-                          options={STATUS_OPTIONS}
-                          selected={showStatuses}
-                          onChange={toggleStatus}
-                          label="Status"
-                        />
-                      ) : undefined
-                    }
-                  />
-                );
-              })}
-              <Table.Th style={{ width: '10%' }}>Actions</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {sorted.map((org) => (
-              <Table.Tr
-                key={org.orgID}
-                style={{ cursor: 'pointer' }}
-                onClick={() => navigate(`/organizations/${org.orgID}`)}
-              >
-                <Table.Td>{org.name}</Table.Td>
-                <Table.Td>{org.type}</Table.Td>
-                <Table.Td>
-                  <Tooltip label="Click to cycle status">
-                    <div
-                      style={{ cursor: 'pointer', display: 'inline-block' }}
-                      onClick={(e) => cycleOrgStatus(org, e)}
-                    >
-                      <OrgStatusBadge status={org.status} />
-                    </div>
-                  </Tooltip>
-                </Table.Td>
-                <Table.Td>{org.timing || '-'}</Table.Td>
-                <Table.Td>
-                  {org.nPushFiction + org.nPushNonfiction + org.nPushPoetry || '-'}
-                </Table.Td>
-                <Table.Td
-                  style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {org.notes || '-'}
-                </Table.Td>
-                <Table.Td>
-                  <Group gap="xs">
-                    <Tooltip label="Open website">
-                      <ActionIcon
-                        variant="subtle"
-                        disabled={!org.url}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (org.url) BrowserOpenURL(org.url);
-                        }}
-                      >
-                        <IconWorld size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Open Duotrope">
-                      <ActionIcon
-                        variant="subtle"
-                        disabled={!org.duotropeNum}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (org.duotropeNum) {
-                            BrowserOpenURL(`https://duotrope.com/listing/${org.duotropeNum}`);
-                          }
-                        }}
-                      >
-                        <IconBook size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Group>
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
-      )}
-      <Text size="sm" c="dimmed">
-        {sorted.length} of {orgs.length} organizations
-      </Text>
-    </Stack>
+    <DataTable<models.OrganizationWithNotes>
+      title="Organizations"
+      data={orgs}
+      columns={columns}
+      loading={loading}
+      getRowKey={(o) => o.orgID}
+      onRowClick={(o) => navigate(`/organizations/${o.orgID}`)}
+      filterFn={filterFn}
+      initialSearch={initialSearch}
+      onSearchChange={SetOrgsFilter}
+      viewName="organizations"
+      initialSort={initialSort}
+      valueGetter={getOrgValue}
+      extraColumns={<Table.Th style={{ width: '10%' }}>Actions</Table.Th>}
+      renderExtraCells={renderExtraCells}
+    />
   );
 }

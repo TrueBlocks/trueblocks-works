@@ -4,23 +4,26 @@ import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
 import { LogErr } from '@/utils';
 import {
   GetOrganization,
-  GetJournalNotes,
-  CreateJournalNote,
-  UpdateJournalNote,
-  DeleteJournalNote,
+  GetNotes,
+  CreateNote,
+  UpdateNote,
+  DeleteNote,
   SetLastOrgID,
   GetSubmissionViewsByOrg,
   DeleteSubmission,
+  UpdateOrganization,
+  GetOrgsFilterOptions,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { OrgHeader, OrgDetails, JournalNotesPortal, SubmissionsPortal } from '@/components';
+import { OrgHeader, OrgDetails, NotesPortal, SubmissionsPortal } from '@/components';
 
 export function OrganizationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [org, setOrg] = useState<models.Organization | null>(null);
-  const [notes, setNotes] = useState<models.JournalNote[]>([]);
+  const [notes, setNotes] = useState<models.Note[]>([]);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
+  const [typeOptions, setTypeOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const orgId = id ? parseInt(id, 10) : null;
@@ -29,14 +32,16 @@ export function OrganizationDetailPage() {
     if (!orgId) return;
     setLoading(true);
     try {
-      const [orgData, notesData, subsData] = await Promise.all([
+      const [orgData, notesData, subsData, filterOpts] = await Promise.all([
         GetOrganization(orgId),
-        GetJournalNotes(orgId),
+        GetNotes('journal', orgId),
         GetSubmissionViewsByOrg(orgId),
+        GetOrgsFilterOptions(),
       ]);
       setOrg(orgData);
       setNotes(notesData || []);
       setSubmissions(subsData || []);
+      setTypeOptions(filterOpts.types || []);
       SetLastOrgID(orgId);
     } catch (err) {
       LogErr('Failed to load organization data:', err);
@@ -57,21 +62,22 @@ export function OrganizationDetailPage() {
   const handleAddNote = useCallback(
     async (noteText: string) => {
       if (!orgId) return;
-      const note = new models.JournalNote();
-      note.orgID = orgId;
+      const note = new models.Note();
+      note.entityType = 'journal';
+      note.entityID = orgId;
       note.note = noteText;
-      await CreateJournalNote(note);
-      const updated = await GetJournalNotes(orgId);
+      await CreateNote(note);
+      const updated = await GetNotes('journal', orgId);
       setNotes(updated || []);
     },
     [orgId]
   );
 
   const handleUpdateNote = useCallback(
-    async (note: models.JournalNote) => {
-      await UpdateJournalNote(note);
+    async (note: models.Note) => {
+      await UpdateNote(note);
       if (orgId) {
-        const updated = await GetJournalNotes(orgId);
+        const updated = await GetNotes('journal', orgId);
         setNotes(updated || []);
       }
     },
@@ -80,9 +86,9 @@ export function OrganizationDetailPage() {
 
   const handleDeleteNote = useCallback(
     async (noteId: number) => {
-      await DeleteJournalNote(noteId);
+      await DeleteNote(noteId);
       if (orgId) {
-        const updated = await GetJournalNotes(orgId);
+        const updated = await GetNotes('journal', orgId);
         setNotes(updated || []);
       }
     },
@@ -107,15 +113,36 @@ export function OrganizationDetailPage() {
 
   return (
     <Stack gap="lg">
-      <OrgHeader org={org} onStatusChange={(newStatus) => setOrg({ ...org, status: newStatus })} />
+      <OrgHeader
+        org={org}
+        typeOptions={typeOptions}
+        onStatusChange={(newStatus) => setOrg({ ...org, status: newStatus })}
+        onNameChange={async (newName) => {
+          const updatedOrg = { ...org, name: newName } as models.Organization;
+          setOrg(updatedOrg);
+          await UpdateOrganization(updatedOrg);
+        }}
+        onTypeChange={async (newType) => {
+          const updatedOrg = { ...org, type: newType } as models.Organization;
+          setOrg(updatedOrg);
+          await UpdateOrganization(updatedOrg);
+        }}
+      />
 
       <Grid>
         <Grid.Col span={{ base: 12, md: 8 }}>
-          <OrgDetails org={org} />
+          <OrgDetails
+            org={org}
+            onUpdate={async (updatedOrg) => {
+              setOrg(updatedOrg);
+              await UpdateOrganization(updatedOrg);
+            }}
+          />
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Stack gap="md">
-            <JournalNotesPortal
+            <NotesPortal
+              title="Journal Notes"
               notes={notes}
               onAdd={handleAddNote}
               onUpdate={handleUpdateNote}

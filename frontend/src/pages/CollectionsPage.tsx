@@ -1,5 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Title, TextInput, Group, Text, Stack, Paper, Box, Flex, Loader } from '@mantine/core';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Title,
+  TextInput,
+  Group,
+  Text,
+  Stack,
+  Paper,
+  Box,
+  Flex,
+  Loader,
+  CloseButton,
+} from '@mantine/core';
+import { useHotkeys } from '@mantine/hooks';
 import { IconSearch, IconFolder } from '@tabler/icons-react';
 import { LogErr } from '@/utils';
 import {
@@ -21,7 +33,10 @@ export function CollectionsPage() {
   const [selectedWorkId, setSelectedWorkId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const searchRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  useHotkeys([['mod+/', () => searchRef.current?.focus()]]);
 
   const worksLoading = selectedId !== null && selectedId !== loadedWorksForId;
 
@@ -102,8 +117,14 @@ export function CollectionsPage() {
       <Paper w={280} p="md" withBorder style={{ flexShrink: 0 }}>
         <Stack gap="sm">
           <TextInput
+            ref={searchRef}
             placeholder="Filter collections..."
             leftSection={<IconSearch size={16} />}
+            rightSection={
+              search ? (
+                <CloseButton size="sm" c="dimmed" onClick={() => handleSearchChange('')} />
+              ) : null
+            }
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />

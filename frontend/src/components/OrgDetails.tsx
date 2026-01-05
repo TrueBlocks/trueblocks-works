@@ -1,8 +1,10 @@
 import { Paper, SimpleGrid, Text, Stack } from '@mantine/core';
 import { models } from '@wailsjs/go/models';
+import { EditableField } from './EditableField';
 
 interface OrgDetailsProps {
   org: models.Organization;
+  onUpdate?: (org: models.Organization) => void;
 }
 
 function Field({ label, value }: { label: string; value?: string | number }) {
@@ -17,10 +19,31 @@ function Field({ label, value }: { label: string; value?: string | number }) {
   );
 }
 
-export function OrgDetails({ org }: OrgDetailsProps) {
+export function OrgDetails({ org, onUpdate }: OrgDetailsProps) {
+  const handleFieldChange = (field: keyof models.Organization, value: string) => {
+    if (onUpdate) {
+      onUpdate({ ...org, [field]: value } as models.Organization);
+    }
+  };
+
   return (
     <Paper p="md" withBorder>
       <Stack gap="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+          <EditableField
+            label="Website URL"
+            placeholder="https://..."
+            value={org.url || ''}
+            onChange={(value) => handleFieldChange('url', value)}
+          />
+          <EditableField
+            label="Other URL"
+            placeholder="https://..."
+            value={org.otherURL || ''}
+            onChange={(value) => handleFieldChange('otherURL', value)}
+          />
+        </SimpleGrid>
+
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
           <Field label="Accepts" value={org.accepts} />
           <Field label="Submission Types" value={org.submissionTypes} />

@@ -1,8 +1,8 @@
-import { Group, Title, Text, Badge, ActionIcon, Stack, Button, Tooltip } from '@mantine/core';
+import { Group, Text, Badge, ActionIcon, Stack, Button, Tooltip } from '@mantine/core';
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { models } from '@wailsjs/go/models';
-import { OrgStatusBadge } from '@/components';
+import { OrgStatusBadge, EditableField, SelectablePopover } from '@/components';
 import {
   OpenOrgURL,
   OpenOrgOtherURL,
@@ -14,10 +14,19 @@ const STATUS_CYCLE = ['Open', 'Boring', 'Defunct'] as const;
 
 interface OrgHeaderProps {
   org: models.Organization;
+  typeOptions?: readonly string[];
   onStatusChange?: (newStatus: string) => void;
+  onNameChange?: (newName: string) => void;
+  onTypeChange?: (newType: string) => void;
 }
 
-export function OrgHeader({ org, onStatusChange }: OrgHeaderProps) {
+export function OrgHeader({
+  org,
+  typeOptions = [],
+  onStatusChange,
+  onNameChange,
+  onTypeChange,
+}: OrgHeaderProps) {
   const navigate = useNavigate();
 
   const handleOpenURL = () => OpenOrgURL(org.orgID);
@@ -41,14 +50,27 @@ export function OrgHeader({ org, onStatusChange }: OrgHeaderProps) {
           <IconArrowLeft size={20} />
         </ActionIcon>
         <div>
-          <Title order={2}>{org.name}</Title>
+          <EditableField
+            value={org.name || ''}
+            onChange={(value) => onNameChange?.(value)}
+            placeholder="Organization name"
+          />
           {org.otherName && (
             <Text size="sm" c="dimmed">
               {org.otherName}
             </Text>
           )}
           <Group gap="xs" mt="xs">
-            <Badge variant="light">{org.type}</Badge>
+            <SelectablePopover
+              options={typeOptions}
+              value={org.type || ''}
+              onChange={(value) => onTypeChange?.(value)}
+              label="Type"
+            >
+              <Badge variant="light" style={{ cursor: 'pointer' }}>
+                {org.type || '(No type)'}
+              </Badge>
+            </SelectablePopover>
             <Tooltip label="Click to cycle status">
               <div style={{ cursor: 'pointer' }} onClick={handleCycleStatus}>
                 <OrgStatusBadge status={org.status} />

@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Stack, Title, TextInput, Button, Group, Text, Paper, Loader, Flex } from '@mantine/core';
-import { IconFolder, IconCheck } from '@tabler/icons-react';
-import { GetSettings, UpdateSettings, BrowseForFolder } from '@wailsjs/go/main/App';
-import { LogErr } from '@/utils';
+import { notifications } from '@mantine/notifications';
+import { IconFolder, IconCheck, IconDatabaseImport } from '@tabler/icons-react';
+import {
+  GetSettings,
+  UpdateSettings,
+  BrowseForFolder,
+  ReimportFromCSV,
+} from '@wailsjs/go/main/App';
 import { settings } from '@wailsjs/go/models';
 
 export function SettingsPage() {
@@ -10,6 +15,8 @@ export function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [reimporting, setReimporting] = useState(false);
+  const [reimportSuccess, setReimportSuccess] = useState(false);
 
   useEffect(() => {
     GetSettings()
@@ -32,10 +39,57 @@ export function SettingsPage() {
       await UpdateSettings(config);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
-    } catch (err) {
-      LogErr('Failed to save settings:', err);
+    } catch {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to save settings',
+        color: 'red',
+      });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleReimport = async () => {
+    notifications.show({
+      id: 'reimport-confirm',
+      title: 'Confirm Reimport',
+      message: 'Starting reimport process...',
+      color: 'blue',
+      autoClose: 2000,
+    });
+
+    setReimporting(true);
+    notifications.show({
+      id: 'reimport-progress',
+      title: 'Reimporting',
+      message: 'Creating backup and reimporting from CSV...',
+      loading: true,
+      autoClose: false,
+    });
+    try {
+      await ReimportFromCSV();
+      notifications.update({
+        id: 'reimport-progress',
+        title: 'Reimport Complete',
+        message: 'All data has been reimported from CSV files',
+        color: 'green',
+        loading: false,
+        autoClose: 3000,
+      });
+      setReimportSuccess(true);
+      setTimeout(() => setReimportSuccess(false), 3000);
+    } catch (err) {
+      notifications.update({
+        id: 'reimport-progress',
+        title: 'Reimport Failed',
+        message: String(err),
+        color: 'red',
+        loading: false,
+        autoClose: 5000,
+      });
+    } finally {
+      setReimporting(false);
     }
   };
 
@@ -136,6 +190,27 @@ export function SettingsPage() {
           <Text size="xs" c="dimmed">
             Default: /Applications/LibreOffice.app/Contents/MacOS/soffice
           </Text>
+        </Stack>
+      </Paper>
+
+      <Paper p="md" withBorder>
+        <Stack gap="md">
+          <Title order={4}>Data Import</Title>
+          <Text size="sm" c="dimmed">
+            Re-import data from CSV files in the imports folder. A backup is created automatically
+            before import.
+          </Text>
+          <Button
+            onClick={handleReimport}
+            loading={reimporting}
+            leftSection={
+              reimportSuccess ? <IconCheck size={16} /> : <IconDatabaseImport size={16} />
+            }
+            variant="outline"
+            color={reimportSuccess ? 'green' : undefined}
+          >
+            {reimportSuccess ? 'Import Complete' : 'Reimport from CSV'}
+          </Button>
         </Stack>
       </Paper>
 

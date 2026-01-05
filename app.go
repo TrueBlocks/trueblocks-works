@@ -94,8 +94,10 @@ func (a *App) GetFileServerPort() int {
 	return a.fileServer.Port()
 }
 
-// func (a *App) shutdown(ctx context.Context) {
-// 	if a.db != nil {
-// 		a.db.Close()
-// 	}
-// }
+func (a *App) shutdown(_ context.Context) {
+	if a.db != nil {
+		// Checkpoint WAL to main database file before closing
+		_, _ = a.db.Conn().Exec("PRAGMA wal_checkpoint(TRUNCATE)")
+		a.db.Close()
+	}
+}

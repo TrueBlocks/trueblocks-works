@@ -30,12 +30,12 @@ export function CreateCollection(arg1) {
   return window['go']['main']['App']['CreateCollection'](arg1);
 }
 
-export function CreateJournalNote(arg1) {
-  return window['go']['main']['App']['CreateJournalNote'](arg1);
-}
-
 export function CreateNewWork(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['CreateNewWork'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function CreateNote(arg1) {
+  return window['go']['main']['App']['CreateNote'](arg1);
 }
 
 export function CreateOrganization(arg1) {
@@ -50,16 +50,12 @@ export function CreateWork(arg1) {
   return window['go']['main']['App']['CreateWork'](arg1);
 }
 
-export function CreateWorkNote(arg1) {
-  return window['go']['main']['App']['CreateWorkNote'](arg1);
-}
-
 export function DeleteBackup(arg1) {
   return window['go']['main']['App']['DeleteBackup'](arg1);
 }
 
-export function DeleteJournalNote(arg1) {
-  return window['go']['main']['App']['DeleteJournalNote'](arg1);
+export function DeleteNote(arg1) {
+  return window['go']['main']['App']['DeleteNote'](arg1);
 }
 
 export function DeleteOrganization(arg1) {
@@ -74,12 +70,12 @@ export function DeleteWork(arg1) {
   return window['go']['main']['App']['DeleteWork'](arg1);
 }
 
-export function DeleteWorkNote(arg1) {
-  return window['go']['main']['App']['DeleteWorkNote'](arg1);
-}
-
 export function DetectLibreOffice() {
   return window['go']['main']['App']['DetectLibreOffice']();
+}
+
+export function ExportAllCSV() {
+  return window['go']['main']['App']['ExportAllCSV']();
 }
 
 export function ExportAllTables() {
@@ -92,6 +88,10 @@ export function ExportToSubmissions(arg1) {
 
 export function GeneratePath(arg1) {
   return window['go']['main']['App']['GeneratePath'](arg1);
+}
+
+export function GetAllSubmissionViews() {
+  return window['go']['main']['App']['GetAllSubmissionViews']();
 }
 
 export function GetAppState() {
@@ -134,8 +134,8 @@ export function GetFileServerPort() {
   return window['go']['main']['App']['GetFileServerPort']();
 }
 
-export function GetJournalNotes(arg1) {
-  return window['go']['main']['App']['GetJournalNotes'](arg1);
+export function GetNotes(arg1, arg2) {
+  return window['go']['main']['App']['GetNotes'](arg1, arg2);
 }
 
 export function GetOrganization(arg1) {
@@ -150,8 +150,16 @@ export function GetOrganizationsWithNotes() {
   return window['go']['main']['App']['GetOrganizationsWithNotes']();
 }
 
+export function GetOrgsFilterOptions() {
+  return window['go']['main']['App']['GetOrgsFilterOptions']();
+}
+
 export function GetPreviewURL(arg1) {
   return window['go']['main']['App']['GetPreviewURL'](arg1);
+}
+
+export function GetReports() {
+  return window['go']['main']['App']['GetReports']();
 }
 
 export function GetSettings() {
@@ -178,6 +186,10 @@ export function GetSubmissionsByWork(arg1) {
   return window['go']['main']['App']['GetSubmissionsByWork'](arg1);
 }
 
+export function GetSubmissionsFilterOptions() {
+  return window['go']['main']['App']['GetSubmissionsFilterOptions']();
+}
+
 export function GetWork(arg1) {
   return window['go']['main']['App']['GetWork'](arg1);
 }
@@ -190,12 +202,12 @@ export function GetWorkFullPath(arg1) {
   return window['go']['main']['App']['GetWorkFullPath'](arg1);
 }
 
-export function GetWorkNotes(arg1) {
-  return window['go']['main']['App']['GetWorkNotes'](arg1);
-}
-
 export function GetWorks() {
   return window['go']['main']['App']['GetWorks']();
+}
+
+export function GetWorksFilterOptions() {
+  return window['go']['main']['App']['GetWorksFilterOptions']();
 }
 
 export function IsFirstRun() {
@@ -246,8 +258,16 @@ export function RegeneratePDF(arg1) {
   return window['go']['main']['App']['RegeneratePDF'](arg1);
 }
 
+export function ReimportFromCSV() {
+  return window['go']['main']['App']['ReimportFromCSV']();
+}
+
 export function RemoveWorkFromCollection(arg1, arg2) {
   return window['go']['main']['App']['RemoveWorkFromCollection'](arg1, arg2);
+}
+
+export function ReportFileSystemChecks() {
+  return window['go']['main']['App']['ReportFileSystemChecks']();
 }
 
 export function RestoreBackup(arg1) {
@@ -298,12 +318,40 @@ export function SetOrgsFilter(arg1) {
   return window['go']['main']['App']['SetOrgsFilter'](arg1);
 }
 
+export function SetOrgsPushcartsFilter(arg1, arg2) {
+  return window['go']['main']['App']['SetOrgsPushcartsFilter'](arg1, arg2);
+}
+
 export function SetOrgsStatusFilter(arg1) {
   return window['go']['main']['App']['SetOrgsStatusFilter'](arg1);
 }
 
+export function SetOrgsSubmissionsFilter(arg1, arg2) {
+  return window['go']['main']['App']['SetOrgsSubmissionsFilter'](arg1, arg2);
+}
+
+export function SetOrgsTimingFilter(arg1) {
+  return window['go']['main']['App']['SetOrgsTimingFilter'](arg1);
+}
+
+export function SetOrgsTypeFilter(arg1) {
+  return window['go']['main']['App']['SetOrgsTypeFilter'](arg1);
+}
+
 export function SetSubmissionsFilter(arg1) {
   return window['go']['main']['App']['SetSubmissionsFilter'](arg1);
+}
+
+export function SetSubmissionsResponseFilter(arg1) {
+  return window['go']['main']['App']['SetSubmissionsResponseFilter'](arg1);
+}
+
+export function SetSubmissionsStatusFilter(arg1) {
+  return window['go']['main']['App']['SetSubmissionsStatusFilter'](arg1);
+}
+
+export function SetSubmissionsTypeFilter(arg1) {
+  return window['go']['main']['App']['SetSubmissionsTypeFilter'](arg1);
 }
 
 export function SetViewSort(arg1, arg2) {
@@ -314,12 +362,28 @@ export function SetWorksFilter(arg1) {
   return window['go']['main']['App']['SetWorksFilter'](arg1);
 }
 
+export function SetWorksQualityFilter(arg1) {
+  return window['go']['main']['App']['SetWorksQualityFilter'](arg1);
+}
+
+export function SetWorksStatusFilter(arg1) {
+  return window['go']['main']['App']['SetWorksStatusFilter'](arg1);
+}
+
+export function SetWorksTypeFilter(arg1) {
+  return window['go']['main']['App']['SetWorksTypeFilter'](arg1);
+}
+
+export function SetWorksYearFilter(arg1) {
+  return window['go']['main']['App']['SetWorksYearFilter'](arg1);
+}
+
 export function TouchWorkAccessDate(arg1) {
   return window['go']['main']['App']['TouchWorkAccessDate'](arg1);
 }
 
-export function UpdateJournalNote(arg1) {
-  return window['go']['main']['App']['UpdateJournalNote'](arg1);
+export function UpdateNote(arg1) {
+  return window['go']['main']['App']['UpdateNote'](arg1);
 }
 
 export function UpdateOrganization(arg1) {
@@ -336,10 +400,6 @@ export function UpdateSubmission(arg1) {
 
 export function UpdateWork(arg1) {
   return window['go']['main']['App']['UpdateWork'](arg1);
-}
-
-export function UpdateWorkNote(arg1) {
-  return window['go']['main']['App']['UpdateWorkNote'](arg1);
 }
 
 export function UpdateWorkPathToGenerated(arg1) {

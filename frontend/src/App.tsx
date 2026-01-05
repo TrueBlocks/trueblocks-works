@@ -15,8 +15,18 @@ import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage';
 import { CollectionsPage } from '@/pages/CollectionsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ExportPage } from '@/pages/ExportPage';
+import { ReportsPage } from '@/pages/ReportsPage';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { GetAppState, IsFirstRun, SaveWindowGeometry, SetLastRoute } from '@wailsjs/go/main/App';
+import {
+  GetAppState,
+  IsFirstRun,
+  SaveWindowGeometry,
+  SetLastRoute,
+  ExportAllTables,
+  ReimportFromCSV,
+} from '@wailsjs/go/main/App';
+import { notifications } from '@mantine/notifications';
+import { Log, LogErr } from '@/utils';
 
 function App() {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -85,6 +95,74 @@ function App() {
     checkFirstRun();
   }, []);
 
+  const handleExportAll = useCallback(async () => {
+    Log('Starting export of all tables...');
+    notifications.show({
+      id: 'export-progress',
+      title: 'Exporting',
+      message: 'Exporting all tables...',
+      loading: true,
+      autoClose: false,
+    });
+    try {
+      const results = await ExportAllTables();
+      const successCount = results.filter((r) => r.success).length;
+      const failCount = results.filter((r) => !r.success).length;
+      Log(`Export complete: ${successCount} succeeded, ${failCount} failed`);
+      notifications.update({
+        id: 'export-progress',
+        title: 'Export Complete',
+        message: `Exported ${successCount} tables${failCount > 0 ? `, ${failCount} failed` : ''}`,
+        color: failCount > 0 ? 'yellow' : 'green',
+        loading: false,
+        autoClose: 3000,
+      });
+    } catch (err) {
+      LogErr('Export failed:', err);
+      notifications.update({
+        id: 'export-progress',
+        title: 'Export Failed',
+        message: String(err),
+        color: 'red',
+        loading: false,
+        autoClose: 5000,
+      });
+    }
+  }, []);
+
+  const handleReimportAll = useCallback(async () => {
+    Log('Starting reimport from CSV...');
+    notifications.show({
+      id: 'reimport-progress',
+      title: 'Reimporting',
+      message: 'Reimporting data from CSV files...',
+      loading: true,
+      autoClose: false,
+    });
+    try {
+      await ReimportFromCSV();
+      Log('Reimport complete');
+      notifications.update({
+        id: 'reimport-progress',
+        title: 'Reimport Complete',
+        message: 'Data reimported successfully. Refresh the page to see changes.',
+        color: 'green',
+        loading: false,
+        autoClose: 3000,
+      });
+    } catch (err) {
+      LogErr('Reimport failed:', err);
+      notifications.update({
+        id: 'reimport-progress',
+        title: 'Reimport Failed',
+        message: String(err),
+        color: 'red',
+        loading: false,
+        autoClose: 5000,
+      });
+    }
+  }, []);
+
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.metaKey && e.key === 'k') {
@@ -95,10 +173,18 @@ function App() {
         e.preventDefault();
         setBackupOpen(true);
       }
+      if (e.metaKey && e.key === 'x') {
+        e.preventDefault();
+        handleExportAll();
+      }
+      if (e.metaKey && e.key === 'i') {
+        e.preventDefault();
+        handleReimportAll();
+      }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleExportAll, handleReimportAll]);
 
   if (!wizardChecked) {
     return null;
@@ -126,6 +212,7 @@ function App() {
             <Route path="/submissions" element={<SubmissionsPage />} />
             <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
             <Route path="/collections" element={<CollectionsPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/export" element={<ExportPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

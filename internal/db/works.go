@@ -81,6 +81,9 @@ func (db *DB) UpdateWork(w *models.Work) error {
 }
 
 func (db *DB) DeleteWork(id int64) error {
+	if err := db.DeleteNotesByEntity("work", id); err != nil {
+		return fmt.Errorf("delete work notes: %w", err)
+	}
 	_, err := db.conn.Exec("DELETE FROM Works WHERE workID = ?", id)
 	if err != nil {
 		return fmt.Errorf("delete work: %w", err)

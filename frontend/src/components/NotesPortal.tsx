@@ -15,21 +15,20 @@ import { models } from '@wailsjs/go/models';
 import dayjs from 'dayjs';
 
 interface NotesPortalProps {
-  notes: models.WorkNote[];
+  notes: models.Note[];
+  title?: string;
   onAdd: (note: string) => void;
-  onUpdate: (note: models.WorkNote) => void;
+  onUpdate: (note: models.Note) => void;
   onDelete: (id: number) => void;
 }
 
-function getNoteId(note: models.WorkNote): number {
-  return note.id;
-}
-
-function getNoteText(note: models.WorkNote): string {
-  return note.note || '';
-}
-
-export function NotesPortal({ notes, onAdd, onUpdate, onDelete }: NotesPortalProps) {
+export function NotesPortal({
+  notes,
+  title = 'Notes',
+  onAdd,
+  onUpdate,
+  onDelete,
+}: NotesPortalProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -43,12 +42,12 @@ export function NotesPortal({ notes, onAdd, onUpdate, onDelete }: NotesPortalPro
     }
   };
 
-  const handleStartEdit = (note: models.WorkNote) => {
-    setEditingId(getNoteId(note));
-    setEditText(getNoteText(note));
+  const handleStartEdit = (note: models.Note) => {
+    setEditingId(note.id);
+    setEditText(note.note || '');
   };
 
-  const handleSaveEdit = (note: models.WorkNote) => {
+  const handleSaveEdit = (note: models.Note) => {
     if (editText.trim()) {
       onUpdate({ ...note, note: editText.trim() });
     }
@@ -59,7 +58,7 @@ export function NotesPortal({ notes, onAdd, onUpdate, onDelete }: NotesPortalPro
   return (
     <Paper p="md" withBorder>
       <Group justify="space-between" mb="md">
-        <Title order={4}>Notes</Title>
+        <Title order={4}>{title}</Title>
         <ActionIcon variant="light" onClick={() => setIsAdding(true)}>
           <IconPlus size={16} />
         </ActionIcon>
@@ -93,8 +92,8 @@ export function NotesPortal({ notes, onAdd, onUpdate, onDelete }: NotesPortalPro
         )}
 
         {notes.map((note) => (
-          <Card key={getNoteId(note)} withBorder padding="sm">
-            {editingId === getNoteId(note) ? (
+          <Card key={note.id} withBorder padding="sm">
+            {editingId === note.id ? (
               <>
                 <Textarea
                   value={editText}
@@ -114,7 +113,7 @@ export function NotesPortal({ notes, onAdd, onUpdate, onDelete }: NotesPortalPro
             ) : (
               <>
                 <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-                  {getNoteText(note)}
+                  {note.note || ''}
                 </Text>
                 <Group justify="space-between" mt="xs">
                   <Text size="xs" c="dimmed">
@@ -125,7 +124,7 @@ export function NotesPortal({ notes, onAdd, onUpdate, onDelete }: NotesPortalPro
                       variant="subtle"
                       size="sm"
                       color="red"
-                      onClick={() => onDelete(getNoteId(note))}
+                      onClick={() => onDelete(note.id)}
                     >
                       <IconTrash size={14} />
                     </ActionIcon>

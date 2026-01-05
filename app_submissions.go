@@ -6,6 +6,10 @@ func (a *App) GetSubmissions() ([]models.Submission, error) {
 	return a.db.ListSubmissions()
 }
 
+func (a *App) GetAllSubmissionViews() ([]models.SubmissionView, error) {
+	return a.db.ListAllSubmissionViews()
+}
+
 func (a *App) GetSubmission(id int64) (*models.Submission, error) {
 	return a.db.GetSubmission(id)
 }

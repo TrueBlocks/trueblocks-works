@@ -7,7 +7,8 @@ import {
   Group,
   Text,
   CloseButton,
-  Stack,
+  Anchor,
+  SimpleGrid,
 } from '@mantine/core';
 import { IconFilter, IconFilterFilled } from '@tabler/icons-react';
 
@@ -15,6 +16,9 @@ interface ColumnFilterPopoverProps {
   options: readonly string[];
   selected: Set<string>;
   onChange: (value: string) => void;
+  onSelectAll?: () => void;
+  onSelectNone?: () => void;
+  onSelectOnly?: (value: string) => void;
   label?: string;
 }
 
@@ -22,13 +26,58 @@ export function ColumnFilterPopover({
   options,
   selected,
   onChange,
+  onSelectAll,
+  onSelectNone,
+  onSelectOnly,
   label = 'Filter',
 }: ColumnFilterPopoverProps) {
   const [opened, setOpened] = useState(false);
   const hasActiveFilter = selected.size !== options.length;
 
+  const handleSelectAll = () => {
+    if (onSelectAll) {
+      onSelectAll();
+    } else {
+      options.forEach((opt) => {
+        if (!selected.has(opt)) onChange(opt);
+      });
+    }
+  };
+
+  const handleSelectNone = () => {
+    if (onSelectNone) {
+      onSelectNone();
+    } else {
+      options.forEach((opt) => {
+        if (selected.has(opt)) onChange(opt);
+      });
+    }
+  };
+
+  const handleSelectOnly = (value: string) => {
+    if (onSelectOnly) {
+      onSelectOnly(value);
+    } else {
+      options.forEach((opt) => {
+        if (opt === value) {
+          if (!selected.has(opt)) onChange(opt);
+        } else {
+          if (selected.has(opt)) onChange(opt);
+        }
+      });
+    }
+  };
+
+  const handleCheckboxClick = (option: string, e: React.MouseEvent) => {
+    if (e.metaKey) {
+      handleSelectOnly(option);
+    } else {
+      onChange(option);
+    }
+  };
+
   return (
-    <Popover opened={opened} onChange={setOpened} position="bottom-start" shadow="md" withinPortal>
+    <Popover opened={opened} onChange={setOpened} position="bottom" shadow="md" withinPortal>
       <Popover.Target>
         <ActionIcon
           size="xs"
@@ -43,24 +92,38 @@ export function ColumnFilterPopover({
         </ActionIcon>
       </Popover.Target>
       <Popover.Dropdown p={0} onClick={(e) => e.stopPropagation()}>
-        <Paper p="sm" style={{ minWidth: 150 }}>
+        <Paper p="sm" style={{ minWidth: 200 }}>
           <Group justify="space-between" mb="xs">
             <Text size="sm" fw={500}>
               {label}
             </Text>
-            <CloseButton size="sm" onClick={() => setOpened(false)} />
+            <Group gap="xs">
+              <Anchor size="xs" onClick={handleSelectAll}>
+                All
+              </Anchor>
+              <Anchor size="xs" onClick={handleSelectNone}>
+                None
+              </Anchor>
+              <CloseButton size="sm" onClick={() => setOpened(false)} />
+            </Group>
           </Group>
-          <Stack gap="xs">
+          <SimpleGrid cols={3} spacing="xs" verticalSpacing="xs">
             {options.map((option) => (
               <Checkbox
-                key={option}
-                label={option}
+                key={option || '__empty__'}
+                label={option || '(Empty)'}
                 checked={selected.has(option)}
-                onChange={() => onChange(option)}
+                onChange={() => {}}
+                onClick={(e) => handleCheckboxClick(option, e)}
                 size="sm"
+                styles={
+                  option === ''
+                    ? { label: { fontStyle: 'italic', color: 'var(--mantine-color-dimmed)' } }
+                    : undefined
+                }
               />
             ))}
-          </Stack>
+          </SimpleGrid>
         </Paper>
       </Popover.Dropdown>
     </Popover>

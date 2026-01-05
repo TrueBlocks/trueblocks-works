@@ -6,6 +6,9 @@ const shortcuts: Record<string, string> = {
   '2': '/organizations',
   '3': '/submissions',
   '4': '/collections',
+  '5': '/reports',
+  '6': '/export',
+  '7': '/settings',
 };
 
 export function useKeyboardShortcuts() {

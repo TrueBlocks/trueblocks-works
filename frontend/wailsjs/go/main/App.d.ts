@@ -21,9 +21,9 @@ export function CreateBackup(arg1:string):Promise<backup.BackupInfo>;
 
 export function CreateCollection(arg1:models.Collection):Promise<void>;
 
-export function CreateJournalNote(arg1:models.JournalNote):Promise<void>;
-
 export function CreateNewWork(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<models.Work>;
+
+export function CreateNote(arg1:models.Note):Promise<void>;
 
 export function CreateOrganization(arg1:models.Organization):Promise<void>;
 
@@ -31,11 +31,9 @@ export function CreateSubmission(arg1:models.Submission):Promise<void>;
 
 export function CreateWork(arg1:models.Work):Promise<void>;
 
-export function CreateWorkNote(arg1:models.WorkNote):Promise<void>;
-
 export function DeleteBackup(arg1:string):Promise<void>;
 
-export function DeleteJournalNote(arg1:number):Promise<void>;
+export function DeleteNote(arg1:number):Promise<void>;
 
 export function DeleteOrganization(arg1:number):Promise<void>;
 
@@ -43,15 +41,17 @@ export function DeleteSubmission(arg1:number):Promise<void>;
 
 export function DeleteWork(arg1:number):Promise<void>;
 
-export function DeleteWorkNote(arg1:number):Promise<void>;
-
 export function DetectLibreOffice():Promise<string>;
+
+export function ExportAllCSV():Promise<Array<main.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<main.ExportResult>>;
 
 export function ExportToSubmissions(arg1:number):Promise<string>;
 
 export function GeneratePath(arg1:number):Promise<string>;
+
+export function GetAllSubmissionViews():Promise<Array<models.SubmissionView>>;
 
 export function GetAppState():Promise<state.AppState>;
 
@@ -73,7 +73,7 @@ export function GetFileConfig():Promise<fileops.Config>;
 
 export function GetFileServerPort():Promise<number>;
 
-export function GetJournalNotes(arg1:number):Promise<Array<models.JournalNote>>;
+export function GetNotes(arg1:string,arg2:number):Promise<Array<models.Note>>;
 
 export function GetOrganization(arg1:number):Promise<models.Organization>;
 
@@ -81,7 +81,11 @@ export function GetOrganizations():Promise<Array<models.Organization>>;
 
 export function GetOrganizationsWithNotes():Promise<Array<models.OrganizationWithNotes>>;
 
+export function GetOrgsFilterOptions():Promise<main.OrgsFilterOptions>;
+
 export function GetPreviewURL(arg1:number):Promise<string>;
+
+export function GetReports():Promise<main.ReportsResult>;
 
 export function GetSettings():Promise<settings.Settings>;
 
@@ -95,15 +99,17 @@ export function GetSubmissions():Promise<Array<models.Submission>>;
 
 export function GetSubmissionsByWork(arg1:number):Promise<Array<models.Submission>>;
 
+export function GetSubmissionsFilterOptions():Promise<main.SubmissionsFilterOptions>;
+
 export function GetWork(arg1:number):Promise<models.Work>;
 
 export function GetWorkCollections(arg1:number):Promise<Array<models.CollectionDetail>>;
 
 export function GetWorkFullPath(arg1:number):Promise<string>;
 
-export function GetWorkNotes(arg1:number):Promise<Array<models.WorkNote>>;
-
 export function GetWorks():Promise<Array<models.Work>>;
+
+export function GetWorksFilterOptions():Promise<main.WorksFilterOptions>;
 
 export function IsFirstRun():Promise<boolean>;
 
@@ -129,7 +135,11 @@ export function PrintWork(arg1:number):Promise<void>;
 
 export function RegeneratePDF(arg1:number):Promise<string>;
 
+export function ReimportFromCSV():Promise<void>;
+
 export function RemoveWorkFromCollection(arg1:number,arg2:number):Promise<void>;
+
+export function ReportFileSystemChecks():Promise<main.ReportCategory>;
 
 export function RestoreBackup(arg1:string):Promise<void>;
 
@@ -155,17 +165,39 @@ export function SetLastWorkID(arg1:number):Promise<void>;
 
 export function SetOrgsFilter(arg1:string):Promise<void>;
 
+export function SetOrgsPushcartsFilter(arg1:any,arg2:any):Promise<void>;
+
 export function SetOrgsStatusFilter(arg1:Array<string>):Promise<void>;
 
+export function SetOrgsSubmissionsFilter(arg1:any,arg2:any):Promise<void>;
+
+export function SetOrgsTimingFilter(arg1:Array<string>):Promise<void>;
+
+export function SetOrgsTypeFilter(arg1:Array<string>):Promise<void>;
+
 export function SetSubmissionsFilter(arg1:string):Promise<void>;
+
+export function SetSubmissionsResponseFilter(arg1:Array<string>):Promise<void>;
+
+export function SetSubmissionsStatusFilter(arg1:Array<string>):Promise<void>;
+
+export function SetSubmissionsTypeFilter(arg1:Array<string>):Promise<void>;
 
 export function SetViewSort(arg1:string,arg2:state.ViewSort):Promise<void>;
 
 export function SetWorksFilter(arg1:string):Promise<void>;
 
+export function SetWorksQualityFilter(arg1:Array<string>):Promise<void>;
+
+export function SetWorksStatusFilter(arg1:Array<string>):Promise<void>;
+
+export function SetWorksTypeFilter(arg1:Array<string>):Promise<void>;
+
+export function SetWorksYearFilter(arg1:Array<string>):Promise<void>;
+
 export function TouchWorkAccessDate(arg1:number):Promise<void>;
 
-export function UpdateJournalNote(arg1:models.JournalNote):Promise<void>;
+export function UpdateNote(arg1:models.Note):Promise<void>;
 
 export function UpdateOrganization(arg1:models.Organization):Promise<void>;
 
@@ -174,8 +206,6 @@ export function UpdateSettings(arg1:settings.Settings):Promise<void>;
 export function UpdateSubmission(arg1:models.Submission):Promise<void>;
 
 export function UpdateWork(arg1:models.Work):Promise<void>;
-
-export function UpdateWorkNote(arg1:models.WorkNote):Promise<void>;
 
 export function UpdateWorkPathToGenerated(arg1:number):Promise<void>;
 

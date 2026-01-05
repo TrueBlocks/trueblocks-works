@@ -4,8 +4,7 @@ export namespace backup {
 	    name: string;
 	    path: string;
 	    size: number;
-	    // Go type: time
-	    createdAt: any;
+	    createdAt: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new BackupInfo(source);
@@ -16,26 +15,8 @@ export namespace backup {
 	        this.name = source["name"];
 	        this.path = source["path"];
 	        this.size = source["size"];
-	        this.createdAt = this.convertValues(source["createdAt"], null);
+	        this.createdAt = source["createdAt"];
 	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
 	}
 
 }
@@ -99,6 +80,22 @@ export namespace main {
 	        this.error = source["error"];
 	    }
 	}
+	export class OrgsFilterOptions {
+	    statuses: string[];
+	    types: string[];
+	    timings: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new OrgsFilterOptions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.statuses = source["statuses"];
+	        this.types = source["types"];
+	        this.timings = source["timings"];
+	    }
+	}
 	export class PathCheckResult {
 	    generatedPath: string;
 	    storedPath: string;
@@ -115,6 +112,111 @@ export namespace main {
 	        this.storedPath = source["storedPath"];
 	        this.status = source["status"];
 	        this.fileExists = source["fileExists"];
+	    }
+	}
+	export class ReportIssue {
+	    id: number;
+	    description: string;
+	    entityType: string;
+	    entityID: number;
+	    entityName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReportIssue(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.description = source["description"];
+	        this.entityType = source["entityType"];
+	        this.entityID = source["entityID"];
+	        this.entityName = source["entityName"];
+	    }
+	}
+	export class ReportCategory {
+	    name: string;
+	    icon: string;
+	    issues: ReportIssue[];
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReportCategory(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.icon = source["icon"];
+	        this.issues = this.convertValues(source["issues"], ReportIssue);
+	        this.count = source["count"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class ReportsResult {
+	    categories: ReportCategory[];
+	    totalCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReportsResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.categories = this.convertValues(source["categories"], ReportCategory);
+	        this.totalCount = source["totalCount"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SubmissionsFilterOptions {
+	    types: string[];
+	    responses: string[];
+	    statuses: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SubmissionsFilterOptions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.types = source["types"];
+	        this.responses = source["responses"];
+	        this.statuses = source["statuses"];
 	    }
 	}
 	export class TableInfo {
@@ -171,6 +273,24 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class WorksFilterOptions {
+	    years: string[];
+	    types: string[];
+	    statuses: string[];
+	    qualities: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorksFilterOptions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.years = source["years"];
+	        this.types = source["types"];
+	        this.statuses = source["statuses"];
+	        this.qualities = source["qualities"];
+	    }
+	}
 
 }
 
@@ -216,22 +336,24 @@ export namespace models {
 	        this.collectionName = source["collectionName"];
 	    }
 	}
-	export class JournalNote {
+	export class Note {
 	    id: number;
-	    orgID: number;
+	    entityType: string;
+	    entityID: number;
 	    type?: string;
 	    note?: string;
 	    modifiedDate?: string;
 	    createdAt: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new JournalNote(source);
+	        return new Note(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
-	        this.orgID = source["orgID"];
+	        this.entityType = source["entityType"];
+	        this.entityID = source["entityID"];
 	        this.type = source["type"];
 	        this.note = source["note"];
 	        this.modifiedDate = source["modifiedDate"];
@@ -345,6 +467,7 @@ export namespace models {
 	    contestPrize2?: string;
 	    dateAdded?: string;
 	    dateModified?: string;
+	    nSubmissions: number;
 	    notes?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -377,6 +500,7 @@ export namespace models {
 	        this.contestPrize2 = source["contestPrize2"];
 	        this.dateAdded = source["dateAdded"];
 	        this.dateModified = source["dateModified"];
+	        this.nSubmissions = source["nSubmissions"];
 	        this.notes = source["notes"];
 	    }
 	}
@@ -546,28 +670,6 @@ export namespace models {
 	        this.modifiedAt = source["modifiedAt"];
 	    }
 	}
-	export class WorkNote {
-	    id: number;
-	    workID: number;
-	    type?: string;
-	    note?: string;
-	    modifiedDate?: string;
-	    createdAt: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new WorkNote(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.workID = source["workID"];
-	        this.type = source["type"];
-	        this.note = source["note"];
-	        this.modifiedDate = source["modifiedDate"];
-	        this.createdAt = source["createdAt"];
-	    }
-	}
 
 }
 
@@ -654,9 +756,22 @@ export namespace state {
 	    lastCollectionID?: number;
 	    lastSubmissionID?: number;
 	    worksFilter?: string;
+	    worksYearFilter: string[];
+	    worksTypeFilter: string[];
+	    worksStatusFilter: string[];
+	    worksQualityFilter: string[];
 	    orgsFilter?: string;
-	    orgsStatusFilter?: string[];
+	    orgsStatusFilter: string[];
+	    orgsTypeFilter: string[];
+	    orgsTimingFilter: string[];
+	    orgsSubmissionsMin?: number;
+	    orgsSubmissionsMax?: number;
+	    orgsPushcartsMin?: number;
+	    orgsPushcartsMax?: number;
 	    submissionsFilter?: string;
+	    submissionsTypeFilter: string[];
+	    submissionsResponseFilter: string[];
+	    submissionsStatusFilter: string[];
 	    collectionsFilter?: string;
 	    lastRoute?: string;
 	    sidebarCollapsed: boolean;
@@ -678,9 +793,22 @@ export namespace state {
 	        this.lastCollectionID = source["lastCollectionID"];
 	        this.lastSubmissionID = source["lastSubmissionID"];
 	        this.worksFilter = source["worksFilter"];
+	        this.worksYearFilter = source["worksYearFilter"];
+	        this.worksTypeFilter = source["worksTypeFilter"];
+	        this.worksStatusFilter = source["worksStatusFilter"];
+	        this.worksQualityFilter = source["worksQualityFilter"];
 	        this.orgsFilter = source["orgsFilter"];
 	        this.orgsStatusFilter = source["orgsStatusFilter"];
+	        this.orgsTypeFilter = source["orgsTypeFilter"];
+	        this.orgsTimingFilter = source["orgsTimingFilter"];
+	        this.orgsSubmissionsMin = source["orgsSubmissionsMin"];
+	        this.orgsSubmissionsMax = source["orgsSubmissionsMax"];
+	        this.orgsPushcartsMin = source["orgsPushcartsMin"];
+	        this.orgsPushcartsMax = source["orgsPushcartsMax"];
 	        this.submissionsFilter = source["submissionsFilter"];
+	        this.submissionsTypeFilter = source["submissionsTypeFilter"];
+	        this.submissionsResponseFilter = source["submissionsResponseFilter"];
+	        this.submissionsStatusFilter = source["submissionsStatusFilter"];
 	        this.collectionsFilter = source["collectionsFilter"];
 	        this.lastRoute = source["lastRoute"];
 	        this.sidebarCollapsed = source["sidebarCollapsed"];

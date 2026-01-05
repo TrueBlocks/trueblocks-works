@@ -18,23 +18,36 @@ type ViewSort struct {
 }
 
 type AppState struct {
-	LastWorkID        *int64              `json:"lastWorkID,omitempty"`
-	LastOrgID         *int64              `json:"lastOrgID,omitempty"`
-	LastCollectionID  *int64              `json:"lastCollectionID,omitempty"`
-	LastSubmissionID  *int64              `json:"lastSubmissionID,omitempty"`
-	WorksFilter       string              `json:"worksFilter,omitempty"`
-	OrgsFilter        string              `json:"orgsFilter,omitempty"`
-	OrgsStatusFilter  []string            `json:"orgsStatusFilter,omitempty"`
-	SubmissionsFilter string              `json:"submissionsFilter,omitempty"`
-	CollectionsFilter string              `json:"collectionsFilter,omitempty"`
-	LastRoute         string              `json:"lastRoute,omitempty"`
-	SidebarCollapsed  bool                `json:"sidebarCollapsed"`
-	PreviewPanelWidth int                 `json:"previewPanelWidth,omitempty"`
-	WindowX           int                 `json:"windowX,omitempty"`
-	WindowY           int                 `json:"windowY,omitempty"`
-	WindowWidth       int                 `json:"windowWidth,omitempty"`
-	WindowHeight      int                 `json:"windowHeight,omitempty"`
-	ViewSorts         map[string]ViewSort `json:"viewSorts,omitempty"`
+	LastWorkID                *int64              `json:"lastWorkID,omitempty"`
+	LastOrgID                 *int64              `json:"lastOrgID,omitempty"`
+	LastCollectionID          *int64              `json:"lastCollectionID,omitempty"`
+	LastSubmissionID          *int64              `json:"lastSubmissionID,omitempty"`
+	WorksFilter               string              `json:"worksFilter,omitempty"`
+	WorksYearFilter           []string            `json:"worksYearFilter"`
+	WorksTypeFilter           []string            `json:"worksTypeFilter"`
+	WorksStatusFilter         []string            `json:"worksStatusFilter"`
+	WorksQualityFilter        []string            `json:"worksQualityFilter"`
+	OrgsFilter                string              `json:"orgsFilter,omitempty"`
+	OrgsStatusFilter          []string            `json:"orgsStatusFilter"`
+	OrgsTypeFilter            []string            `json:"orgsTypeFilter"`
+	OrgsTimingFilter          []string            `json:"orgsTimingFilter"`
+	OrgsSubmissionsMin        *int                `json:"orgsSubmissionsMin"`
+	OrgsSubmissionsMax        *int                `json:"orgsSubmissionsMax"`
+	OrgsPushcartsMin          *int                `json:"orgsPushcartsMin"`
+	OrgsPushcartsMax          *int                `json:"orgsPushcartsMax"`
+	SubmissionsFilter         string              `json:"submissionsFilter,omitempty"`
+	SubmissionsTypeFilter     []string            `json:"submissionsTypeFilter"`
+	SubmissionsResponseFilter []string            `json:"submissionsResponseFilter"`
+	SubmissionsStatusFilter   []string            `json:"submissionsStatusFilter"`
+	CollectionsFilter         string              `json:"collectionsFilter,omitempty"`
+	LastRoute                 string              `json:"lastRoute,omitempty"`
+	SidebarCollapsed          bool                `json:"sidebarCollapsed"`
+	PreviewPanelWidth         int                 `json:"previewPanelWidth,omitempty"`
+	WindowX                   int                 `json:"windowX,omitempty"`
+	WindowY                   int                 `json:"windowY,omitempty"`
+	WindowWidth               int                 `json:"windowWidth,omitempty"`
+	WindowHeight              int                 `json:"windowHeight,omitempty"`
+	ViewSorts                 map[string]ViewSort `json:"viewSorts,omitempty"`
 }
 
 type Manager struct {
@@ -128,6 +141,34 @@ func (m *Manager) SetWorksFilter(filter string) {
 	_ = m.Save()
 }
 
+func (m *Manager) SetWorksYearFilter(years []string) {
+	m.mu.Lock()
+	m.state.WorksYearFilter = years
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetWorksTypeFilter(types []string) {
+	m.mu.Lock()
+	m.state.WorksTypeFilter = types
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetWorksStatusFilter(statuses []string) {
+	m.mu.Lock()
+	m.state.WorksStatusFilter = statuses
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetWorksQualityFilter(qualities []string) {
+	m.mu.Lock()
+	m.state.WorksQualityFilter = qualities
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
 func (m *Manager) SetOrgsFilter(filter string) {
 	m.mu.Lock()
 	m.state.OrgsFilter = filter
@@ -189,6 +230,57 @@ func (m *Manager) GetWindowGeometry() (x, y, width, height int) {
 func (m *Manager) SetOrgsStatusFilter(statuses []string) {
 	m.mu.Lock()
 	m.state.OrgsStatusFilter = statuses
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetOrgsTypeFilter(types []string) {
+	m.mu.Lock()
+	m.state.OrgsTypeFilter = types
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetOrgsTimingFilter(timings []string) {
+	m.mu.Lock()
+	m.state.OrgsTimingFilter = timings
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetOrgsPushcartsFilter(min, max *int) {
+	m.mu.Lock()
+	m.state.OrgsPushcartsMin = min
+	m.state.OrgsPushcartsMax = max
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetOrgsSubmissionsFilter(min, max *int) {
+	m.mu.Lock()
+	m.state.OrgsSubmissionsMin = min
+	m.state.OrgsSubmissionsMax = max
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetSubmissionsTypeFilter(types []string) {
+	m.mu.Lock()
+	m.state.SubmissionsTypeFilter = types
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetSubmissionsResponseFilter(responses []string) {
+	m.mu.Lock()
+	m.state.SubmissionsResponseFilter = responses
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetSubmissionsStatusFilter(statuses []string) {
+	m.mu.Lock()
+	m.state.SubmissionsStatusFilter = statuses
 	m.mu.Unlock()
 	_ = m.Save()
 }

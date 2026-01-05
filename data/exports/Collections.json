@@ -4,249 +4,187 @@
     {
       "collID": 90,
       "collectionName": "Out",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Process"
     },
     {
       "collID": 10010,
       "collectionName": "Focus",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Active"
     },
     {
       "collID": 10020,
       "collectionName": "Active",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Active"
     },
     {
       "collID": 10030,
       "collectionName": "Working",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Active"
     },
     {
       "collID": 10040,
       "collectionName": "Resting",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Active"
     },
     {
       "collID": 10050,
       "collectionName": "Waiting",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Active"
     },
     {
       "collID": 10170,
       "collectionName": "Genji Sequence",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 20010,
       "collectionName": "Gestating",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Process"
     },
     {
       "collID": 30020,
       "collectionName": "Math Essays",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
-      "type": "Other"
-    },
-    {
-      "collID": 30030,
-      "collectionName": "Blooming Glen",
-      "createdAt": "2026-01-03 20:03:26",
-      "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 30040,
       "collectionName": "Papers",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 30050,
       "collectionName": "Freewrite",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 30060,
       "collectionName": "365 Challenge",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 30070,
       "collectionName": "Evernote",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 30080,
       "collectionName": "VoiceMemos",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 30090,
       "collectionName": "Travel Journals",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Actgive"
     },
     {
       "collID": 40010,
       "collectionName": "Spiral",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
+      "type": "Book"
+    },
+    {
+      "collID": 40020,
+      "collectionName": "Blooming Glen",
+      "isStatus": null,
       "type": "Book"
     },
     {
       "collID": 40030,
       "collectionName": "Doylestown",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 40040,
       "collectionName": "Sea Isle City",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 40050,
       "collectionName": "Storey Cotton",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 40060,
       "collectionName": "Troop Movements",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 50010,
       "collectionName": "Poetry 2008 and Earlier",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 50020,
       "collectionName": "Poetry 2009 and 2010",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 50030,
       "collectionName": "Prose 2010 and Earlier",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 50040,
       "collectionName": "Prose and Poetry 2011",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Book"
     },
     {
       "collID": 50050,
       "collectionName": "May 2015",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": null,
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Other"
     },
     {
       "collID": 60010,
       "collectionName": "Sleeping",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Dead"
     },
     {
       "collID": 60020,
       "collectionName": "Dying",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Dead"
     },
     {
       "collID": 60030,
       "collectionName": "Dead",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Dead"
     },
     {
       "collID": 70010,
       "collectionName": "Published",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Process"
     },
     {
       "collID": 70020,
       "collectionName": "Done",
-      "createdAt": "2026-01-03 20:03:26",
       "isStatus": "yes",
-      "modifiedAt": "2026-01-03 20:03:26",
       "type": "Hidden"
     }
   ],

@@ -4,12 +4,12 @@ import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
 import { LogErr } from '@/utils';
 import {
   GetWork,
-  GetWorkNotes,
+  GetNotes,
   GetSubmissionViewsByWork,
   GetWorkCollections,
-  CreateWorkNote,
-  UpdateWorkNote,
-  DeleteWorkNote,
+  CreateNote,
+  UpdateNote,
+  DeleteNote,
   DeleteSubmission,
   RemoveWorkFromCollection,
   SetLastWorkID,
@@ -29,7 +29,7 @@ export function WorkDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [work, setWork] = useState<models.Work | null>(null);
-  const [notes, setNotes] = useState<models.WorkNote[]>([]);
+  const [notes, setNotes] = useState<models.Note[]>([]);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export function WorkDetailPage() {
     try {
       const [workData, notesData, subsData, collsData] = await Promise.all([
         GetWork(workId),
-        GetWorkNotes(workId),
+        GetNotes('work', workId),
         GetSubmissionViewsByWork(workId),
         GetWorkCollections(workId),
       ]);
@@ -65,21 +65,22 @@ export function WorkDetailPage() {
   const handleAddNote = useCallback(
     async (noteText: string) => {
       if (!workId) return;
-      const note = new models.WorkNote();
-      note.workID = workId;
+      const note = new models.Note();
+      note.entityType = 'work';
+      note.entityID = workId;
       note.note = noteText;
-      await CreateWorkNote(note);
-      const updated = await GetWorkNotes(workId);
+      await CreateNote(note);
+      const updated = await GetNotes('work', workId);
       setNotes(updated || []);
     },
     [workId]
   );
 
   const handleUpdateNote = useCallback(
-    async (note: models.WorkNote) => {
-      await UpdateWorkNote(note);
+    async (note: models.Note) => {
+      await UpdateNote(note);
       if (workId) {
-        const updated = await GetWorkNotes(workId);
+        const updated = await GetNotes('work', workId);
         setNotes(updated || []);
       }
     },
@@ -88,9 +89,9 @@ export function WorkDetailPage() {
 
   const handleDeleteNote = useCallback(
     async (noteId: number) => {
-      await DeleteWorkNote(noteId);
+      await DeleteNote(noteId);
       if (workId) {
-        const updated = await GetWorkNotes(workId);
+        const updated = await GetNotes('work', workId);
         setNotes(updated || []);
       }
     },

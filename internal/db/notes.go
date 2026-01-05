@@ -7,14 +7,14 @@ import (
 	"works/internal/models"
 )
 
-func (db *DB) CreateWorkNote(n *models.WorkNote) error {
+func (db *DB) CreateNote(n *models.Note) error {
 	now := time.Now().Format(time.RFC3339)
-	query := `INSERT INTO WorkNotes (workID, type, note, modified_date, created_at)
-		VALUES (?, ?, ?, ?, ?)`
+	query := `INSERT INTO Notes (entity_type, entity_id, type, note, modified_date, created_at)
+		VALUES (?, ?, ?, ?, ?, ?)`
 
-	result, err := db.conn.Exec(query, n.WorkID, n.Type, n.Note, now, now)
+	result, err := db.conn.Exec(query, n.EntityType, n.EntityID, n.Type, n.Note, now, now)
 	if err != nil {
-		return fmt.Errorf("insert work note: %w", err)
+		return fmt.Errorf("insert note: %w", err)
 	}
 
 	id, err := result.LastInsertId()
@@ -27,127 +27,99 @@ func (db *DB) CreateWorkNote(n *models.WorkNote) error {
 	return nil
 }
 
-func (db *DB) GetWorkNotes(workID int64) ([]models.WorkNote, error) {
-	query := `SELECT id, workID, type, note, modified_date, created_at
-		FROM WorkNotes WHERE workID = ? ORDER BY created_at DESC`
+func (db *DB) GetNotes(entityType string, entityID int64) ([]models.Note, error) {
+	query := `SELECT id, entity_type, entity_id, type, note, modified_date, created_at
+		FROM Notes WHERE entity_type = ? AND entity_id = ? ORDER BY created_at DESC`
 
-	rows, err := db.conn.Query(query, workID)
+	rows, err := db.conn.Query(query, entityType, entityID)
 	if err != nil {
-		return nil, fmt.Errorf("query work notes: %w", err)
+		return nil, fmt.Errorf("query notes: %w", err)
 	}
 	defer rows.Close()
 
-	var notes []models.WorkNote
+	var notes []models.Note
 	for rows.Next() {
-		var n models.WorkNote
-		err := rows.Scan(&n.ID, &n.WorkID, &n.Type, &n.Note,
+		var n models.Note
+		err := rows.Scan(&n.ID, &n.EntityType, &n.EntityID, &n.Type, &n.Note,
 			&n.ModifiedDate, &n.CreatedAt)
 		if err != nil {
-			return nil, fmt.Errorf("scan work note: %w", err)
+			return nil, fmt.Errorf("scan note: %w", err)
 		}
 		notes = append(notes, n)
 	}
 	return notes, rows.Err()
 }
 
-func (db *DB) UpdateWorkNote(n *models.WorkNote) error {
+func (db *DB) UpdateNote(n *models.Note) error {
 	now := time.Now().Format(time.RFC3339)
-	query := `UPDATE WorkNotes SET type=?, note=?, modified_date=? WHERE id=?`
+	query := `UPDATE Notes SET type=?, note=?, modified_date=? WHERE id=?`
 	_, err := db.conn.Exec(query, n.Type, n.Note, now, n.ID)
 	if err != nil {
-		return fmt.Errorf("update work note: %w", err)
+		return fmt.Errorf("update note: %w", err)
 	}
 	n.ModifiedDate = &now
 	return nil
 }
 
-func (db *DB) DeleteWorkNote(id int64) error {
-	_, err := db.conn.Exec("DELETE FROM WorkNotes WHERE id = ?", id)
+func (db *DB) DeleteNote(id int64) error {
+	_, err := db.conn.Exec("DELETE FROM Notes WHERE id = ?", id)
 	if err != nil {
-		return fmt.Errorf("delete work note: %w", err)
+		return fmt.Errorf("delete note: %w", err)
 	}
 	return nil
 }
 
-func (db *DB) CreateJournalNote(n *models.JournalNote) error {
-	now := time.Now().Format(time.RFC3339)
-	query := `INSERT INTO JournalNotes (orgID, type, note, modified_date, created_at)
-		VALUES (?, ?, ?, ?, ?)`
-
-	result, err := db.conn.Exec(query, n.OrgID, n.Type, n.Note, now, now)
+func (db *DB) DeleteNotesByEntity(entityType string, entityID int64) error {
+	_, err := db.conn.Exec("DELETE FROM Notes WHERE entity_type = ? AND entity_id = ?", entityType, entityID)
 	if err != nil {
-		return fmt.Errorf("insert journal note: %w", err)
+		return fmt.Errorf("delete notes by entity: %w", err)
 	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("get last insert id: %w", err)
-	}
-	n.ID = id
-	n.ModifiedDate = &now
-	n.CreatedAt = now
 	return nil
 }
 
-func (db *DB) GetJournalNotes(orgID int64) ([]models.JournalNote, error) {
-	query := `SELECT id, orgID, type, note, modified_date, created_at
-		FROM JournalNotes WHERE orgID = ? ORDER BY created_at DESC`
+func (db *DB) GetAllNotes() ([]models.Note, error) {
+	query := `SELECT id, entity_type, entity_id, type, note, modified_date, created_at
+		FROM Notes ORDER BY id`
 
-	rows, err := db.conn.Query(query, orgID)
+	rows, err := db.conn.Query(query)
 	if err != nil {
-		return nil, fmt.Errorf("query journal notes: %w", err)
+		return nil, fmt.Errorf("query all notes: %w", err)
 	}
 	defer rows.Close()
 
-	var notes []models.JournalNote
+	var notes []models.Note
 	for rows.Next() {
-		var n models.JournalNote
-		err := rows.Scan(&n.ID, &n.OrgID, &n.Type, &n.Note,
+		var n models.Note
+		err := rows.Scan(&n.ID, &n.EntityType, &n.EntityID, &n.Type, &n.Note,
 			&n.ModifiedDate, &n.CreatedAt)
 		if err != nil {
-			return nil, fmt.Errorf("scan journal note: %w", err)
+			return nil, fmt.Errorf("scan note: %w", err)
 		}
 		notes = append(notes, n)
 	}
 	return notes, rows.Err()
-}
-
-func (db *DB) UpdateJournalNote(n *models.JournalNote) error {
-	now := time.Now().Format(time.RFC3339)
-	query := `UPDATE JournalNotes SET type=?, note=?, modified_date=? WHERE id=?`
-	_, err := db.conn.Exec(query, n.Type, n.Note, now, n.ID)
-	if err != nil {
-		return fmt.Errorf("update journal note: %w", err)
-	}
-	n.ModifiedDate = &now
-	return nil
-}
-
-func (db *DB) DeleteJournalNote(id int64) error {
-	_, err := db.conn.Exec("DELETE FROM JournalNotes WHERE id = ?", id)
-	if err != nil {
-		return fmt.Errorf("delete journal note: %w", err)
-	}
-	return nil
 }
 
 func (db *DB) SearchNotesByText(searchText string) ([]models.NoteSearchResult, error) {
 	query := `
-		SELECT wn.id as note_id, 'work' as entity_type, wn.workID as entity_id, w.title as entity_name, 
-			   wn.type as note_type, wn.note, wn.created_at
-		FROM WorkNotes wn
-		LEFT JOIN Works w ON wn.workID = w.workID
-		WHERE wn.note LIKE '%' || ? || '%'
-		UNION ALL
-		SELECT jn.id as note_id, 'journal' as entity_type, jn.orgID as entity_id, o.name as entity_name,
-			   jn.type as note_type, jn.note, jn.created_at
-		FROM JournalNotes jn
-		LEFT JOIN Organizations o ON jn.orgID = o.orgID
-		WHERE jn.note LIKE '%' || ? || '%'
-		ORDER BY created_at DESC
+		SELECT n.id as note_id, n.entity_type, n.entity_id,
+			CASE 
+				WHEN n.entity_type = 'work' THEN COALESCE(w.title, 'Unknown Work')
+				WHEN n.entity_type = 'journal' THEN COALESCE(o.name, 'Unknown Org')
+				WHEN n.entity_type = 'submission' THEN 'Submission #' || n.entity_id
+				WHEN n.entity_type = 'collection' THEN COALESCE(c.collection_name, 'Unknown Collection')
+				ELSE 'Unknown'
+			END as entity_name,
+			n.type as note_type, n.note, n.created_at
+		FROM Notes n
+		LEFT JOIN Works w ON n.entity_type = 'work' AND n.entity_id = w.workID
+		LEFT JOIN Organizations o ON n.entity_type = 'journal' AND n.entity_id = o.orgID
+		LEFT JOIN Collections c ON n.entity_type = 'collection' AND n.entity_id = c.collID
+		WHERE n.note LIKE '%' || ? || '%'
+		ORDER BY n.created_at DESC
 		LIMIT 50`
 
-	rows, err := db.conn.Query(query, searchText, searchText)
+	rows, err := db.conn.Query(query, searchText)
 	if err != nil {
 		return nil, fmt.Errorf("search notes: %w", err)
 	}

@@ -120,24 +120,14 @@ export interface CollectionDetail {
   collectionName: string;
 }
 
-export interface WorkNote {
-  noteID: number;
-  workID: number;
+export interface Note {
+  id: number;
+  entityType: 'work' | 'journal' | 'submission' | 'collection';
+  entityID: number;
   type?: NoteType;
   note?: string;
   modifiedDate?: string;
   createdAt?: string;
-  modifiedAt?: string;
-}
-
-export interface JournalNote {
-  noteID: number;
-  orgID: number;
-  type?: NoteType;
-  note?: string;
-  modifiedDate?: string;
-  createdAt?: string;
-  modifiedAt?: string;
 }
 
 export interface SearchResult {

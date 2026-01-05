@@ -39,5 +39,6 @@ type OrganizationView struct {
 // OrganizationWithNotes includes concatenated journal notes
 type OrganizationWithNotes struct {
 	Organization
-	Notes *string `json:"notes,omitempty"`
+	NSubmissions int     `json:"nSubmissions" db:"n_submissions"`
+	Notes        *string `json:"notes,omitempty"`
 }

@@ -18,10 +18,11 @@ type Manager struct {
 }
 
 type BackupInfo struct {
-	Name      string    `json:"name"`
-	Path      string    `json:"path"`
-	Size      int64     `json:"size"`
-	CreatedAt time.Time `json:"createdAt"`
+	Name        string    `json:"name"`
+	Path        string    `json:"path"`
+	Size        int64     `json:"size"`
+	CreatedAt   string    `json:"createdAt"`
+	createdTime time.Time `json:"-"` // internal use only, not exported to JSON
 }
 
 func NewManager(dbPath string) *Manager {
@@ -59,11 +60,13 @@ func (m *Manager) CreateBackup(label string) (*BackupInfo, error) {
 		return nil, err
 	}
 
+	now := time.Now()
 	return &BackupInfo{
-		Name:      filename,
-		Path:      backupPath,
-		Size:      info.Size(),
-		CreatedAt: time.Now(),
+		Name:        filename,
+		Path:        backupPath,
+		Size:        info.Size(),
+		CreatedAt:   now.Format(time.RFC3339),
+		createdTime: now,
 	}, nil
 }
 
@@ -87,16 +90,18 @@ func (m *Manager) ListBackups() ([]BackupInfo, error) {
 			continue
 		}
 
+		modTime := info.ModTime()
 		backups = append(backups, BackupInfo{
-			Name:      entry.Name(),
-			Path:      filepath.Join(m.backupDir, entry.Name()),
-			Size:      info.Size(),
-			CreatedAt: info.ModTime(),
+			Name:        entry.Name(),
+			Path:        filepath.Join(m.backupDir, entry.Name()),
+			Size:        info.Size(),
+			CreatedAt:   modTime.Format(time.RFC3339),
+			createdTime: modTime,
 		})
 	}
 
 	sort.Slice(backups, func(i, j int) bool {
-		return backups[i].CreatedAt.After(backups[j].CreatedAt)
+		return backups[i].createdTime.After(backups[j].createdTime)
 	})
 
 	return backups, nil
@@ -143,7 +148,7 @@ func (m *Manager) CleanupOldBackups() (int, error) {
 			shouldRemove = true
 		}
 
-		if backup.CreatedAt.Before(cutoff) {
+		if backup.createdTime.Before(cutoff) {
 			shouldRemove = true
 		}
 
@@ -165,7 +170,7 @@ func (m *Manager) AutoBackup() (*BackupInfo, error) {
 
 	if len(backups) > 0 {
 		lastBackup := backups[0]
-		if time.Since(lastBackup.CreatedAt) < 24*time.Hour {
+		if time.Since(lastBackup.createdTime) < 24*time.Hour {
 			return nil, nil
 		}
 	}

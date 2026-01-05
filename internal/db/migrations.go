@@ -17,6 +17,11 @@ var migrations = []Migration{
 		Name:    "populate_year_from_path",
 		Up:      migratePopulateYearFromPath,
 	},
+	{
+		Version: 3,
+		Name:    "consolidate_notes_tables",
+		Up:      migrateConsolidateNotes,
+	},
 }
 
 func (db *DB) RunMigrations() error {
@@ -107,6 +112,65 @@ func migratePopulateYearFromPath(db *DB) error {
 		if err != nil {
 			return fmt.Errorf("update work %d: %w", u.workID, err)
 		}
+	}
+
+	return nil
+}
+
+func migrateConsolidateNotes(db *DB) error {
+	_, err := db.conn.Exec(`
+		CREATE TABLE IF NOT EXISTS Notes (
+			id INTEGER PRIMARY KEY,
+			entity_type TEXT NOT NULL,
+			entity_id INTEGER NOT NULL,
+			type TEXT,
+			note TEXT,
+			modified_date TEXT,
+			created_at TEXT DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create Notes table: %w", err)
+	}
+
+	_, err = db.conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_entity ON Notes(entity_type, entity_id)`)
+	if err != nil {
+		return fmt.Errorf("create notes entity index: %w", err)
+	}
+
+	_, err = db.conn.Exec(`CREATE INDEX IF NOT EXISTS idx_notes_type ON Notes(type)`)
+	if err != nil {
+		return fmt.Errorf("create notes type index: %w", err)
+	}
+
+	var workNotesExist int
+	if err := db.conn.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='WorkNotes'").Scan(&workNotesExist); err != nil {
+		return fmt.Errorf("check WorkNotes table: %w", err)
+	}
+	if workNotesExist > 0 {
+		_, err = db.conn.Exec(`
+			INSERT INTO Notes (entity_type, entity_id, type, note, modified_date, created_at)
+			SELECT 'work', workID, type, note, modified_date, created_at FROM WorkNotes
+		`)
+		if err != nil {
+			return fmt.Errorf("migrate work notes: %w", err)
+		}
+		_, _ = db.conn.Exec("DROP TABLE WorkNotes")
+	}
+
+	var journalNotesExist int
+	if err := db.conn.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='JournalNotes'").Scan(&journalNotesExist); err != nil {
+		return fmt.Errorf("check JournalNotes table: %w", err)
+	}
+	if journalNotesExist > 0 {
+		_, err = db.conn.Exec(`
+			INSERT INTO Notes (entity_type, entity_id, type, note, modified_date, created_at)
+			SELECT 'journal', orgID, type, note, modified_date, created_at FROM JournalNotes
+		`)
+		if err != nil {
+			return fmt.Errorf("migrate journal notes: %w", err)
+		}
+		_, _ = db.conn.Exec("DROP TABLE JournalNotes")
 	}
 
 	return nil

@@ -1,32 +1,60 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { Title, Table, TextInput, Group, Text, Stack, Badge, ActionIcon } from '@mantine/core';
-import { IconSearch, IconPlus } from '@tabler/icons-react';
+import { Badge, ActionIcon } from '@mantine/core';
+import { IconPlus } from '@tabler/icons-react';
 import { Log, LogErr } from '@/utils';
-import { GetSubmissions, GetAppState } from '@wailsjs/go/main/App';
+import { matchesFilter, intersectFilter } from '@/utils/filterHelpers';
+import {
+  GetAllSubmissionViews,
+  GetAppState,
+  SetSubmissionsFilter,
+  GetSubmissionsFilterOptions,
+  SetSubmissionsTypeFilter,
+  SetSubmissionsResponseFilter,
+  SetSubmissionsStatusFilter,
+} from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { ResponseBadge, SortableHeader } from '@/components';
-import { useTableSort, ViewSort } from '@/hooks';
+import { ResponseBadge, DataTable, Column, ColumnFilterPopover } from '@/components';
+import { ViewSort } from '@/hooks';
 import dayjs from 'dayjs';
 
-function isActive(sub: models.Submission): boolean {
-  return !sub.responseDate && !sub.responseType;
+function getStatus(sub: models.SubmissionView): string {
+  return !sub.responseDate && !sub.responseType ? 'Active' : 'Closed';
 }
 
 export function SubmissionsPage() {
-  const [submissions, setSubmissions] = useState<models.Submission[]>([]);
-  const [search, setSearch] = useState('');
+  const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialSearch, setInitialSearch] = useState('');
+  const [initialSort, setInitialSort] = useState<ViewSort | undefined>(undefined);
   const navigate = useNavigate();
 
-  const { handleColumnClick, getSortInfo, sortData, setInitialSort } =
-    useTableSort<models.Submission>('submissions');
+  // Filter options from DB
+  const [typeOptions, setTypeOptions] = useState<string[]>([]);
+  const [responseOptions, setResponseOptions] = useState<string[]>([]);
+  const statusOptions = useMemo(() => ['Active', 'Closed'], []);
+
+  // Selected filters
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
+  const [selectedResponses, setSelectedResponses] = useState<Set<string>>(new Set());
+  const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    Promise.all([GetSubmissions(), GetAppState()])
-      .then(([data, appState]) => {
+    Promise.all([GetAllSubmissionViews(), GetAppState(), GetSubmissionsFilterOptions()])
+      .then(([data, appState, filterOpts]) => {
         Log('Submissions loaded:', data?.length || 0);
         setSubmissions(data || []);
+
+        // Set filter options
+        setTypeOptions(filterOpts.types || []);
+        setResponseOptions(filterOpts.responses || []);
+
+        // Restore search
+        if (appState?.submissionsFilter) {
+          setInitialSearch(appState.submissionsFilter);
+        }
+
+        // Restore sort
         if (appState?.viewSorts?.submissions) {
           const vs = appState.viewSorts.submissions;
           setInitialSort({
@@ -40,103 +68,225 @@ export function SubmissionsPage() {
             },
           });
         }
+
+        // Restore filters (intersect with available options)
+        const types = intersectFilter(appState?.submissionsTypeFilter, filterOpts.types || []);
+        setSelectedTypes(new Set(types));
+
+        const responses = intersectFilter(
+          appState?.submissionsResponseFilter,
+          filterOpts.responses || []
+        );
+        setSelectedResponses(new Set(responses));
+
+        const statuses = intersectFilter(appState?.submissionsStatusFilter, ['Active', 'Closed']);
+        setSelectedStatuses(new Set(statuses));
       })
       .catch((err) => LogErr('Failed to load submissions:', err))
       .finally(() => setLoading(false));
-  }, [setInitialSort]);
+  }, []);
 
-  const filtered = submissions.filter(
-    (s) =>
-      s.draft?.toLowerCase().includes(search.toLowerCase()) ||
-      s.contestName?.toLowerCase().includes(search.toLowerCase())
+  // Filter handlers
+  const handleTypeChange = useCallback((value: string) => {
+    setSelectedTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      SetSubmissionsTypeFilter([...next]);
+      return next;
+    });
+  }, []);
+
+  const handleResponseChange = useCallback((value: string) => {
+    setSelectedResponses((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      SetSubmissionsResponseFilter([...next]);
+      return next;
+    });
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setSelectedStatuses((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      SetSubmissionsStatusFilter([...next]);
+      return next;
+    });
+  }, []);
+
+  const filterFn = useCallback(
+    (sub: models.SubmissionView, search: string) => {
+      const matchesSearch =
+        sub.titleOfWork.toLowerCase().includes(search.toLowerCase()) ||
+        sub.journalName.toLowerCase().includes(search.toLowerCase()) ||
+        (sub.draft?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+        (sub.contestName?.toLowerCase().includes(search.toLowerCase()) ?? false);
+
+      const status = getStatus(sub);
+
+      return (
+        matchesSearch &&
+        matchesFilter(selectedTypes, sub.submissionType || '') &&
+        matchesFilter(selectedResponses, sub.responseType || '') &&
+        matchesFilter(selectedStatuses, status)
+      );
+    },
+    [selectedTypes, selectedResponses, selectedStatuses]
   );
 
-  const sorted = sortData(filtered);
-
-  const columns = [
-    { key: 'workID', label: 'Work', width: '15%' },
-    { key: 'orgID', label: 'Organization', width: '20%' },
-    { key: 'submissionType', label: 'Type', width: '15%' },
-    { key: 'submissionDate', label: 'Submitted', width: '15%' },
-    { key: 'responseType', label: 'Response', width: '15%' },
-  ];
+  const columns: Column<models.SubmissionView>[] = useMemo(
+    () => [
+      {
+        key: 'titleOfWork',
+        label: 'Work',
+        width: '20%',
+        render: (s) => s.titleOfWork || '-',
+      },
+      {
+        key: 'journalName',
+        label: 'Organization',
+        width: '20%',
+        render: (s) => s.journalName || '-',
+      },
+      {
+        key: 'submissionType',
+        label: 'Type',
+        width: '12%',
+        render: (s) => s.submissionType || '-',
+        filterElement: (
+          <ColumnFilterPopover
+            options={typeOptions}
+            selected={selectedTypes}
+            onChange={handleTypeChange}
+            onSelectAll={() => {
+              setSelectedTypes(new Set(typeOptions));
+              SetSubmissionsTypeFilter([...typeOptions]);
+            }}
+            onSelectNone={() => {
+              setSelectedTypes(new Set());
+              SetSubmissionsTypeFilter([]);
+            }}
+            onSelectOnly={(value) => {
+              setSelectedTypes(new Set([value]));
+              SetSubmissionsTypeFilter([value]);
+            }}
+            label="Type"
+          />
+        ),
+      },
+      {
+        key: 'responseType',
+        label: 'Response',
+        width: '12%',
+        render: (s) => <ResponseBadge response={s.responseType} />,
+        filterElement: (
+          <ColumnFilterPopover
+            options={responseOptions}
+            selected={selectedResponses}
+            onChange={handleResponseChange}
+            onSelectAll={() => {
+              setSelectedResponses(new Set(responseOptions));
+              SetSubmissionsResponseFilter([...responseOptions]);
+            }}
+            onSelectNone={() => {
+              setSelectedResponses(new Set());
+              SetSubmissionsResponseFilter([]);
+            }}
+            onSelectOnly={(value) => {
+              setSelectedResponses(new Set([value]));
+              SetSubmissionsResponseFilter([value]);
+            }}
+            label="Response"
+          />
+        ),
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        width: '10%',
+        render: (s) => {
+          const status = getStatus(s);
+          return status === 'Active' ? (
+            <Badge color="green" variant="light" size="sm">
+              Active
+            </Badge>
+          ) : (
+            <Badge color="gray" variant="light" size="sm">
+              Closed
+            </Badge>
+          );
+        },
+        filterElement: (
+          <ColumnFilterPopover
+            options={statusOptions}
+            selected={selectedStatuses}
+            onChange={handleStatusChange}
+            onSelectAll={() => {
+              setSelectedStatuses(new Set(statusOptions));
+              SetSubmissionsStatusFilter([...statusOptions]);
+            }}
+            onSelectNone={() => {
+              setSelectedStatuses(new Set());
+              SetSubmissionsStatusFilter([]);
+            }}
+            onSelectOnly={(value) => {
+              setSelectedStatuses(new Set([value]));
+              SetSubmissionsStatusFilter([value]);
+            }}
+            label="Status"
+          />
+        ),
+      },
+      {
+        key: 'submissionDate',
+        label: 'Submitted',
+        width: '12%',
+        render: (s) => (s.submissionDate ? dayjs(s.submissionDate).format('MMM D, YYYY') : '-'),
+      },
+    ],
+    [
+      typeOptions,
+      selectedTypes,
+      handleTypeChange,
+      responseOptions,
+      selectedResponses,
+      handleResponseChange,
+      statusOptions,
+      selectedStatuses,
+      handleStatusChange,
+    ]
+  );
 
   return (
-    <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Submissions</Title>
-        <Group>
-          <TextInput
-            placeholder="Search submissions..."
-            leftSection={<IconSearch size={16} />}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            w={300}
-          />
-          <ActionIcon variant="filled" size="lg">
-            <IconPlus size={18} />
-          </ActionIcon>
-        </Group>
-      </Group>
-
-      {loading ? (
-        <Text>Loading...</Text>
-      ) : (
-        <Table striped highlightOnHover style={{ tableLayout: 'fixed', width: '100%' }}>
-          <Table.Thead>
-            <Table.Tr>
-              {columns.map((col) => {
-                const sortInfo = getSortInfo(col.key);
-                return (
-                  <SortableHeader
-                    key={col.key}
-                    label={col.label}
-                    column={col.key}
-                    level={sortInfo.level}
-                    direction={sortInfo.direction}
-                    onClick={handleColumnClick}
-                    style={{ width: col.width }}
-                  />
-                );
-              })}
-              <Table.Th style={{ width: '10%' }}>Status</Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {sorted.map((sub) => (
-              <Table.Tr
-                key={sub.submissionID}
-                style={{ cursor: 'pointer' }}
-                onClick={() => navigate(`/submissions/${sub.submissionID}`)}
-              >
-                <Table.Td>Work #{sub.workID}</Table.Td>
-                <Table.Td>Org #{sub.orgID}</Table.Td>
-                <Table.Td>{sub.submissionType || '-'}</Table.Td>
-                <Table.Td>
-                  {sub.submissionDate ? dayjs(sub.submissionDate).format('MMM D, YYYY') : '-'}
-                </Table.Td>
-                <Table.Td>
-                  <ResponseBadge response={sub.responseType} />
-                </Table.Td>
-                <Table.Td>
-                  {isActive(sub) ? (
-                    <Badge color="green" variant="light" size="sm">
-                      Active
-                    </Badge>
-                  ) : (
-                    <Badge color="gray" variant="light" size="sm">
-                      Closed
-                    </Badge>
-                  )}
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
-      )}
-      <Text size="sm" c="dimmed">
-        {sorted.length} of {submissions.length} submissions
-      </Text>
-    </Stack>
+    <DataTable<models.SubmissionView>
+      title="Submissions"
+      data={submissions}
+      columns={columns}
+      loading={loading}
+      getRowKey={(s) => s.submissionID}
+      onRowClick={(s) => navigate(`/submissions/${s.submissionID}`)}
+      filterFn={filterFn}
+      initialSearch={initialSearch}
+      onSearchChange={SetSubmissionsFilter}
+      viewName="submissions"
+      initialSort={initialSort}
+      headerActions={
+        <ActionIcon variant="filled" size="lg">
+          <IconPlus size={18} />
+        </ActionIcon>
+      }
+    />
   );
 }

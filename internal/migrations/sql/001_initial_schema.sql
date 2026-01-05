@@ -114,26 +114,15 @@ CREATE TABLE Submissions (
     FOREIGN KEY (orgID) REFERENCES Organizations(orgID)
 );
 
--- WorkNotes: notes, critiques, history for individual works
-CREATE TABLE WorkNotes (
+-- Notes: unified notes for all entity types (works, journals, submissions, collections)
+CREATE TABLE Notes (
     id INTEGER PRIMARY KEY,
-    workID INTEGER NOT NULL,
+    entity_type TEXT NOT NULL,  -- 'work', 'journal', 'submission', 'collection'
+    entity_id INTEGER NOT NULL,
     type TEXT,
     note TEXT,
     modified_date TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (workID) REFERENCES Works(workID) ON DELETE CASCADE
-);
-
--- JournalNotes: notes about organizations/journals
-CREATE TABLE JournalNotes (
-    id INTEGER PRIMARY KEY,
-    orgID INTEGER NOT NULL,
-    type TEXT,
-    note TEXT,
-    modified_date TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (orgID) REFERENCES Organizations(orgID) ON DELETE CASCADE
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 --------------------------------------------------------------------------------
@@ -166,10 +155,8 @@ CREATE INDEX idx_submissions_response ON Submissions(response_type);
 CREATE INDEX idx_submissions_date ON Submissions(submission_date);
 
 -- Notes indexes
-CREATE INDEX idx_worknotes_workid ON WorkNotes(workID);
-CREATE INDEX idx_worknotes_type ON WorkNotes(type);
-CREATE INDEX idx_journalnotes_orgid ON JournalNotes(orgID);
-CREATE INDEX idx_journalnotes_type ON JournalNotes(type);
+CREATE INDEX idx_notes_entity ON Notes(entity_type, entity_id);
+CREATE INDEX idx_notes_type ON Notes(type);
 
 --------------------------------------------------------------------------------
 -- FTS5 Virtual Tables (Full-Text Search)

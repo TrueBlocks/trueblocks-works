@@ -90,6 +90,9 @@ func (db *DB) UpdateOrganization(o *models.Organization) error {
 }
 
 func (db *DB) DeleteOrganization(id int64) error {
+	if err := db.DeleteNotesByEntity("journal", id); err != nil {
+		return fmt.Errorf("delete journal notes: %w", err)
+	}
 	_, err := db.conn.Exec("DELETE FROM Organizations WHERE orgID = ?", id)
 	if err != nil {
 		return fmt.Errorf("delete organization: %w", err)
@@ -136,9 +139,10 @@ func (db *DB) ListOrganizationsWithNotes() ([]models.OrganizationWithNotes, erro
 		o.website_menu, o.duotrope_num, o.n_push_fiction, o.n_push_nonfiction,
 		o.n_push_poetry, o.contest_ends, o.contest_fee, o.contest_prize,
 		o.contest_prize_2, o.date_added, o.date_modified,
-		GROUP_CONCAT(jn.note, ' ') as notes
+		(SELECT COUNT(*) FROM Submissions s WHERE s.orgID = o.orgID) as n_submissions,
+		GROUP_CONCAT(n.note, ' ') as notes
 		FROM Organizations o
-		LEFT JOIN JournalNotes jn ON o.orgID = jn.orgID
+		LEFT JOIN Notes n ON n.entity_type = 'journal' AND o.orgID = n.entity_id
 		GROUP BY o.orgID
 		ORDER BY o.name`
 
@@ -157,7 +161,7 @@ func (db *DB) ListOrganizationsWithNotes() ([]models.OrganizationWithNotes, erro
 			&o.MyInterest, &o.Ranking, &o.Source, &o.WebsiteMenu,
 			&o.DuotropeNum, &o.NPushFiction, &o.NPushNonfict, &o.NPushPoetry,
 			&o.ContestEnds, &o.ContestFee, &o.ContestPrize, &o.ContestPrize2,
-			&o.DateAdded, &o.DateModified, &o.Notes,
+			&o.DateAdded, &o.DateModified, &o.NSubmissions, &o.Notes,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan organization with notes: %w", err)

@@ -20,7 +20,12 @@ export function WorkHeader({ work, actions }: WorkHeaderProps) {
           <IconArrowLeft size={20} />
         </ActionIcon>
         <div>
-          <Title order={2}>{work.title}</Title>
+          <Title order={2}>
+            {work.title}{' '}
+            <Text component="span" c="dimmed" size="lg">
+              (#{work.workID})
+            </Text>
+          </Title>
           <Group gap="xs" mt="xs">
             <Badge variant="light">{work.type}</Badge>
             <StatusBadge status={work.status} />

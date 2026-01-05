@@ -5,6 +5,8 @@ linters:
   default: none
   enable:
     - errcheck
+    - goconst
+    - govet
     - ineffassign
     - misspell
     - prealloc
@@ -12,6 +14,9 @@ linters:
     - staticcheck
     - unused
   settings:
+    goconst:
+      min-len: 3
+      min-occurrences: 3
     revive:
       rules:
         - name: unused-parameter

@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const unknownName = "Unknown"
+
 type ReportIssue struct {
 	ID          int64  `json:"id"`
 	Description string `json:"description"`
@@ -120,7 +122,7 @@ func (a *App) reportSubmissionsIntegrity() ReportCategory {
 			var id int64
 			var title, orgName *string
 			_ = rows3.Scan(&id, &title, &orgName)
-			name := "Unknown"
+			name := unknownName
 			if title != nil && orgName != nil {
 				name = fmt.Sprintf("%s → %s", *title, *orgName)
 			}
@@ -151,7 +153,7 @@ func (a *App) reportSubmissionsIntegrity() ReportCategory {
 			var id int64
 			var title, orgName, subDate *string
 			_ = rows4.Scan(&id, &title, &orgName, &subDate)
-			name := "Unknown"
+			name := unknownName
 			if title != nil && orgName != nil {
 				name = fmt.Sprintf("%s → %s", *title, *orgName)
 			}
@@ -182,7 +184,7 @@ func (a *App) reportWorksIntegrity() ReportCategory {
 			var id int64
 			var title *string
 			_ = rows.Scan(&id, &title)
-			name := "Unknown"
+			name := unknownName
 			if title != nil {
 				name = *title
 			}
@@ -207,7 +209,7 @@ func (a *App) reportWorksIntegrity() ReportCategory {
 			var id int64
 			var title *string
 			_ = rows2.Scan(&id, &title)
-			name := "Unknown"
+			name := unknownName
 			if title != nil {
 				name = *title
 			}
@@ -232,7 +234,7 @@ func (a *App) reportWorksIntegrity() ReportCategory {
 			var id int64
 			var title *string
 			_ = rows3.Scan(&id, &title)
-			name := "Unknown"
+			name := unknownName
 			if title != nil {
 				name = *title
 			}
@@ -266,7 +268,7 @@ func (a *App) reportWorksIntegrity() ReportCategory {
 			var workType *string
 			var cnt int
 			_ = rows4.Scan(&id, &title, &year, &workType, &cnt)
-			name := "Unknown"
+			name := unknownName
 			if title != nil {
 				name = *title
 				if year != nil && *year != "" {
@@ -493,7 +495,7 @@ func (a *App) reportDataQuality() ReportCategory {
 			var title *string
 			var nWords int
 			_ = rows.Scan(&id, &title, &nWords)
-			name := "Unknown"
+			name := unknownName
 			if title != nil {
 				name = *title
 			}
@@ -519,7 +521,7 @@ func (a *App) reportDataQuality() ReportCategory {
 			var title *string
 			var nWords int
 			_ = rows2.Scan(&id, &title, &nWords)
-			name := "Unknown"
+			name := unknownName
 			if title != nil {
 				name = *title
 			}
@@ -556,7 +558,7 @@ func (a *App) reportDataQuality() ReportCategory {
 			var id int64
 			var title, orgName, subDate *string
 			_ = rows3.Scan(&id, &title, &orgName, &subDate)
-			name := "Unknown"
+			name := unknownName
 			if title != nil && orgName != nil {
 				name = fmt.Sprintf("%s → %s", *title, *orgName)
 			}
@@ -599,7 +601,7 @@ func (a *App) ReportFileSystemChecks() ReportCategory {
 					continue
 				}
 				if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-					name := "Unknown"
+					name := unknownName
 					if title != nil {
 						name = *title
 					}

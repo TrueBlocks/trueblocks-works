@@ -137,7 +137,7 @@ func (a *App) CreateNewWork(title, workType, year, quality, status string) (*mod
 
 	defaultColl, err := a.db.GetOrCreateDefaultCollection()
 	if err == nil && defaultColl != nil {
-		_ = a.db.AddWorkToCollection(defaultColl.CollID, work.WorkID, defaultColl.CollectionName)
+		_ = a.db.AddWorkToCollection(defaultColl.CollID, work.WorkID)
 	}
 
 	return work, nil

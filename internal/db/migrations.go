@@ -22,6 +22,21 @@ var migrations = []Migration{
 		Name:    "consolidate_notes_tables",
 		Up:      migrateConsolidateNotes,
 	},
+	{
+		Version: 4,
+		Name:    "add_position_to_collection_details",
+		Up:      migrateAddPositionColumn,
+	},
+	{
+		Version: 5,
+		Name:    "drop_collection_name_from_details",
+		Up:      migrateDropCollectionName,
+	},
+	{
+		Version: 6,
+		Name:    "populate_position_from_title",
+		Up:      migratePopulatePositionFromTitle,
+	},
 }
 
 func (db *DB) RunMigrations() error {
@@ -171,6 +186,83 @@ func migrateConsolidateNotes(db *DB) error {
 			return fmt.Errorf("migrate journal notes: %w", err)
 		}
 		_, _ = db.conn.Exec("DROP TABLE JournalNotes")
+	}
+
+	return nil
+}
+
+func migrateAddPositionColumn(db *DB) error {
+	_, err := db.conn.Exec(`ALTER TABLE CollectionDetails ADD COLUMN position INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add position column: %w", err)
+	}
+
+	_, err = db.conn.Exec(`CREATE INDEX IF NOT EXISTS idx_collection_position ON CollectionDetails(collID, position)`)
+	if err != nil {
+		return fmt.Errorf("create position index: %w", err)
+	}
+
+	return nil
+}
+
+func migrateDropCollectionName(db *DB) error {
+	_, _ = db.conn.Exec(`DROP TABLE IF EXISTS CollectionDetails_new`)
+
+	_, err := db.conn.Exec(`
+		CREATE TABLE CollectionDetails_new (
+			id INTEGER PRIMARY KEY,
+			collID INTEGER NOT NULL,
+			workID INTEGER NOT NULL,
+			position INTEGER DEFAULT 0,
+			FOREIGN KEY (collID) REFERENCES Collections(collID),
+			FOREIGN KEY (workID) REFERENCES Works(workID) ON DELETE CASCADE,
+			UNIQUE(collID, workID)
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create new table: %w", err)
+	}
+
+	_, err = db.conn.Exec(`
+		INSERT INTO CollectionDetails_new (id, collID, workID, position)
+		SELECT id, collID, workID, position FROM CollectionDetails
+	`)
+	if err != nil {
+		return fmt.Errorf("copy data: %w", err)
+	}
+
+	_, err = db.conn.Exec(`DROP TABLE CollectionDetails`)
+	if err != nil {
+		return fmt.Errorf("drop old table: %w", err)
+	}
+
+	_, err = db.conn.Exec(`ALTER TABLE CollectionDetails_new RENAME TO CollectionDetails`)
+	if err != nil {
+		return fmt.Errorf("rename table: %w", err)
+	}
+
+	_, err = db.conn.Exec(`CREATE INDEX IF NOT EXISTS idx_collection_position ON CollectionDetails(collID, position)`)
+	if err != nil {
+		return fmt.Errorf("recreate index: %w", err)
+	}
+
+	return nil
+}
+
+func migratePopulatePositionFromTitle(db *DB) error {
+	_, err := db.conn.Exec(`
+		UPDATE CollectionDetails
+		SET position = (
+			SELECT COUNT(*)
+			FROM CollectionDetails cd2
+			INNER JOIN Works w2 ON cd2.workID = w2.workID
+			INNER JOIN Works w1 ON CollectionDetails.workID = w1.workID
+			WHERE cd2.collID = CollectionDetails.collID
+			AND (w2.title < w1.title OR (w2.title = w1.title AND cd2.id < CollectionDetails.id))
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("populate position from title: %w", err)
 	}
 
 	return nil

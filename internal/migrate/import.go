@@ -230,8 +230,8 @@ func (i *Importer) ReimportCollectionDetails() error {
 		return err
 	}
 	for _, row := range rows {
-		query := `INSERT OR REPLACE INTO CollectionDetails (collID, workID, collection_name) VALUES (?, ?, ?)`
-		_, _ = i.db.Conn().Exec(query, parseInt(row["collID"]), parseInt(row["WorkID"]), row["Collection Name"])
+		query := `INSERT OR REPLACE INTO CollectionDetails (collID, workID, position) VALUES (?, ?, ?)`
+		_, _ = i.db.Conn().Exec(query, parseInt(row["collID"]), parseInt(row["workID"]), parseInt(row["position"]))
 	}
 	return nil
 }
@@ -314,8 +314,8 @@ func (i *Importer) ImportCollectionDetails() error {
 		return err
 	}
 	for _, row := range rows {
-		query := "INSERT INTO CollectionDetails (collID, workID, collection_name) VALUES (?, ?, ?)"
-		_, _ = i.db.Conn().Exec(query, parseInt(row["collID"]), parseInt(row["WorkID"]), row["Collection Name"])
+		query := "INSERT INTO CollectionDetails (collID, workID, position) VALUES (?, ?, ?)"
+		_, _ = i.db.Conn().Exec(query, parseInt(row["collID"]), parseInt(row["workID"]), parseInt(row["position"]))
 	}
 	return nil
 }

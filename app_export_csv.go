@@ -324,13 +324,12 @@ func (a *App) exportCollectionDetailsCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	// Header matches original exactly
-	header := []string{"Collection Name", "WorkID", "collID"}
+	header := []string{"collID", "workID", "position"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
-	rows, err := a.db.Conn().Query(`SELECT collection_name, workID, collID FROM CollectionDetails`)
+	rows, err := a.db.Conn().Query(`SELECT collID, workID, position FROM CollectionDetails ORDER BY collID, position`)
 	if err != nil {
 		return 0, err
 	}
@@ -338,27 +337,22 @@ func (a *App) exportCollectionDetailsCSV(importsPath string) (int, error) {
 
 	var records [][]string
 	for rows.Next() {
-		var collectionName *string
-		var workID, collID int64
+		var collID, workID, position int64
 
-		if err := rows.Scan(&collectionName, &workID, &collID); err != nil {
+		if err := rows.Scan(&collID, &workID, &position); err != nil {
 			return 0, err
 		}
 
 		record := []string{
-			strPtrToCSV(collectionName),
-			strconv.FormatInt(workID, 10),
 			strconv.FormatInt(collID, 10),
+			strconv.FormatInt(workID, 10),
+			strconv.FormatInt(position, 10),
 		}
 		records = append(records, record)
 	}
 	if err := rows.Err(); err != nil {
 		return 0, err
 	}
-
-	sort.Slice(records, func(i, j int) bool {
-		return strings.Join(records[i], ",") < strings.Join(records[j], ",")
-	})
 
 	for _, record := range records {
 		if err := writer.Write(record); err != nil {

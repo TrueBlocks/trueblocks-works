@@ -239,7 +239,7 @@ func (a *App) exportCollections() (interface{}, int, error) {
 }
 
 func (a *App) exportCollectionDetails() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT id, collID, workID, collection_name FROM CollectionDetails ORDER BY id`)
+	rows, err := a.db.Conn().Query(`SELECT id, collID, workID, position FROM CollectionDetails ORDER BY collID, position`)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -247,16 +247,15 @@ func (a *App) exportCollectionDetails() (interface{}, int, error) {
 
 	var records []map[string]interface{}
 	for rows.Next() {
-		var id, collID, workID int64
-		var collectionName *string
+		var id, collID, workID, position int64
 
-		err := rows.Scan(&id, &collID, &workID, &collectionName)
+		err := rows.Scan(&id, &collID, &workID, &position)
 		if err != nil {
 			return nil, 0, err
 		}
 
 		records = append(records, map[string]interface{}{
-			"collID": collID, "workID": workID, "collectionName": collectionName,
+			"collID": collID, "workID": workID, "position": position,
 		})
 	}
 	return records, len(records), nil

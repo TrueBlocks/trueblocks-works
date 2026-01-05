@@ -18,8 +18,8 @@ func (a *App) UpdateCollection(coll *models.Collection) error {
 	return a.db.UpdateCollection(coll)
 }
 
-func (a *App) AddWorkToCollection(collID, workID int64, collName string) error {
-	return a.db.AddWorkToCollection(collID, workID, collName)
+func (a *App) AddWorkToCollection(collID, workID int64) error {
+	return a.db.AddWorkToCollection(collID, workID)
 }
 
 func (a *App) RemoveWorkFromCollection(collID, workID int64) error {
@@ -32,4 +32,8 @@ func (a *App) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 
 func (a *App) GetCollectionWorks(collID int64) ([]models.Work, error) {
 	return a.db.GetCollectionWorks(collID)
+}
+
+func (a *App) ReorderCollectionWorks(collID int64, workIDs []int64) error {
+	return a.db.ReorderCollectionWorks(collID, workIDs)
 }

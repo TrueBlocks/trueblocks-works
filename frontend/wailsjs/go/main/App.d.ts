@@ -7,7 +7,7 @@ import {state} from '../models';
 import {fileops} from '../models';
 import {settings} from '../models';
 
-export function AddWorkToCollection(arg1:number,arg2:number,arg3:string):Promise<void>;
+export function AddWorkToCollection(arg1:number,arg2:number):Promise<void>;
 
 export function BrowseForFolder(arg1:string):Promise<string>;
 
@@ -138,6 +138,8 @@ export function RegeneratePDF(arg1:number):Promise<string>;
 export function ReimportFromCSV():Promise<void>;
 
 export function RemoveWorkFromCollection(arg1:number,arg2:number):Promise<void>;
+
+export function ReorderCollectionWorks(arg1:number,arg2:Array<number>):Promise<void>;
 
 export function ReportFileSystemChecks():Promise<main.ReportCategory>;
 

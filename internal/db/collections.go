@@ -92,10 +92,15 @@ func (db *DB) ListCollections() ([]models.Collection, error) {
 	return cols, rows.Err()
 }
 
-func (db *DB) AddWorkToCollection(collID, workID int64, collName string) error {
-	query := `INSERT OR IGNORE INTO CollectionDetails (collID, workID, collection_name)
-		VALUES (?, ?, ?)`
-	_, err := db.conn.Exec(query, collID, workID, collName)
+func (db *DB) AddWorkToCollection(collID, workID int64) error {
+	var maxPos int64
+	err := db.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) FROM CollectionDetails WHERE collID = ?`, collID).Scan(&maxPos)
+	if err != nil {
+		return fmt.Errorf("get max position: %w", err)
+	}
+
+	query := `INSERT OR IGNORE INTO CollectionDetails (collID, workID, position) VALUES (?, ?, ?)`
+	_, err = db.conn.Exec(query, collID, workID, maxPos+1)
 	if err != nil {
 		return fmt.Errorf("add work to collection: %w", err)
 	}
@@ -112,8 +117,10 @@ func (db *DB) RemoveWorkFromCollection(collID, workID int64) error {
 }
 
 func (db *DB) GetWorkCollections(workID int64) ([]models.CollectionDetail, error) {
-	query := `SELECT id, collID, workID, collection_name
-		FROM CollectionDetails WHERE workID = ?`
+	query := `SELECT cd.id, cd.collID, cd.workID, cd.position, c.collection_name
+		FROM CollectionDetails cd
+		INNER JOIN Collections c ON cd.collID = c.collID
+		WHERE cd.workID = ?`
 
 	rows, err := db.conn.Query(query, workID)
 	if err != nil {
@@ -124,7 +131,7 @@ func (db *DB) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 	var details []models.CollectionDetail
 	for rows.Next() {
 		var d models.CollectionDetail
-		err := rows.Scan(&d.ID, &d.CollID, &d.WorkID, &d.CollectionName)
+		err := rows.Scan(&d.ID, &d.CollID, &d.WorkID, &d.Position, &d.CollectionName)
 		if err != nil {
 			return nil, fmt.Errorf("scan collection detail: %w", err)
 		}
@@ -140,7 +147,7 @@ func (db *DB) GetCollectionWorks(collID int64) ([]models.Work, error) {
 		FROM Works w
 		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
 		WHERE cd.collID = ?
-		ORDER BY w.title`
+		ORDER BY cd.position, w.title`
 
 	rows, err := db.conn.Query(query, collID)
 	if err != nil {
@@ -163,6 +170,33 @@ func (db *DB) GetCollectionWorks(collID int64) ([]models.Work, error) {
 		works = append(works, w)
 	}
 	return works, rows.Err()
+}
+
+func (db *DB) ReorderCollectionWorks(collID int64, workIDs []int64) error {
+	tx, err := db.conn.Begin()
+	if err != nil {
+		return fmt.Errorf("begin transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	stmt, err := tx.Prepare(`UPDATE CollectionDetails SET position = ? WHERE collID = ? AND workID = ?`)
+	if err != nil {
+		return fmt.Errorf("prepare statement: %w", err)
+	}
+	defer stmt.Close()
+
+	for i, workID := range workIDs {
+		_, err := stmt.Exec(i, collID, workID)
+		if err != nil {
+			return fmt.Errorf("update position for work %d: %w", workID, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (db *DB) GetOrCreateDefaultCollection() (*models.Collection, error) {

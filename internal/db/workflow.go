@@ -43,7 +43,7 @@ func (db *DB) UpdateCollectionMembership(workID int64, oldStatus, newStatus stri
 			return err
 		}
 		if newCollID > 0 {
-			if err := db.AddWorkToCollection(newCollID, workID, newStatus); err != nil {
+			if err := db.AddWorkToCollection(newCollID, workID); err != nil {
 				return err
 			}
 		}

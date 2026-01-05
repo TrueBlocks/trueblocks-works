@@ -8,11 +8,12 @@ import {
   GetCollection,
   GetCollectionWorks,
   RemoveWorkFromCollection,
+  ReorderCollectionWorks,
   SetLastCollectionID,
   UpdateCollection,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { NotesPortal, WorksPortal, EditableField } from '@/components';
+import { NotesPortal, SortableWorksPortal, EditableField } from '@/components';
 
 export function CollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -58,6 +59,23 @@ export function CollectionDetailPage() {
       setWorks((prev) => prev.filter((w) => w.workID !== workId));
     },
     [collId]
+  );
+
+  const handleReorder = useCallback(
+    async (workIds: number[]) => {
+      if (!collId) return;
+      const reordered = workIds
+        .map((id) => works.find((w) => w.workID === id))
+        .filter((w): w is models.Work => w !== undefined);
+      setWorks(reordered);
+      try {
+        await ReorderCollectionWorks(collId, workIds);
+      } catch (err) {
+        LogErr('Failed to reorder works:', err);
+        loadData();
+      }
+    },
+    [collId, works, loadData]
   );
 
   const handleNameChange = useCallback(
@@ -114,11 +132,12 @@ export function CollectionDetailPage() {
 
       <Grid>
         <Grid.Col span={{ base: 12, md: 8 }}>
-          <WorksPortal
+          <SortableWorksPortal
             title="Works in Collection"
             works={works}
             onRowClick={(work) => navigate(`/works/${work.workID}`)}
             onRemove={handleRemoveWork}
+            onReorder={handleReorder}
           />
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 4 }}>

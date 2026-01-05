@@ -13,6 +13,7 @@ import { OrganizationDetailPage } from '@/pages/OrganizationDetailPage';
 import { SubmissionsPage } from '@/pages/SubmissionsPage';
 import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage';
 import { CollectionsPage } from '@/pages/CollectionsPage';
+import { CollectionDetailPage } from '@/pages/CollectionDetailPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ExportPage } from '@/pages/ExportPage';
 import { ReportsPage } from '@/pages/ReportsPage';
@@ -212,6 +213,7 @@ function App() {
             <Route path="/submissions" element={<SubmissionsPage />} />
             <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
             <Route path="/collections" element={<CollectionsPage />} />
+            <Route path="/collections/:id" element={<CollectionDetailPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/export" element={<ExportPage />} />
             <Route path="/settings" element={<SettingsPage />} />

@@ -197,6 +197,8 @@ export function SetWorksYearFilter(arg1:Array<string>):Promise<void>;
 
 export function TouchWorkAccessDate(arg1:number):Promise<void>;
 
+export function UpdateCollection(arg1:models.Collection):Promise<void>;
+
 export function UpdateNote(arg1:models.Note):Promise<void>;
 
 export function UpdateOrganization(arg1:models.Organization):Promise<void>;

@@ -2,14 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
 import { LogErr } from '@/utils';
+import { useNotes } from '@/hooks';
 import {
   GetWork,
-  GetNotes,
   GetSubmissionViewsByWork,
   GetWorkCollections,
-  CreateNote,
-  UpdateNote,
-  DeleteNote,
   DeleteSubmission,
   RemoveWorkFromCollection,
   SetLastWorkID,
@@ -29,25 +26,28 @@ export function WorkDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [work, setWork] = useState<models.Work | null>(null);
-  const [notes, setNotes] = useState<models.Note[]>([]);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
   const [loading, setLoading] = useState(true);
 
   const workId = id ? parseInt(id, 10) : null;
+  const {
+    notes,
+    handleAdd: handleAddNote,
+    handleUpdate: handleUpdateNote,
+    handleDelete: handleDeleteNote,
+  } = useNotes('work', workId);
 
   const loadData = useCallback(async () => {
     if (!workId) return;
     setLoading(true);
     try {
-      const [workData, notesData, subsData, collsData] = await Promise.all([
+      const [workData, subsData, collsData] = await Promise.all([
         GetWork(workId),
-        GetNotes('work', workId),
         GetSubmissionViewsByWork(workId),
         GetWorkCollections(workId),
       ]);
       setWork(workData);
-      setNotes(notesData || []);
       setSubmissions(subsData || []);
       setCollections(collsData || []);
       SetLastWorkID(workId);
@@ -61,42 +61,6 @@ export function WorkDetailPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const handleAddNote = useCallback(
-    async (noteText: string) => {
-      if (!workId) return;
-      const note = new models.Note();
-      note.entityType = 'work';
-      note.entityID = workId;
-      note.note = noteText;
-      await CreateNote(note);
-      const updated = await GetNotes('work', workId);
-      setNotes(updated || []);
-    },
-    [workId]
-  );
-
-  const handleUpdateNote = useCallback(
-    async (note: models.Note) => {
-      await UpdateNote(note);
-      if (workId) {
-        const updated = await GetNotes('work', workId);
-        setNotes(updated || []);
-      }
-    },
-    [workId]
-  );
-
-  const handleDeleteNote = useCallback(
-    async (noteId: number) => {
-      await DeleteNote(noteId);
-      if (workId) {
-        const updated = await GetNotes('work', workId);
-        setNotes(updated || []);
-      }
-    },
-    [workId]
-  );
 
   const handleRemoveFromCollection = useCallback(
     async (collId: number) => {

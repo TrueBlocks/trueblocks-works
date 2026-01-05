@@ -50,6 +50,22 @@ func (db *DB) GetCollection(id int64) (*models.Collection, error) {
 	return c, nil
 }
 
+func (db *DB) UpdateCollection(c *models.Collection) error {
+	now := time.Now().Format(time.RFC3339)
+	query := `UPDATE Collections SET
+		collection_name = ?, is_status = ?, type = ?, modified_at = ?
+		WHERE collID = ?`
+
+	_, err := db.conn.Exec(query,
+		c.CollectionName, c.IsStatus, c.Type, now, c.CollID,
+	)
+	if err != nil {
+		return fmt.Errorf("update collection: %w", err)
+	}
+	c.ModifiedAt = now
+	return nil
+}
+
 func (db *DB) ListCollections() ([]models.Collection, error) {
 	query := `SELECT collID, collection_name, is_status, type,
 		created_at, modified_at

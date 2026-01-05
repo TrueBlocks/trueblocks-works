@@ -10,6 +10,7 @@ export { WorkHeader } from './WorkHeader';
 export { PathDisplay } from './PathDisplay';
 export { NotesPortal } from './NotesPortal';
 export { SubmissionsPortal } from './SubmissionsPortal';
+export { WorksPortal } from './WorksPortal';
 export { CollectionsPortal } from './CollectionsPortal';
 export { OrgHeader } from './OrgHeader';
 export { OrgDetails } from './OrgDetails';

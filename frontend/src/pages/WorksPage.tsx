@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ActionIcon } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 import { Log, LogErr, matchesFilter, intersectFilter } from '@/utils';
@@ -21,7 +21,7 @@ import {
   Column,
   ColumnFilterPopover,
 } from '@/components';
-import { ViewSort } from '@/hooks';
+import { ViewSort, useColumnFilter } from '@/hooks';
 import { useNavigate } from 'react-router';
 
 export function WorksPage() {
@@ -30,15 +30,17 @@ export function WorksPage() {
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [initialSearch, setInitialSearch] = useState('');
   const [initialSort, setInitialSort] = useState<ViewSort | undefined>(undefined);
-  const [showYears, setShowYears] = useState<Set<string>>(new Set());
-  const [showTypes, setShowTypes] = useState<Set<string>>(new Set());
-  const [showStatuses, setShowStatuses] = useState<Set<string>>(new Set());
-  const [showQualities, setShowQualities] = useState<Set<string>>(new Set());
   const [availableYears, setAvailableYears] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const [availableStatuses, setAvailableStatuses] = useState<string[]>([]);
   const [availableQualities, setAvailableQualities] = useState<string[]>([]);
+  const hasInitialized = useRef(false);
   const navigate = useNavigate();
+
+  const yearFilter = useColumnFilter(availableYears, SetWorksYearFilter);
+  const typeFilter = useColumnFilter(availableTypes, SetWorksTypeFilter);
+  const statusFilter = useColumnFilter(availableStatuses, SetWorksStatusFilter);
+  const qualityFilter = useColumnFilter(availableQualities, SetWorksQualityFilter);
 
   const loadWorks = useCallback(() => {
     setLoading(true);
@@ -49,6 +51,9 @@ export function WorksPage() {
   }, []);
 
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     Promise.all([GetWorks(), GetAppState(), GetWorksFilterOptions()])
       .then(([data, appState, filterOptions]) => {
         Log('Works loaded:', data?.length || 0);
@@ -65,11 +70,16 @@ export function WorksPage() {
           setInitialSearch(appState.worksFilter);
         }
 
-        // Set filters: intersect persisted with available (defaults to all if no valid persisted)
-        setShowYears(intersectFilter(appState?.worksYearFilter, filterOptions.years || []));
-        setShowTypes(intersectFilter(appState?.worksTypeFilter, filterOptions.types || []));
-        setShowStatuses(intersectFilter(appState?.worksStatusFilter, filterOptions.statuses || []));
-        setShowQualities(
+        yearFilter.initialize(
+          intersectFilter(appState?.worksYearFilter, filterOptions.years || [])
+        );
+        typeFilter.initialize(
+          intersectFilter(appState?.worksTypeFilter, filterOptions.types || [])
+        );
+        statusFilter.initialize(
+          intersectFilter(appState?.worksStatusFilter, filterOptions.statuses || [])
+        );
+        qualityFilter.initialize(
           intersectFilter(appState?.worksQualityFilter, filterOptions.qualities || [])
         );
         if (appState?.viewSorts?.works) {
@@ -88,137 +98,25 @@ export function WorksPage() {
       })
       .catch((err) => LogErr('Failed to load works:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [yearFilter, typeFilter, statusFilter, qualityFilter]);
 
   const handleCreated = (work: models.Work) => {
     loadWorks();
     navigate(`/works/${work.workID}`);
   };
 
-  const toggleYear = useCallback((year: string) => {
-    setShowYears((prev) => {
-      const next = new Set(prev);
-      if (next.has(year)) {
-        next.delete(year);
-      } else {
-        next.add(year);
-      }
-      SetWorksYearFilter(Array.from(next));
-      return next;
-    });
-  }, []);
-
-  const toggleType = useCallback((type: string) => {
-    setShowTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) {
-        next.delete(type);
-      } else {
-        next.add(type);
-      }
-      SetWorksTypeFilter(Array.from(next));
-      return next;
-    });
-  }, []);
-
-  const toggleStatus = useCallback((status: string) => {
-    setShowStatuses((prev) => {
-      const next = new Set(prev);
-      if (next.has(status)) {
-        next.delete(status);
-      } else {
-        next.add(status);
-      }
-      SetWorksStatusFilter(Array.from(next));
-      return next;
-    });
-  }, []);
-
-  const toggleQuality = useCallback((quality: string) => {
-    setShowQualities((prev) => {
-      const next = new Set(prev);
-      if (next.has(quality)) {
-        next.delete(quality);
-      } else {
-        next.add(quality);
-      }
-      SetWorksQualityFilter(Array.from(next));
-      return next;
-    });
-  }, []);
-
-  const selectAllYears = useCallback(() => {
-    setShowYears(new Set(availableYears));
-    SetWorksYearFilter(availableYears);
-  }, [availableYears]);
-
-  const selectNoneYears = useCallback(() => {
-    setShowYears(new Set());
-    SetWorksYearFilter([]);
-  }, []);
-
-  const selectOnlyYear = useCallback((year: string) => {
-    setShowYears(new Set([year]));
-    SetWorksYearFilter([year]);
-  }, []);
-
-  const selectAllTypes = useCallback(() => {
-    setShowTypes(new Set(availableTypes));
-    SetWorksTypeFilter(availableTypes);
-  }, [availableTypes]);
-
-  const selectNoneTypes = useCallback(() => {
-    setShowTypes(new Set());
-    SetWorksTypeFilter([]);
-  }, []);
-
-  const selectOnlyType = useCallback((type: string) => {
-    setShowTypes(new Set([type]));
-    SetWorksTypeFilter([type]);
-  }, []);
-
-  const selectAllStatuses = useCallback(() => {
-    setShowStatuses(new Set(availableStatuses));
-    SetWorksStatusFilter(availableStatuses);
-  }, [availableStatuses]);
-
-  const selectNoneStatuses = useCallback(() => {
-    setShowStatuses(new Set());
-    SetWorksStatusFilter([]);
-  }, []);
-
-  const selectOnlyStatus = useCallback((status: string) => {
-    setShowStatuses(new Set([status]));
-    SetWorksStatusFilter([status]);
-  }, []);
-
-  const selectAllQualities = useCallback(() => {
-    setShowQualities(new Set(availableQualities));
-    SetWorksQualityFilter(availableQualities);
-  }, [availableQualities]);
-
-  const selectNoneQualities = useCallback(() => {
-    setShowQualities(new Set());
-    SetWorksQualityFilter([]);
-  }, []);
-
-  const selectOnlyQuality = useCallback((quality: string) => {
-    setShowQualities(new Set([quality]));
-    SetWorksQualityFilter([quality]);
-  }, []);
-
   const filterFn = useCallback(
     (work: models.Work, search: string) => {
       const matchesSearch = work.title.toLowerCase().includes(search.toLowerCase());
       return (
         matchesSearch &&
-        matchesFilter(showYears, work.year) &&
-        matchesFilter(showTypes, work.type) &&
-        matchesFilter(showStatuses, work.status) &&
-        matchesFilter(showQualities, work.quality)
+        matchesFilter(yearFilter.selected, work.year) &&
+        matchesFilter(typeFilter.selected, work.type) &&
+        matchesFilter(statusFilter.selected, work.status) &&
+        matchesFilter(qualityFilter.selected, work.quality)
       );
     },
-    [showYears, showTypes, showStatuses, showQualities]
+    [yearFilter.selected, typeFilter.selected, statusFilter.selected, qualityFilter.selected]
   );
 
   const columns: Column<models.Work>[] = useMemo(
@@ -233,11 +131,11 @@ export function WorksPage() {
         filterElement: (
           <ColumnFilterPopover
             options={availableYears}
-            selected={showYears}
-            onChange={toggleYear}
-            onSelectAll={selectAllYears}
-            onSelectNone={selectNoneYears}
-            onSelectOnly={selectOnlyYear}
+            selected={yearFilter.selected}
+            onChange={yearFilter.toggle}
+            onSelectAll={yearFilter.selectAll}
+            onSelectNone={yearFilter.selectNone}
+            onSelectOnly={yearFilter.selectOnly}
             label="Year"
           />
         ),
@@ -250,11 +148,11 @@ export function WorksPage() {
         filterElement: (
           <ColumnFilterPopover
             options={availableTypes}
-            selected={showTypes}
-            onChange={toggleType}
-            onSelectAll={selectAllTypes}
-            onSelectNone={selectNoneTypes}
-            onSelectOnly={selectOnlyType}
+            selected={typeFilter.selected}
+            onChange={typeFilter.toggle}
+            onSelectAll={typeFilter.selectAll}
+            onSelectNone={typeFilter.selectNone}
+            onSelectOnly={typeFilter.selectOnly}
             label="Type"
           />
         ),
@@ -267,11 +165,11 @@ export function WorksPage() {
         filterElement: (
           <ColumnFilterPopover
             options={availableStatuses}
-            selected={showStatuses}
-            onChange={toggleStatus}
-            onSelectAll={selectAllStatuses}
-            onSelectNone={selectNoneStatuses}
-            onSelectOnly={selectOnlyStatus}
+            selected={statusFilter.selected}
+            onChange={statusFilter.toggle}
+            onSelectAll={statusFilter.selectAll}
+            onSelectNone={statusFilter.selectNone}
+            onSelectOnly={statusFilter.selectOnly}
             label="Status"
           />
         ),
@@ -284,11 +182,11 @@ export function WorksPage() {
         filterElement: (
           <ColumnFilterPopover
             options={availableQualities}
-            selected={showQualities}
-            onChange={toggleQuality}
-            onSelectAll={selectAllQualities}
-            onSelectNone={selectNoneQualities}
-            onSelectOnly={selectOnlyQuality}
+            selected={qualityFilter.selected}
+            onChange={qualityFilter.toggle}
+            onSelectAll={qualityFilter.selectAll}
+            onSelectNone={qualityFilter.selectNone}
+            onSelectOnly={qualityFilter.selectOnly}
             label="Quality"
           />
         ),
@@ -305,26 +203,10 @@ export function WorksPage() {
       availableTypes,
       availableStatuses,
       availableQualities,
-      showYears,
-      toggleYear,
-      selectAllYears,
-      selectNoneYears,
-      selectOnlyYear,
-      showTypes,
-      toggleType,
-      selectAllTypes,
-      selectNoneTypes,
-      selectOnlyType,
-      showStatuses,
-      toggleStatus,
-      selectAllStatuses,
-      selectNoneStatuses,
-      selectOnlyStatus,
-      showQualities,
-      toggleQuality,
-      selectAllQualities,
-      selectNoneQualities,
-      selectOnlyQuality,
+      yearFilter,
+      typeFilter,
+      statusFilter,
+      qualityFilter,
     ]
   );
 

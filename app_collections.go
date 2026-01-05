@@ -14,6 +14,10 @@ func (a *App) CreateCollection(coll *models.Collection) error {
 	return a.db.CreateCollection(coll)
 }
 
+func (a *App) UpdateCollection(coll *models.Collection) error {
+	return a.db.UpdateCollection(coll)
+}
+
 func (a *App) AddWorkToCollection(collID, workID int64, collName string) error {
 	return a.db.AddWorkToCollection(collID, workID, collName)
 }

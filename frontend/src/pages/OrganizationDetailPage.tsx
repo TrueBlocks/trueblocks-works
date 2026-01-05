@@ -2,12 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
 import { LogErr } from '@/utils';
+import { useNotes } from '@/hooks';
 import {
   GetOrganization,
-  GetNotes,
-  CreateNote,
-  UpdateNote,
-  DeleteNote,
   SetLastOrgID,
   GetSubmissionViewsByOrg,
   DeleteSubmission,
@@ -21,25 +18,28 @@ export function OrganizationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [org, setOrg] = useState<models.Organization | null>(null);
-  const [notes, setNotes] = useState<models.Note[]>([]);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [typeOptions, setTypeOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const orgId = id ? parseInt(id, 10) : null;
+  const {
+    notes,
+    handleAdd: handleAddNote,
+    handleUpdate: handleUpdateNote,
+    handleDelete: handleDeleteNote,
+  } = useNotes('journal', orgId);
 
   const loadData = useCallback(async () => {
     if (!orgId) return;
     setLoading(true);
     try {
-      const [orgData, notesData, subsData, filterOpts] = await Promise.all([
+      const [orgData, subsData, filterOpts] = await Promise.all([
         GetOrganization(orgId),
-        GetNotes('journal', orgId),
         GetSubmissionViewsByOrg(orgId),
         GetOrgsFilterOptions(),
       ]);
       setOrg(orgData);
-      setNotes(notesData || []);
       setSubmissions(subsData || []);
       setTypeOptions(filterOpts.types || []);
       SetLastOrgID(orgId);
@@ -58,42 +58,6 @@ export function OrganizationDetailPage() {
     await DeleteSubmission(subId);
     setSubmissions((prev) => prev.filter((s) => s.submissionID !== subId));
   }, []);
-
-  const handleAddNote = useCallback(
-    async (noteText: string) => {
-      if (!orgId) return;
-      const note = new models.Note();
-      note.entityType = 'journal';
-      note.entityID = orgId;
-      note.note = noteText;
-      await CreateNote(note);
-      const updated = await GetNotes('journal', orgId);
-      setNotes(updated || []);
-    },
-    [orgId]
-  );
-
-  const handleUpdateNote = useCallback(
-    async (note: models.Note) => {
-      await UpdateNote(note);
-      if (orgId) {
-        const updated = await GetNotes('journal', orgId);
-        setNotes(updated || []);
-      }
-    },
-    [orgId]
-  );
-
-  const handleDeleteNote = useCallback(
-    async (noteId: number) => {
-      await DeleteNote(noteId);
-      if (orgId) {
-        const updated = await GetNotes('journal', orgId);
-        setNotes(updated || []);
-      }
-    },
-    [orgId]
-  );
 
   if (loading) {
     return (

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Badge, ActionIcon } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
@@ -15,7 +15,7 @@ import {
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { ResponseBadge, DataTable, Column, ColumnFilterPopover } from '@/components';
-import { ViewSort } from '@/hooks';
+import { ViewSort, useColumnFilter } from '@/hooks';
 import dayjs from 'dayjs';
 
 function getStatus(sub: models.SubmissionView): string {
@@ -29,17 +29,19 @@ export function SubmissionsPage() {
   const [initialSort, setInitialSort] = useState<ViewSort | undefined>(undefined);
   const navigate = useNavigate();
 
-  // Filter options from DB
   const [typeOptions, setTypeOptions] = useState<string[]>([]);
   const [responseOptions, setResponseOptions] = useState<string[]>([]);
   const statusOptions = useMemo(() => ['Active', 'Closed'], []);
 
-  // Selected filters
-  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
-  const [selectedResponses, setSelectedResponses] = useState<Set<string>>(new Set());
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(new Set());
+  const typeFilter = useColumnFilter(typeOptions, SetSubmissionsTypeFilter);
+  const responseFilter = useColumnFilter(responseOptions, SetSubmissionsResponseFilter);
+  const statusFilter = useColumnFilter(statusOptions, SetSubmissionsStatusFilter);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     Promise.all([GetAllSubmissionViews(), GetAppState(), GetSubmissionsFilterOptions()])
       .then(([data, appState, filterOpts]) => {
         Log('Submissions loaded:', data?.length || 0);
@@ -69,62 +71,19 @@ export function SubmissionsPage() {
           });
         }
 
-        // Restore filters (intersect with available options)
-        const types = intersectFilter(appState?.submissionsTypeFilter, filterOpts.types || []);
-        setSelectedTypes(new Set(types));
-
-        const responses = intersectFilter(
-          appState?.submissionsResponseFilter,
-          filterOpts.responses || []
+        typeFilter.initialize(
+          new Set(intersectFilter(appState?.submissionsTypeFilter, filterOpts.types || []))
         );
-        setSelectedResponses(new Set(responses));
-
-        const statuses = intersectFilter(appState?.submissionsStatusFilter, ['Active', 'Closed']);
-        setSelectedStatuses(new Set(statuses));
+        responseFilter.initialize(
+          new Set(intersectFilter(appState?.submissionsResponseFilter, filterOpts.responses || []))
+        );
+        statusFilter.initialize(
+          new Set(intersectFilter(appState?.submissionsStatusFilter, ['Active', 'Closed']))
+        );
       })
       .catch((err) => LogErr('Failed to load submissions:', err))
       .finally(() => setLoading(false));
-  }, []);
-
-  // Filter handlers
-  const handleTypeChange = useCallback((value: string) => {
-    setSelectedTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) {
-        next.delete(value);
-      } else {
-        next.add(value);
-      }
-      SetSubmissionsTypeFilter([...next]);
-      return next;
-    });
-  }, []);
-
-  const handleResponseChange = useCallback((value: string) => {
-    setSelectedResponses((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) {
-        next.delete(value);
-      } else {
-        next.add(value);
-      }
-      SetSubmissionsResponseFilter([...next]);
-      return next;
-    });
-  }, []);
-
-  const handleStatusChange = useCallback((value: string) => {
-    setSelectedStatuses((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) {
-        next.delete(value);
-      } else {
-        next.add(value);
-      }
-      SetSubmissionsStatusFilter([...next]);
-      return next;
-    });
-  }, []);
+  }, [typeFilter, responseFilter, statusFilter]);
 
   const filterFn = useCallback(
     (sub: models.SubmissionView, search: string) => {
@@ -138,12 +97,12 @@ export function SubmissionsPage() {
 
       return (
         matchesSearch &&
-        matchesFilter(selectedTypes, sub.submissionType || '') &&
-        matchesFilter(selectedResponses, sub.responseType || '') &&
-        matchesFilter(selectedStatuses, status)
+        matchesFilter(typeFilter.selected, sub.submissionType || '') &&
+        matchesFilter(responseFilter.selected, sub.responseType || '') &&
+        matchesFilter(statusFilter.selected, status)
       );
     },
-    [selectedTypes, selectedResponses, selectedStatuses]
+    [typeFilter.selected, responseFilter.selected, statusFilter.selected]
   );
 
   const columns: Column<models.SubmissionView>[] = useMemo(
@@ -168,20 +127,11 @@ export function SubmissionsPage() {
         filterElement: (
           <ColumnFilterPopover
             options={typeOptions}
-            selected={selectedTypes}
-            onChange={handleTypeChange}
-            onSelectAll={() => {
-              setSelectedTypes(new Set(typeOptions));
-              SetSubmissionsTypeFilter([...typeOptions]);
-            }}
-            onSelectNone={() => {
-              setSelectedTypes(new Set());
-              SetSubmissionsTypeFilter([]);
-            }}
-            onSelectOnly={(value) => {
-              setSelectedTypes(new Set([value]));
-              SetSubmissionsTypeFilter([value]);
-            }}
+            selected={typeFilter.selected}
+            onChange={typeFilter.toggle}
+            onSelectAll={typeFilter.selectAll}
+            onSelectNone={typeFilter.selectNone}
+            onSelectOnly={typeFilter.selectOnly}
             label="Type"
           />
         ),
@@ -194,20 +144,11 @@ export function SubmissionsPage() {
         filterElement: (
           <ColumnFilterPopover
             options={responseOptions}
-            selected={selectedResponses}
-            onChange={handleResponseChange}
-            onSelectAll={() => {
-              setSelectedResponses(new Set(responseOptions));
-              SetSubmissionsResponseFilter([...responseOptions]);
-            }}
-            onSelectNone={() => {
-              setSelectedResponses(new Set());
-              SetSubmissionsResponseFilter([]);
-            }}
-            onSelectOnly={(value) => {
-              setSelectedResponses(new Set([value]));
-              SetSubmissionsResponseFilter([value]);
-            }}
+            selected={responseFilter.selected}
+            onChange={responseFilter.toggle}
+            onSelectAll={responseFilter.selectAll}
+            onSelectNone={responseFilter.selectNone}
+            onSelectOnly={responseFilter.selectOnly}
             label="Response"
           />
         ),
@@ -231,20 +172,11 @@ export function SubmissionsPage() {
         filterElement: (
           <ColumnFilterPopover
             options={statusOptions}
-            selected={selectedStatuses}
-            onChange={handleStatusChange}
-            onSelectAll={() => {
-              setSelectedStatuses(new Set(statusOptions));
-              SetSubmissionsStatusFilter([...statusOptions]);
-            }}
-            onSelectNone={() => {
-              setSelectedStatuses(new Set());
-              SetSubmissionsStatusFilter([]);
-            }}
-            onSelectOnly={(value) => {
-              setSelectedStatuses(new Set([value]));
-              SetSubmissionsStatusFilter([value]);
-            }}
+            selected={statusFilter.selected}
+            onChange={statusFilter.toggle}
+            onSelectAll={statusFilter.selectAll}
+            onSelectNone={statusFilter.selectNone}
+            onSelectOnly={statusFilter.selectOnly}
             label="Status"
           />
         ),
@@ -256,17 +188,7 @@ export function SubmissionsPage() {
         render: (s) => (s.submissionDate ? dayjs(s.submissionDate).format('MMM D, YYYY') : '-'),
       },
     ],
-    [
-      typeOptions,
-      selectedTypes,
-      handleTypeChange,
-      responseOptions,
-      selectedResponses,
-      handleResponseChange,
-      statusOptions,
-      selectedStatuses,
-      handleStatusChange,
-    ]
+    [typeOptions, typeFilter, responseOptions, responseFilter, statusOptions, statusFilter]
   );
 
   return (

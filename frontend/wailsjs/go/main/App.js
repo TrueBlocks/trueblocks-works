@@ -382,6 +382,10 @@ export function TouchWorkAccessDate(arg1) {
   return window['go']['main']['App']['TouchWorkAccessDate'](arg1);
 }
 
+export function UpdateCollection(arg1) {
+  return window['go']['main']['App']['UpdateCollection'](arg1);
+}
+
 export function UpdateNote(arg1) {
   return window['go']['main']['App']['UpdateNote'](arg1);
 }

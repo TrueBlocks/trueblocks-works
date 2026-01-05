@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Table, Group, ActionIcon, Tooltip } from '@mantine/core';
 import { IconWorld, IconBook } from '@tabler/icons-react';
@@ -23,7 +23,7 @@ import {
   ColumnFilterPopover,
   NumericFilterPopover,
 } from '@/components';
-import { ViewSort } from '@/hooks';
+import { ViewSort, useColumnFilter } from '@/hooks';
 import { Log, LogErr, matchesFilter, matchesNumericFilter, intersectFilter } from '@/utils';
 
 const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown => {
@@ -40,99 +40,20 @@ export function OrganizationsPage() {
   const [initialSort, setInitialSort] = useState<ViewSort | undefined>(undefined);
   const navigate = useNavigate();
 
-  // Filter state
-  const [showStatuses, setShowStatuses] = useState<Set<string>>(new Set());
-  const [showTypes, setShowTypes] = useState<Set<string>>(new Set());
-  const [showTimings, setShowTimings] = useState<Set<string>>(new Set());
   const [submissionsMin, setSubmissionsMin] = useState<number | undefined>(undefined);
   const [submissionsMax, setSubmissionsMax] = useState<number | undefined>(undefined);
   const [pushcartsMin, setPushcartsMin] = useState<number | undefined>(undefined);
   const [pushcartsMax, setPushcartsMax] = useState<number | undefined>(undefined);
 
-  // Available options from backend
   const [availableStatuses, setAvailableStatuses] = useState<string[]>([]);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const [availableTimings, setAvailableTimings] = useState<string[]>([]);
 
-  // Status filter callbacks
-  const toggleStatus = useCallback((status: string) => {
-    setShowStatuses((prev) => {
-      const next = new Set(prev);
-      if (next.has(status)) next.delete(status);
-      else next.add(status);
-      SetOrgsStatusFilter(Array.from(next));
-      return next;
-    });
-  }, []);
+  const statusFilter = useColumnFilter(availableStatuses, SetOrgsStatusFilter);
+  const typeFilter = useColumnFilter(availableTypes, SetOrgsTypeFilter);
+  const timingFilter = useColumnFilter(availableTimings, SetOrgsTimingFilter);
+  const hasInitialized = useRef(false);
 
-  const selectAllStatuses = useCallback(() => {
-    setShowStatuses(new Set(availableStatuses));
-    SetOrgsStatusFilter(availableStatuses);
-  }, [availableStatuses]);
-
-  const selectNoneStatuses = useCallback(() => {
-    setShowStatuses(new Set());
-    SetOrgsStatusFilter([]);
-  }, []);
-
-  const selectOnlyStatus = useCallback((status: string) => {
-    setShowStatuses(new Set([status]));
-    SetOrgsStatusFilter([status]);
-  }, []);
-
-  // Type filter callbacks
-  const toggleType = useCallback((type: string) => {
-    setShowTypes((prev) => {
-      const next = new Set(prev);
-      if (next.has(type)) next.delete(type);
-      else next.add(type);
-      SetOrgsTypeFilter(Array.from(next));
-      return next;
-    });
-  }, []);
-
-  const selectAllTypes = useCallback(() => {
-    setShowTypes(new Set(availableTypes));
-    SetOrgsTypeFilter(availableTypes);
-  }, [availableTypes]);
-
-  const selectNoneTypes = useCallback(() => {
-    setShowTypes(new Set());
-    SetOrgsTypeFilter([]);
-  }, []);
-
-  const selectOnlyType = useCallback((type: string) => {
-    setShowTypes(new Set([type]));
-    SetOrgsTypeFilter([type]);
-  }, []);
-
-  // Timing filter callbacks
-  const toggleTiming = useCallback((timing: string) => {
-    setShowTimings((prev) => {
-      const next = new Set(prev);
-      if (next.has(timing)) next.delete(timing);
-      else next.add(timing);
-      SetOrgsTimingFilter(Array.from(next));
-      return next;
-    });
-  }, []);
-
-  const selectAllTimings = useCallback(() => {
-    setShowTimings(new Set(availableTimings));
-    SetOrgsTimingFilter(availableTimings);
-  }, [availableTimings]);
-
-  const selectNoneTimings = useCallback(() => {
-    setShowTimings(new Set());
-    SetOrgsTimingFilter([]);
-  }, []);
-
-  const selectOnlyTiming = useCallback((timing: string) => {
-    setShowTimings(new Set([timing]));
-    SetOrgsTimingFilter([timing]);
-  }, []);
-
-  // Submissions filter callback
   const handleSubmissionsFilterChange = useCallback(
     (min: number | undefined, max: number | undefined) => {
       setSubmissionsMin(min);
@@ -152,35 +73,35 @@ export function OrganizationsPage() {
     []
   );
 
-  const cycleOrgStatus = useCallback((org: models.OrganizationWithNotes, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const statusOrder = ['Open', 'Boring', 'Defunct'];
-    const currentIndex = statusOrder.indexOf(org.status || 'Open');
-    const nextIndex = (currentIndex + 1) % statusOrder.length;
-    const newStatus = statusOrder[nextIndex];
-    const oldStatus = org.status;
+  const cycleOrgStatus = useCallback(
+    (org: models.OrganizationWithNotes, e: React.MouseEvent) => {
+      e.stopPropagation();
+      const statusOrder = ['Open', 'Boring', 'Defunct'];
+      const currentIndex = statusOrder.indexOf(org.status || 'Open');
+      const nextIndex = (currentIndex + 1) % statusOrder.length;
+      const newStatus = statusOrder[nextIndex];
+      const oldStatus = org.status;
 
-    // Ensure the new status is included in the filter so the row doesn't disappear
-    setShowStatuses((prev) => {
-      if (prev.has(newStatus)) return prev;
-      const next = new Set(prev);
-      next.add(newStatus);
-      SetOrgsStatusFilter(Array.from(next));
-      return next;
-    });
+      statusFilter.addValue(newStatus);
 
-    // Also add to available options if not present
-    setAvailableStatuses((prev) => (prev.includes(newStatus) ? prev : [...prev, newStatus]));
+      setAvailableStatuses((prev) => (prev.includes(newStatus) ? prev : [...prev, newStatus]));
 
-    setOrgs((prev) => prev.map((o) => (o.orgID === org.orgID ? { ...o, status: newStatus } : o)));
+      setOrgs((prev) => prev.map((o) => (o.orgID === org.orgID ? { ...o, status: newStatus } : o)));
 
-    const updatedOrg = { ...org, status: newStatus };
-    UpdateOrganization(updatedOrg as models.Organization).catch(() => {
-      setOrgs((prev) => prev.map((o) => (o.orgID === org.orgID ? { ...o, status: oldStatus } : o)));
-    });
-  }, []);
+      const updatedOrg = { ...org, status: newStatus };
+      UpdateOrganization(updatedOrg as models.Organization).catch(() => {
+        setOrgs((prev) =>
+          prev.map((o) => (o.orgID === org.orgID ? { ...o, status: oldStatus } : o))
+        );
+      });
+    },
+    [statusFilter]
+  );
 
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
     Promise.all([GetOrganizationsWithNotes(), GetAppState(), GetOrgsFilterOptions()])
       .then(([data, appState, filterOptions]) => {
         Log('Organizations loaded:', data?.length || 0);
@@ -196,10 +117,13 @@ export function OrganizationsPage() {
           setInitialSearch(appState.orgsFilter);
         }
 
-        // Set filters: intersect persisted with available (defaults to all if no valid persisted)
-        setShowStatuses(intersectFilter(appState?.orgsStatusFilter, filterOptions.statuses || []));
-        setShowTypes(intersectFilter(appState?.orgsTypeFilter, filterOptions.types || []));
-        setShowTimings(intersectFilter(appState?.orgsTimingFilter, filterOptions.timings || []));
+        statusFilter.initialize(
+          intersectFilter(appState?.orgsStatusFilter, filterOptions.statuses || [])
+        );
+        typeFilter.initialize(intersectFilter(appState?.orgsTypeFilter, filterOptions.types || []));
+        timingFilter.initialize(
+          intersectFilter(appState?.orgsTimingFilter, filterOptions.timings || [])
+        );
 
         // Restore numeric filters
         if (appState?.orgsSubmissionsMin !== undefined && appState?.orgsSubmissionsMin !== null) {
@@ -233,24 +157,24 @@ export function OrganizationsPage() {
         LogErr('Failed to load organizations:', err);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [statusFilter, typeFilter, timingFilter]);
 
   const filterFn = useCallback(
     (org: models.OrganizationWithNotes, search: string) => {
       const pushcarts = org.nPushFiction + org.nPushNonfiction + org.nPushPoetry;
       return (
         org.name.toLowerCase().includes(search.toLowerCase()) &&
-        matchesFilter(showStatuses, org.status) &&
-        matchesFilter(showTypes, org.type) &&
-        matchesFilter(showTimings, org.timing) &&
+        matchesFilter(statusFilter.selected, org.status) &&
+        matchesFilter(typeFilter.selected, org.type) &&
+        matchesFilter(timingFilter.selected, org.timing) &&
         matchesNumericFilter(org.nSubmissions, submissionsMin, submissionsMax) &&
         matchesNumericFilter(pushcarts, pushcartsMin, pushcartsMax)
       );
     },
     [
-      showStatuses,
-      showTypes,
-      showTimings,
+      statusFilter.selected,
+      typeFilter.selected,
+      timingFilter.selected,
       submissionsMin,
       submissionsMax,
       pushcartsMin,
@@ -270,11 +194,11 @@ export function OrganizationsPage() {
         filterElement: (
           <ColumnFilterPopover
             options={availableTypes}
-            selected={showTypes}
-            onChange={toggleType}
-            onSelectAll={selectAllTypes}
-            onSelectNone={selectNoneTypes}
-            onSelectOnly={selectOnlyType}
+            selected={typeFilter.selected}
+            onChange={typeFilter.toggle}
+            onSelectAll={typeFilter.selectAll}
+            onSelectNone={typeFilter.selectNone}
+            onSelectOnly={typeFilter.selectOnly}
             label="Type"
           />
         ),
@@ -296,11 +220,11 @@ export function OrganizationsPage() {
         filterElement: (
           <ColumnFilterPopover
             options={availableStatuses}
-            selected={showStatuses}
-            onChange={toggleStatus}
-            onSelectAll={selectAllStatuses}
-            onSelectNone={selectNoneStatuses}
-            onSelectOnly={selectOnlyStatus}
+            selected={statusFilter.selected}
+            onChange={statusFilter.toggle}
+            onSelectAll={statusFilter.selectAll}
+            onSelectNone={statusFilter.selectNone}
+            onSelectOnly={statusFilter.selectOnly}
             label="Status"
           />
         ),
@@ -313,11 +237,11 @@ export function OrganizationsPage() {
         filterElement: (
           <ColumnFilterPopover
             options={availableTimings}
-            selected={showTimings}
-            onChange={toggleTiming}
-            onSelectAll={selectAllTimings}
-            onSelectNone={selectNoneTimings}
-            onSelectOnly={selectOnlyTiming}
+            selected={timingFilter.selected}
+            onChange={timingFilter.toggle}
+            onSelectAll={timingFilter.selectAll}
+            onSelectNone={timingFilter.selectNone}
+            onSelectOnly={timingFilter.selectOnly}
             label="Timing"
           />
         ),
@@ -373,21 +297,9 @@ export function OrganizationsPage() {
       availableTypes,
       availableTimings,
       cycleOrgStatus,
-      showStatuses,
-      toggleStatus,
-      selectAllStatuses,
-      selectNoneStatuses,
-      selectOnlyStatus,
-      showTypes,
-      toggleType,
-      selectAllTypes,
-      selectNoneTypes,
-      selectOnlyType,
-      showTimings,
-      toggleTiming,
-      selectAllTimings,
-      selectNoneTimings,
-      selectOnlyTiming,
+      statusFilter,
+      typeFilter,
+      timingFilter,
       submissionsMin,
       submissionsMax,
       handleSubmissionsFilterChange,

@@ -76,7 +76,12 @@ const entityTypeColor: Record<string, string> = {
 };
 
 function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
+  // Handle both ISO format (2026-01-05T22:38:09-05:00) and SQLite format (2026-01-06 03:27:20)
+  // SQLite CURRENT_TIMESTAMP is UTC but lacks 'Z' suffix, so append it
+  const normalizedDateString = dateString.includes('T')
+    ? dateString
+    : dateString.replace(' ', 'T') + 'Z';
+  const date = new Date(normalizedDateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);

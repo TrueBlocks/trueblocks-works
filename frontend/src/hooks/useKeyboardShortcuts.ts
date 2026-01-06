@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const shortcuts: Record<string, string> = {
-  '1': '/works',
-  '2': '/organizations',
-  '3': '/submissions',
-  '4': '/collections',
-  '5': '/reports',
-  '6': '/settings',
+  '1': '/dashboard',
+  '2': '/works',
+  '3': '/organizations',
+  '4': '/submissions',
+  '5': '/collections',
+  '6': '/reports',
+  '7': '/settings',
 };
 
 export function useKeyboardShortcuts() {

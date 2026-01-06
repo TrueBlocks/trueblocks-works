@@ -1,3 +1,4 @@
+export { DashboardPage } from './DashboardPage';
 export { WorksPage } from './WorksPage';
 export { WorkDetailPage } from './WorkDetailPage';
 export { OrganizationsPage } from './OrganizationsPage';

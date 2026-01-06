@@ -63,6 +63,8 @@ export function GetCollectionWorks(arg1:number):Promise<Array<models.Work>>;
 
 export function GetCollections():Promise<Array<models.Collection>>;
 
+export function GetDashboardStats():Promise<main.DashboardStats>;
+
 export function GetDuotropeURL(arg1:number):Promise<string>;
 
 export function GetEnumLists():Promise<main.EnumLists>;

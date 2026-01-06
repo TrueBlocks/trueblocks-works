@@ -6,6 +6,7 @@ import { Navigation } from '@/components/Navigation';
 import { SearchModal } from '@/components/SearchModal';
 import { BackupRestoreModal } from '@/components/BackupRestoreModal';
 import { SetupWizard } from '@/components/SetupWizard';
+import { DashboardPage } from '@/pages/DashboardPage';
 import { WorksPage } from '@/pages/WorksPage';
 import { WorkDetailPage } from '@/pages/WorkDetailPage';
 import { OrganizationsPage } from '@/pages/OrganizationsPage';
@@ -204,7 +205,8 @@ function App() {
         </AppShell.Navbar>
         <AppShell.Main>
           <Routes>
-            <Route path="/" element={<WorksPage />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/works" element={<WorksPage />} />
             <Route path="/works/:id" element={<WorkDetailPage />} />
             <Route path="/organizations" element={<OrganizationsPage />} />

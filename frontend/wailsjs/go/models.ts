@@ -46,6 +46,252 @@ export namespace fileops {
 
 export namespace main {
 	
+	export class CollectionSize {
+	    name: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionSize(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.count = source["count"];
+	    }
+	}
+	export class CollectionsStats {
+	    total: number;
+	    statusLists: number;
+	    regular: number;
+	    largest: CollectionSize[];
+	    sparkline: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionsStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.total = source["total"];
+	        this.statusLists = source["statusLists"];
+	        this.regular = source["regular"];
+	        this.largest = this.convertValues(source["largest"], CollectionSize);
+	        this.sparkline = source["sparkline"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PendingAlert {
+	    submissionID: number;
+	    workTitle: string;
+	    orgName: string;
+	    daysWaiting: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PendingAlert(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.submissionID = source["submissionID"];
+	        this.workTitle = source["workTitle"];
+	        this.orgName = source["orgName"];
+	        this.daysWaiting = source["daysWaiting"];
+	    }
+	}
+	export class RecentItem {
+	    entityType: string;
+	    entityID: number;
+	    name: string;
+	    createdAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RecentItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entityType = source["entityType"];
+	        this.entityID = source["entityID"];
+	        this.name = source["name"];
+	        this.createdAt = source["createdAt"];
+	    }
+	}
+	export class YearProgressStats {
+	    year: number;
+	    submissions: number;
+	    acceptances: number;
+	    successRate: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new YearProgressStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.year = source["year"];
+	        this.submissions = source["submissions"];
+	        this.acceptances = source["acceptances"];
+	        this.successRate = source["successRate"];
+	    }
+	}
+	export class SubmissionsStats {
+	    total: number;
+	    pending: number;
+	    thisYear: number;
+	    byResponse: Record<string, number>;
+	    byMonth: Record<string, number>;
+	    acceptRate: number;
+	    sparkline: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SubmissionsStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.total = source["total"];
+	        this.pending = source["pending"];
+	        this.thisYear = source["thisYear"];
+	        this.byResponse = source["byResponse"];
+	        this.byMonth = source["byMonth"];
+	        this.acceptRate = source["acceptRate"];
+	        this.sparkline = source["sparkline"];
+	    }
+	}
+	export class OrgSubmitCount {
+	    name: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new OrgSubmitCount(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.count = source["count"];
+	    }
+	}
+	export class OrganizationsStats {
+	    total: number;
+	    byStatus: Record<string, number>;
+	    byType: Record<string, number>;
+	    topSubmitted: OrgSubmitCount[];
+	    sparkline: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new OrganizationsStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.total = source["total"];
+	        this.byStatus = source["byStatus"];
+	        this.byType = source["byType"];
+	        this.topSubmitted = this.convertValues(source["topSubmitted"], OrgSubmitCount);
+	        this.sparkline = source["sparkline"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorksStats {
+	    total: number;
+	    byType: Record<string, number>;
+	    byStatus: Record<string, number>;
+	    byYear: Record<string, number>;
+	    byQuality: Record<string, number>;
+	    sparkline: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorksStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.total = source["total"];
+	        this.byType = source["byType"];
+	        this.byStatus = source["byStatus"];
+	        this.byYear = source["byYear"];
+	        this.byQuality = source["byQuality"];
+	        this.sparkline = source["sparkline"];
+	    }
+	}
+	export class DashboardStats {
+	    works: WorksStats;
+	    organizations: OrganizationsStats;
+	    submissions: SubmissionsStats;
+	    collections: CollectionsStats;
+	    yearProgress: YearProgressStats;
+	    recentItems: RecentItem[];
+	    pendingAlerts: PendingAlert[];
+	
+	    static createFrom(source: any = {}) {
+	        return new DashboardStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.works = this.convertValues(source["works"], WorksStats);
+	        this.organizations = this.convertValues(source["organizations"], OrganizationsStats);
+	        this.submissions = this.convertValues(source["submissions"], SubmissionsStats);
+	        this.collections = this.convertValues(source["collections"], CollectionsStats);
+	        this.yearProgress = this.convertValues(source["yearProgress"], YearProgressStats);
+	        this.recentItems = this.convertValues(source["recentItems"], RecentItem);
+	        this.pendingAlerts = this.convertValues(source["pendingAlerts"], PendingAlert);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class EnumLists {
 	    statusList: string[];
 	    qualityList: string[];
@@ -80,6 +326,8 @@ export namespace main {
 	        this.error = source["error"];
 	    }
 	}
+	
+	
 	export class OrgsFilterOptions {
 	    statuses: string[];
 	    types: string[];
@@ -114,6 +362,8 @@ export namespace main {
 	        this.fileExists = source["fileExists"];
 	    }
 	}
+	
+	
 	export class ReportIssue {
 	    id: number;
 	    description: string;
@@ -219,6 +469,7 @@ export namespace main {
 	        this.statuses = source["statuses"];
 	    }
 	}
+	
 	export class TableInfo {
 	    name: string;
 	    count: number;
@@ -291,6 +542,7 @@ export namespace main {
 	        this.qualities = source["qualities"];
 	    }
 	}
+	
 
 }
 

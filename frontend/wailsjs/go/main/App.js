@@ -114,6 +114,10 @@ export function GetCollections() {
   return window['go']['main']['App']['GetCollections']();
 }
 
+export function GetDashboardStats() {
+  return window['go']['main']['App']['GetDashboardStats']();
+}
+
 export function GetDuotropeURL(arg1) {
   return window['go']['main']['App']['GetDuotropeURL'](arg1);
 }

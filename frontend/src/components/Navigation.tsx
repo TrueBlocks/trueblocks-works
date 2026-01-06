@@ -7,9 +7,11 @@ import {
   IconFolder,
   IconSettings,
   IconReportAnalytics,
+  IconDashboard,
 } from '@tabler/icons-react';
 
 const navItems = [
+  { path: '/dashboard', label: 'Dashboard', icon: IconDashboard },
   { path: '/works', label: 'Works', icon: IconBook2 },
   { path: '/organizations', label: 'Organizations', icon: IconBuilding },
   { path: '/submissions', label: 'Submissions', icon: IconSend },
@@ -32,7 +34,7 @@ function Links() {
 
   const renderLink = (item: { path: string; label: string; icon: typeof IconBook2 }) => {
     const isActive =
-      location.pathname === item.path || (location.pathname === '/' && item.path === '/works');
+      location.pathname === item.path || (location.pathname === '/' && item.path === '/dashboard');
     return (
       <NavLink
         key={item.path}

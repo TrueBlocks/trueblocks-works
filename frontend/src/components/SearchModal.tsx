@@ -148,10 +148,7 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
     >
       <Stack gap="sm">
         <TextInput
-<<<<<<< HEAD
-=======
           ref={inputRef}
->>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
           placeholder="Search works, journals, notes, submissions..."
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}

@@ -15,7 +15,7 @@ func (db *DB) CreateOrganization(o *models.Organization) error {
 		submission_types, accepts, my_interest, ranking, source,
 		website_menu, duotrope_num, n_push_fiction, n_push_nonfiction,
 		n_push_poetry, contest_ends, contest_fee, contest_prize,
-		contest_prize_2, attributes, date_added, date_modified
+		contest_prize_2, attributes, date_added, modified_at
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
@@ -35,7 +35,7 @@ func (db *DB) CreateOrganization(o *models.Organization) error {
 	}
 	o.OrgID = id
 	o.DateAdded = &now
-	o.DateModified = &now
+	o.ModifiedAt = &now
 	return nil
 }
 
@@ -44,7 +44,7 @@ func (db *DB) GetOrganization(id int64) (*models.Organization, error) {
 		timing, submission_types, accepts, my_interest, ranking, source,
 		website_menu, duotrope_num, n_push_fiction, n_push_nonfiction,
 		n_push_poetry, contest_ends, contest_fee, contest_prize,
-		contest_prize_2, attributes, date_added, date_modified
+		contest_prize_2, attributes, date_added, modified_at
 		FROM Organizations WHERE orgID = ?`
 
 	o := &models.Organization{}
@@ -54,7 +54,7 @@ func (db *DB) GetOrganization(id int64) (*models.Organization, error) {
 		&o.MyInterest, &o.Ranking, &o.Source, &o.WebsiteMenu,
 		&o.DuotropeNum, &o.NPushFiction, &o.NPushNonfict, &o.NPushPoetry,
 		&o.ContestEnds, &o.ContestFee, &o.ContestPrize, &o.ContestPrize2,
-		&o.Attributes, &o.DateAdded, &o.DateModified,
+		&o.Attributes, &o.DateAdded, &o.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -72,7 +72,7 @@ func (db *DB) UpdateOrganization(o *models.Organization) error {
 		timing=?, submission_types=?, accepts=?, my_interest=?, ranking=?,
 		source=?, website_menu=?, duotrope_num=?, n_push_fiction=?,
 		n_push_nonfiction=?, n_push_poetry=?, contest_ends=?, contest_fee=?,
-		contest_prize=?, contest_prize_2=?, attributes=?, date_modified=?
+		contest_prize=?, contest_prize_2=?, attributes=?, modified_at=?
 		WHERE orgID=?`
 
 	_, err := db.conn.Exec(query,
@@ -85,7 +85,7 @@ func (db *DB) UpdateOrganization(o *models.Organization) error {
 	if err != nil {
 		return fmt.Errorf("update organization: %w", err)
 	}
-	o.DateModified = &now
+	o.ModifiedAt = &now
 	return nil
 }
 
@@ -105,7 +105,7 @@ func (db *DB) ListOrganizations() ([]models.Organization, error) {
 		timing, submission_types, accepts, my_interest, ranking, source,
 		website_menu, duotrope_num, n_push_fiction, n_push_nonfiction,
 		n_push_poetry, contest_ends, contest_fee, contest_prize,
-		contest_prize_2, attributes, date_added, date_modified
+		contest_prize_2, attributes, date_added, modified_at
 		FROM Organizations ORDER BY name`
 
 	rows, err := db.conn.Query(query)
@@ -123,7 +123,7 @@ func (db *DB) ListOrganizations() ([]models.Organization, error) {
 			&o.MyInterest, &o.Ranking, &o.Source, &o.WebsiteMenu,
 			&o.DuotropeNum, &o.NPushFiction, &o.NPushNonfict, &o.NPushPoetry,
 			&o.ContestEnds, &o.ContestFee, &o.ContestPrize, &o.ContestPrize2,
-			&o.Attributes, &o.DateAdded, &o.DateModified,
+			&o.Attributes, &o.DateAdded, &o.ModifiedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan organization: %w", err)
@@ -138,7 +138,7 @@ func (db *DB) ListOrganizationsWithNotes() ([]models.OrganizationWithNotes, erro
 		o.timing, o.submission_types, o.accepts, o.my_interest, o.ranking, o.source,
 		o.website_menu, o.duotrope_num, o.n_push_fiction, o.n_push_nonfiction,
 		o.n_push_poetry, o.contest_ends, o.contest_fee, o.contest_prize,
-		o.contest_prize_2, o.attributes, o.date_added, o.date_modified,
+		o.contest_prize_2, o.attributes, o.date_added, o.modified_at,
 		(SELECT COUNT(*) FROM Submissions s WHERE s.orgID = o.orgID) as n_submissions,
 		GROUP_CONCAT(n.note, ' ') as notes
 		FROM Organizations o
@@ -161,7 +161,7 @@ func (db *DB) ListOrganizationsWithNotes() ([]models.OrganizationWithNotes, erro
 			&o.MyInterest, &o.Ranking, &o.Source, &o.WebsiteMenu,
 			&o.DuotropeNum, &o.NPushFiction, &o.NPushNonfict, &o.NPushPoetry,
 			&o.ContestEnds, &o.ContestFee, &o.ContestPrize, &o.ContestPrize2,
-			&o.Attributes, &o.DateAdded, &o.DateModified, &o.NSubmissions, &o.Notes,
+			&o.Attributes, &o.DateAdded, &o.ModifiedAt, &o.NSubmissions, &o.Notes,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan organization with notes: %w", err)

@@ -366,12 +366,12 @@ func (a *App) exportNotesCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	header := []string{"entity_type", "entity_id", "type", "note", "modified_date"}
+	header := []string{"entity_type", "entity_id", "type", "note", "modified_at"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
-	rows, err := a.db.Conn().Query(`SELECT entity_type, entity_id, type, note, modified_date FROM Notes ORDER BY entity_type, entity_id`)
+	rows, err := a.db.Conn().Query(`SELECT entity_type, entity_id, type, note, modified_at FROM Notes ORDER BY entity_type, entity_id`)
 	if err != nil {
 		return 0, err
 	}
@@ -381,9 +381,9 @@ func (a *App) exportNotesCSV(importsPath string) (int, error) {
 	for rows.Next() {
 		var entityType string
 		var entityID int64
-		var noteType, note, modifiedDate *string
+		var noteType, note, modifiedAt *string
 
-		if err := rows.Scan(&entityType, &entityID, &noteType, &note, &modifiedDate); err != nil {
+		if err := rows.Scan(&entityType, &entityID, &noteType, &note, &modifiedAt); err != nil {
 			return 0, err
 		}
 
@@ -392,7 +392,7 @@ func (a *App) exportNotesCSV(importsPath string) (int, error) {
 			strconv.FormatInt(entityID, 10),
 			strPtrToCSV(noteType),
 			strPtrToCSV(note),
-			strPtrToCSV(modifiedDate),
+			strPtrToCSV(modifiedAt),
 		}
 		records = append(records, record)
 	}
@@ -433,11 +433,21 @@ func (q *quotedCSVWriter) Write(record []string) error {
 }
 
 // Helper functions for CSV conversion
+
+// encodeForCSV replaces newlines with magic text placeholders to ensure
+// CSV rows stay on single lines. Use decodeFromCSV on import to restore.
+func encodeForCSV(s string) string {
+	s = strings.ReplaceAll(s, "\r\n", "[[CRLF]]")
+	s = strings.ReplaceAll(s, "\n", "[[NEWLINE]]")
+	s = strings.ReplaceAll(s, "\r", "[[RETURN]]")
+	return s
+}
+
 func strPtrToCSV(s *string) string {
 	if s == nil {
 		return ""
 	}
-	return *s
+	return encodeForCSV(*s)
 }
 
 func intPtrToCSV(i *int) string {

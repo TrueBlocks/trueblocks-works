@@ -162,6 +162,10 @@ export function GetPreviewURL(arg1) {
   return window['go']['main']['App']['GetPreviewURL'](arg1);
 }
 
+export function GetRecentlyChanged(arg1) {
+  return window['go']['main']['App']['GetRecentlyChanged'](arg1);
+}
+
 export function GetReports() {
   return window['go']['main']['App']['GetReports']();
 }

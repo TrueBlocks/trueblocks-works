@@ -9,7 +9,7 @@ import (
 
 func (db *DB) CreateNote(n *models.Note) error {
 	now := time.Now().Format(time.RFC3339)
-	query := `INSERT INTO Notes (entity_type, entity_id, type, note, modified_date, created_at)
+	query := `INSERT INTO Notes (entity_type, entity_id, type, note, modified_at, created_at)
 		VALUES (?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query, n.EntityType, n.EntityID, n.Type, n.Note, now, now)
@@ -22,13 +22,13 @@ func (db *DB) CreateNote(n *models.Note) error {
 		return fmt.Errorf("get last insert id: %w", err)
 	}
 	n.ID = id
-	n.ModifiedDate = &now
+	n.ModifiedAt = &now
 	n.CreatedAt = now
 	return nil
 }
 
 func (db *DB) GetNotes(entityType string, entityID int64) ([]models.Note, error) {
-	query := `SELECT id, entity_type, entity_id, type, note, modified_date, created_at
+	query := `SELECT id, entity_type, entity_id, type, note, modified_at, created_at
 		FROM Notes WHERE entity_type = ? AND entity_id = ? ORDER BY created_at DESC`
 
 	rows, err := db.conn.Query(query, entityType, entityID)
@@ -41,7 +41,7 @@ func (db *DB) GetNotes(entityType string, entityID int64) ([]models.Note, error)
 	for rows.Next() {
 		var n models.Note
 		err := rows.Scan(&n.ID, &n.EntityType, &n.EntityID, &n.Type, &n.Note,
-			&n.ModifiedDate, &n.CreatedAt)
+			&n.ModifiedAt, &n.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan note: %w", err)
 		}
@@ -52,12 +52,12 @@ func (db *DB) GetNotes(entityType string, entityID int64) ([]models.Note, error)
 
 func (db *DB) UpdateNote(n *models.Note) error {
 	now := time.Now().Format(time.RFC3339)
-	query := `UPDATE Notes SET type=?, note=?, modified_date=? WHERE id=?`
+	query := `UPDATE Notes SET type=?, note=?, modified_at=? WHERE id=?`
 	_, err := db.conn.Exec(query, n.Type, n.Note, now, n.ID)
 	if err != nil {
 		return fmt.Errorf("update note: %w", err)
 	}
-	n.ModifiedDate = &now
+	n.ModifiedAt = &now
 	return nil
 }
 
@@ -78,7 +78,7 @@ func (db *DB) DeleteNotesByEntity(entityType string, entityID int64) error {
 }
 
 func (db *DB) GetAllNotes() ([]models.Note, error) {
-	query := `SELECT id, entity_type, entity_id, type, note, modified_date, created_at
+	query := `SELECT id, entity_type, entity_id, type, note, modified_at, created_at
 		FROM Notes ORDER BY type, entity_type, note`
 
 	rows, err := db.conn.Query(query)
@@ -91,7 +91,7 @@ func (db *DB) GetAllNotes() ([]models.Note, error) {
 	for rows.Next() {
 		var n models.Note
 		err := rows.Scan(&n.ID, &n.EntityType, &n.EntityID, &n.Type, &n.Note,
-			&n.ModifiedDate, &n.CreatedAt)
+			&n.ModifiedAt, &n.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan note: %w", err)
 		}

@@ -152,7 +152,7 @@ func (a *App) exportWorks() (interface{}, int, error) {
 }
 
 func (a *App) exportOrganizations() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, date_modified FROM Organizations ORDER BY orgID`)
+	rows, err := a.db.Conn().Query(`SELECT orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, modified_at FROM Organizations ORDER BY orgID`)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -162,10 +162,10 @@ func (a *App) exportOrganizations() (interface{}, int, error) {
 	for rows.Next() {
 		var orgID int64
 		var name string
-		var otherName, url, otherURL, status, orgType, timing, submissionTypes, accepts, myInterest, source, websiteMenu, contestEnds, contestFee, contestPrize, contestPrize2, attributes, dateAdded, dateModified *string
+		var otherName, url, otherURL, status, orgType, timing, submissionTypes, accepts, myInterest, source, websiteMenu, contestEnds, contestFee, contestPrize, contestPrize2, attributes, dateAdded, modifiedAt *string
 		var ranking, duotropeNum, nPushFiction, nPushNonfiction, nPushPoetry *int
 
-		err := rows.Scan(&orgID, &name, &otherName, &url, &otherURL, &status, &orgType, &timing, &submissionTypes, &accepts, &myInterest, &ranking, &source, &websiteMenu, &duotropeNum, &nPushFiction, &nPushNonfiction, &nPushPoetry, &contestEnds, &contestFee, &contestPrize, &contestPrize2, &attributes, &dateAdded, &dateModified)
+		err := rows.Scan(&orgID, &name, &otherName, &url, &otherURL, &status, &orgType, &timing, &submissionTypes, &accepts, &myInterest, &ranking, &source, &websiteMenu, &duotropeNum, &nPushFiction, &nPushNonfiction, &nPushPoetry, &contestEnds, &contestFee, &contestPrize, &contestPrize2, &attributes, &dateAdded, &modifiedAt)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -270,13 +270,13 @@ func (a *App) exportNotes() (interface{}, int, error) {
 	records := make([]map[string]interface{}, 0, len(notes))
 	for _, n := range notes {
 		records = append(records, map[string]interface{}{
-			"id":           n.ID,
-			"entityType":   n.EntityType,
-			"entityID":     n.EntityID,
-			"type":         n.Type,
-			"note":         n.Note,
-			"modifiedDate": n.ModifiedDate,
-			"createdAt":    n.CreatedAt,
+			"id":         n.ID,
+			"entityType": n.EntityType,
+			"entityID":   n.EntityID,
+			"type":       n.Type,
+			"note":       n.Note,
+			"modifiedAt": n.ModifiedAt,
+			"createdAt":  n.CreatedAt,
 		})
 	}
 	return records, len(records), nil

@@ -23,6 +23,11 @@ var migrations = []Migration{
 		Name:    "fts_notes_and_submissions",
 		Up:      migrateFTSNotesAndSubmissions,
 	},
+	{
+		Version: 12,
+		Name:    "rename_modified_columns",
+		Up:      migrateRenameModifiedColumns,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -195,6 +200,25 @@ func migrateFTSNotesAndSubmissions(tx *sql.Tx) error {
 	`)
 	if err != nil {
 		return fmt.Errorf("create submissions_fts_au trigger: %w", err)
+	}
+
+	return nil
+}
+
+// migrateRenameModifiedColumns renames date_modified to modified_at in Organizations
+// and modified_date to modified_at in Notes for consistency across all tables.
+func migrateRenameModifiedColumns(tx *sql.Tx) error {
+	// SQLite 3.25.0+ supports ALTER TABLE RENAME COLUMN
+	// Rename Organizations.date_modified -> modified_at
+	_, err := tx.Exec(`ALTER TABLE Organizations RENAME COLUMN date_modified TO modified_at`)
+	if err != nil {
+		return fmt.Errorf("rename Organizations.date_modified: %w", err)
+	}
+
+	// Rename Notes.modified_date -> modified_at
+	_, err = tx.Exec(`ALTER TABLE Notes RENAME COLUMN modified_date TO modified_at`)
+	if err != nil {
+		return fmt.Errorf("rename Notes.modified_date: %w", err)
 	}
 
 	return nil

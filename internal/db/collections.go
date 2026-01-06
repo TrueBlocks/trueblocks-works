@@ -104,6 +104,12 @@ func (db *DB) AddWorkToCollection(collID, workID int64) error {
 	if err != nil {
 		return fmt.Errorf("add work to collection: %w", err)
 	}
+
+	// Update collection's modified_at timestamp
+	_, err = db.conn.Exec(`UPDATE Collections SET modified_at = CURRENT_TIMESTAMP WHERE collID = ?`, collID)
+	if err != nil {
+		return fmt.Errorf("update collection modified_at: %w", err)
+	}
 	return nil
 }
 
@@ -112,6 +118,12 @@ func (db *DB) RemoveWorkFromCollection(collID, workID int64) error {
 	_, err := db.conn.Exec(query, collID, workID)
 	if err != nil {
 		return fmt.Errorf("remove work from collection: %w", err)
+	}
+
+	// Update collection's modified_at timestamp
+	_, err = db.conn.Exec(`UPDATE Collections SET modified_at = CURRENT_TIMESTAMP WHERE collID = ?`, collID)
+	if err != nil {
+		return fmt.Errorf("update collection modified_at: %w", err)
 	}
 	return nil
 }

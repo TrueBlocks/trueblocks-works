@@ -87,6 +87,8 @@ export function GetOrgsFilterOptions():Promise<main.OrgsFilterOptions>;
 
 export function GetPreviewURL(arg1:number):Promise<string>;
 
+export function GetRecentlyChanged(arg1:number):Promise<Array<models.RecentChange>>;
+
 export function GetReports():Promise<main.ReportsResult>;
 
 export function GetSearchHistory():Promise<Array<string>>;

@@ -86,7 +86,7 @@ CREATE TABLE Organizations (
     contest_prize_2 TEXT,
     attributes TEXT DEFAULT '',
     date_added TEXT,
-    date_modified TEXT
+    modified_at TEXT
 );
 
 -- Submissions: tracking submissions to organizations
@@ -119,7 +119,7 @@ CREATE TABLE Notes (
     entity_id INTEGER NOT NULL,
     type TEXT,
     note TEXT,
-    modified_date TEXT,
+    modified_at TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -331,3 +331,4 @@ INSERT INTO schema_migrations (version, description) VALUES (8, 'populate_attrib
 INSERT INTO schema_migrations (version, description) VALUES (9, 'drop_boolean_columns');
 INSERT INTO schema_migrations (version, description) VALUES (10, 'drop_mark_column');
 INSERT INTO schema_migrations (version, description) VALUES (11, 'fts_notes_and_submissions');
+INSERT INTO schema_migrations (version, description) VALUES (12, 'rename_modified_columns');

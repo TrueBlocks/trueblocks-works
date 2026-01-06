@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"works/internal/models"
 )
 
 const unknownName = "Unknown"
@@ -28,6 +30,11 @@ type ReportCategory struct {
 type ReportsResult struct {
 	Categories []ReportCategory `json:"categories"`
 	TotalCount int              `json:"totalCount"`
+}
+
+// GetRecentlyChanged returns recently modified records across all entity types.
+func (a *App) GetRecentlyChanged(limit int) ([]models.RecentChange, error) {
+	return a.db.GetRecentlyChanged(limit)
 }
 
 func (a *App) GetReports() (ReportsResult, error) {

@@ -82,6 +82,15 @@ func extractYearFromPath(path string) *string {
 	return nil
 }
 
+// decodeFromCSV restores newlines from magic text placeholders that were
+// encoded during CSV export. This ensures round-trip integrity.
+func decodeFromCSV(s string) string {
+	s = strings.ReplaceAll(s, "[[CRLF]]", "\r\n")
+	s = strings.ReplaceAll(s, "[[NEWLINE]]", "\n")
+	s = strings.ReplaceAll(s, "[[RETURN]]", "\r")
+	return s
+}
+
 func (i *Importer) readCSV(filename string) ([]map[string]string, error) {
 	path := i.importsDir + "/" + filename
 	file, err := os.Open(path)
@@ -106,7 +115,7 @@ func (i *Importer) readCSV(filename string) ([]map[string]string, error) {
 		row := make(map[string]string)
 		for j, header := range headers {
 			if j < len(record) {
-				row[header] = strings.TrimSpace(record[j])
+				row[header] = decodeFromCSV(strings.TrimSpace(record[j]))
 			}
 		}
 		rows = append(rows, row)
@@ -212,7 +221,7 @@ func (i *Importer) ReimportOrganizations() error {
 		query := `INSERT OR REPLACE INTO Organizations 
 			(orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, 
 			 my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, 
-			 n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, date_modified) 
+			 n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, modified_at) 
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
 		_, err := i.db.Conn().Exec(query, orgID, row["Name"], strPtr(row["Other Name"]), strPtr(row["URL"]), strPtr(row["Other URL"]), row["Status"], row["Type"], strPtr(row["Timing"]), strPtr(row["Submission Types"]), strPtr(row["Accepts"]), strPtr(row["My Interest"]), parseIntPtr(row["Ranking"]), strPtr(row["Source"]), strPtr(row["Website Menu"]), parseIntPtr(row["Doutrope Num"]), int(parseInt(row["nPushFiction"])), int(parseInt(row["nPushNonFiction"])), int(parseInt(row["nPushPoetry"])), strPtr(row["Contest Ends"]), strPtr(row["Contest Fee"]), strPtr(row["Contest Prize"]), strPtr(row["Contest Prize 2"]), row["Attributes"], strPtr(row["Date Added"]))
 		if err != nil {
@@ -301,7 +310,7 @@ func (i *Importer) ImportOrganizations() error {
 	}
 	for _, row := range rows {
 		orgID := parseInt(row["orgID"])
-		query := "INSERT INTO Organizations (orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, date_modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		query := "INSERT INTO Organizations (orgID, name, other_name, url, other_url, status, type, timing, submission_types, accepts, my_interest, ranking, source, website_menu, duotrope_num, n_push_fiction, n_push_nonfiction, n_push_poetry, contest_ends, contest_fee, contest_prize, contest_prize_2, attributes, date_added, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 		_, err := i.db.Conn().Exec(query, orgID, row["Name"], strPtr(row["Other Name"]), strPtr(row["URL"]), strPtr(row["Other URL"]), row["Status"], row["Type"], strPtr(row["Timing"]), strPtr(row["Submission Types"]), strPtr(row["Accepts"]), strPtr(row["My Interest"]), parseIntPtr(row["Ranking"]), strPtr(row["Source"]), strPtr(row["Website Menu"]), parseIntPtr(row["Doutrope Num"]), int(parseInt(row["nPushFiction"])), int(parseInt(row["nPushNonFiction"])), int(parseInt(row["nPushPoetry"])), strPtr(row["Contest Ends"]), strPtr(row["Contest Fee"]), strPtr(row["Contest Prize"]), strPtr(row["Contest Prize 2"]), row["Attributes"], strPtr(row["Date Added"]), strPtr(row["Date Modified"]))
 		if err != nil {
 			return fmt.Errorf("insert org %d: %w", orgID, err)
@@ -351,11 +360,11 @@ func (i *Importer) ImportNotes() error {
 	}
 	for _, row := range rows {
 		n := &models.Note{
-			EntityType:   row["entity_type"],
-			EntityID:     parseInt(row["entity_id"]),
-			Type:         strPtr(row["type"]),
-			Note:         strPtr(row["note"]),
-			ModifiedDate: strPtr(row["modified_date"]),
+			EntityType: row["entity_type"],
+			EntityID:   parseInt(row["entity_id"]),
+			Type:       strPtr(row["type"]),
+			Note:       strPtr(row["note"]),
+			ModifiedAt: strPtr(row["modified_at"]),
 		}
 		_ = i.db.CreateNote(n)
 	}

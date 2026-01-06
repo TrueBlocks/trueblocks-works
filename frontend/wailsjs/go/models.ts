@@ -346,7 +346,7 @@ export namespace models {
 	    entityID: number;
 	    type?: string;
 	    note?: string;
-	    modifiedDate?: string;
+	    modifiedAt?: string;
 	    createdAt: string;
 	
 	    static createFrom(source: any = {}) {
@@ -360,7 +360,7 @@ export namespace models {
 	        this.entityID = source["entityID"];
 	        this.type = source["type"];
 	        this.note = source["note"];
-	        this.modifiedDate = source["modifiedDate"];
+	        this.modifiedAt = source["modifiedAt"];
 	        this.createdAt = source["createdAt"];
 	    }
 	}
@@ -389,7 +389,7 @@ export namespace models {
 	    contestPrize2?: string;
 	    attributes: string;
 	    dateAdded?: string;
-	    dateModified?: string;
+	    modifiedAt?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Organization(source);
@@ -421,7 +421,7 @@ export namespace models {
 	        this.contestPrize2 = source["contestPrize2"];
 	        this.attributes = source["attributes"];
 	        this.dateAdded = source["dateAdded"];
-	        this.dateModified = source["dateModified"];
+	        this.modifiedAt = source["modifiedAt"];
 	    }
 	}
 	export class OrganizationWithNotes {
@@ -449,7 +449,7 @@ export namespace models {
 	    contestPrize2?: string;
 	    attributes: string;
 	    dateAdded?: string;
-	    dateModified?: string;
+	    modifiedAt?: string;
 	    nSubmissions: number;
 	    notes?: string;
 	
@@ -483,9 +483,27 @@ export namespace models {
 	        this.contestPrize2 = source["contestPrize2"];
 	        this.attributes = source["attributes"];
 	        this.dateAdded = source["dateAdded"];
-	        this.dateModified = source["dateModified"];
+	        this.modifiedAt = source["modifiedAt"];
 	        this.nSubmissions = source["nSubmissions"];
 	        this.notes = source["notes"];
+	    }
+	}
+	export class RecentChange {
+	    entityType: string;
+	    entityID: number;
+	    name: string;
+	    modifiedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RecentChange(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entityType = source["entityType"];
+	        this.entityID = source["entityID"];
+	        this.name = source["name"];
+	        this.modifiedAt = source["modifiedAt"];
 	    }
 	}
 	export class SearchResult {

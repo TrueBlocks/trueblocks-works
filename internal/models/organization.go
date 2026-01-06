@@ -26,7 +26,7 @@ type Organization struct {
 	ContestPrize2  *string `json:"contestPrize2,omitempty" db:"contest_prize_2"`
 	Attributes     string  `json:"attributes" db:"attributes"`
 	DateAdded      *string `json:"dateAdded,omitempty" db:"date_added"`
-	DateModified   *string `json:"dateModified,omitempty" db:"date_modified"`
+	ModifiedAt     *string `json:"modifiedAt,omitempty" db:"modified_at"`
 }
 
 // OrganizationView extends Organization with computed fields

@@ -10,7 +10,7 @@ import {
   Kbd,
   Loader,
 } from '@mantine/core';
-import { IconSearch, IconFileText, IconBuilding } from '@tabler/icons-react';
+import { IconSearch, IconFileText, IconBuilding, IconNote, IconSend } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from '@wailsjs/go/main/App';
 import { LogErr } from '@/utils';
@@ -66,6 +66,10 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
         navigate(`/works/${result.entityID}`);
       } else if (result.entityType === 'organization') {
         navigate(`/organizations?id=${result.entityID}`);
+      } else if (result.entityType === 'note') {
+        navigate(`/works?noteId=${result.entityID}`);
+      } else if (result.entityType === 'submission') {
+        navigate(`/submissions/${result.entityID}`);
       }
     },
     [navigate, onClose]
@@ -99,7 +103,7 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
     >
       <Stack gap="sm">
         <TextInput
-          placeholder="Search works and organizations..."
+          placeholder="Search works, journals, notes, submissions..."
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
           onKeyDown={handleKeyDown}
@@ -122,10 +126,17 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
                 }}
               >
                 <Group gap="sm">
-                  {result.entityType === 'work' ? (
+                  {result.entityType === 'work' && (
                     <IconFileText size={20} color="var(--mantine-color-blue-6)" />
-                  ) : (
+                  )}
+                  {result.entityType === 'organization' && (
                     <IconBuilding size={20} color="var(--mantine-color-green-6)" />
+                  )}
+                  {result.entityType === 'note' && (
+                    <IconNote size={20} color="var(--mantine-color-yellow-6)" />
+                  )}
+                  {result.entityType === 'submission' && (
+                    <IconSend size={20} color="var(--mantine-color-violet-6)" />
                   )}
                   <Stack gap={0} style={{ flex: 1 }}>
                     <Group gap="xs">
@@ -135,14 +146,27 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
                       <Badge
                         size="xs"
                         variant="light"
-                        color={result.entityType === 'work' ? 'blue' : 'green'}
+                        color={
+                          result.entityType === 'work'
+                            ? 'blue'
+                            : result.entityType === 'organization'
+                              ? 'green'
+                              : result.entityType === 'note'
+                                ? 'yellow'
+                                : 'violet'
+                        }
                       >
-                        {result.entityType}
+                        {result.entityType === 'organization' ? 'journal' : result.entityType}
                       </Badge>
                     </Group>
                     {result.subtitle && (
                       <Text size="xs" c="dimmed">
                         {result.subtitle}
+                      </Text>
+                    )}
+                    {result.snippet && (
+                      <Text size="xs" c="dimmed" lineClamp={1}>
+                        {result.snippet}
                       </Text>
                     )}
                   </Stack>
@@ -160,7 +184,7 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
 
         {!query.trim() && (
           <Text size="xs" c="dimmed" ta="center" py="md">
-            Type to search works and organizations
+            Type to search works, journals, notes, and submissions
           </Text>
         )}
       </Stack>

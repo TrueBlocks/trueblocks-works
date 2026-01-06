@@ -1,17 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Stack, Grid, Loader, Flex, Text, Paper, SimpleGrid, Title, Card } from '@mantine/core';
+import { Stack, Grid, Loader, Flex, Text, Paper, SimpleGrid } from '@mantine/core';
 import { LogErr } from '@/utils';
 import { Group, Badge, Anchor, ActionIcon, Button } from '@mantine/core';
-import { IconArrowLeft, IconExternalLink, IconTrash, IconEdit } from '@tabler/icons-react';
-import {
-  GetSubmission,
-  GetWork,
-  GetOrganization,
-  DeleteSubmission,
-  SearchNotesByText,
-  DeleteNote,
-} from '@wailsjs/go/main/App';
+import { IconArrowLeft, IconExternalLink, IconTrash } from '@tabler/icons-react';
+import { GetSubmission, GetWork, GetOrganization, DeleteSubmission } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { ResponseBadge } from '@/components';
 import dayjs from 'dayjs';
@@ -34,8 +27,6 @@ export function SubmissionDetailPage() {
   const [submission, setSubmission] = useState<models.Submission | null>(null);
   const [work, setWork] = useState<models.Work | null>(null);
   const [org, setOrg] = useState<models.Organization | null>(null);
-  const [workNotes, setWorkNotes] = useState<models.NoteSearchResult[]>([]);
-  const [journalNotes, setJournalNotes] = useState<models.NoteSearchResult[]>([]);
   const [loading, setLoading] = useState(true);
 
   const subId = id ? parseInt(id, 10) : null;
@@ -53,20 +44,6 @@ export function SubmissionDetailPage() {
         ]);
         setWork(workData);
         setOrg(orgData);
-        const notePromises: Promise<models.NoteSearchResult[]>[] = [];
-        if (workData?.title) {
-          notePromises.push(SearchNotesByText(workData.title));
-        } else {
-          notePromises.push(Promise.resolve([]));
-        }
-        if (orgData?.name) {
-          notePromises.push(SearchNotesByText(orgData.name));
-        } else {
-          notePromises.push(Promise.resolve([]));
-        }
-        const [workNotesData, journalNotesData] = await Promise.all(notePromises);
-        setWorkNotes(workNotesData || []);
-        setJournalNotes(journalNotesData || []);
       }
     } catch (err) {
       LogErr('Failed to load submission data:', err);
@@ -84,33 +61,6 @@ export function SubmissionDetailPage() {
     await DeleteSubmission(subId);
     navigate(-1);
   }, [subId, navigate]);
-
-  const handleDeleteNote = useCallback(
-    async (note: models.NoteSearchResult, isWorkNote: boolean) => {
-      try {
-        await DeleteNote(note.noteID);
-        if (isWorkNote) {
-          setWorkNotes((prev) => prev.filter((n) => n.noteID !== note.noteID));
-        } else {
-          setJournalNotes((prev) => prev.filter((n) => n.noteID !== note.noteID));
-        }
-      } catch (err) {
-        LogErr('Failed to delete note:', err);
-      }
-    },
-    []
-  );
-
-  const handleEditNote = useCallback(
-    (note: models.NoteSearchResult) => {
-      if (note.entityType === 'work') {
-        navigate(`/works/${note.entityID}`);
-      } else {
-        navigate(`/organizations/${note.entityID}`);
-      }
-    },
-    [navigate]
-  );
 
   if (loading) {
     return (
@@ -271,127 +221,6 @@ export function SubmissionDetailPage() {
           </SimpleGrid>
         </Paper>
       )}
-
-      <Grid>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Paper p="md" withBorder h="100%">
-            <Title order={4} mb="md">
-              Notes Mentioning {work?.title}
-            </Title>
-            {workNotes.length === 0 ? (
-              <Text c="dimmed" size="sm" ta="center">
-                No notes mentioning this work
-              </Text>
-            ) : (
-              <Stack gap="xs">
-                {workNotes.map((note, idx) => (
-                  <Card
-                    key={`work-${note.entityType}-${note.entityID}-${idx}`}
-                    padding="sm"
-                    radius="sm"
-                    withBorder
-                  >
-                    <Group justify="space-between" wrap="nowrap" mb="xs">
-                      <Group gap="xs">
-                        <Badge
-                          size="xs"
-                          variant="light"
-                          color={note.entityType === 'work' ? 'blue' : 'grape'}
-                        >
-                          {note.entityType === 'work' ? 'Work' : 'Journal'}
-                        </Badge>
-                        <Text size="sm" fw={500}>
-                          {note.entityName}
-                        </Text>
-                      </Group>
-                    </Group>
-                    <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-                      {note.note}
-                    </Text>
-                    <Group justify="space-between" mt="xs">
-                      <Text size="xs" c="dimmed">
-                        {dayjs(note.createdAt).format('MMM D, YYYY')}
-                      </Text>
-                      <Group gap="xs">
-                        <ActionIcon
-                          variant="subtle"
-                          size="sm"
-                          color="red"
-                          onClick={() => handleDeleteNote(note, true)}
-                        >
-                          <IconTrash size={14} />
-                        </ActionIcon>
-                        <ActionIcon variant="subtle" size="sm" onClick={() => handleEditNote(note)}>
-                          <IconEdit size={14} />
-                        </ActionIcon>
-                      </Group>
-                    </Group>
-                  </Card>
-                ))}
-              </Stack>
-            )}
-          </Paper>
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Paper p="md" withBorder h="100%">
-            <Title order={4} mb="md">
-              Notes Mentioning {org?.name}
-            </Title>
-            {journalNotes.length === 0 ? (
-              <Text c="dimmed" size="sm" ta="center">
-                No notes mentioning this journal
-              </Text>
-            ) : (
-              <Stack gap="xs">
-                {journalNotes.map((note, idx) => (
-                  <Card
-                    key={`journal-${note.entityType}-${note.entityID}-${idx}`}
-                    padding="sm"
-                    radius="sm"
-                    withBorder
-                  >
-                    <Group justify="space-between" wrap="nowrap" mb="xs">
-                      <Group gap="xs">
-                        <Badge
-                          size="xs"
-                          variant="light"
-                          color={note.entityType === 'work' ? 'blue' : 'grape'}
-                        >
-                          {note.entityType === 'work' ? 'Work' : 'Journal'}
-                        </Badge>
-                        <Text size="sm" fw={500}>
-                          {note.entityName}
-                        </Text>
-                      </Group>
-                    </Group>
-                    <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-                      {note.note}
-                    </Text>
-                    <Group justify="space-between" mt="xs">
-                      <Text size="xs" c="dimmed">
-                        {dayjs(note.createdAt).format('MMM D, YYYY')}
-                      </Text>
-                      <Group gap="xs">
-                        <ActionIcon
-                          variant="subtle"
-                          size="sm"
-                          color="red"
-                          onClick={() => handleDeleteNote(note, false)}
-                        >
-                          <IconTrash size={14} />
-                        </ActionIcon>
-                        <ActionIcon variant="subtle" size="sm" onClick={() => handleEditNote(note)}>
-                          <IconEdit size={14} />
-                        </ActionIcon>
-                      </Group>
-                    </Group>
-                  </Card>
-                ))}
-              </Stack>
-            )}
-          </Paper>
-        </Grid.Col>
-      </Grid>
     </Stack>
   );
 }

@@ -18,13 +18,11 @@ type Migration struct {
 // New databases start with all migrations pre-applied via INSERT statements in the schema file.
 // Future migrations should start at version 11+.
 var migrations = []Migration{
-	// Future migrations go here, starting at version 11
-	// Example:
-	// {
-	// 	Version: 11,
-	// 	Name:    "add_some_feature",
-	// 	Up:      migrateAddSomeFeature,
-	// },
+	{
+		Version: 11,
+		Name:    "fts_notes_and_submissions",
+		Up:      migrateFTSNotesAndSubmissions,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -96,4 +94,108 @@ func (db *DB) isMigrationApplied(version int) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func migrateFTSNotesAndSubmissions(tx *sql.Tx) error {
+	// Drop old notes_fts (was not properly configured as content table)
+	_, _ = tx.Exec(`DROP TABLE IF EXISTS notes_fts`)
+
+	// Create notes_fts as content table linked to Notes
+	_, err := tx.Exec(`
+		CREATE VIRTUAL TABLE notes_fts USING fts5(
+			note,
+			type,
+			content='Notes',
+			content_rowid='id',
+			tokenize='porter'
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create notes_fts: %w", err)
+	}
+
+	// Populate notes_fts from existing Notes
+	_, err = tx.Exec(`INSERT INTO notes_fts(rowid, note, type) SELECT id, note, type FROM Notes`)
+	if err != nil {
+		return fmt.Errorf("populate notes_fts: %w", err)
+	}
+
+	// Create triggers to keep notes_fts in sync
+	_, err = tx.Exec(`
+		CREATE TRIGGER notes_fts_ai AFTER INSERT ON Notes BEGIN
+			INSERT INTO notes_fts(rowid, note, type) VALUES (NEW.id, NEW.note, NEW.type);
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create notes_fts_ai trigger: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		CREATE TRIGGER notes_fts_ad AFTER DELETE ON Notes BEGIN
+			INSERT INTO notes_fts(notes_fts, rowid, note, type) VALUES ('delete', OLD.id, OLD.note, OLD.type);
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create notes_fts_ad trigger: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		CREATE TRIGGER notes_fts_au AFTER UPDATE ON Notes BEGIN
+			INSERT INTO notes_fts(notes_fts, rowid, note, type) VALUES ('delete', OLD.id, OLD.note, OLD.type);
+			INSERT INTO notes_fts(rowid, note, type) VALUES (NEW.id, NEW.note, NEW.type);
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create notes_fts_au trigger: %w", err)
+	}
+
+	// Create submissions_fts for searching submissions
+	_, err = tx.Exec(`
+		CREATE VIRTUAL TABLE submissions_fts USING fts5(
+			contest_name,
+			content='Submissions',
+			content_rowid='submissionID',
+			tokenize='porter'
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create submissions_fts: %w", err)
+	}
+
+	// Populate submissions_fts from existing Submissions
+	_, err = tx.Exec(`INSERT INTO submissions_fts(rowid, contest_name) SELECT submissionID, contest_name FROM Submissions`)
+	if err != nil {
+		return fmt.Errorf("populate submissions_fts: %w", err)
+	}
+
+	// Create triggers to keep submissions_fts in sync
+	_, err = tx.Exec(`
+		CREATE TRIGGER submissions_fts_ai AFTER INSERT ON Submissions BEGIN
+			INSERT INTO submissions_fts(rowid, contest_name) VALUES (NEW.submissionID, NEW.contest_name);
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create submissions_fts_ai trigger: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		CREATE TRIGGER submissions_fts_ad AFTER DELETE ON Submissions BEGIN
+			INSERT INTO submissions_fts(submissions_fts, rowid, contest_name) VALUES ('delete', OLD.submissionID, OLD.contest_name);
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create submissions_fts_ad trigger: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		CREATE TRIGGER submissions_fts_au AFTER UPDATE ON Submissions BEGIN
+			INSERT INTO submissions_fts(submissions_fts, rowid, contest_name) VALUES ('delete', OLD.submissionID, OLD.contest_name);
+			INSERT INTO submissions_fts(rowid, contest_name) VALUES (NEW.submissionID, NEW.contest_name);
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create submissions_fts_au trigger: %w", err)
+	}
+
+	return nil
 }

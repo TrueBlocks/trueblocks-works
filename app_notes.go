@@ -17,7 +17,3 @@ func (a *App) UpdateNote(note *models.Note) error {
 func (a *App) DeleteNote(id int64) error {
 	return a.db.DeleteNote(id)
 }
-
-func (a *App) SearchNotesByText(searchText string) ([]models.NoteSearchResult, error) {
-	return a.db.SearchNotesByText(searchText)
-}

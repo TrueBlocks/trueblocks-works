@@ -364,30 +364,6 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	    }
 	}
-	export class NoteSearchResult {
-	    noteID: number;
-	    entityType: string;
-	    entityID: number;
-	    entityName: string;
-	    noteType?: string;
-	    note: string;
-	    createdAt: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new NoteSearchResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.noteID = source["noteID"];
-	        this.entityType = source["entityType"];
-	        this.entityID = source["entityID"];
-	        this.entityName = source["entityName"];
-	        this.noteType = source["noteType"];
-	        this.note = source["note"];
-	        this.createdAt = source["createdAt"];
-	    }
-	}
 	export class Organization {
 	    orgID: number;
 	    name: string;
@@ -519,6 +495,8 @@ export namespace models {
 	    subtitle?: string;
 	    snippet?: string;
 	    rank: number;
+	    parentEntityType?: string;
+	    parentEntityID?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new SearchResult(source);
@@ -532,6 +510,8 @@ export namespace models {
 	        this.subtitle = source["subtitle"];
 	        this.snippet = source["snippet"];
 	        this.rank = source["rank"];
+	        this.parentEntityType = source["parentEntityType"];
+	        this.parentEntityID = source["parentEntityID"];
 	    }
 	}
 	export class Submission {
@@ -781,6 +761,7 @@ export namespace state {
 	    windowWidth?: number;
 	    windowHeight?: number;
 	    viewSorts?: Record<string, ViewSort>;
+	    searchHistory?: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new AppState(source);
@@ -818,6 +799,7 @@ export namespace state {
 	        this.windowWidth = source["windowWidth"];
 	        this.windowHeight = source["windowHeight"];
 	        this.viewSorts = this.convertValues(source["viewSorts"], ViewSort, true);
+	        this.searchHistory = source["searchHistory"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

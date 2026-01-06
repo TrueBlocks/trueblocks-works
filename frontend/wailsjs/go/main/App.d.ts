@@ -7,6 +7,8 @@ import {state} from '../models';
 import {fileops} from '../models';
 import {settings} from '../models';
 
+export function AddSearchHistory(arg1:string):Promise<void>;
+
 export function AddWorkToCollection(arg1:number,arg2:number):Promise<void>;
 
 export function BrowseForFolder(arg1:string):Promise<string>;
@@ -87,6 +89,8 @@ export function GetPreviewURL(arg1:number):Promise<string>;
 
 export function GetReports():Promise<main.ReportsResult>;
 
+export function GetSearchHistory():Promise<Array<string>>;
+
 export function GetSettings():Promise<settings.Settings>;
 
 export function GetSubmission(arg1:number):Promise<models.Submission>;
@@ -148,8 +152,6 @@ export function RestoreBackup(arg1:string):Promise<void>;
 export function SaveWindowGeometry(arg1:number,arg2:number,arg3:number,arg4:number):Promise<void>;
 
 export function Search(arg1:string,arg2:number):Promise<Array<models.SearchResult>>;
-
-export function SearchNotesByText(arg1:string):Promise<Array<models.NoteSearchResult>>;
 
 export function SelectExportFolder():Promise<string>;
 

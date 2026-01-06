@@ -17,7 +17,6 @@ func (db *DB) Search(query string, limit int) ([]models.SearchResult, error) {
 	}
 
 	ftsQuery := escapeFTSQuery(query)
-	likeQuery := "%" + strings.TrimSpace(query) + "%"
 
 	results := []models.SearchResult{}
 
@@ -33,13 +32,13 @@ func (db *DB) Search(query string, limit int) ([]models.SearchResult, error) {
 	}
 	results = append(results, orgsResults...)
 
-	notesResults, err := db.searchNotes(likeQuery, limit)
+	notesResults, err := db.searchNotes(ftsQuery, limit)
 	if err != nil {
 		return nil, fmt.Errorf("search notes: %w", err)
 	}
 	results = append(results, notesResults...)
 
-	submissionsResults, err := db.searchSubmissions(likeQuery, limit)
+	submissionsResults, err := db.searchSubmissions(ftsQuery, limit)
 	if err != nil {
 		return nil, fmt.Errorf("search submissions: %w", err)
 	}
@@ -171,7 +170,11 @@ func (db *DB) searchOrganizations(ftsQuery string, limit int) ([]models.SearchRe
 	return results, rows.Err()
 }
 
+<<<<<<< HEAD
 func (db *DB) searchNotes(likeQuery string, limit int) ([]models.SearchResult, error) {
+=======
+func (db *DB) searchNotes(ftsQuery string, limit int) ([]models.SearchResult, error) {
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 	query := `
 		SELECT 
 			n.id,
@@ -183,6 +186,7 @@ func (db *DB) searchNotes(likeQuery string, limit int) ([]models.SearchResult, e
 				WHEN n.entity_type = 'work' THEN COALESCE(w.title, 'Unknown Work')
 				WHEN n.entity_type = 'journal' THEN COALESCE(o.name, 'Unknown Journal')
 				ELSE 'Unknown'
+<<<<<<< HEAD
 			END as entity_name
 		FROM Notes n
 		LEFT JOIN Works w ON n.entity_type = 'work' AND n.entity_id = w.workID
@@ -193,6 +197,20 @@ func (db *DB) searchNotes(likeQuery string, limit int) ([]models.SearchResult, e
 	`
 
 	rows, err := db.conn.Query(query, likeQuery, limit)
+=======
+			END as entity_name,
+			bm25(notes_fts) as rank
+		FROM notes_fts
+		JOIN Notes n ON notes_fts.rowid = n.id
+		LEFT JOIN Works w ON n.entity_type = 'work' AND n.entity_id = w.workID
+		LEFT JOIN Organizations o ON n.entity_type = 'journal' AND n.entity_id = o.orgID
+		WHERE notes_fts MATCH ?
+		ORDER BY rank
+		LIMIT ?
+	`
+
+	rows, err := db.conn.Query(query, ftsQuery, limit)
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 	if err != nil {
 		return nil, err
 	}
@@ -207,12 +225,21 @@ func (db *DB) searchNotes(likeQuery string, limit int) ([]models.SearchResult, e
 			noteType   *string
 			noteText   string
 			entityName string
+<<<<<<< HEAD
 		)
 		if err := rows.Scan(&noteID, &entityType, &entityID, &noteType, &noteText, &entityName); err != nil {
 			return nil, err
 		}
 
 		// Build subtitle: "Work Note" or "Journal Note" + note type
+=======
+			rank       float64
+		)
+		if err := rows.Scan(&noteID, &entityType, &entityID, &noteType, &noteText, &entityName, &rank); err != nil {
+			return nil, err
+		}
+
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 		subtitle := ""
 		switch entityType {
 		case "work":
@@ -224,26 +251,45 @@ func (db *DB) searchNotes(likeQuery string, limit int) ([]models.SearchResult, e
 			subtitle += " • " + *noteType
 		}
 
+<<<<<<< HEAD
 		// Truncate note text for snippet
+=======
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 		snippet := noteText
 		if len(snippet) > 100 {
 			snippet = snippet[:100] + "..."
 		}
 
 		results = append(results, models.SearchResult{
+<<<<<<< HEAD
 			EntityType: "note",
 			EntityID:   noteID,
 			Title:      entityName,
 			Subtitle:   subtitle,
 			Snippet:    snippet,
 			Rank:       0,
+=======
+			EntityType:       "note",
+			EntityID:         noteID,
+			Title:            entityName,
+			Subtitle:         subtitle,
+			Snippet:          snippet,
+			Rank:             rank,
+			ParentEntityType: entityType,
+			ParentEntityID:   entityID,
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 		})
 	}
 
 	return results, rows.Err()
 }
 
+<<<<<<< HEAD
 func (db *DB) searchSubmissions(likeQuery string, limit int) ([]models.SearchResult, error) {
+=======
+func (db *DB) searchSubmissions(ftsQuery string, limit int) ([]models.SearchResult, error) {
+	// Search submissions by contest_name using FTS5
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 	query := `
 		SELECT 
 			s.submissionID,
@@ -251,6 +297,7 @@ func (db *DB) searchSubmissions(likeQuery string, limit int) ([]models.SearchRes
 			o.name,
 			s.contest_name,
 			s.submission_date,
+<<<<<<< HEAD
 			s.response_type
 		FROM Submissions s
 		LEFT JOIN Works w ON s.workID = w.workID
@@ -263,6 +310,20 @@ func (db *DB) searchSubmissions(likeQuery string, limit int) ([]models.SearchRes
 	`
 
 	rows, err := db.conn.Query(query, likeQuery, likeQuery, likeQuery, limit)
+=======
+			s.response_type,
+			bm25(submissions_fts) as rank
+		FROM submissions_fts
+		JOIN Submissions s ON submissions_fts.rowid = s.submissionID
+		LEFT JOIN Works w ON s.workID = w.workID
+		LEFT JOIN Organizations o ON s.orgID = o.orgID
+		WHERE submissions_fts MATCH ?
+		ORDER BY rank
+		LIMIT ?
+	`
+
+	rows, err := db.conn.Query(query, ftsQuery, limit)
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 	if err != nil {
 		return nil, err
 	}
@@ -277,12 +338,21 @@ func (db *DB) searchSubmissions(likeQuery string, limit int) ([]models.SearchRes
 			contestName    *string
 			submissionDate *string
 			responseType   *string
+<<<<<<< HEAD
 		)
 		if err := rows.Scan(&submissionID, &workTitle, &journalName, &contestName, &submissionDate, &responseType); err != nil {
 			return nil, err
 		}
 
 		// Title: "Work Title → Journal Name"
+=======
+			rank           float64
+		)
+		if err := rows.Scan(&submissionID, &workTitle, &journalName, &contestName, &submissionDate, &responseType, &rank); err != nil {
+			return nil, err
+		}
+
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 		title := ""
 		if workTitle != nil {
 			title = *workTitle
@@ -291,7 +361,10 @@ func (db *DB) searchSubmissions(likeQuery string, limit int) ([]models.SearchRes
 			title += " → " + *journalName
 		}
 
+<<<<<<< HEAD
 		// Subtitle: date and response
+=======
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 		subtitle := ""
 		if submissionDate != nil && *submissionDate != "" {
 			subtitle = *submissionDate
@@ -303,7 +376,10 @@ func (db *DB) searchSubmissions(likeQuery string, limit int) ([]models.SearchRes
 			subtitle += *responseType
 		}
 
+<<<<<<< HEAD
 		// Snippet: contest name if present
+=======
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 		snippet := ""
 		if contestName != nil {
 			snippet = *contestName
@@ -315,7 +391,11 @@ func (db *DB) searchSubmissions(likeQuery string, limit int) ([]models.SearchRes
 			Title:      title,
 			Subtitle:   subtitle,
 			Snippet:    snippet,
+<<<<<<< HEAD
 			Rank:       0,
+=======
+			Rank:       rank,
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
 		})
 	}
 

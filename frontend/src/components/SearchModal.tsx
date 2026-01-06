@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   TextInput,
@@ -10,9 +10,16 @@ import {
   Kbd,
   Loader,
 } from '@mantine/core';
-import { IconSearch, IconFileText, IconBuilding, IconNote, IconSend } from '@tabler/icons-react';
+import {
+  IconSearch,
+  IconFileText,
+  IconBuilding,
+  IconNote,
+  IconSend,
+  IconHistory,
+} from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { Search } from '@wailsjs/go/main/App';
+import { Search, AddSearchHistory, GetSearchHistory } from '@wailsjs/go/main/App';
 import { LogErr } from '@/utils';
 import { models } from '@wailsjs/go/models';
 
@@ -24,18 +31,31 @@ interface SearchModalProps {
 export function SearchModal({ opened, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<models.SearchResult[]>([]);
+  const [history, setHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // Load search history when modal opens
   useEffect(() => {
-    if (!opened) {
+    if (opened) {
+      GetSearchHistory()
+        .then((h) => setHistory(h || []))
+        .catch((err) => LogErr('Failed to load search history:', err));
+
+      // Focus input after a short delay to ensure modal is rendered
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    } else {
       setQuery('');
       setResults([]);
       setSelectedIndex(0);
     }
   }, [opened]);
 
+  // Debounced search on query change
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -54,39 +74,63 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
       } finally {
         setLoading(false);
       }
-    }, 150);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [query]);
 
   const navigateToResult = useCallback(
     (result: models.SearchResult) => {
+      // Save search to history before navigating
+      if (query.trim()) {
+        AddSearchHistory(query.trim()).catch((err) =>
+          LogErr('Failed to save search history:', err)
+        );
+      }
+
       onClose();
+
       if (result.entityType === 'work') {
         navigate(`/works/${result.entityID}`);
       } else if (result.entityType === 'organization') {
-        navigate(`/organizations?id=${result.entityID}`);
+        navigate(`/organizations/${result.entityID}`);
       } else if (result.entityType === 'note') {
-        navigate(`/works?noteId=${result.entityID}`);
+        // Navigate to the parent entity
+        if (result.parentEntityType === 'work') {
+          navigate(`/works/${result.parentEntityID}`);
+        } else if (result.parentEntityType === 'journal') {
+          navigate(`/organizations/${result.parentEntityID}`);
+        }
       } else if (result.entityType === 'submission') {
         navigate(`/submissions/${result.entityID}`);
       }
     },
-    [navigate, onClose]
+    [navigate, onClose, query]
   );
+
+  const handleHistoryClick = useCallback((historyQuery: string) => {
+    setQuery(historyQuery);
+  }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((i) => Math.min(i + 1, results.length - 1));
+      const maxIndex = results.length > 0 ? results.length - 1 : history.length - 1;
+      setSelectedIndex((i) => Math.min(i + 1, maxIndex));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && results[selectedIndex]) {
+    } else if (e.key === 'Enter') {
       e.preventDefault();
-      navigateToResult(results[selectedIndex]);
+      if (results.length > 0 && results[selectedIndex]) {
+        navigateToResult(results[selectedIndex]);
+      } else if (!query.trim() && history.length > 0 && history[selectedIndex]) {
+        setQuery(history[selectedIndex]);
+      }
     }
   };
+
+  const showHistory = !query.trim() && history.length > 0;
 
   return (
     <Modal
@@ -100,16 +144,21 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
       }
       size="lg"
       padding="md"
+      trapFocus
     >
       <Stack gap="sm">
         <TextInput
+<<<<<<< HEAD
+=======
+          ref={inputRef}
+>>>>>>> d853e1b (feat: extend Cmd+K search to notes/submissions with FTS5 (fixes #7))
           placeholder="Search works, journals, notes, submissions..."
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
           onKeyDown={handleKeyDown}
           leftSection={loading ? <Loader size="xs" /> : <IconSearch size={16} />}
           rightSection={<Kbd size="xs">↵</Kbd>}
-          autoFocus
+          data-autofocus
         />
 
         {results.length > 0 && (
@@ -176,13 +225,38 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
           </Stack>
         )}
 
+        {showHistory && (
+          <Stack gap={4}>
+            <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
+              Recent Searches
+            </Text>
+            {history.map((historyQuery, index) => (
+              <UnstyledButton
+                key={`history-${index}`}
+                onClick={() => handleHistoryClick(historyQuery)}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 4,
+                  backgroundColor:
+                    index === selectedIndex ? 'var(--mantine-color-blue-light)' : 'transparent',
+                }}
+              >
+                <Group gap="sm">
+                  <IconHistory size={16} color="var(--mantine-color-dimmed)" />
+                  <Text size="sm">{historyQuery}</Text>
+                </Group>
+              </UnstyledButton>
+            ))}
+          </Stack>
+        )}
+
         {query.trim() && !loading && results.length === 0 && (
           <Text size="sm" c="dimmed" ta="center" py="md">
-            No results found for {query}
+            No results found for &quot;{query}&quot;
           </Text>
         )}
 
-        {!query.trim() && (
+        {!query.trim() && history.length === 0 && (
           <Text size="xs" c="dimmed" ta="center" py="md">
             Type to search works, journals, notes, and submissions
           </Text>

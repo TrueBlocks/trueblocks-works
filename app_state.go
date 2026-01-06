@@ -93,3 +93,11 @@ func (a *App) SetSubmissionsStatusFilter(statuses []string) {
 func (a *App) SetViewSort(view string, sort state.ViewSort) {
 	a.state.SetViewSort(view, sort)
 }
+
+func (a *App) AddSearchHistory(query string) {
+	a.state.AddSearchHistory(query)
+}
+
+func (a *App) GetSearchHistory() []string {
+	return a.state.GetSearchHistory()
+}

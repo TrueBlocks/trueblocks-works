@@ -48,6 +48,7 @@ type AppState struct {
 	WindowWidth               int                 `json:"windowWidth,omitempty"`
 	WindowHeight              int                 `json:"windowHeight,omitempty"`
 	ViewSorts                 map[string]ViewSort `json:"viewSorts,omitempty"`
+	SearchHistory             []string            `json:"searchHistory,omitempty"`
 }
 
 type Manager struct {
@@ -293,4 +294,36 @@ func (m *Manager) SetViewSort(view string, sort ViewSort) {
 	m.state.ViewSorts[view] = sort
 	m.mu.Unlock()
 	_ = m.Save()
+}
+
+func (m *Manager) AddSearchHistory(query string) {
+	if query == "" {
+		return
+	}
+	m.mu.Lock()
+	// Remove if already exists (to move to front)
+	history := make([]string, 0, len(m.state.SearchHistory))
+	for _, h := range m.state.SearchHistory {
+		if h != query {
+			history = append(history, h)
+		}
+	}
+	// Add to front
+	history = append([]string{query}, history...)
+	// Limit to 25
+	if len(history) > 25 {
+		history = history[:25]
+	}
+	m.state.SearchHistory = history
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) GetSearchHistory() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.state.SearchHistory == nil {
+		return []string{}
+	}
+	return m.state.SearchHistory
 }

@@ -182,12 +182,20 @@ CREATE VIRTUAL TABLE orgs_fts USING fts5(
     content_rowid='orgID'
 );
 
--- Full-text search for Notes (combined work and journal notes)
+-- Full-text search for Notes
 CREATE VIRTUAL TABLE notes_fts USING fts5(
     note,
     type,
-    entity_type,
-    entity_id,
+    content='Notes',
+    content_rowid='id',
+    tokenize='porter'
+);
+
+-- Full-text search for Submissions (contest names)
+CREATE VIRTUAL TABLE submissions_fts USING fts5(
+    contest_name,
+    content='Submissions',
+    content_rowid='submissionID',
     tokenize='porter'
 );
 
@@ -229,6 +237,34 @@ CREATE TRIGGER orgs_fts_au AFTER UPDATE ON Organizations BEGIN
     VALUES ('delete', OLD.orgID, OLD.name, OLD.other_name, OLD.url, OLD.accepts, OLD.source);
     INSERT INTO orgs_fts(rowid, name, other_name, url, accepts, source)
     VALUES (NEW.orgID, NEW.name, NEW.other_name, NEW.url, NEW.accepts, NEW.source);
+END;
+
+-- Notes FTS triggers
+CREATE TRIGGER notes_fts_ai AFTER INSERT ON Notes BEGIN
+    INSERT INTO notes_fts(rowid, note, type) VALUES (NEW.id, NEW.note, NEW.type);
+END;
+
+CREATE TRIGGER notes_fts_ad AFTER DELETE ON Notes BEGIN
+    INSERT INTO notes_fts(notes_fts, rowid, note, type) VALUES ('delete', OLD.id, OLD.note, OLD.type);
+END;
+
+CREATE TRIGGER notes_fts_au AFTER UPDATE ON Notes BEGIN
+    INSERT INTO notes_fts(notes_fts, rowid, note, type) VALUES ('delete', OLD.id, OLD.note, OLD.type);
+    INSERT INTO notes_fts(rowid, note, type) VALUES (NEW.id, NEW.note, NEW.type);
+END;
+
+-- Submissions FTS triggers
+CREATE TRIGGER submissions_fts_ai AFTER INSERT ON Submissions BEGIN
+    INSERT INTO submissions_fts(rowid, contest_name) VALUES (NEW.submissionID, NEW.contest_name);
+END;
+
+CREATE TRIGGER submissions_fts_ad AFTER DELETE ON Submissions BEGIN
+    INSERT INTO submissions_fts(submissions_fts, rowid, contest_name) VALUES ('delete', OLD.submissionID, OLD.contest_name);
+END;
+
+CREATE TRIGGER submissions_fts_au AFTER UPDATE ON Submissions BEGIN
+    INSERT INTO submissions_fts(submissions_fts, rowid, contest_name) VALUES ('delete', OLD.submissionID, OLD.contest_name);
+    INSERT INTO submissions_fts(rowid, contest_name) VALUES (NEW.submissionID, NEW.contest_name);
 END;
 
 --------------------------------------------------------------------------------
@@ -294,3 +330,4 @@ INSERT INTO schema_migrations (version, description) VALUES (7, 'add_attributes_
 INSERT INTO schema_migrations (version, description) VALUES (8, 'populate_attributes_from_booleans');
 INSERT INTO schema_migrations (version, description) VALUES (9, 'drop_boolean_columns');
 INSERT INTO schema_migrations (version, description) VALUES (10, 'drop_mark_column');
+INSERT INTO schema_migrations (version, description) VALUES (11, 'fts_notes_and_submissions');

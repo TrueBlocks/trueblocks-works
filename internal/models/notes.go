@@ -10,14 +10,3 @@ type Note struct {
 	ModifiedDate *string `json:"modifiedDate,omitempty" db:"modified_date"`
 	CreatedAt    string  `json:"createdAt" db:"created_at"`
 }
-
-// NoteSearchResult represents a note with its parent entity name
-type NoteSearchResult struct {
-	NoteID     int64   `json:"noteID"`
-	EntityType string  `json:"entityType"`
-	EntityID   int64   `json:"entityID"`
-	EntityName string  `json:"entityName"`
-	NoteType   *string `json:"noteType,omitempty"`
-	Note       string  `json:"note"`
-	CreatedAt  string  `json:"createdAt"`
-}

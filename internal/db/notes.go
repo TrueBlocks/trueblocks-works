@@ -79,7 +79,7 @@ func (db *DB) DeleteNotesByEntity(entityType string, entityID int64) error {
 
 func (db *DB) GetAllNotes() ([]models.Note, error) {
 	query := `SELECT id, entity_type, entity_id, type, note, modified_date, created_at
-		FROM Notes ORDER BY id`
+		FROM Notes ORDER BY type, entity_type, note`
 
 	rows, err := db.conn.Query(query)
 	if err != nil {

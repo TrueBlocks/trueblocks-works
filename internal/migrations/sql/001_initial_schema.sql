@@ -1,6 +1,6 @@
 -- Schema for Works database
--- Version: 1.0
--- Created: 2026-01-03
+-- Version: 2.0 (squashed from migrations 1-10)
+-- Updated: 2026-01-05
 
 -- Enable foreign keys
 PRAGMA foreign_keys = ON;
@@ -21,32 +21,29 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 -- Collections: groupings/categories for organizing works
 CREATE TABLE Collections (
-    collID INTEGER PRIMARY KEY,
-    collection_name TEXT NOT NULL UNIQUE,
+    collID INTEGER PRIMARY KEY AUTOINCREMENT,
+    collection_name TEXT NOT NULL,
     is_status TEXT,
     type TEXT,
+    attributes TEXT DEFAULT '',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     modified_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Works: creative writing pieces with metadata
 CREATE TABLE Works (
-    workID INTEGER PRIMARY KEY,
+    workID INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     type TEXT NOT NULL,
     year TEXT,
-    status TEXT DEFAULT 'Working',
-    quality TEXT DEFAULT 'Okay',
-    doc_type TEXT DEFAULT 'docx',
+    status TEXT NOT NULL DEFAULT '',
+    quality TEXT NOT NULL DEFAULT '',
+    doc_type TEXT NOT NULL DEFAULT '',
     path TEXT,
     draft TEXT,
     n_words INTEGER,
     course_name TEXT,
-    is_blog TEXT,
-    is_printed TEXT,
-    is_prose_poem TEXT,
-    is_revised TEXT,
-    mark TEXT,
+    attributes TEXT DEFAULT '',
     access_date TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     modified_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -57,7 +54,7 @@ CREATE TABLE CollectionDetails (
     id INTEGER PRIMARY KEY,
     collID INTEGER NOT NULL,
     workID INTEGER NOT NULL,
-    collection_name TEXT,
+    position INTEGER DEFAULT 0,
     FOREIGN KEY (collID) REFERENCES Collections(collID),
     FOREIGN KEY (workID) REFERENCES Works(workID) ON DELETE CASCADE,
     UNIQUE(collID, workID)
@@ -65,13 +62,13 @@ CREATE TABLE CollectionDetails (
 
 -- Organizations: literary journals, magazines, publishers
 CREATE TABLE Organizations (
-    orgID INTEGER PRIMARY KEY,
+    orgID INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     other_name TEXT,
     url TEXT,
     other_url TEXT,
-    status TEXT DEFAULT 'Open',
-    type TEXT DEFAULT 'Journal',
+    status TEXT NOT NULL DEFAULT '',
+    type TEXT NOT NULL DEFAULT '',
     timing TEXT,
     submission_types TEXT,
     accepts TEXT,
@@ -87,16 +84,17 @@ CREATE TABLE Organizations (
     contest_fee TEXT,
     contest_prize TEXT,
     contest_prize_2 TEXT,
-    date_added TEXT DEFAULT CURRENT_TIMESTAMP,
-    date_modified TEXT DEFAULT CURRENT_TIMESTAMP
+    attributes TEXT DEFAULT '',
+    date_added TEXT,
+    date_modified TEXT
 );
 
 -- Submissions: tracking submissions to organizations
 CREATE TABLE Submissions (
-    submissionID INTEGER PRIMARY KEY,
+    submissionID INTEGER PRIMARY KEY AUTOINCREMENT,
     workID INTEGER NOT NULL,
     orgID INTEGER NOT NULL,
-    draft TEXT NOT NULL,
+    draft TEXT,
     submission_date TEXT,
     submission_type TEXT,
     query_date TEXT,
@@ -107,7 +105,7 @@ CREATE TABLE Submissions (
     user_id TEXT,
     password TEXT,
     web_address TEXT,
-    mark TEXT,
+    attributes TEXT DEFAULT '',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     modified_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (workID) REFERENCES Works(workID),
@@ -140,7 +138,6 @@ CREATE INDEX idx_works_doc_type ON Works(doc_type);
 -- CollectionDetails indexes
 CREATE INDEX idx_colldet_collid ON CollectionDetails(collID);
 CREATE INDEX idx_colldet_workid ON CollectionDetails(workID);
-CREATE INDEX idx_colldet_name ON CollectionDetails(collection_name);
 
 -- Organizations indexes
 CREATE INDEX idx_orgs_name ON Organizations(name);
@@ -244,8 +241,9 @@ SELECT
     w.*,
     CAST((julianday('now') - julianday(w.access_date)) AS INTEGER) AS age_days,
     (SELECT COUNT(*) FROM Submissions s WHERE s.workID = w.workID) AS n_submissions,
-    (SELECT GROUP_CONCAT(cd.collection_name, ', ') 
-     FROM CollectionDetails cd 
+    (SELECT GROUP_CONCAT(c.collection_name, ', ') 
+     FROM CollectionDetails cd
+     JOIN Collections c ON cd.collID = c.collID
      WHERE cd.workID = w.workID) AS collection_list
 FROM Works w;
 
@@ -264,14 +262,15 @@ SELECT
     s.*,
     w.title AS title_of_work,
     o.name AS journal_name,
+    COALESCE(o.status, 'Open') AS journal_status,
     CASE 
-        WHEN s.response_type IS NOT NULL AND s.response_type != 'Waiting' 
-        THEN 'no' 
-        ELSE 'yes' 
+        WHEN s.response_date IS NULL AND (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting')
+        THEN 'yes' 
+        ELSE 'no' 
     END AS decision_pending
 FROM Submissions s
-JOIN Works w ON s.workID = w.workID
-JOIN Organizations o ON s.orgID = o.orgID;
+LEFT JOIN Works w ON s.workID = w.workID
+LEFT JOIN Organizations o ON s.orgID = o.orgID;
 
 -- Collections view with item count
 CREATE VIEW CollectionsView AS
@@ -282,7 +281,16 @@ SELECT
 FROM Collections c;
 
 --------------------------------------------------------------------------------
--- Initial migration record
+-- Initial migration record (marks all migrations as applied)
 --------------------------------------------------------------------------------
 
 INSERT INTO schema_migrations (version, description) VALUES (1, 'Initial schema');
+INSERT INTO schema_migrations (version, description) VALUES (2, 'populate_year_from_path');
+INSERT INTO schema_migrations (version, description) VALUES (3, 'consolidate_notes_tables');
+INSERT INTO schema_migrations (version, description) VALUES (4, 'add_position_to_collection_details');
+INSERT INTO schema_migrations (version, description) VALUES (5, 'drop_collection_name_from_details');
+INSERT INTO schema_migrations (version, description) VALUES (6, 'populate_position_from_title');
+INSERT INTO schema_migrations (version, description) VALUES (7, 'add_attributes_and_mark');
+INSERT INTO schema_migrations (version, description) VALUES (8, 'populate_attributes_from_booleans');
+INSERT INTO schema_migrations (version, description) VALUES (9, 'drop_boolean_columns');
+INSERT INTO schema_migrations (version, description) VALUES (10, 'drop_mark_column');

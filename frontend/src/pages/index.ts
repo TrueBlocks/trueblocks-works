@@ -7,5 +7,4 @@ export { SubmissionDetailPage } from './SubmissionDetailPage';
 export { CollectionsPage } from './CollectionsPage';
 export { CollectionDetailPage } from './CollectionDetailPage';
 export { SettingsPage } from './SettingsPage';
-export { ExportPage } from './ExportPage';
 export { ReportsPage } from './ReportsPage';

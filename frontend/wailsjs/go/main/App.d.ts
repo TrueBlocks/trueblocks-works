@@ -111,6 +111,8 @@ export function GetSubmissionsByWork(arg1:number):Promise<Array<models.Submissio
 
 export function GetSubmissionsFilterOptions():Promise<main.SubmissionsFilterOptions>;
 
+export function GetTableState(arg1:string):Promise<state.TableState>;
+
 export function GetWork(arg1:number):Promise<models.Work>;
 
 export function GetWorkCollections(arg1:number):Promise<Array<models.CollectionDetail>>;
@@ -163,8 +165,6 @@ export function Search(arg1:string,arg2:number):Promise<models.SearchResponse>;
 
 export function SelectExportFolder():Promise<string>;
 
-export function SetCollectionsFilter(arg1:string):Promise<void>;
-
 export function SetLastCollectionID(arg1:number):Promise<void>;
 
 export function SetLastCollectionType(arg1:string):Promise<void>;
@@ -177,37 +177,7 @@ export function SetLastSubmissionID(arg1:number):Promise<void>;
 
 export function SetLastWorkID(arg1:number):Promise<void>;
 
-export function SetOrgsFilter(arg1:string):Promise<void>;
-
-export function SetOrgsPushcartsFilter(arg1:any,arg2:any):Promise<void>;
-
-export function SetOrgsStatusFilter(arg1:Array<string>):Promise<void>;
-
-export function SetOrgsSubmissionsFilter(arg1:any,arg2:any):Promise<void>;
-
-export function SetOrgsTimingFilter(arg1:Array<string>):Promise<void>;
-
-export function SetOrgsTypeFilter(arg1:Array<string>):Promise<void>;
-
-export function SetSubmissionsFilter(arg1:string):Promise<void>;
-
-export function SetSubmissionsResponseFilter(arg1:Array<string>):Promise<void>;
-
-export function SetSubmissionsStatusFilter(arg1:Array<string>):Promise<void>;
-
-export function SetSubmissionsTypeFilter(arg1:Array<string>):Promise<void>;
-
-export function SetViewSort(arg1:string,arg2:state.ViewSort):Promise<void>;
-
-export function SetWorksFilter(arg1:string):Promise<void>;
-
-export function SetWorksQualityFilter(arg1:Array<string>):Promise<void>;
-
-export function SetWorksStatusFilter(arg1:Array<string>):Promise<void>;
-
-export function SetWorksTypeFilter(arg1:Array<string>):Promise<void>;
-
-export function SetWorksYearFilter(arg1:Array<string>):Promise<void>;
+export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;
 
 export function TouchWorkAccessDate(arg1:number):Promise<void>;
 

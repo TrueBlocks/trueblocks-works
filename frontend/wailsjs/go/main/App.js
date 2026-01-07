@@ -210,6 +210,10 @@ export function GetSubmissionsFilterOptions() {
   return window['go']['main']['App']['GetSubmissionsFilterOptions']();
 }
 
+export function GetTableState(arg1) {
+  return window['go']['main']['App']['GetTableState'](arg1);
+}
+
 export function GetWork(arg1) {
   return window['go']['main']['App']['GetWork'](arg1);
 }
@@ -314,10 +318,6 @@ export function SelectExportFolder() {
   return window['go']['main']['App']['SelectExportFolder']();
 }
 
-export function SetCollectionsFilter(arg1) {
-  return window['go']['main']['App']['SetCollectionsFilter'](arg1);
-}
-
 export function SetLastCollectionID(arg1) {
   return window['go']['main']['App']['SetLastCollectionID'](arg1);
 }
@@ -342,68 +342,8 @@ export function SetLastWorkID(arg1) {
   return window['go']['main']['App']['SetLastWorkID'](arg1);
 }
 
-export function SetOrgsFilter(arg1) {
-  return window['go']['main']['App']['SetOrgsFilter'](arg1);
-}
-
-export function SetOrgsPushcartsFilter(arg1, arg2) {
-  return window['go']['main']['App']['SetOrgsPushcartsFilter'](arg1, arg2);
-}
-
-export function SetOrgsStatusFilter(arg1) {
-  return window['go']['main']['App']['SetOrgsStatusFilter'](arg1);
-}
-
-export function SetOrgsSubmissionsFilter(arg1, arg2) {
-  return window['go']['main']['App']['SetOrgsSubmissionsFilter'](arg1, arg2);
-}
-
-export function SetOrgsTimingFilter(arg1) {
-  return window['go']['main']['App']['SetOrgsTimingFilter'](arg1);
-}
-
-export function SetOrgsTypeFilter(arg1) {
-  return window['go']['main']['App']['SetOrgsTypeFilter'](arg1);
-}
-
-export function SetSubmissionsFilter(arg1) {
-  return window['go']['main']['App']['SetSubmissionsFilter'](arg1);
-}
-
-export function SetSubmissionsResponseFilter(arg1) {
-  return window['go']['main']['App']['SetSubmissionsResponseFilter'](arg1);
-}
-
-export function SetSubmissionsStatusFilter(arg1) {
-  return window['go']['main']['App']['SetSubmissionsStatusFilter'](arg1);
-}
-
-export function SetSubmissionsTypeFilter(arg1) {
-  return window['go']['main']['App']['SetSubmissionsTypeFilter'](arg1);
-}
-
-export function SetViewSort(arg1, arg2) {
-  return window['go']['main']['App']['SetViewSort'](arg1, arg2);
-}
-
-export function SetWorksFilter(arg1) {
-  return window['go']['main']['App']['SetWorksFilter'](arg1);
-}
-
-export function SetWorksQualityFilter(arg1) {
-  return window['go']['main']['App']['SetWorksQualityFilter'](arg1);
-}
-
-export function SetWorksStatusFilter(arg1) {
-  return window['go']['main']['App']['SetWorksStatusFilter'](arg1);
-}
-
-export function SetWorksTypeFilter(arg1) {
-  return window['go']['main']['App']['SetWorksTypeFilter'](arg1);
-}
-
-export function SetWorksYearFilter(arg1) {
-  return window['go']['main']['App']['SetWorksYearFilter'](arg1);
+export function SetTableState(arg1, arg2) {
+  return window['go']['main']['App']['SetTableState'](arg1, arg2);
 }
 
 export function TouchWorkAccessDate(arg1) {

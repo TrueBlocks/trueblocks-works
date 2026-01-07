@@ -1,6 +1,6 @@
 import { Group, Text, Stack } from '@mantine/core';
 import { IconChevronUp, IconChevronDown } from '@tabler/icons-react';
-import type { SortDirection } from '@/hooks/useTableSort';
+import type { SortDirection } from './DataTable';
 
 interface SortableHeaderProps {
   label: string;

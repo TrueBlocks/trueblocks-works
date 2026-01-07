@@ -42,4 +42,4 @@ export { EditableField } from './EditableField';
 export { SelectablePopover } from './SelectablePopover';
 export { DataTable } from './DataTable';
 export { EnumManagement } from './EnumManagement';
-export type { Column } from './DataTable';
+export type { Column, ViewSort, SortColumn, SortDirection } from './DataTable';

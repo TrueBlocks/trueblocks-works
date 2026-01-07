@@ -87,4 +87,10 @@ Steps:
 - No lint or security suppression (per‑line, file, or global) may be added without explicit user approval. Default action: fix the underlying issue or propose alternatives.
 
 ## 15. Exit Criteria (Refactor / Feature Complete)
-All tasks show ✅ for every step, all checkpoints passed, tests & lint green, coverage mapping shows no gaps, and no open risk notes remain.
+All tasks show ✅ for every step, all checkpoints passed, coverage mapping shows no gaps, and no open risk notes remain.
+
+**Final Validation (required at end of entire ToDoList):**
+1. Run `yarn lint --fix` — must pass with no errors
+2. Run `yarn type-check` — must pass with no errors
+
+Both commands must succeed before declaring the ToDoList complete. Do not run these validation commands during intermediate checkpoints — only at the very end after all tasks are complete.

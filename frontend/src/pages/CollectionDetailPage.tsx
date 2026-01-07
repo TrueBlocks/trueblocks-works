@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Stack, Grid, Loader, Flex, Text, Group, Paper, ActionIcon, Table } from '@mantine/core';
 import { IconFolder, IconArrowLeft, IconX, IconPlus } from '@tabler/icons-react';
-import { LogErr, matchesFilter } from '@/utils';
-import { useNotes, useColumnFilter } from '@/hooks';
+import { LogErr } from '@/utils';
+import { useNotes } from '@/hooks';
 import {
   GetCollection,
   GetCollectionWorks,
@@ -19,7 +19,6 @@ import {
   Column,
   CollectionFieldSelect,
   WorkPickerModal,
-  ColumnFilterPopover,
   StatusBadge,
   QualityBadge,
   TypeBadge,
@@ -41,27 +40,15 @@ export function CollectionDetailPage() {
     handleDelete: handleDeleteNote,
   } = useNotes('collection', collId);
 
-  const availableYears = useMemo(
-    () => [...new Set(works.map((w) => w.year).filter(Boolean))].sort() as string[],
+  const filterOptions = useMemo(
+    () => ({
+      years: [...new Set(works.map((w) => w.year).filter(Boolean))].sort() as string[],
+      types: [...new Set(works.map((w) => w.type).filter(Boolean))].sort() as string[],
+      statuses: [...new Set(works.map((w) => w.status).filter(Boolean))].sort() as string[],
+      qualities: [...new Set(works.map((w) => w.quality).filter(Boolean))].sort() as string[],
+    }),
     [works]
   );
-  const availableTypes = useMemo(
-    () => [...new Set(works.map((w) => w.type).filter(Boolean))].sort() as string[],
-    [works]
-  );
-  const availableStatuses = useMemo(
-    () => [...new Set(works.map((w) => w.status).filter(Boolean))].sort() as string[],
-    [works]
-  );
-  const availableQualities = useMemo(
-    () => [...new Set(works.map((w) => w.quality).filter(Boolean))].sort() as string[],
-    [works]
-  );
-
-  const yearFilter = useColumnFilter(availableYears);
-  const typeFilter = useColumnFilter(availableTypes);
-  const statusFilter = useColumnFilter(availableStatuses);
-  const qualityFilter = useColumnFilter(availableQualities);
 
   const loadData = useCallback(async () => {
     if (!collId) return;
@@ -126,99 +113,42 @@ export function CollectionDetailPage() {
         label: 'Year',
         width: '80px',
         render: (work) => <Text size="sm">{work.year || '-'}</Text>,
-        filterElement: (
-          <ColumnFilterPopover
-            options={availableYears}
-            selected={yearFilter.selected}
-            onChange={yearFilter.toggle}
-            onSelectAll={yearFilter.selectAll}
-            onSelectNone={yearFilter.selectNone}
-            onSelectOnly={yearFilter.selectOnly}
-            label="Year"
-          />
-        ),
+        filterOptions: filterOptions.years,
       },
       {
         key: 'type',
         label: 'Type',
         width: '100px',
         render: (work) => <TypeBadge value={work.type} />,
-        filterElement: (
-          <ColumnFilterPopover
-            options={availableTypes}
-            selected={typeFilter.selected}
-            onChange={typeFilter.toggle}
-            onSelectAll={typeFilter.selectAll}
-            onSelectNone={typeFilter.selectNone}
-            onSelectOnly={typeFilter.selectOnly}
-            label="Type"
-          />
-        ),
+        filterOptions: filterOptions.types,
       },
       {
         key: 'status',
         label: 'Status',
         width: '100px',
         render: (work) => <StatusBadge status={work.status} />,
-        filterElement: (
-          <ColumnFilterPopover
-            options={availableStatuses}
-            selected={statusFilter.selected}
-            onChange={statusFilter.toggle}
-            onSelectAll={statusFilter.selectAll}
-            onSelectNone={statusFilter.selectNone}
-            onSelectOnly={statusFilter.selectOnly}
-            label="Status"
-          />
-        ),
+        filterOptions: filterOptions.statuses,
       },
       {
         key: 'quality',
         label: 'Quality',
         width: '100px',
         render: (work) => <QualityBadge quality={work.quality} />,
-        filterElement: (
-          <ColumnFilterPopover
-            options={availableQualities}
-            selected={qualityFilter.selected}
-            onChange={qualityFilter.toggle}
-            onSelectAll={qualityFilter.selectAll}
-            onSelectNone={qualityFilter.selectNone}
-            onSelectOnly={qualityFilter.selectOnly}
-            label="Quality"
-          />
-        ),
+        filterOptions: filterOptions.qualities,
       },
     ],
-    [
-      availableYears,
-      yearFilter,
-      availableTypes,
-      typeFilter,
-      availableStatuses,
-      statusFilter,
-      availableQualities,
-      qualityFilter,
-    ]
+    [filterOptions]
   );
 
-  const filterFn = useCallback(
-    (work: models.CollectionWork, search: string) => {
-      if (!matchesFilter(yearFilter.selected, work.year)) return false;
-      if (!matchesFilter(typeFilter.selected, work.type)) return false;
-      if (!matchesFilter(statusFilter.selected, work.status)) return false;
-      if (!matchesFilter(qualityFilter.selected, work.quality)) return false;
-
-      const s = search.toLowerCase();
-      return (
-        work.title.toLowerCase().includes(s) ||
-        (work.type?.toLowerCase().includes(s) ?? false) ||
-        (work.year?.toLowerCase().includes(s) ?? false) ||
-        String(work.workID).includes(s)
-      );
-    },
-    [yearFilter.selected, typeFilter.selected, statusFilter.selected, qualityFilter.selected]
-  );
+  const searchFn = useCallback((work: models.CollectionWork, search: string) => {
+    const s = search.toLowerCase();
+    return (
+      work.title.toLowerCase().includes(s) ||
+      (work.type?.toLowerCase().includes(s) ?? false) ||
+      (work.year?.toLowerCase().includes(s) ?? false) ||
+      String(work.workID).includes(s)
+    );
+  }, []);
 
   const valueGetter = useCallback((item: models.CollectionWork, column: string) => {
     switch (column) {
@@ -272,19 +202,14 @@ export function CollectionDetailPage() {
 
       <Grid>
         <Grid.Col span={{ base: 12, md: 8 }}>
-          <DataTable
+          <DataTable<models.CollectionWork>
+            tableName={`collection-${collId}`}
             title="Works in Collection"
             data={works}
             columns={columns}
             getRowKey={(work) => work.workID}
             onRowClick={(work) => navigate(`/works/${work.workID}`)}
-            filterFn={filterFn}
-            viewName="collectionDetailWorks"
-            pageSize={15}
-            initialSort={{
-              primary: { column: 'position', direction: 'asc' },
-              secondary: { column: '', direction: '' },
-            }}
+            searchFn={searchFn}
             valueGetter={valueGetter}
             extraColumns={<Table.Th style={{ width: '50px' }} />}
             renderExtraCells={(work) => (

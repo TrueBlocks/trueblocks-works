@@ -4,8 +4,6 @@ import {
   SetLastWorkID,
   SetLastOrgID,
   SetLastCollectionID,
-  SetWorksFilter,
-  SetOrgsFilter,
   SetLastRoute,
 } from '@wailsjs/go/main/App';
 import { state } from '@wailsjs/go/models';
@@ -36,16 +34,6 @@ export function useAppState() {
     setAppState((prev) => (prev ? new state.AppState({ ...prev, lastCollectionID: id }) : prev));
   }, []);
 
-  const updateWorksFilter = useCallback((filter: string) => {
-    SetWorksFilter(filter);
-    setAppState((prev) => (prev ? new state.AppState({ ...prev, worksFilter: filter }) : prev));
-  }, []);
-
-  const updateOrgsFilter = useCallback((filter: string) => {
-    SetOrgsFilter(filter);
-    setAppState((prev) => (prev ? new state.AppState({ ...prev, orgsFilter: filter }) : prev));
-  }, []);
-
   const updateLastRoute = useCallback((route: string) => {
     SetLastRoute(route);
     setAppState((prev) => (prev ? new state.AppState({ ...prev, lastRoute: route }) : prev));
@@ -57,8 +45,6 @@ export function useAppState() {
     updateLastWorkID,
     updateLastOrgID,
     updateLastCollectionID,
-    updateWorksFilter,
-    updateOrgsFilter,
     updateLastRoute,
   };
 }

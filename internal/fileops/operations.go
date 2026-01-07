@@ -37,8 +37,15 @@ func (f *FileOps) MoveFile(w *models.Work) (string, error) {
 		return "", fmt.Errorf("source file not found: %w", err)
 	}
 
-	ext := filepath.Ext(sourcePath)
-	destPath := newPath + ext
+	sourceExt := strings.ToLower(filepath.Ext(sourcePath))
+	destExt := strings.ToLower(filepath.Ext(newPath))
+
+	destPath := newPath
+	if destExt == "" {
+		destPath = newPath + sourceExt
+	} else if destExt != sourceExt {
+		destPath = strings.TrimSuffix(newPath, filepath.Ext(newPath)) + sourceExt
+	}
 
 	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory: %w", err)
@@ -53,7 +60,7 @@ func (f *FileOps) MoveFile(w *models.Work) (string, error) {
 		return "", fmt.Errorf("failed to update timestamp: %w", err)
 	}
 
-	relativePath := f.GeneratePath(w)
+	relativePath, _ := filepath.Rel(f.Config.BaseFolderPath, destPath)
 	return relativePath, nil
 }
 

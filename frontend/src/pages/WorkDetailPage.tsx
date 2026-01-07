@@ -29,6 +29,7 @@ export function WorkDetailPage() {
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const workId = id ? parseInt(id, 10) : null;
   const {
@@ -37,6 +38,11 @@ export function WorkDetailPage() {
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
   } = useNotes('work', workId);
+
+  const handleWorkUpdate = useCallback((updatedWork: models.Work) => {
+    setWork(updatedWork);
+    setRefreshKey((k) => k + 1);
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!workId) return;
@@ -102,7 +108,10 @@ export function WorkDetailPage() {
     <Stack gap="lg">
       <WorkHeader
         work={work}
-        actions={<FileActionsToolbar workID={work.workID} onMoved={loadData} />}
+        actions={
+          <FileActionsToolbar workID={work.workID} refreshKey={refreshKey} onMoved={loadData} />
+        }
+        onWorkUpdate={handleWorkUpdate}
       />
       <PathDisplay path={work.path} docType={work.docType} nWords={work.nWords} />
 

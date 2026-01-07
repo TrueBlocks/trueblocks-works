@@ -62,8 +62,6 @@ export namespace main {
 	}
 	export class CollectionsStats {
 	    total: number;
-	    statusLists: number;
-	    regular: number;
 	    largest: CollectionSize[];
 	    sparkline: number[];
 	
@@ -74,8 +72,6 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.total = source["total"];
-	        this.statusLists = source["statusLists"];
-	        this.regular = source["regular"];
 	        this.largest = this.convertValues(source["largest"], CollectionSize);
 	        this.sparkline = source["sparkline"];
 	    }
@@ -551,7 +547,6 @@ export namespace models {
 	export class Collection {
 	    collID: number;
 	    collectionName: string;
-	    isStatus?: string;
 	    type?: string;
 	    attributes: string;
 	    createdAt: string;
@@ -565,7 +560,6 @@ export namespace models {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.collID = source["collID"];
 	        this.collectionName = source["collectionName"];
-	        this.isStatus = source["isStatus"];
 	        this.type = source["type"];
 	        this.attributes = source["attributes"];
 	        this.createdAt = source["createdAt"];
@@ -590,6 +584,72 @@ export namespace models {
 	        this.workID = source["workID"];
 	        this.position = source["position"];
 	        this.collectionName = source["collectionName"];
+	    }
+	}
+	export class CollectionView {
+	    collID: number;
+	    collectionName: string;
+	    type?: string;
+	    attributes: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	    nItems: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.collID = source["collID"];
+	        this.collectionName = source["collectionName"];
+	        this.type = source["type"];
+	        this.attributes = source["attributes"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	        this.nItems = source["nItems"];
+	    }
+	}
+	export class CollectionWork {
+	    workID: number;
+	    title: string;
+	    type: string;
+	    year?: string;
+	    status: string;
+	    quality: string;
+	    docType: string;
+	    path?: string;
+	    draft?: string;
+	    nWords?: number;
+	    courseName?: string;
+	    attributes: string;
+	    accessDate?: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	    position: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionWork(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workID = source["workID"];
+	        this.title = source["title"];
+	        this.type = source["type"];
+	        this.year = source["year"];
+	        this.status = source["status"];
+	        this.quality = source["quality"];
+	        this.docType = source["docType"];
+	        this.path = source["path"];
+	        this.draft = source["draft"];
+	        this.nWords = source["nWords"];
+	        this.courseName = source["courseName"];
+	        this.attributes = source["attributes"];
+	        this.accessDate = source["accessDate"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	        this.position = source["position"];
 	    }
 	}
 	export class Note {
@@ -918,6 +978,52 @@ export namespace models {
 	        this.accessDate = source["accessDate"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
+	    }
+	}
+	export class WorkView {
+	    workID: number;
+	    title: string;
+	    type: string;
+	    year?: string;
+	    status: string;
+	    quality: string;
+	    docType: string;
+	    path?: string;
+	    draft?: string;
+	    nWords?: number;
+	    courseName?: string;
+	    attributes: string;
+	    accessDate?: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	    ageDays?: number;
+	    nSubmissions: number;
+	    collectionList?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkView(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workID = source["workID"];
+	        this.title = source["title"];
+	        this.type = source["type"];
+	        this.year = source["year"];
+	        this.status = source["status"];
+	        this.quality = source["quality"];
+	        this.docType = source["docType"];
+	        this.path = source["path"];
+	        this.draft = source["draft"];
+	        this.nWords = source["nWords"];
+	        this.courseName = source["courseName"];
+	        this.attributes = source["attributes"];
+	        this.accessDate = source["accessDate"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	        this.ageDays = source["ageDays"];
+	        this.nSubmissions = source["nSubmissions"];
+	        this.collectionList = source["collectionList"];
 	    }
 	}
 

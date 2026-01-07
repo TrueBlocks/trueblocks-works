@@ -11,6 +11,8 @@ import {
   Loader,
   Alert,
   ThemeIcon,
+  Box,
+  ScrollArea,
 } from '@mantine/core';
 import {
   IconBook2,
@@ -261,8 +263,6 @@ export function DashboardPage() {
       content: (
         <Stack gap={4}>
           <StatRow label="Total" value={stats.collections.total} color={COLORS.collections} />
-          <StatRow label="Status Lists" value={stats.collections.statusLists} />
-          <StatRow label="Regular" value={stats.collections.regular} />
         </Stack>
       ),
     },
@@ -279,11 +279,16 @@ export function DashboardPage() {
   ];
 
   return (
-    <Stack gap="lg">
-      <Title order={2}>Dashboard</Title>
+    <Box
+      h="calc(100vh - 100px)"
+      style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+    >
+      <Title order={2} mb="md">
+        Dashboard
+      </Title>
 
       {/* Year Progress Banner */}
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="sm" radius="md" mb="md" style={{ flexShrink: 0 }}>
         <Group justify="space-between">
           <Group gap="lg">
             <ThemeIcon size="lg" variant="light" color="blue">
@@ -315,44 +320,8 @@ export function DashboardPage() {
       </Paper>
 
       {/* Main Cards Grid */}
-      <Grid>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <DashboardCard
-            title="Works"
-            icon={<IconBook2 size={20} />}
-            color={COLORS.works}
-            pages={worksPages}
-            currentPage={cardPages.works}
-            onPageChange={(p) => setCardPages((prev) => ({ ...prev, works: p }))}
-            onViewAll={() => navigate('/works')}
-            sparkline={stats.works.sparkline}
-          />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <DashboardCard
-            title="Organizations"
-            icon={<IconBuilding size={20} />}
-            color={COLORS.organizations}
-            pages={orgsPages}
-            currentPage={cardPages.organizations}
-            onPageChange={(p) => setCardPages((prev) => ({ ...prev, organizations: p }))}
-            onViewAll={() => navigate('/organizations')}
-            sparkline={stats.organizations.sparkline}
-          />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <DashboardCard
-            title="Submissions"
-            icon={<IconSend size={20} />}
-            color={COLORS.submissions}
-            pages={submissionsPages}
-            currentPage={cardPages.submissions}
-            onPageChange={(p) => setCardPages((prev) => ({ ...prev, submissions: p }))}
-            onViewAll={() => navigate('/submissions')}
-            sparkline={stats.submissions.sparkline}
-          />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 6 }}>
+      <Grid style={{ flex: 1, minHeight: 0 }} gutter="md">
+        <Grid.Col span={{ base: 12, md: 6 }} style={{ height: 'calc(50% - 8px)' }}>
           <DashboardCard
             title="Collections"
             icon={<IconFolder size={20} />}
@@ -364,92 +333,137 @@ export function DashboardPage() {
             sparkline={stats.collections.sparkline}
           />
         </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 6 }} style={{ height: 'calc(50% - 8px)' }}>
+          <DashboardCard
+            title="Works"
+            icon={<IconBook2 size={20} />}
+            color={COLORS.works}
+            pages={worksPages}
+            currentPage={cardPages.works}
+            onPageChange={(p) => setCardPages((prev) => ({ ...prev, works: p }))}
+            onViewAll={() => navigate('/works')}
+            sparkline={stats.works.sparkline}
+          />
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 6 }} style={{ height: 'calc(50% - 8px)' }}>
+          <DashboardCard
+            title="Organizations"
+            icon={<IconBuilding size={20} />}
+            color={COLORS.organizations}
+            pages={orgsPages}
+            currentPage={cardPages.organizations}
+            onPageChange={(p) => setCardPages((prev) => ({ ...prev, organizations: p }))}
+            onViewAll={() => navigate('/organizations')}
+            sparkline={stats.organizations.sparkline}
+          />
+        </Grid.Col>
+        <Grid.Col span={{ base: 12, md: 6 }} style={{ height: 'calc(50% - 8px)' }}>
+          <DashboardCard
+            title="Submissions"
+            icon={<IconSend size={20} />}
+            color={COLORS.submissions}
+            pages={submissionsPages}
+            currentPage={cardPages.submissions}
+            onPageChange={(p) => setCardPages((prev) => ({ ...prev, submissions: p }))}
+            onViewAll={() => navigate('/submissions')}
+            sparkline={stats.submissions.sparkline}
+          />
+        </Grid.Col>
       </Grid>
 
-      {/* Recently Added Section */}
-      {stats.recentItems && stats.recentItems.length > 0 && (
-        <Paper withBorder p="md" radius="md">
-          <Group gap="xs" mb="sm">
-            <IconClock size={18} />
-            <Title order={5}>Recently Added</Title>
-          </Group>
-          <Stack gap="xs">
-            {stats.recentItems.map((item, idx) => (
-              <Group
-                key={idx}
-                justify="space-between"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  switch (item.entityType) {
-                    case 'work':
-                      navigate(`/works/${item.entityID}`);
-                      break;
-                    case 'organization':
-                      navigate(`/organizations/${item.entityID}`);
-                      break;
-                    case 'submission':
-                      navigate(`/submissions/${item.entityID}`);
-                      break;
-                    case 'collection':
-                      navigate(`/collections/${item.entityID}`);
-                      break;
-                  }
-                }}
-              >
-                <Group gap="xs">
-                  <Badge
-                    size="xs"
-                    color={COLORS[item.entityType as keyof typeof COLORS] || 'gray'}
-                    variant="light"
-                  >
-                    {item.entityType}
-                  </Badge>
-                  <Text size="sm">{item.name || '(unnamed)'}</Text>
-                </Group>
-                <Text size="xs" c="dimmed">
-                  {formatRelativeTime(item.createdAt)}
+      {/* Bottom Row: Recently Added + Pending Alerts */}
+      {((stats.recentItems && stats.recentItems.length > 0) ||
+        (stats.pendingAlerts && stats.pendingAlerts.length > 0)) && (
+        <Group grow align="flex-start" gap="md" mt="md" style={{ flexShrink: 0, maxHeight: 120 }}>
+          {/* Recently Added Section */}
+          {stats.recentItems && stats.recentItems.length > 0 && (
+            <Paper withBorder p="xs" radius="md" h={110}>
+              <Group gap="xs" mb={4}>
+                <IconClock size={14} />
+                <Text size="xs" fw={600}>
+                  Recently Added
                 </Text>
               </Group>
-            ))}
-          </Stack>
-        </Paper>
-      )}
+              <ScrollArea h={75} offsetScrollbars scrollbarSize={4}>
+                <Stack gap={2}>
+                  {stats.recentItems.slice(0, 5).map((item, idx) => (
+                    <Group
+                      key={idx}
+                      justify="space-between"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => {
+                        switch (item.entityType) {
+                          case 'work':
+                            navigate(`/works/${item.entityID}`);
+                            break;
+                          case 'organization':
+                            navigate(`/organizations/${item.entityID}`);
+                            break;
+                          case 'submission':
+                            navigate(`/submissions/${item.entityID}`);
+                            break;
+                          case 'collection':
+                            navigate(`/collections/${item.entityID}`);
+                            break;
+                        }
+                      }}
+                    >
+                      <Group gap={4}>
+                        <Badge
+                          size="xs"
+                          color={COLORS[item.entityType as keyof typeof COLORS] || 'gray'}
+                          variant="light"
+                        >
+                          {item.entityType}
+                        </Badge>
+                        <Text size="xs" lineClamp={1}>
+                          {item.name || '(unnamed)'}
+                        </Text>
+                      </Group>
+                      <Text size="xs" c="dimmed">
+                        {formatRelativeTime(item.createdAt)}
+                      </Text>
+                    </Group>
+                  ))}
+                </Stack>
+              </ScrollArea>
+            </Paper>
+          )}
 
-      {/* Pending Alerts */}
-      {stats.pendingAlerts && stats.pendingAlerts.length > 0 && (
-        <Paper withBorder p="md" radius="md" bg="orange.0">
-          <Group gap="xs" mb="sm">
-            <ThemeIcon size="sm" variant="light" color="orange">
-              <IconAlertTriangle size={14} />
-            </ThemeIcon>
-            <Title order={5} c="orange.8">
-              Submissions Waiting 60+ Days
-            </Title>
-          </Group>
-          <Stack gap="xs">
-            {stats.pendingAlerts.map((alert) => (
-              <Group
-                key={alert.submissionID}
-                justify="space-between"
-                style={{ cursor: 'pointer' }}
-                onClick={() => navigate(`/submissions/${alert.submissionID}`)}
-              >
-                <Group gap="xs">
-                  <Text size="sm" fw={500}>
-                    {alert.workTitle}
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    → {alert.orgName}
-                  </Text>
-                </Group>
-                <Badge color="orange" variant="light">
-                  {alert.daysWaiting} days
-                </Badge>
+          {/* Pending Alerts */}
+          {stats.pendingAlerts && stats.pendingAlerts.length > 0 && (
+            <Paper withBorder p="xs" radius="md" bg="orange.0" h={110}>
+              <Group gap="xs" mb={4}>
+                <ThemeIcon size="xs" variant="light" color="orange">
+                  <IconAlertTriangle size={12} />
+                </ThemeIcon>
+                <Text size="xs" fw={600} c="orange.8">
+                  Pending 60+ Days ({stats.pendingAlerts.length})
+                </Text>
               </Group>
-            ))}
-          </Stack>
-        </Paper>
+              <ScrollArea h={75} offsetScrollbars scrollbarSize={4}>
+                <Stack gap={2}>
+                  {stats.pendingAlerts.map((alert) => (
+                    <Group
+                      key={alert.submissionID}
+                      justify="space-between"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => navigate(`/submissions/${alert.submissionID}`)}
+                    >
+                      <Text size="xs" lineClamp={1} style={{ flex: 1 }}>
+                        {alert.workTitle} → {alert.orgName}
+                      </Text>
+                      <Badge color="orange" variant="light" size="xs">
+                        {alert.daysWaiting}d
+                      </Badge>
+                    </Group>
+                  ))}
+                </Stack>
+              </ScrollArea>
+            </Paper>
+          )}
+        </Group>
       )}
-    </Stack>
+    </Box>
   );
 }

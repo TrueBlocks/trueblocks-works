@@ -40,6 +40,32 @@ function App() {
   const navigate = useNavigate();
   useKeyboardShortcuts();
 
+  // Prevent unhandled keystrokes from causing macOS beep
+  useEffect(() => {
+    function handleUnhandledKey(e: KeyboardEvent) {
+      // Allow browser/system shortcuts (Cmd+C, Cmd+V, Cmd+A, etc.)
+      if (e.metaKey || e.ctrlKey) return;
+
+      // Allow navigation keys when focused on inputs/textareas
+      const target = e.target as HTMLElement;
+      const isInput =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+      if (isInput) return;
+
+      // Allow Tab for focus navigation
+      if (e.key === 'Tab') return;
+
+      // Prevent default to stop beep for unhandled printable keys
+      const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+      if (e.key.length === 1 || arrowKeys.includes(e.key)) {
+        e.preventDefault();
+      }
+    }
+
+    window.addEventListener('keydown', handleUnhandledKey);
+    return () => window.removeEventListener('keydown', handleUnhandledKey);
+  }, []);
+
   // Save route on navigation
   useEffect(() => {
     if (hasRestoredRoute.current) {

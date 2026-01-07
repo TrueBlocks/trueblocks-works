@@ -85,10 +85,11 @@ func (db *DB) DeleteWork(id int64) error {
 	return nil
 }
 
-func (db *DB) ListWorks() ([]models.Work, error) {
+func (db *DB) ListWorks() ([]models.WorkView, error) {
 	query := `SELECT workID, title, type, year, status, quality, doc_type,
-		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at
-		FROM Works ORDER BY title`
+		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at,
+		age_days, n_submissions, collection_list
+		FROM WorksView ORDER BY title`
 
 	rows, err := db.conn.Query(query)
 	if err != nil {
@@ -96,13 +97,14 @@ func (db *DB) ListWorks() ([]models.Work, error) {
 	}
 	defer rows.Close()
 
-	var works []models.Work
+	var works []models.WorkView
 	for rows.Next() {
-		var w models.Work
+		var w models.WorkView
 		err := rows.Scan(
 			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
 			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
+			&w.AgeDays, &w.NSubmissions, &w.CollectionList,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan work: %w", err)

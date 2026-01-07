@@ -213,7 +213,7 @@ func (a *App) exportSubmissions() (interface{}, int, error) {
 }
 
 func (a *App) exportCollections() (interface{}, int, error) {
-	rows, err := a.db.Conn().Query(`SELECT collID, collection_name, is_status, type, attributes, created_at, modified_at FROM Collections ORDER BY collID`)
+	rows, err := a.db.Conn().Query(`SELECT collID, collection_name, type, attributes, created_at, modified_at FROM Collections ORDER BY collID`)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -223,15 +223,15 @@ func (a *App) exportCollections() (interface{}, int, error) {
 	for rows.Next() {
 		var collID int64
 		var collectionName string
-		var isStatus, collType, attributes, createdAt, modifiedAt *string
+		var collType, attributes, createdAt, modifiedAt *string
 
-		err := rows.Scan(&collID, &collectionName, &isStatus, &collType, &attributes, &createdAt, &modifiedAt)
+		err := rows.Scan(&collID, &collectionName, &collType, &attributes, &createdAt, &modifiedAt)
 		if err != nil {
 			return nil, 0, err
 		}
 
 		records = append(records, map[string]interface{}{
-			"collID": collID, "collectionName": collectionName, "isStatus": isStatus,
+			"collID": collID, "collectionName": collectionName,
 			"type": collType, "attributes": attributes,
 		})
 	}

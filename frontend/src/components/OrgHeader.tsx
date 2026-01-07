@@ -2,46 +2,22 @@ import { Group, Text, Badge, ActionIcon, Stack, Button, Tooltip } from '@mantine
 import { IconArrowLeft, IconExternalLink } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { models } from '@wailsjs/go/models';
-import { OrgStatusBadge, EditableField, SelectablePopover } from '@/components';
-import {
-  OpenOrgURL,
-  OpenOrgOtherURL,
-  OpenDuotrope,
-  UpdateOrganization,
-} from '@wailsjs/go/main/App';
-
-const STATUS_CYCLE = ['Open', 'Boring', 'Defunct'] as const;
+import { EditableField, OrgFieldSelect } from '@/components';
+import { orgStatusColors } from '@/types';
+import { OpenOrgURL, OpenOrgOtherURL, OpenDuotrope } from '@wailsjs/go/main/App';
 
 interface OrgHeaderProps {
   org: models.Organization;
-  typeOptions?: readonly string[];
-  onStatusChange?: (newStatus: string) => void;
+  onOrgUpdate?: (org: models.Organization) => void;
   onNameChange?: (newName: string) => void;
-  onTypeChange?: (newType: string) => void;
 }
 
-export function OrgHeader({
-  org,
-  typeOptions = [],
-  onStatusChange,
-  onNameChange,
-  onTypeChange,
-}: OrgHeaderProps) {
+export function OrgHeader({ org, onOrgUpdate, onNameChange }: OrgHeaderProps) {
   const navigate = useNavigate();
 
   const handleOpenURL = () => OpenOrgURL(org.orgID);
   const handleOpenOtherURL = () => OpenOrgOtherURL(org.orgID);
   const handleOpenDuotrope = () => OpenDuotrope(org.orgID);
-
-  const handleCycleStatus = async () => {
-    const currentIndex = STATUS_CYCLE.indexOf(org.status as (typeof STATUS_CYCLE)[number]);
-    const nextIndex = (currentIndex + 1) % STATUS_CYCLE.length;
-    const newStatus = STATUS_CYCLE[nextIndex];
-
-    const updatedOrg = { ...org, status: newStatus };
-    await UpdateOrganization(updatedOrg as models.Organization);
-    onStatusChange?.(newStatus);
-  };
 
   return (
     <Group justify="space-between" align="flex-start">
@@ -61,21 +37,14 @@ export function OrgHeader({
             </Text>
           )}
           <Group gap="xs" mt="xs">
-            <SelectablePopover
-              options={typeOptions}
-              value={org.type || ''}
-              onChange={(value) => onTypeChange?.(value)}
-              label="Type"
-            >
-              <Badge variant="light" style={{ cursor: 'pointer' }}>
-                {org.type || '(No type)'}
-              </Badge>
-            </SelectablePopover>
-            <Tooltip label="Click to cycle status">
-              <div style={{ cursor: 'pointer' }} onClick={handleCycleStatus}>
-                <OrgStatusBadge status={org.status} />
-              </div>
-            </Tooltip>
+            <OrgFieldSelect org={org} field="type" onUpdate={onOrgUpdate} width={100} />
+            <OrgFieldSelect
+              org={org}
+              field="status"
+              colorMap={orgStatusColors}
+              onUpdate={onOrgUpdate}
+              width={100}
+            />
             {org.timing && <Badge variant="outline">{org.timing}</Badge>}
           </Group>
         </div>

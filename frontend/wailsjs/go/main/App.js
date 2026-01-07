@@ -118,6 +118,10 @@ export function GetDashboardStats() {
   return window['go']['main']['App']['GetDashboardStats']();
 }
 
+export function GetDistinctValues(arg1, arg2) {
+  return window['go']['main']['App']['GetDistinctValues'](arg1, arg2);
+}
+
 export function GetDuotropeURL(arg1) {
   return window['go']['main']['App']['GetDuotropeURL'](arg1);
 }
@@ -280,6 +284,10 @@ export function ReimportFromCSV() {
 
 export function RemoveWorkFromCollection(arg1, arg2) {
   return window['go']['main']['App']['RemoveWorkFromCollection'](arg1, arg2);
+}
+
+export function RenameFieldValue(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['RenameFieldValue'](arg1, arg2, arg3, arg4);
 }
 
 export function ReorderCollectionWorks(arg1, arg2) {

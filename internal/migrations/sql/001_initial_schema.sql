@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 CREATE TABLE Collections (
     collID INTEGER PRIMARY KEY AUTOINCREMENT,
     collection_name TEXT NOT NULL,
-    is_status TEXT,
     type TEXT,
     attributes TEXT DEFAULT '',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -312,7 +311,6 @@ LEFT JOIN Organizations o ON s.orgID = o.orgID;
 CREATE VIEW CollectionsView AS
 SELECT 
     c.*,
-    CASE WHEN c.is_status = 'yes' THEN c.collection_name ELSE 'None' END AS status_list,
     (SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID) AS n_items
 FROM Collections c;
 
@@ -332,3 +330,4 @@ INSERT INTO schema_migrations (version, description) VALUES (9, 'drop_boolean_co
 INSERT INTO schema_migrations (version, description) VALUES (10, 'drop_mark_column');
 INSERT INTO schema_migrations (version, description) VALUES (11, 'fts_notes_and_submissions');
 INSERT INTO schema_migrations (version, description) VALUES (12, 'rename_modified_columns');
+INSERT INTO schema_migrations (version, description) VALUES (13, 'drop_is_status_column');

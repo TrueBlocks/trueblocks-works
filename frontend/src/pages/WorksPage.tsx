@@ -25,7 +25,7 @@ import { ViewSort, useColumnFilter } from '@/hooks';
 import { useNavigate } from 'react-router';
 
 export function WorksPage() {
-  const [works, setWorks] = useState<models.Work[]>([]);
+  const [works, setWorks] = useState<models.WorkView[]>([]);
   const [loading, setLoading] = useState(true);
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [initialSearch, setInitialSearch] = useState('');
@@ -106,7 +106,7 @@ export function WorksPage() {
   };
 
   const filterFn = useCallback(
-    (work: models.Work, search: string) => {
+    (work: models.WorkView, search: string) => {
       const matchesSearch = work.title.toLowerCase().includes(search.toLowerCase());
       return (
         matchesSearch &&
@@ -119,7 +119,7 @@ export function WorksPage() {
     [yearFilter.selected, typeFilter.selected, statusFilter.selected, qualityFilter.selected]
   );
 
-  const columns: Column<models.Work>[] = useMemo(
+  const columns: Column<models.WorkView>[] = useMemo(
     () => [
       { key: 'workID', label: 'ID', width: '5%', render: (w) => w.workID },
       { key: 'title', label: 'Title', width: '35%', render: (w) => w.title },
@@ -194,8 +194,17 @@ export function WorksPage() {
       {
         key: 'nWords',
         label: 'Words',
-        width: '10%',
+        width: '8%',
         render: (w) => w.nWords?.toLocaleString() || '-',
+      },
+      {
+        key: 'collectionList',
+        label: 'Collections',
+        width: '15%',
+        render: (w) => {
+          const list = w.collectionList || '';
+          return list.length > 30 ? list.substring(0, 30) + '…' : list || '-';
+        },
       },
     ],
     [
@@ -212,7 +221,7 @@ export function WorksPage() {
 
   return (
     <>
-      <DataTable<models.Work>
+      <DataTable<models.WorkView>
         title="Works"
         data={works}
         columns={columns}

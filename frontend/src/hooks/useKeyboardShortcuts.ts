@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 
 const shortcuts: Record<string, string> = {
   '1': '/dashboard',
-  '2': '/works',
-  '3': '/organizations',
-  '4': '/submissions',
-  '5': '/collections',
+  '2': '/collections',
+  '3': '/works',
+  '4': '/organizations',
+  '5': '/submissions',
   '6': '/reports',
   '7': '/settings',
 };

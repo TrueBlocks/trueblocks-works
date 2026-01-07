@@ -28,6 +28,11 @@ var migrations = []Migration{
 		Name:    "rename_modified_columns",
 		Up:      migrateRenameModifiedColumns,
 	},
+	{
+		Version: 13,
+		Name:    "drop_is_status_column",
+		Up:      migrateDropIsStatusColumn,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -219,6 +224,77 @@ func migrateRenameModifiedColumns(tx *sql.Tx) error {
 	_, err = tx.Exec(`ALTER TABLE Notes RENAME COLUMN modified_date TO modified_at`)
 	if err != nil {
 		return fmt.Errorf("rename Notes.modified_date: %w", err)
+	}
+
+	return nil
+}
+
+func migrateDropIsStatusColumn(tx *sql.Tx) error {
+	// Drop views that depend on Collections table
+	_, _ = tx.Exec(`DROP VIEW IF EXISTS WorksView`)
+	_, _ = tx.Exec(`DROP VIEW IF EXISTS CollectionsView`)
+	_, _ = tx.Exec(`DROP TABLE IF EXISTS Collections_new`)
+
+	_, err := tx.Exec(`
+		CREATE TABLE Collections_new (
+			collID INTEGER PRIMARY KEY AUTOINCREMENT,
+			collection_name TEXT NOT NULL,
+			type TEXT,
+			attributes TEXT DEFAULT '',
+			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+			modified_at TEXT DEFAULT CURRENT_TIMESTAMP
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create Collections_new: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		INSERT INTO Collections_new (collID, collection_name, type, attributes, created_at, modified_at)
+		SELECT collID, collection_name, type, attributes, created_at, modified_at
+		FROM Collections
+	`)
+	if err != nil {
+		return fmt.Errorf("copy data to Collections_new: %w", err)
+	}
+
+	_, err = tx.Exec(`DROP TABLE Collections`)
+	if err != nil {
+		return fmt.Errorf("drop old Collections: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Collections_new RENAME TO Collections`)
+	if err != nil {
+		return fmt.Errorf("rename Collections_new: %w", err)
+	}
+
+	// Recreate WorksView
+	_, err = tx.Exec(`
+		CREATE VIEW WorksView AS
+		SELECT 
+			w.*,
+			CAST((julianday('now') - julianday(w.access_date)) AS INTEGER) AS age_days,
+			(SELECT COUNT(*) FROM Submissions s WHERE s.workID = w.workID) AS n_submissions,
+			(SELECT GROUP_CONCAT(c.collection_name, ', ') 
+			 FROM CollectionDetails cd
+			 JOIN Collections c ON cd.collID = c.collID
+			 WHERE cd.workID = w.workID) AS collection_list
+		FROM Works w
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate WorksView: %w", err)
+	}
+
+	// Recreate CollectionsView without is_status/status_list
+	_, err = tx.Exec(`
+		CREATE VIEW CollectionsView AS
+		SELECT 
+			c.*,
+			(SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID) AS n_items
+		FROM Collections c
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate CollectionsView: %w", err)
 	}
 
 	return nil

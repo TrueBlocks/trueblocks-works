@@ -12,10 +12,10 @@ import {
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: IconDashboard },
+  { path: '/collections', label: 'Collections', icon: IconFolder },
   { path: '/works', label: 'Works', icon: IconBook2 },
   { path: '/organizations', label: 'Organizations', icon: IconBuilding },
   { path: '/submissions', label: 'Submissions', icon: IconSend },
-  { path: '/collections', label: 'Collections', icon: IconFolder },
 ];
 
 export function Navigation() {

@@ -212,7 +212,7 @@ Cmd+Shift+P → "Developer: Reload Window"
 
 ## 14. Git
 
-- Commit early and often
+- **NEVER ask if user wants to commit** — only commit when explicitly told
 - Clear messages: `feat:`, `fix:`, `refactor:`, `docs:`
 - Never commit `node_modules/`, `build/`, or `.db` files
 

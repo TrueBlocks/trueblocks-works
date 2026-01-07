@@ -50,7 +50,11 @@ func (f *FileOps) GeneratePath(w *models.Work) string {
 	qualityMark := GetQualityMark(w.Quality)
 	sanitizedTitle := strings.ReplaceAll(w.Title, "/", "~")
 	filename := fmt.Sprintf("%s%s - %s - %s", qualityMark, w.Type, year, sanitizedTitle)
-	return folder + filename
+	ext := w.DocType
+	if ext != "" && !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+	return folder + filename + ext
 }
 
 func (f *FileOps) GetFullPath(w *models.Work) string {

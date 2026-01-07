@@ -59,11 +59,13 @@ export function GetAppState():Promise<state.AppState>;
 
 export function GetCollection(arg1:number):Promise<models.Collection>;
 
-export function GetCollectionWorks(arg1:number):Promise<Array<models.Work>>;
+export function GetCollectionWorks(arg1:number):Promise<Array<models.CollectionWork>>;
 
-export function GetCollections():Promise<Array<models.Collection>>;
+export function GetCollections():Promise<Array<models.CollectionView>>;
 
 export function GetDashboardStats():Promise<main.DashboardStats>;
+
+export function GetDistinctValues(arg1:string,arg2:string):Promise<Array<string>>;
 
 export function GetDuotropeURL(arg1:number):Promise<string>;
 
@@ -115,7 +117,7 @@ export function GetWorkCollections(arg1:number):Promise<Array<models.CollectionD
 
 export function GetWorkFullPath(arg1:number):Promise<string>;
 
-export function GetWorks():Promise<Array<models.Work>>;
+export function GetWorks():Promise<Array<models.WorkView>>;
 
 export function GetWorksFilterOptions():Promise<main.WorksFilterOptions>;
 
@@ -146,6 +148,8 @@ export function RegeneratePDF(arg1:number):Promise<string>;
 export function ReimportFromCSV():Promise<void>;
 
 export function RemoveWorkFromCollection(arg1:number,arg2:number):Promise<void>;
+
+export function RenameFieldValue(arg1:string,arg2:string,arg3:string,arg4:string):Promise<number>;
 
 export function ReorderCollectionWorks(arg1:number,arg2:Array<number>):Promise<void>;
 

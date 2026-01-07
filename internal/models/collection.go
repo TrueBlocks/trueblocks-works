@@ -4,7 +4,6 @@ package models
 type Collection struct {
 	CollID         int64   `json:"collID" db:"collID"`
 	CollectionName string  `json:"collectionName" db:"collection_name"`
-	IsStatus       *string `json:"isStatus,omitempty" db:"is_status"`
 	Type           *string `json:"type,omitempty" db:"type"`
 	Attributes     string  `json:"attributes" db:"attributes"`
 	CreatedAt      string  `json:"createdAt" db:"created_at"`
@@ -14,8 +13,7 @@ type Collection struct {
 // CollectionView extends Collection with computed fields
 type CollectionView struct {
 	Collection
-	StatusList string `json:"statusList" db:"status_list"`
-	NItems     int    `json:"nItems" db:"n_items"`
+	NItems int `json:"nItems" db:"n_items"`
 }
 
 // CollectionDetail is the join table between Collections and Works
@@ -25,4 +23,10 @@ type CollectionDetail struct {
 	WorkID         int64   `json:"workID" db:"workID"`
 	Position       int64   `json:"position" db:"position"`
 	CollectionName *string `json:"collectionName,omitempty" db:"collection_name"`
+}
+
+// CollectionWork represents a Work with its position in a collection
+type CollectionWork struct {
+	Work
+	Position int64 `json:"position" db:"position"`
 }

@@ -19,7 +19,7 @@ export function MoveFileModal({
   onUpdatePathOnly,
 }: MoveFileModalProps) {
   return (
-    <Modal opened={opened} onClose={onClose} title="Move File Confirmation" size="lg">
+    <Modal opened={opened} onClose={onClose} title="Move File Confirmation" size="xl">
       <Stack gap="md">
         <Alert icon={<IconAlertTriangle size={16} />} color="yellow" variant="light">
           The file location differs from what the metadata suggests.

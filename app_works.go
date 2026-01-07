@@ -2,7 +2,7 @@ package main
 
 import "works/internal/models"
 
-func (a *App) GetWorks() ([]models.Work, error) {
+func (a *App) GetWorks() ([]models.WorkView, error) {
 	return a.db.ListWorks()
 }
 

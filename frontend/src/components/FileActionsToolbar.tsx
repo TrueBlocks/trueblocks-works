@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Tooltip } from '@mantine/core';
+import { ActionIcon, Button, Group, Tooltip } from '@mantine/core';
 import { IconFileText, IconPrinter, IconDownload, IconArrowsExchange } from '@tabler/icons-react';
 import {
   OpenDocument,
@@ -9,15 +9,16 @@ import {
   UpdateWorkPathToGenerated,
 } from '@wailsjs/go/main/App';
 import { Log, LogErr } from '@/utils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MoveFileModal } from './MoveFileModal';
 
 interface FileActionsToolbarProps {
   workID: number;
+  refreshKey?: number;
   onMoved?: () => void;
 }
 
-export function FileActionsToolbar({ workID, onMoved }: FileActionsToolbarProps) {
+export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsToolbarProps) {
   const [pathStatus, setPathStatus] = useState<string>('');
   const [fileExists, setFileExists] = useState(true);
   const [currentPath, setCurrentPath] = useState('');
@@ -31,7 +32,7 @@ export function FileActionsToolbar({ workID, onMoved }: FileActionsToolbarProps)
       setCurrentPath(result.storedPath);
       setGeneratedPath(result.generatedPath);
     });
-  }, [workID]);
+  }, [workID, refreshKey]);
 
   const handleOpen = async () => {
     try {
@@ -41,7 +42,7 @@ export function FileActionsToolbar({ workID, onMoved }: FileActionsToolbarProps)
     }
   };
 
-  const handleMove = async () => {
+  const handleMove = useCallback(async () => {
     try {
       await MoveWorkFile(workID);
       setPathStatus('');
@@ -50,7 +51,19 @@ export function FileActionsToolbar({ workID, onMoved }: FileActionsToolbarProps)
     } catch (err) {
       LogErr('Failed to move file:', err);
     }
-  };
+  }, [workID, onMoved]);
+
+  // Cmd+M hotkey to move file directly
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'm' && pathStatus === 'name changed') {
+        e.preventDefault();
+        handleMove();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pathStatus, handleMove]);
 
   const handleUpdatePathOnly = async () => {
     try {
@@ -83,19 +96,24 @@ export function FileActionsToolbar({ workID, onMoved }: FileActionsToolbarProps)
   return (
     <>
       <Group gap="xs">
+        {pathStatus === 'name changed' && (
+          <Button
+            variant="filled"
+            color="orange"
+            size="xs"
+            leftSection={<IconArrowsExchange size={16} />}
+            onClick={() => setModalOpen(true)}
+            styles={{ root: { color: 'black' } }}
+          >
+            Move File
+          </Button>
+        )}
+
         <Tooltip label="Open document">
           <ActionIcon variant="subtle" onClick={handleOpen} disabled={!fileExists}>
             <IconFileText size={18} />
           </ActionIcon>
         </Tooltip>
-
-        {pathStatus === 'name changed' && (
-          <Tooltip label="Move file to match metadata">
-            <ActionIcon variant="light" color="yellow" onClick={() => setModalOpen(true)}>
-              <IconArrowsExchange size={18} />
-            </ActionIcon>
-          </Tooltip>
-        )}
 
         <Tooltip label="Export to submissions folder">
           <ActionIcon variant="subtle" onClick={handleExport} disabled={!fileExists}>

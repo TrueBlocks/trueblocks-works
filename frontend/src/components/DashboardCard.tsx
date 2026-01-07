@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Card, Group, Title, Text, Stack, ActionIcon, Button, Box, Divider } from '@mantine/core';
+import {
+  Card,
+  Group,
+  Title,
+  Text,
+  ActionIcon,
+  Button,
+  Box,
+  Divider,
+  ScrollArea,
+} from '@mantine/core';
 import { IconChevronLeft, IconChevronRight, IconPlus, IconArrowRight } from '@tabler/icons-react';
 
 interface DashboardCardPage {
@@ -70,12 +80,14 @@ export function DashboardCard({
         </Group>
       </Card.Section>
 
-      <Stack gap="sm" mt="md" style={{ minHeight: 180 }}>
-        <Text size="sm" fw={500} c="dimmed">
+      <Box mt="md">
+        <Text size="sm" fw={500} c="dimmed" mb="xs">
           {pages[activePage]?.title}
         </Text>
-        {pages[activePage]?.content}
-      </Stack>
+        <ScrollArea h={140} offsetScrollbars scrollbarSize={6}>
+          {pages[activePage]?.content}
+        </ScrollArea>
+      </Box>
 
       {sparkline && sparkline.length > 0 && (
         <>

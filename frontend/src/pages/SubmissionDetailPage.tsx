@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Stack, Grid, Loader, Flex, Text, Paper, SimpleGrid } from '@mantine/core';
 import { LogErr } from '@/utils';
-import { Group, Badge, Anchor, ActionIcon, Button } from '@mantine/core';
+import { Group, Badge, ActionIcon, Button } from '@mantine/core';
 import { IconArrowLeft, IconExternalLink, IconTrash } from '@tabler/icons-react';
 import { GetSubmission, GetWork, GetOrganization, DeleteSubmission } from '@wailsjs/go/main/App';
+import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import { models } from '@wailsjs/go/models';
 import { ResponseBadge } from '@/components';
 import dayjs from 'dayjs';
@@ -212,9 +213,14 @@ export function SubmissionDetailPage() {
                 <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
                   Website
                 </Text>
-                <Anchor href={submission.webAddress} target="_blank" size="sm">
+                <Text
+                  size="sm"
+                  c="blue"
+                  style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                  onClick={() => BrowserOpenURL(submission.webAddress!)}
+                >
                   {submission.webAddress}
-                </Anchor>
+                </Text>
               </div>
             )}
             <Field label="User ID" value={submission.userID} />

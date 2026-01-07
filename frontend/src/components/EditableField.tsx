@@ -6,26 +6,40 @@ interface EditableFieldProps {
   onChange: (value: string) => void;
   placeholder?: string;
   label?: string;
+  autoFocus?: boolean;
 }
 
-export function EditableField({ value, onChange, placeholder, label }: EditableFieldProps) {
-  const [isFocused, setIsFocused] = useState(false);
+export function EditableField({
+  value,
+  onChange,
+  placeholder,
+  label,
+  autoFocus,
+}: EditableFieldProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
   useEffect(() => {
-    if (isFocused && inputRef.current) {
+    if (isEditing && inputRef.current) {
       inputRef.current.focus();
       inputRef.current.select();
     }
-  }, [isFocused]);
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (autoFocus && boxRef.current && !isEditing) {
+      boxRef.current.focus();
+    }
+  }, [autoFocus, isEditing]);
 
   const handleBlur = () => {
-    setIsFocused(false);
+    setIsEditing(false);
     if (localValue !== value) {
       onChange(localValue);
     }
@@ -37,11 +51,22 @@ export function EditableField({ value, onChange, placeholder, label }: EditableF
     }
     if (e.key === 'Escape') {
       setLocalValue(value);
-      setIsFocused(false);
+      setIsEditing(false);
     }
   };
 
-  if (isFocused) {
+  const handleBoxKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsEditing(true);
+    } else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      e.preventDefault();
+      setLocalValue(e.key);
+      setIsEditing(true);
+    }
+  };
+
+  if (isEditing) {
     return (
       <Box>
         {label && (
@@ -68,13 +93,9 @@ export function EditableField({ value, onChange, placeholder, label }: EditableF
 
   return (
     <Box
-      onClick={() => setIsFocused(true)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          setIsFocused(true);
-        }
-      }}
+      ref={boxRef}
+      onClick={() => setIsEditing(true)}
+      onKeyDown={handleBoxKeyDown}
       tabIndex={0}
       style={{
         cursor: 'pointer',

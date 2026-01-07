@@ -78,7 +78,7 @@ Steps:
 5. Checkpoint
 
 ## 13. Updating Existing ToDoList
-- If a `ToDoList.md` already exists: STOP and request user direction. Do not auto‑merge or append; the user will prune or remove outdated lists/design docs before a fresh plan is generated.
+- Always overwrite `ToDoList.md` when entering Planning Mode with a new task. Previous completed lists are considered historical.
 - Do not maintain a historical "Completed Tasks" table; keep only the active task list for the current execution window.
 - If scope expands mid‑execution, append new tasks at the end; do not renumber existing tasks.
 - If a step becomes obsolete, note its removal succinctly in the next checkpoint summary (no need for a dedicated removed section) and exclude it from future tables.

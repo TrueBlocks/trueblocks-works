@@ -9,7 +9,6 @@ import {
   GetSubmissionViewsByOrg,
   DeleteSubmission,
   UpdateOrganization,
-  GetOrgsFilterOptions,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { OrgHeader, OrgDetails, NotesPortal, SubmissionsPortal } from '@/components';
@@ -19,7 +18,6 @@ export function OrganizationDetailPage() {
   const navigate = useNavigate();
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
-  const [typeOptions, setTypeOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const orgId = id ? parseInt(id, 10) : null;
@@ -34,14 +32,12 @@ export function OrganizationDetailPage() {
     if (!orgId) return;
     setLoading(true);
     try {
-      const [orgData, subsData, filterOpts] = await Promise.all([
+      const [orgData, subsData] = await Promise.all([
         GetOrganization(orgId),
         GetSubmissionViewsByOrg(orgId),
-        GetOrgsFilterOptions(),
       ]);
       setOrg(orgData);
       setSubmissions(subsData || []);
-      setTypeOptions(filterOpts.types || []);
       SetLastOrgID(orgId);
     } catch (err) {
       LogErr('Failed to load organization data:', err);
@@ -79,15 +75,9 @@ export function OrganizationDetailPage() {
     <Stack gap="lg">
       <OrgHeader
         org={org}
-        typeOptions={typeOptions}
-        onStatusChange={(newStatus) => setOrg({ ...org, status: newStatus })}
+        onOrgUpdate={(updated) => setOrg(updated)}
         onNameChange={async (newName) => {
           const updatedOrg = { ...org, name: newName } as models.Organization;
-          setOrg(updatedOrg);
-          await UpdateOrganization(updatedOrg);
-        }}
-        onTypeChange={async (newType) => {
-          const updatedOrg = { ...org, type: newType } as models.Organization;
           setOrg(updatedOrg);
           await UpdateOrganization(updatedOrg);
         }}

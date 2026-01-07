@@ -1,6 +1,7 @@
-import { Paper, SimpleGrid, Text, Stack } from '@mantine/core';
+import { Paper, SimpleGrid, Text, Stack, Box } from '@mantine/core';
 import { models } from '@wailsjs/go/models';
 import { EditableField } from './EditableField';
+import { OrgFieldSelect } from './OrgFieldSelect';
 
 interface OrgDetailsProps {
   org: models.Organization;
@@ -47,7 +48,12 @@ export function OrgDetails({ org, onUpdate }: OrgDetailsProps) {
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
           <Field label="Accepts" value={org.accepts} />
           <Field label="Submission Types" value={org.submissionTypes} />
-          <Field label="My Interest" value={org.myInterest} />
+          <Box>
+            <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
+              My Interest
+            </Text>
+            <OrgFieldSelect org={org} field="myInterest" onUpdate={onUpdate} width={100} />
+          </Box>
           <Field label="Source" value={org.source} />
           <Field label="Duotrope #" value={org.duotropeNum} />
           <Field label="Website Menu" value={org.websiteMenu} />

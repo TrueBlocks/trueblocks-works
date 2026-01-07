@@ -2,7 +2,7 @@ package main
 
 import "works/internal/models"
 
-func (a *App) GetCollections() ([]models.Collection, error) {
+func (a *App) GetCollections() ([]models.CollectionView, error) {
 	return a.db.ListCollections()
 }
 
@@ -30,7 +30,7 @@ func (a *App) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 	return a.db.GetWorkCollections(workID)
 }
 
-func (a *App) GetCollectionWorks(collID int64) ([]models.Work, error) {
+func (a *App) GetCollectionWorks(collID int64) ([]models.CollectionWork, error) {
 	return a.db.GetCollectionWorks(collID)
 }
 

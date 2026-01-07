@@ -47,10 +47,9 @@ func (a *App) CheckWorkPath(workID int64) (PathCheckResult, error) {
 	generatedPath := a.fileOps.GeneratePath(work)
 	status := a.fileOps.CheckPath(work)
 	fullPath := a.fileOps.GetFilename(derefPath(work.Path))
-	exists := fileops.FileExists(fullPath) ||
-		fileops.FileExists(fullPath+".rtf") ||
-		fileops.FileExists(fullPath+".docx") ||
-		fileops.FileExists(fullPath+".txt")
+
+	_, err = fileops.FindFileWithExtension(fullPath)
+	exists := err == nil
 
 	return PathCheckResult{
 		GeneratedPath: generatedPath,
@@ -157,14 +156,24 @@ func (a *App) GetPreviewURL(workID int64) (string, error) {
 		return "", err
 	}
 
-	docPath, err := fileops.FindFileWithExtension(a.fileOps.GetFilename(derefPath(work.Path)))
-	if err != nil {
-		return "", fmt.Errorf("file not found: %w", err)
-	}
+	pdfFilename := fmt.Sprintf("%d.pdf", workID)
+	pdfPath := filepath.Join(a.fileOps.Config.PDFPreviewPath, pdfFilename)
 
-	pdfPath, err := a.fileOps.GetPreviewPath(work.WorkID, docPath)
-	if err != nil {
-		return "", err
+	docPath, docErr := fileops.FindFileWithExtension(a.fileOps.GetFilename(derefPath(work.Path)))
+	if docErr == nil {
+		pdfPath, err = a.fileOps.GetPreviewPath(work.WorkID, docPath)
+		if err != nil {
+			existingPdf := filepath.Join(a.fileOps.Config.PDFPreviewPath, pdfFilename)
+			if fileops.FileExists(existingPdf) {
+				pdfPath = existingPdf
+			} else {
+				return "", err
+			}
+		}
+	} else {
+		if !fileops.FileExists(pdfPath) {
+			return "", fmt.Errorf("file not found and no preview available")
+		}
 	}
 
 	filename := filepath.Base(pdfPath)

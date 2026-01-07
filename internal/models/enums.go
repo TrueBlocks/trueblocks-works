@@ -1,5 +1,8 @@
 package models
 
+// NOTE: These lists are for reference only. Actual values are now
+// loaded dynamically from the database using GetDistinctValues.
+
 var StatusList = []string{
 	"Out",
 	"Focus",
@@ -16,22 +19,6 @@ var StatusList = []string{
 	"Done",
 }
 
-var StatusOrder = map[string]int{
-	"Out":       1,
-	"Focus":     2,
-	"Active":    3,
-	"Working":   4,
-	"Resting":   5,
-	"Waiting":   6,
-	"Gestating": 7,
-	"Sound":     8,
-	"Published": 9,
-	"Sleeping":  10,
-	"Dying":     11,
-	"Dead":      12,
-	"Done":      13,
-}
-
 var QualityList = []string{
 	"Best",
 	"Better",
@@ -40,16 +27,6 @@ var QualityList = []string{
 	"Bad",
 	"Worst",
 	"Unknown",
-}
-
-var QualityOrder = map[string]int{
-	"Best":    1,
-	"Better":  2,
-	"Good":    3,
-	"Okay":    4,
-	"Bad":     5,
-	"Worst":   6,
-	"Unknown": 7,
 }
 
 var WorkTypeList = []string{
@@ -82,38 +59,6 @@ var WorkTypeList = []string{
 	"Flash Idea",
 	"Micro Idea",
 	"Other",
-}
-
-var TypeOrder = map[string]int{
-	"Article":        1,
-	"Book":           2,
-	"Chapter":        3,
-	"Critique":       4,
-	"Essay":          5,
-	"Flash":          6,
-	"Interview":      7,
-	"Freewrite":      8,
-	"Journal":        9,
-	"Micro":          10,
-	"Poem":           11,
-	"Paper":          12,
-	"Lesson":         13,
-	"Character":      14,
-	"Research":       15,
-	"Review":         16,
-	"Song":           17,
-	"Story":          18,
-	"Travel":         19,
-	"Essay Idea":     20,
-	"Poem Idea":      21,
-	"Article Idea":   22,
-	"Book Idea":      23,
-	"Story Idea":     24,
-	"Paper Idea":     25,
-	"Interview Idea": 26,
-	"Flash Idea":     27,
-	"Micro Idea":     28,
-	"Other":          99,
 }
 
 var ResponseTypeList = []string{

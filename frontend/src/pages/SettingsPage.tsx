@@ -9,6 +9,7 @@ import {
   ReimportFromCSV,
 } from '@wailsjs/go/main/App';
 import { settings } from '@wailsjs/go/models';
+import { EnumManagement } from '@/components';
 
 export function SettingsPage() {
   const [config, setConfig] = useState<settings.Settings | null>(null);
@@ -213,6 +214,8 @@ export function SettingsPage() {
           </Button>
         </Stack>
       </Paper>
+
+      <EnumManagement />
 
       <Group>
         <Button

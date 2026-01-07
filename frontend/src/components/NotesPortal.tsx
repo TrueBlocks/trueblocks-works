@@ -12,6 +12,7 @@ import {
 } from '@mantine/core';
 import { IconPlus, IconTrash, IconEdit } from '@tabler/icons-react';
 import { models } from '@wailsjs/go/models';
+import { NoteFieldSelect } from './NoteFieldSelect';
 import dayjs from 'dayjs';
 
 interface NotesPortalProps {
@@ -116,9 +117,12 @@ export function NotesPortal({
                   {note.note || ''}
                 </Text>
                 <Group justify="space-between" mt="xs">
-                  <Text size="xs" c="dimmed">
-                    {dayjs(note.createdAt).format('MMM D, YYYY')}
-                  </Text>
+                  <Group gap="xs">
+                    <Text size="xs" c="dimmed">
+                      {dayjs(note.createdAt).format('MMM D, YYYY')}
+                    </Text>
+                    <NoteFieldSelect note={note} onUpdate={onUpdate} width={80} />
+                  </Group>
                   <Group gap="xs">
                     <ActionIcon
                       variant="subtle"

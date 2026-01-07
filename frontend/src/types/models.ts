@@ -100,7 +100,6 @@ export interface SubmissionView extends Submission {
 export interface Collection {
   collID: number;
   collectionName: string;
-  isStatus?: string;
   type?: CollectionType;
   attributes: string;
   createdAt?: string;

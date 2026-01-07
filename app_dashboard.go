@@ -50,11 +50,9 @@ type SubmissionsStats struct {
 }
 
 type CollectionsStats struct {
-	Total       int              `json:"total"`
-	StatusLists int              `json:"statusLists"`
-	Regular     int              `json:"regular"`
-	Largest     []CollectionSize `json:"largest"`
-	Sparkline   []int            `json:"sparkline"`
+	Total     int              `json:"total"`
+	Largest   []CollectionSize `json:"largest"`
+	Sparkline []int            `json:"sparkline"`
 }
 
 type CollectionSize struct {
@@ -395,11 +393,6 @@ func (a *App) getCollectionsStats() CollectionsStats {
 	// Total
 	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Collections")
 	_ = row.Scan(&stats.Total)
-
-	// Status lists vs regular
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Collections WHERE is_status = 'yes'")
-	_ = row.Scan(&stats.StatusLists)
-	stats.Regular = stats.Total - stats.StatusLists
 
 	// Largest collections
 	rows, _ := a.db.Conn().Query(`

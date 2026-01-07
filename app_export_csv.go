@@ -249,16 +249,13 @@ func (a *App) exportCollectionsCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	// Header matches original exactly plus new attributes field
-	header := []string{"Collection Name", "isStatus", "Type", "Attributes", "Collection ID", "statusList", "nItems"}
+	header := []string{"Collection Name", "Type", "Attributes", "Collection ID", "nItems"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
-	// Note: statusList is derived from isStatus, nItems is computed from CollectionDetails count
 	rows, err := a.db.Conn().Query(`
-		SELECT c.collection_name, c.is_status, c.type, c.attributes, c.collID,
-			CASE WHEN c.is_status = 'yes' THEN c.collection_name ELSE 'None' END as statusList,
+		SELECT c.collection_name, c.type, c.attributes, c.collID,
 			COALESCE((SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID), 0) as nItems
 		FROM Collections c`)
 	if err != nil {
@@ -269,12 +266,11 @@ func (a *App) exportCollectionsCSV(importsPath string) (int, error) {
 	var records [][]string
 	for rows.Next() {
 		var collectionName string
-		var isStatus, collType, attributes *string
+		var collType, attributes *string
 		var collID int64
-		var statusList string
 		var nItems int
 
-		if err := rows.Scan(&collectionName, &isStatus, &collType, &attributes, &collID, &statusList, &nItems); err != nil {
+		if err := rows.Scan(&collectionName, &collType, &attributes, &collID, &nItems); err != nil {
 			return 0, err
 		}
 
@@ -285,11 +281,9 @@ func (a *App) exportCollectionsCSV(importsPath string) (int, error) {
 
 		record := []string{
 			collectionName,
-			strPtrToCSV(isStatus),
 			strPtrToCSV(collType),
 			strPtrToCSV(attributes),
 			strconv.FormatInt(collID, 10),
-			statusList,
 			nItemsStr,
 		}
 		records = append(records, record)

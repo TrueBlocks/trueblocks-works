@@ -89,7 +89,14 @@ func (f *FileOps) GetPreviewPath(workID int64, docPath string) (string, error) {
 	pdfPath := filepath.Join(f.Config.PDFPreviewPath, fmt.Sprintf("%d.pdf", workID))
 
 	if f.NeedsRegeneration(docPath, workID) {
-		return f.GeneratePDF(docPath, workID)
+		generatedPath, err := f.GeneratePDF(docPath, workID)
+		if err != nil {
+			if FileExists(pdfPath) {
+				return pdfPath, nil
+			}
+			return "", fmt.Errorf("no preview available")
+		}
+		return generatedPath, nil
 	}
 
 	if !FileExists(pdfPath) {

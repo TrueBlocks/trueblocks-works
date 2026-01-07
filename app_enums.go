@@ -1,6 +1,46 @@
 package main
 
-import "works/internal/models"
+import (
+	"fmt"
+	"slices"
+)
+
+var allowedEnumFields = map[string][]string{
+	"Works":         {"status", "type", "quality"},
+	"Organizations": {"status", "type", "my_interest"},
+	"Collections":   {"type"},
+	"Notes":         {"type"},
+}
+
+func (a *App) GetDistinctValues(table, column string) ([]string, error) {
+	allowedColumns, ok := allowedEnumFields[table]
+	if !ok {
+		return nil, fmt.Errorf("table %q not allowed for enum queries", table)
+	}
+	if !slices.Contains(allowedColumns, column) {
+		return nil, fmt.Errorf("column %q not allowed for table %q", column, table)
+	}
+
+	query := fmt.Sprintf(
+		`SELECT DISTINCT COALESCE(%s, '') as val FROM %s WHERE %s != '' ORDER BY val`,
+		column, table, column,
+	)
+
+	rows, err := a.db.Conn().Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+	defer rows.Close()
+
+	var values []string
+	for rows.Next() {
+		var val string
+		if rows.Scan(&val) == nil && val != "" {
+			values = append(values, val)
+		}
+	}
+	return values, nil
+}
 
 type EnumLists struct {
 	StatusList   []string `json:"statusList"`
@@ -9,11 +49,38 @@ type EnumLists struct {
 }
 
 func (a *App) GetEnumLists() EnumLists {
+	statusList, _ := a.GetDistinctValues("Works", "status")
+	qualityList, _ := a.GetDistinctValues("Works", "quality")
+	workTypeList, _ := a.GetDistinctValues("Works", "type")
+
 	return EnumLists{
-		StatusList:   models.StatusList,
-		QualityList:  models.QualityList,
-		WorkTypeList: models.WorkTypeList,
+		StatusList:   statusList,
+		QualityList:  qualityList,
+		WorkTypeList: workTypeList,
 	}
+}
+
+func (a *App) RenameFieldValue(table, column, oldValue, newValue string) (int64, error) {
+	allowedColumns, ok := allowedEnumFields[table]
+	if !ok {
+		return 0, fmt.Errorf("table %q not allowed for enum updates", table)
+	}
+	if !slices.Contains(allowedColumns, column) {
+		return 0, fmt.Errorf("column %q not allowed for table %q", column, table)
+	}
+	if oldValue == "" || newValue == "" {
+		return 0, fmt.Errorf("old and new values must be non-empty")
+	}
+	if oldValue == newValue {
+		return 0, nil
+	}
+
+	query := fmt.Sprintf(`UPDATE %s SET %s = ? WHERE %s = ?`, table, column, column)
+	result, err := a.db.Conn().Exec(query, newValue, oldValue)
+	if err != nil {
+		return 0, fmt.Errorf("update failed: %w", err)
+	}
+	return result.RowsAffected()
 }
 
 // WorksFilterOptions contains distinct values from the Works table for filtering

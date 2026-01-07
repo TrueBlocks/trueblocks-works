@@ -45,3 +45,11 @@ func (a *App) GetTableState(tableName string) state.TableState {
 func (a *App) SetTableState(tableName string, tableState state.TableState) {
 	a.state.SetTableState(tableName, tableState)
 }
+
+func (a *App) GetTab(pageName string) string {
+	return a.state.GetTab(pageName)
+}
+
+func (a *App) SetTab(pageName string, tab string) {
+	a.state.SetTab(pageName, tab)
+}

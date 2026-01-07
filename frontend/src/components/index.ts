@@ -18,6 +18,8 @@ export { CollectionSidebar } from './CollectionSidebar';
 export { WorksTable } from './WorksTable';
 export { WorkHeader } from './WorkHeader';
 export { PathDisplay } from './PathDisplay';
+export { TabView } from './TabView';
+export type { Tab } from './TabView';
 export { NotesPortal } from './NotesPortal';
 export { SubmissionsPortal } from './SubmissionsPortal';
 export { WorksPortal } from './WorksPortal';

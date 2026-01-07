@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router';
 import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
 import { LogErr } from '@/utils';
 import { useNotes } from '@/hooks';
@@ -23,9 +22,12 @@ import {
   PDFPreview,
 } from '@/components';
 
-export function WorkDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+interface WorkDetailProps {
+  workId: number;
+  onNavigateSubmission: (subId: number) => void;
+}
+
+export function WorkDetail({ workId, onNavigateSubmission }: WorkDetailProps) {
   const [work, setWork] = useState<models.Work | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
@@ -33,7 +35,6 @@ export function WorkDetailPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
 
-  const workId = id ? parseInt(id, 10) : null;
   const {
     notes,
     handleAdd: handleAddNote,
@@ -145,7 +146,7 @@ export function WorkDetailPage() {
             />
             <SubmissionsPortal
               submissions={submissions}
-              onRowClick={(sub) => navigate(`/submissions/${sub.submissionID}`)}
+              onRowClick={(sub) => onNavigateSubmission(sub.submissionID)}
               onDelete={handleDeleteSubmission}
             />
             <NotesPortal

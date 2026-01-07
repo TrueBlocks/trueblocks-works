@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTabContext } from '@/stores';
-import { GetAppState, OpenDocument } from '@wailsjs/go/main/App';
+import { GetAppState, OpenDocument, GetTab } from '@wailsjs/go/main/App';
 import { LogErr } from '@/utils';
+import { notifications } from '@mantine/notifications';
 
 const shortcuts: Record<string, string> = {
   '1': '/dashboard',
@@ -17,6 +18,16 @@ const shortcuts: Record<string, string> = {
 const tabbedPages: Record<string, 'settings' | 'reports'> = {
   '/settings': 'settings',
   '/reports': 'reports',
+};
+
+const entityPages: Record<
+  string,
+  { pageName: 'works' | 'collections' | 'organizations' | 'submissions'; idField: string }
+> = {
+  '/works': { pageName: 'works', idField: 'lastWorkID' },
+  '/collections': { pageName: 'collections', idField: 'lastCollectionID' },
+  '/organizations': { pageName: 'organizations', idField: 'lastOrgID' },
+  '/submissions': { pageName: 'submissions', idField: 'lastSubmissionID' },
 };
 
 export function useKeyboardShortcuts() {
@@ -47,12 +58,44 @@ export function useKeyboardShortcuts() {
         e.preventDefault();
         const targetPath = shortcuts[e.key];
         const currentPath = location.pathname;
+        const basePath = '/' + currentPath.split('/')[1];
 
+        // Simple tabbed pages (Settings, Reports) - cycle through their tabs
         if (currentPath === targetPath && tabbedPages[targetPath]) {
           cycleTab(tabbedPages[targetPath]);
-        } else {
-          navigate(targetPath);
+          return;
         }
+
+        // Entity pages (Works, Collections, etc.) - cycle between list/detail
+        if (basePath === targetPath && entityPages[targetPath]) {
+          const { pageName, idField } = entityPages[targetPath];
+          const currentTab = await GetTab(pageName);
+
+          if (currentTab === 'detail' || !currentTab) {
+            // Go to list
+            navigate(targetPath);
+          } else {
+            // Go to detail - get last entity ID
+            const state = await GetAppState();
+            const lastId = (state as unknown as Record<string, number | undefined>)[idField];
+
+            if (lastId && lastId > 0) {
+              navigate(`${targetPath}/${lastId}`);
+            } else {
+              // Should never happen - show error toast
+              notifications.show({
+                title: 'Tab Cycling Failed',
+                message: `Cannot switch to Detail tab: no ${pageName} ID available. Page: ${pageName}, CurrentTab: ${currentTab || 'null'}, LastID: ${lastId || 'undefined'}, Location: ${location.pathname}`,
+                color: 'red',
+                autoClose: 10000,
+              });
+            }
+          }
+          return;
+        }
+
+        // Different page - just navigate
+        navigate(targetPath);
       }
     }
 

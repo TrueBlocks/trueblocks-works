@@ -1,9 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { Stack, Grid, Loader, Flex, Text, Paper, SimpleGrid } from '@mantine/core';
-import { LogErr } from '@/utils';
-import { Group, Badge, ActionIcon, Button } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
+import {
+  Stack,
+  Grid,
+  Loader,
+  Flex,
+  Text,
+  Paper,
+  SimpleGrid,
+  Group,
+  Badge,
+  ActionIcon,
+  Button,
+} from '@mantine/core';
 import { IconArrowLeft, IconExternalLink, IconTrash } from '@tabler/icons-react';
+import { LogErr } from '@/utils';
 import { GetSubmission, GetWork, GetOrganization, DeleteSubmission } from '@wailsjs/go/main/App';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import { models } from '@wailsjs/go/models';
@@ -22,21 +33,22 @@ function Field({ label, value }: { label: string; value?: string | number }) {
   );
 }
 
-export function SubmissionDetailPage() {
-  const { id } = useParams<{ id: string }>();
+interface SubmissionDetailProps {
+  submissionId: number;
+}
+
+export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
   const navigate = useNavigate();
   const [submission, setSubmission] = useState<models.Submission | null>(null);
   const [work, setWork] = useState<models.Work | null>(null);
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const subId = id ? parseInt(id, 10) : null;
-
   const loadData = useCallback(async () => {
-    if (!subId) return;
+    if (!submissionId) return;
     setLoading(true);
     try {
-      const subData = await GetSubmission(subId);
+      const subData = await GetSubmission(submissionId);
       setSubmission(subData);
       if (subData) {
         const [workData, orgData] = await Promise.all([
@@ -51,17 +63,17 @@ export function SubmissionDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [subId]);
+  }, [submissionId]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const handleDelete = useCallback(async () => {
-    if (!subId) return;
-    await DeleteSubmission(subId);
-    navigate(-1);
-  }, [subId, navigate]);
+    if (!submissionId) return;
+    await DeleteSubmission(submissionId);
+    navigate('/submissions');
+  }, [submissionId, navigate]);
 
   if (loading) {
     return (
@@ -85,7 +97,7 @@ export function SubmissionDetailPage() {
     <Stack gap="lg">
       <Group justify="space-between" align="flex-start">
         <Group>
-          <ActionIcon variant="subtle" onClick={() => navigate(-1)}>
+          <ActionIcon variant="subtle" onClick={() => navigate('/submissions')}>
             <IconArrowLeft size={20} />
           </ActionIcon>
           <div>

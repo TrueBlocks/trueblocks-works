@@ -1,153 +1,151 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { Stack, Grid, Loader, Flex, Text, Group, Paper, ActionIcon, Table } from '@mantine/core';
-import { IconFolder, IconArrowLeft, IconX, IconPlus } from '@tabler/icons-react';
-import { LogErr } from '@/utils';
-import { useNotes } from '@/hooks';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Stack, Paper, Group, ActionIcon, Flex, Loader, Text, Grid, Table } from '@mantine/core';
+import { IconFolder, IconArrowLeft, IconPlus, IconX } from '@tabler/icons-react';
+import { Log, LogErr } from '@/utils';
 import {
   GetCollection,
   GetCollectionWorks,
-  RemoveWorkFromCollection,
-  SetLastCollectionID,
   UpdateCollection,
+  RemoveWorkFromCollection,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import {
-  NotesPortal,
   DataTable,
-  EditableField,
   Column,
-  CollectionFieldSelect,
-  WorkPickerModal,
   StatusBadge,
-  QualityBadge,
   TypeBadge,
+  QualityBadge,
+  EditableField,
+  WorkPickerModal,
+  NotesPortal,
+  CollectionFieldSelect,
 } from '@/components';
+import { useNotes } from '@/hooks';
 
-export function CollectionDetailPage() {
-  const { id } = useParams<{ id: string }>();
+interface CollectionDetailProps {
+  collectionId: number;
+}
+
+export function CollectionDetail({ collectionId }: CollectionDetailProps) {
   const navigate = useNavigate();
-  const [collection, setCollection] = useState<models.Collection | null>(null);
+  const [collection, setCollection] = useState<models.CollectionView | null>(null);
   const [works, setWorks] = useState<models.CollectionWork[]>([]);
   const [loading, setLoading] = useState(true);
   const [workPickerOpen, setWorkPickerOpen] = useState(false);
+  const [filterOptions, setFilterOptions] = useState({
+    years: [] as string[],
+    types: [] as string[],
+    statuses: [] as string[],
+    qualities: [] as string[],
+  });
+  const hasInitialized = useRef(false);
 
-  const collId = id ? parseInt(id, 10) : null;
   const {
     notes,
     handleAdd: handleAddNote,
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
-  } = useNotes('collection', collId);
+  } = useNotes('collection', collectionId);
 
-  const filterOptions = useMemo(
-    () => ({
-      years: [...new Set(works.map((w) => w.year).filter(Boolean))].sort() as string[],
-      types: [...new Set(works.map((w) => w.type).filter(Boolean))].sort() as string[],
-      statuses: [...new Set(works.map((w) => w.status).filter(Boolean))].sort() as string[],
-      qualities: [...new Set(works.map((w) => w.quality).filter(Boolean))].sort() as string[],
-    }),
-    [works]
-  );
+  const loadData = useCallback(() => {
+    if (!collectionId) return;
 
-  const loadData = useCallback(async () => {
-    if (!collId) return;
-    setLoading(true);
-    try {
-      const [collData, worksData] = await Promise.all([
-        GetCollection(collId),
-        GetCollectionWorks(collId),
-      ]);
-      setCollection(collData);
-      setWorks(worksData || []);
-      SetLastCollectionID(collId);
-    } catch (err) {
-      LogErr('Failed to load collection data:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [collId]);
+    Promise.all([GetCollection(collectionId), GetCollectionWorks(collectionId)])
+      .then(([coll, worksData]) => {
+        setCollection(coll as models.CollectionView);
+        const data = worksData || [];
+        setWorks(data);
+
+        const years = [...new Set(data.map((w) => w.year).filter(Boolean))].sort() as string[];
+        const types = [...new Set(data.map((w) => w.type).filter(Boolean))] as string[];
+        const statuses = [...new Set(data.map((w) => w.status).filter(Boolean))] as string[];
+        const qualities = [...new Set(data.map((w) => w.quality).filter(Boolean))] as string[];
+
+        setFilterOptions({ years, types, statuses, qualities });
+      })
+      .catch((err) => LogErr(`Failed to load collection ${collectionId}:`, err))
+      .finally(() => setLoading(false));
+  }, [collectionId]);
 
   useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
     loadData();
   }, [loadData]);
 
-  const handleRemoveWork = useCallback(
-    async (workId: number) => {
-      if (!collId) return;
-      await RemoveWorkFromCollection(collId, workId);
-      setWorks((prev) => prev.filter((w) => w.workID !== workId));
-    },
-    [collId]
-  );
-
   const handleNameChange = useCallback(
-    async (newName: string) => {
+    (newName: string) => {
       if (!collection) return;
-      const updated = { ...collection, collectionName: newName } as models.Collection;
-      setCollection(updated);
-      await UpdateCollection(updated);
+      const updated = { ...collection, collectionName: newName };
+      UpdateCollection(updated)
+        .then(() => {
+          setCollection(updated);
+          Log(`Collection renamed to: ${newName}`);
+        })
+        .catch((err) => LogErr('Failed to update collection:', err));
     },
     [collection]
   );
 
+  const handleRemoveWork = useCallback(
+    (workID: number) => {
+      if (!collectionId) return;
+      RemoveWorkFromCollection(collectionId, workID)
+        .then(() => {
+          Log(`Removed work ${workID} from collection`);
+          loadData();
+        })
+        .catch((err) => LogErr('Failed to remove work:', err));
+    },
+    [collectionId, loadData]
+  );
+
   const columns: Column<models.CollectionWork>[] = useMemo(
     () => [
-      {
-        key: 'workID',
-        label: 'ID',
-        width: '60px',
-        render: (work) => <Text size="sm">{work.workID}</Text>,
-      },
-      {
-        key: 'title',
-        label: 'Title',
-        render: (work) => (
-          <Text size="sm" truncate>
-            {work.title}
-          </Text>
-        ),
-      },
+      { key: 'workID', label: 'ID', width: '8%', render: (work) => work.workID },
+      { key: 'title', label: 'Title', width: '30%', render: (work) => work.title },
       {
         key: 'year',
         label: 'Year',
-        width: '80px',
+        width: '10%',
         render: (work) => <Text size="sm">{work.year || '-'}</Text>,
         filterOptions: filterOptions.years,
       },
       {
         key: 'type',
         label: 'Type',
-        width: '100px',
+        width: '15%',
         render: (work) => <TypeBadge value={work.type} />,
         filterOptions: filterOptions.types,
       },
       {
         key: 'status',
         label: 'Status',
-        width: '100px',
+        width: '15%',
         render: (work) => <StatusBadge status={work.status} />,
         filterOptions: filterOptions.statuses,
       },
       {
         key: 'quality',
         label: 'Quality',
-        width: '100px',
+        width: '12%',
         render: (work) => <QualityBadge quality={work.quality} />,
         filterOptions: filterOptions.qualities,
+      },
+      {
+        key: 'modifiedAt',
+        label: 'Last Modified',
+        width: '10%',
+        render: (work) =>
+          work.modifiedAt ? new Date(work.modifiedAt + 'Z').toLocaleDateString() : '-',
       },
     ],
     [filterOptions]
   );
 
   const searchFn = useCallback((work: models.CollectionWork, search: string) => {
-    const s = search.toLowerCase();
-    return (
-      work.title.toLowerCase().includes(s) ||
-      (work.type?.toLowerCase().includes(s) ?? false) ||
-      (work.year?.toLowerCase().includes(s) ?? false) ||
-      String(work.workID).includes(s)
-    );
+    return work.title.toLowerCase().includes(search.toLowerCase());
   }, []);
 
   const valueGetter = useCallback((item: models.CollectionWork, column: string) => {
@@ -190,7 +188,7 @@ export function CollectionDetailPage() {
                 collection={collection}
                 field="type"
                 width={100}
-                onUpdate={(updated) => setCollection(updated)}
+                onUpdate={(updated) => setCollection(updated as models.CollectionView)}
               />
               <Text size="sm" c="dimmed">
                 {works.length} work{works.length !== 1 ? 's' : ''}
@@ -203,7 +201,7 @@ export function CollectionDetailPage() {
       <Grid>
         <Grid.Col span={{ base: 12, md: 8 }}>
           <DataTable<models.CollectionWork>
-            tableName={`collection-${collId}`}
+            tableName={`collection-${collectionId}`}
             title="Works in Collection"
             data={works}
             columns={columns}
@@ -236,7 +234,7 @@ export function CollectionDetailPage() {
           <WorkPickerModal
             opened={workPickerOpen}
             onClose={() => setWorkPickerOpen(false)}
-            collectionID={collId || 0}
+            collectionID={collectionId}
             onUpdate={loadData}
           />
         </Grid.Col>

@@ -210,6 +210,10 @@ export function GetSubmissionsFilterOptions() {
   return window['go']['main']['App']['GetSubmissionsFilterOptions']();
 }
 
+export function GetTab(arg1) {
+  return window['go']['main']['App']['GetTab'](arg1);
+}
+
 export function GetTableState(arg1) {
   return window['go']['main']['App']['GetTableState'](arg1);
 }
@@ -340,6 +344,10 @@ export function SetLastSubmissionID(arg1) {
 
 export function SetLastWorkID(arg1) {
   return window['go']['main']['App']['SetLastWorkID'](arg1);
+}
+
+export function SetTab(arg1, arg2) {
+  return window['go']['main']['App']['SetTab'](arg1, arg2);
 }
 
 export function SetTableState(arg1, arg2) {

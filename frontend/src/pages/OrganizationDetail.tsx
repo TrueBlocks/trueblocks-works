@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
 import { LogErr } from '@/utils';
 import { useNotes } from '@/hooks';
@@ -13,38 +13,40 @@ import {
 import { models } from '@wailsjs/go/models';
 import { OrgHeader, OrgDetails, NotesPortal, SubmissionsPortal } from '@/components';
 
-export function OrganizationDetailPage() {
-  const { id } = useParams<{ id: string }>();
+interface OrganizationDetailProps {
+  organizationId: number;
+}
+
+export function OrganizationDetail({ organizationId }: OrganizationDetailProps) {
   const navigate = useNavigate();
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const orgId = id ? parseInt(id, 10) : null;
   const {
     notes,
     handleAdd: handleAddNote,
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
-  } = useNotes('journal', orgId);
+  } = useNotes('journal', organizationId);
 
   const loadData = useCallback(async () => {
-    if (!orgId) return;
+    if (!organizationId) return;
     setLoading(true);
     try {
       const [orgData, subsData] = await Promise.all([
-        GetOrganization(orgId),
-        GetSubmissionViewsByOrg(orgId),
+        GetOrganization(organizationId),
+        GetSubmissionViewsByOrg(organizationId),
       ]);
       setOrg(orgData);
       setSubmissions(subsData || []);
-      SetLastOrgID(orgId);
+      SetLastOrgID(organizationId);
     } catch (err) {
       LogErr('Failed to load organization data:', err);
     } finally {
       setLoading(false);
     }
-  }, [orgId]);
+  }, [organizationId]);
 
   useEffect(() => {
     loadData();

@@ -1,73 +1,75 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { LogErr } from '@/utils';
-import { GetCollections } from '@wailsjs/go/main/App';
+import { useCallback, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { TabView, Tab } from '@/components';
+import { GetAppState, SetTab } from '@wailsjs/go/main/App';
+import { CollectionsList } from './CollectionsList';
+import { CollectionDetail } from './CollectionDetail';
 import { models } from '@wailsjs/go/models';
-import { DataTable, Column, TypeBadge } from '@/components';
-import { useNavigate } from 'react-router';
+
+const tabs: Tab[] = [
+  { value: 'list', label: 'Collections' },
+  { value: 'detail', label: 'Details' },
+];
 
 export function CollectionsPage() {
-  const [collections, setCollections] = useState<models.CollectionView[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const navigate = useNavigate();
-  const hasInitialized = useRef(false);
+  const { id } = useParams<{ id?: string }>();
+  const collectionId = id ? parseInt(id, 10) : undefined;
+  const lastCollectionIdRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    if (collectionId !== undefined) {
+      lastCollectionIdRef.current = collectionId;
+    }
+  }, [collectionId]);
 
-    GetCollections()
-      .then((colls) => {
-        const data = colls || [];
-        setCollections(data);
-        const types = [...new Set(data.map((c) => c.type).filter(Boolean))] as string[];
-        setAvailableTypes(types);
-      })
-      .catch((err) => LogErr('Failed to load collections:', err))
-      .finally(() => setLoading(false));
-  }, []);
+  const activeTab = collectionId !== undefined ? 'detail' : 'list';
 
-  const searchFn = useCallback((coll: models.CollectionView, search: string) => {
-    return coll.collectionName.toLowerCase().includes(search.toLowerCase());
-  }, []);
+  useEffect(() => {
+    SetTab('collections', activeTab);
+  }, [activeTab]);
 
-  const columns: Column<models.CollectionView>[] = useMemo(
-    () => [
-      { key: 'collID', label: 'ID', width: '8%', render: (c) => c.collID },
-      { key: 'collectionName', label: 'Name', width: '45%', render: (c) => c.collectionName },
-      {
-        key: 'type',
-        label: 'Type',
-        width: '15%',
-        render: (c) => <TypeBadge value={c.type} />,
-        filterOptions: availableTypes,
-      },
-      {
-        key: 'nItems',
-        label: 'Works',
-        width: '12%',
-        render: (c) => c.nItems,
-      },
-      {
-        key: 'modifiedAt',
-        label: 'Last Modified',
-        width: '20%',
-        render: (c) => (c.modifiedAt ? new Date(c.modifiedAt + 'Z').toLocaleDateString() : '-'),
-      },
-    ],
-    [availableTypes]
+  const handleTabChange = useCallback(
+    (newTab: string) => {
+      if (newTab === 'list') {
+        navigate('/collections');
+      } else {
+        const targetId = lastCollectionIdRef.current;
+        if (targetId !== undefined) {
+          navigate(`/collections/${targetId}`);
+        } else {
+          GetAppState().then((state) => {
+            const lastId = state.lastCollectionID;
+            if (lastId) {
+              navigate(`/collections/${lastId}`);
+            }
+          });
+        }
+      }
+    },
+    [navigate]
+  );
+
+  const handleCollectionClick = useCallback(
+    (coll: models.CollectionView) => {
+      navigate(`/collections/${coll.collID}`);
+    },
+    [navigate]
   );
 
   return (
-    <DataTable<models.CollectionView>
-      tableName="collections"
-      title="Collections"
-      data={collections}
-      columns={columns}
-      loading={loading}
-      getRowKey={(c) => c.collID}
-      onRowClick={(c) => navigate(`/collections/${c.collID}`)}
-      searchFn={searchFn}
-    />
+    <TabView
+      pageName="collections"
+      tabs={tabs}
+      defaultTab="list"
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    >
+      {activeTab === 'list' ? (
+        <CollectionsList onCollectionClick={handleCollectionClick} />
+      ) : collectionId !== undefined ? (
+        <CollectionDetail collectionId={collectionId} />
+      ) : null}
+    </TabView>
   );
 }

@@ -1,132 +1,75 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router';
-import { Badge, ActionIcon } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
-import { Log, LogErr } from '@/utils';
-import { GetAllSubmissionViews, GetSubmissionsFilterOptions } from '@wailsjs/go/main/App';
+import { useCallback, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { TabView, Tab } from '@/components';
+import { GetAppState, SetTab } from '@wailsjs/go/main/App';
+import { SubmissionsList } from './SubmissionsList';
+import { SubmissionDetail } from './SubmissionDetail';
 import { models } from '@wailsjs/go/models';
-import { ResponseBadge, DataTable, Column, TypeBadge } from '@/components';
-import dayjs from 'dayjs';
 
-function getStatus(sub: models.SubmissionView): string {
-  return !sub.responseDate && !sub.responseType ? 'Active' : 'Closed';
-}
-
-const getSubmissionValue = (sub: models.SubmissionView, column: string): unknown => {
-  if (column === 'status') {
-    return getStatus(sub);
-  }
-  return (sub as unknown as Record<string, unknown>)[column];
-};
+const tabs: Tab[] = [
+  { value: 'list', label: 'Submissions' },
+  { value: 'detail', label: 'Details' },
+];
 
 export function SubmissionsPage() {
-  const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filterOptions, setFilterOptions] = useState<{
-    types: string[];
-    responses: string[];
-  }>({ types: [], responses: [] });
   const navigate = useNavigate();
-  const hasInitialized = useRef(false);
+  const { id } = useParams<{ id?: string }>();
+  const submissionId = id ? parseInt(id, 10) : undefined;
+  const lastSubmissionIdRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    if (submissionId !== undefined) {
+      lastSubmissionIdRef.current = submissionId;
+    }
+  }, [submissionId]);
 
-    Promise.all([GetAllSubmissionViews(), GetSubmissionsFilterOptions()])
-      .then(([data, filterOpts]) => {
-        Log('Submissions loaded:', data?.length || 0);
-        setSubmissions(data || []);
-        setFilterOptions({
-          types: filterOpts.types || [],
-          responses: filterOpts.responses || [],
-        });
-      })
-      .catch((err) => LogErr('Failed to load submissions:', err))
-      .finally(() => setLoading(false));
-  }, []);
+  const activeTab = submissionId !== undefined ? 'detail' : 'list';
 
-  const searchFn = useCallback((sub: models.SubmissionView, search: string) => {
-    return (
-      sub.titleOfWork.toLowerCase().includes(search.toLowerCase()) ||
-      sub.journalName.toLowerCase().includes(search.toLowerCase()) ||
-      (sub.draft?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-      (sub.contestName?.toLowerCase().includes(search.toLowerCase()) ?? false)
-    );
-  }, []);
+  useEffect(() => {
+    SetTab('submissions', activeTab);
+  }, [activeTab]);
 
-  const columns: Column<models.SubmissionView>[] = useMemo(
-    () => [
-      {
-        key: 'titleOfWork',
-        label: 'Work',
-        width: '20%',
-        render: (s) => s.titleOfWork || '-',
-      },
-      {
-        key: 'journalName',
-        label: 'Organization',
-        width: '20%',
-        render: (s) => s.journalName || '-',
-      },
-      {
-        key: 'submissionType',
-        label: 'Type',
-        width: '12%',
-        render: (s) => <TypeBadge value={s.submissionType} />,
-        filterOptions: filterOptions.types,
-      },
-      {
-        key: 'responseType',
-        label: 'Response',
-        width: '12%',
-        render: (s) => <ResponseBadge response={s.responseType} />,
-        filterOptions: filterOptions.responses,
-      },
-      {
-        key: 'status',
-        label: 'Status',
-        width: '10%',
-        render: (s) => {
-          const status = getStatus(s);
-          return status === 'Active' ? (
-            <Badge color="green" variant="light">
-              Active
-            </Badge>
-          ) : (
-            <Badge color="gray" variant="light">
-              Closed
-            </Badge>
-          );
-        },
-        filterOptions: ['Active', 'Closed'],
-      },
-      {
-        key: 'submissionDate',
-        label: 'Submitted',
-        width: '12%',
-        render: (s) => (s.submissionDate ? dayjs(s.submissionDate).format('MMM D, YYYY') : '-'),
-      },
-    ],
-    [filterOptions]
+  const handleTabChange = useCallback(
+    (newTab: string) => {
+      if (newTab === 'list') {
+        navigate('/submissions');
+      } else {
+        const targetId = lastSubmissionIdRef.current;
+        if (targetId !== undefined) {
+          navigate(`/submissions/${targetId}`);
+        } else {
+          GetAppState().then((state) => {
+            const lastId = state.lastSubmissionID;
+            if (lastId) {
+              navigate(`/submissions/${lastId}`);
+            }
+          });
+        }
+      }
+    },
+    [navigate]
+  );
+
+  const handleSubmissionClick = useCallback(
+    (sub: models.SubmissionView) => {
+      navigate(`/submissions/${sub.submissionID}`);
+    },
+    [navigate]
   );
 
   return (
-    <DataTable<models.SubmissionView>
-      tableName="submissions"
-      title="Submissions"
-      data={submissions}
-      columns={columns}
-      loading={loading}
-      getRowKey={(s) => s.submissionID}
-      onRowClick={(s) => navigate(`/submissions/${s.submissionID}`)}
-      searchFn={searchFn}
-      valueGetter={getSubmissionValue}
-      headerActions={
-        <ActionIcon variant="filled" size="lg">
-          <IconPlus size={18} />
-        </ActionIcon>
-      }
-    />
+    <TabView
+      pageName="submissions"
+      tabs={tabs}
+      defaultTab="list"
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    >
+      {activeTab === 'list' ? (
+        <SubmissionsList onSubmissionClick={handleSubmissionClick} />
+      ) : submissionId !== undefined ? (
+        <SubmissionDetail submissionId={submissionId} />
+      ) : null}
+    </TabView>
   );
 }

@@ -1,142 +1,73 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ActionIcon } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
-import { Log, LogErr } from '@/utils';
-import { GetWorks, GetWorksFilterOptions } from '@wailsjs/go/main/App';
+import { useMemo, useCallback, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { IconList, IconFileText } from '@tabler/icons-react';
+import { GetAppState, SetTab } from '@wailsjs/go/main/App';
+import { TabView, Tab } from '@/components';
+import { WorksList } from './WorksList';
+import { WorkDetail } from './WorkDetail';
 import { models } from '@wailsjs/go/models';
-import {
-  StatusBadge,
-  QualityBadge,
-  TypeBadge,
-  NewWorkModal,
-  DataTable,
-  Column,
-} from '@/components';
-import { useNavigate } from 'react-router';
 
 export function WorksPage() {
-  const [works, setWorks] = useState<models.WorkView[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [newModalOpen, setNewModalOpen] = useState(false);
-  const [filterOptions, setFilterOptions] = useState<{
-    years: string[];
-    types: string[];
-    statuses: string[];
-    qualities: string[];
-  }>({ years: [], types: [], statuses: [], qualities: [] });
-  const hasInitialized = useRef(false);
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const workId = id ? parseInt(id, 10) : null;
 
-  const loadWorks = useCallback(() => {
-    setLoading(true);
-    GetWorks()
-      .then((data) => setWorks(data || []))
-      .catch((err) => LogErr('Failed to load works:', err))
-      .finally(() => setLoading(false));
-  }, []);
+  const handleWorkClick = useCallback(
+    (work: models.WorkView) => {
+      navigate(`/works/${work.workID}`);
+    },
+    [navigate]
+  );
+
+  const handleNavigateSubmission = useCallback(
+    (subId: number) => {
+      navigate(`/submissions/${subId}`);
+    },
+    [navigate]
+  );
+
+  const handleTabChange = useCallback(
+    async (tab: string) => {
+      if (tab === 'list') {
+        navigate('/works');
+      } else if (tab === 'detail') {
+        const state = await GetAppState();
+        const lastId = state.lastWorkID || 1;
+        navigate(`/works/${lastId}`);
+      }
+    },
+    [navigate]
+  );
+
+  const activeTab = workId ? 'detail' : 'list';
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    SetTab('works', activeTab);
+  }, [activeTab]);
 
-    Promise.all([GetWorks(), GetWorksFilterOptions()])
-      .then(([data, options]) => {
-        Log('Works loaded:', data?.length || 0);
-        setWorks(data || []);
-        setFilterOptions({
-          years: options.years || [],
-          types: options.types || [],
-          statuses: options.statuses || [],
-          qualities: options.qualities || [],
-        });
-      })
-      .catch((err) => LogErr('Failed to load works:', err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleCreated = (work: models.Work) => {
-    loadWorks();
-    navigate(`/works/${work.workID}`);
-  };
-
-  const searchFn = useCallback((work: models.WorkView, search: string) => {
-    return work.title.toLowerCase().includes(search.toLowerCase());
-  }, []);
-
-  const columns: Column<models.WorkView>[] = useMemo(
+  const tabs: Tab[] = useMemo(
     () => [
-      { key: 'workID', label: 'ID', width: '5%', render: (w) => w.workID },
-      { key: 'title', label: 'Title', width: '35%', render: (w) => w.title },
       {
-        key: 'year',
-        label: 'Year',
-        width: '8%',
-        render: (w) => w.year || '-',
-        filterOptions: filterOptions.years,
+        value: 'list',
+        label: 'List',
+        icon: <IconList size={16} />,
+        content: <WorksList onWorkClick={handleWorkClick} />,
       },
       {
-        key: 'type',
-        label: 'Type',
-        width: '10%',
-        render: (w) => <TypeBadge value={w.type} />,
-        filterOptions: filterOptions.types,
-      },
-      {
-        key: 'status',
-        label: 'Status',
-        width: '12%',
-        render: (w) => <StatusBadge status={w.status} />,
-        filterOptions: filterOptions.statuses,
-      },
-      {
-        key: 'quality',
-        label: 'Quality',
-        width: '12%',
-        render: (w) => <QualityBadge quality={w.quality} />,
-        filterOptions: filterOptions.qualities,
-      },
-      {
-        key: 'nWords',
-        label: 'Words',
-        width: '8%',
-        render: (w) => w.nWords?.toLocaleString() || '-',
-      },
-      {
-        key: 'collectionList',
-        label: 'Collections',
-        width: '15%',
-        render: (w) => {
-          const list = w.collectionList || '';
-          return list.length > 30 ? list.substring(0, 30) + '…' : list || '-';
-        },
+        value: 'detail',
+        label: 'Detail',
+        icon: <IconFileText size={16} />,
+        content: workId ? (
+          <WorkDetail workId={workId} onNavigateSubmission={handleNavigateSubmission} />
+        ) : (
+          <div>Select a work to view details</div>
+        ),
       },
     ],
-    [filterOptions]
+    [workId, handleWorkClick, handleNavigateSubmission]
   );
 
   return (
-    <>
-      <DataTable<models.WorkView>
-        tableName="works"
-        title="Works"
-        data={works}
-        columns={columns}
-        loading={loading}
-        getRowKey={(w) => w.workID}
-        onRowClick={(w) => navigate(`/works/${w.workID}`)}
-        searchFn={searchFn}
-        headerActions={
-          <ActionIcon variant="light" size="lg" onClick={() => setNewModalOpen(true)}>
-            <IconPlus size={18} />
-          </ActionIcon>
-        }
-      />
-
-      <NewWorkModal
-        opened={newModalOpen}
-        onClose={() => setNewModalOpen(false)}
-        onCreated={handleCreated}
-      />
-    </>
+    <TabView pageName="works" tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
   );
 }

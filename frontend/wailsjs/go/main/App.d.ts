@@ -111,6 +111,8 @@ export function GetSubmissionsByWork(arg1:number):Promise<Array<models.Submissio
 
 export function GetSubmissionsFilterOptions():Promise<main.SubmissionsFilterOptions>;
 
+export function GetTab(arg1:string):Promise<string>;
+
 export function GetTableState(arg1:string):Promise<state.TableState>;
 
 export function GetWork(arg1:number):Promise<models.Work>;
@@ -176,6 +178,8 @@ export function SetLastRoute(arg1:string):Promise<void>;
 export function SetLastSubmissionID(arg1:number):Promise<void>;
 
 export function SetLastWorkID(arg1:number):Promise<void>;
+
+export function SetTab(arg1:string,arg2:string):Promise<void>;
 
 export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;
 

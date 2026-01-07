@@ -65,6 +65,7 @@ type AppState struct {
 	SearchHistory             []string              `json:"searchHistory,omitempty"`
 	LastCollectionType        string                `json:"lastCollectionType,omitempty"`
 	Tables                    map[string]TableState `json:"tables,omitempty"`
+	Tabs                      map[string]string     `json:"tabs,omitempty"`
 }
 
 type Manager struct {
@@ -242,6 +243,25 @@ func (m *Manager) SetTableState(tableName string, tableState TableState) {
 		m.state.Tables = make(map[string]TableState)
 	}
 	m.state.Tables[tableName] = tableState
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) GetTab(pageName string) string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if m.state.Tabs == nil {
+		return ""
+	}
+	return m.state.Tabs[pageName]
+}
+
+func (m *Manager) SetTab(pageName string, tab string) {
+	m.mu.Lock()
+	if m.state.Tabs == nil {
+		m.state.Tabs = make(map[string]string)
+	}
+	m.state.Tabs[pageName] = tab
 	m.mu.Unlock()
 	_ = m.Save()
 }

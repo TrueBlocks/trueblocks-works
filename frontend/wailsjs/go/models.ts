@@ -1247,6 +1247,7 @@ export namespace state {
 	    searchHistory?: string[];
 	    lastCollectionType?: string;
 	    tables?: Record<string, TableState>;
+	    tabs?: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppState(source);
@@ -1287,6 +1288,7 @@ export namespace state {
 	        this.searchHistory = source["searchHistory"];
 	        this.lastCollectionType = source["lastCollectionType"];
 	        this.tables = this.convertValues(source["tables"], TableState, true);
+	        this.tabs = source["tabs"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

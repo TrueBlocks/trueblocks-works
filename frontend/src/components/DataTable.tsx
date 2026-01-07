@@ -48,6 +48,7 @@ interface DataTableProps<T> {
   loading?: boolean;
   getRowKey: (item: T) => string | number;
   onRowClick?: (item: T) => void;
+  onSelectedChange?: (item: T) => void;
   valueGetter?: (item: T, column: string) => unknown;
   extraColumns?: React.ReactNode;
   renderExtraCells?: (item: T) => React.ReactNode;
@@ -73,6 +74,7 @@ export function DataTable<T>({
   loading = false,
   getRowKey,
   onRowClick,
+  onSelectedChange,
   valueGetter,
   extraColumns,
   renderExtraCells,
@@ -364,6 +366,13 @@ export function DataTable<T>({
     return selectedIndex;
   }, [selectedIndex, paginated.length]);
 
+  useEffect(() => {
+    if (paginated.length > 0 && effectiveSelectedIndex >= 0) {
+      const item = paginated[effectiveSelectedIndex];
+      if (item) onSelectedChange?.(item);
+    }
+  }, [paginated, effectiveSelectedIndex, onSelectedChange]);
+
   const handlePageSizeChange = useCallback((value: string | null) => {
     if (value) {
       setPageSize(parseInt(value, 10));
@@ -384,16 +393,19 @@ export function DataTable<T>({
       const newLocalIndex = clampedIndex % pageSize;
       setPage(newPage);
       setSelectedIndex(newLocalIndex);
+      const item = sorted[clampedIndex];
+      if (item) onSelectedChange?.(item);
     },
-    [sorted.length, pageSize]
+    [sorted, pageSize, onSelectedChange]
   );
 
   const handleRowClick = useCallback(
     (item: T, index: number) => {
       setSelectedIndex(index);
+      onSelectedChange?.(item);
       onRowClick?.(item);
     },
-    [onRowClick]
+    [onRowClick, onSelectedChange]
   );
 
   useHotkeys([

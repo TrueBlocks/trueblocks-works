@@ -8,13 +8,9 @@ import { BackupRestoreModal } from '@/components/BackupRestoreModal';
 import { SetupWizard } from '@/components/SetupWizard';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { WorksPage } from '@/pages/WorksPage';
-import { WorkDetailPage } from '@/pages/WorkDetailPage';
 import { OrganizationsPage } from '@/pages/OrganizationsPage';
-import { OrganizationDetailPage } from '@/pages/OrganizationDetailPage';
 import { SubmissionsPage } from '@/pages/SubmissionsPage';
-import { SubmissionDetailPage } from '@/pages/SubmissionDetailPage';
 import { CollectionsPage } from '@/pages/CollectionsPage';
-import { CollectionDetailPage } from '@/pages/CollectionDetailPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -234,13 +230,13 @@ function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/works" element={<WorksPage />} />
-            <Route path="/works/:id" element={<WorkDetailPage />} />
+            <Route path="/works/:id" element={<WorksPage />} />
             <Route path="/organizations" element={<OrganizationsPage />} />
-            <Route path="/organizations/:id" element={<OrganizationDetailPage />} />
+            <Route path="/organizations/:id" element={<OrganizationsPage />} />
             <Route path="/submissions" element={<SubmissionsPage />} />
-            <Route path="/submissions/:id" element={<SubmissionDetailPage />} />
+            <Route path="/submissions/:id" element={<SubmissionsPage />} />
             <Route path="/collections" element={<CollectionsPage />} />
-            <Route path="/collections/:id" element={<CollectionDetailPage />} />
+            <Route path="/collections/:id" element={<CollectionsPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>

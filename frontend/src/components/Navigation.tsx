@@ -1,5 +1,6 @@
 import { Group, Title, Text, Divider, Stack } from '@mantine/core';
-import { NavLink, useLocation } from 'react-router-dom';
+import { notifications } from '@mantine/notifications';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   IconBook2,
   IconBuilding,
@@ -9,13 +10,14 @@ import {
   IconReportAnalytics,
   IconDashboard,
 } from '@tabler/icons-react';
+import { GetTab, GetAppState } from '@wailsjs/go/main/App';
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: IconDashboard },
-  { path: '/collections', label: 'Collections', icon: IconFolder },
-  { path: '/works', label: 'Works', icon: IconBook2 },
-  { path: '/organizations', label: 'Organizations', icon: IconBuilding },
-  { path: '/submissions', label: 'Submissions', icon: IconSend },
+  { path: '/dashboard', label: 'Dashboard', icon: IconDashboard, hasTabs: false },
+  { path: '/collections', label: 'Collections', icon: IconFolder, hasTabs: true },
+  { path: '/works', label: 'Works', icon: IconBook2, hasTabs: true },
+  { path: '/organizations', label: 'Organizations', icon: IconBuilding, hasTabs: true },
+  { path: '/submissions', label: 'Submissions', icon: IconSend, hasTabs: true },
 ];
 
 export function Navigation() {
@@ -31,8 +33,68 @@ export function Navigation() {
 
 function Links() {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const renderLink = (item: { path: string; label: string; icon: typeof IconBook2 }) => {
+  const handleNavClick = async (
+    e: React.MouseEvent,
+    item: { path: string; label: string; icon: typeof IconBook2; hasTabs: boolean }
+  ) => {
+    const currentPath = location.pathname;
+    const basePath = '/' + currentPath.split('/')[1];
+
+    // Check if clicking the same base route
+    if (basePath === item.path && item.hasTabs) {
+      e.preventDefault();
+
+      // Get current tab
+      const pageName = item.path.substring(1); // Remove leading slash
+      const currentTab = await GetTab(pageName);
+
+      // Determine target tab
+      if (currentTab === 'detail' || !currentTab) {
+        // Go to list
+        navigate(item.path);
+      } else {
+        // Go to detail - need to get last entity ID
+        const state = await GetAppState();
+        let lastId: number | undefined;
+
+        switch (pageName) {
+          case 'works':
+            lastId = state.lastWorkID;
+            break;
+          case 'collections':
+            lastId = state.lastCollectionID;
+            break;
+          case 'organizations':
+            lastId = state.lastOrgID;
+            break;
+          case 'submissions':
+            lastId = state.lastSubmissionID;
+            break;
+        }
+
+        if (lastId && lastId > 0) {
+          navigate(`${item.path}/${lastId}`);
+        } else {
+          // This should NEVER happen - show error toast
+          notifications.show({
+            title: 'Tab Cycling Failed',
+            message: `Cannot switch to Detail tab: no ${pageName} ID available. Page: ${pageName}, CurrentTab: ${currentTab || 'null'}, LastID: ${lastId || 'undefined'}, Location: ${location.pathname}`,
+            color: 'red',
+            autoClose: 10000,
+          });
+        }
+      }
+    }
+  };
+
+  const renderLink = (item: {
+    path: string;
+    label: string;
+    icon: typeof IconBook2;
+    hasTabs: boolean;
+  }) => {
     const isActive =
       location.pathname === item.path ||
       location.pathname.startsWith(item.path + '/') ||
@@ -41,6 +103,7 @@ function Links() {
       <NavLink
         key={item.path}
         to={item.path}
+        onClick={(e) => handleNavClick(e, item)}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -65,8 +128,18 @@ function Links() {
       <div>{navItems.map(renderLink)}</div>
       <div>
         <Divider my="sm" />
-        {renderLink({ path: '/reports', label: 'Reports', icon: IconReportAnalytics })}
-        {renderLink({ path: '/settings', label: 'Settings', icon: IconSettings })}
+        {renderLink({
+          path: '/reports',
+          label: 'Reports',
+          icon: IconReportAnalytics,
+          hasTabs: true,
+        })}
+        {renderLink({
+          path: '/settings',
+          label: 'Settings',
+          icon: IconSettings,
+          hasTabs: true,
+        })}
       </div>
     </Stack>
   );

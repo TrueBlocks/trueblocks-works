@@ -34,7 +34,9 @@ function Links() {
 
   const renderLink = (item: { path: string; label: string; icon: typeof IconBook2 }) => {
     const isActive =
-      location.pathname === item.path || (location.pathname === '/' && item.path === '/dashboard');
+      location.pathname === item.path ||
+      location.pathname.startsWith(item.path + '/') ||
+      (location.pathname === '/' && item.path === '/dashboard');
     return (
       <NavLink
         key={item.path}

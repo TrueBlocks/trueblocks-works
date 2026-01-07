@@ -10,6 +10,7 @@ var allowedEnumFields = map[string][]string{
 	"Organizations": {"status", "type", "my_interest"},
 	"Collections":   {"type"},
 	"Notes":         {"type"},
+	"Submissions":   {"submission_type", "response_type"},
 }
 
 func (a *App) GetDistinctValues(table, column string) ([]string, error) {

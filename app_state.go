@@ -22,6 +22,10 @@ func (a *App) SetLastSubmissionID(id int64) {
 	a.state.SetLastSubmissionID(id)
 }
 
+func (a *App) SetLastCollectionType(collType string) {
+	a.state.SetLastCollectionType(collType)
+}
+
 func (a *App) SetWorksFilter(filter string) {
 	a.state.SetWorksFilter(filter)
 }

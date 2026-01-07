@@ -322,6 +322,10 @@ export function SetLastCollectionID(arg1) {
   return window['go']['main']['App']['SetLastCollectionID'](arg1);
 }
 
+export function SetLastCollectionType(arg1) {
+  return window['go']['main']['App']['SetLastCollectionType'](arg1);
+}
+
 export function SetLastOrgID(arg1) {
   return window['go']['main']['App']['SetLastOrgID'](arg1);
 }

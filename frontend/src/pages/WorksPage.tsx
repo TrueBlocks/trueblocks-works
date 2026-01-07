@@ -16,6 +16,7 @@ import { models } from '@wailsjs/go/models';
 import {
   StatusBadge,
   QualityBadge,
+  TypeBadge,
   NewWorkModal,
   DataTable,
   Column,
@@ -144,7 +145,7 @@ export function WorksPage() {
         key: 'type',
         label: 'Type',
         width: '10%',
-        render: (w) => w.type,
+        render: (w) => <TypeBadge value={w.type} />,
         filterElement: (
           <ColumnFilterPopover
             options={availableTypes}

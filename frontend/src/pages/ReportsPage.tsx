@@ -29,6 +29,7 @@ import {
 import { GetReports, GetRecentlyChanged } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { Log, LogErr } from '@/utils';
+import { useTabContext } from '@/stores';
 
 interface ReportIssue {
   id: number;
@@ -98,7 +99,8 @@ function formatRelativeTime(dateString: string): string {
 
 export function ReportsPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<string | null>('recently-changed');
+  const { getTab, setTab, setPageTabs } = useTabContext();
+  const activeTab = getTab('reports');
   const [reports, setReports] = useState<ReportsResult | null>(null);
   const [recentChanges, setRecentChanges] = useState<models.RecentChange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +111,11 @@ export function ReportsPage() {
       const [reportsData, changesData] = await Promise.all([GetReports(), GetRecentlyChanged(50)]);
       setReports(reportsData);
       setRecentChanges(changesData || []);
+      const tabNames = [
+        'recently-changed',
+        ...(reportsData?.categories?.map((c: ReportCategory) => c.name) || []),
+      ];
+      setPageTabs('reports', tabNames);
       Log('Reports loaded:', reportsData);
       Log('Recent changes loaded:', changesData?.length || 0);
     } catch (err) {
@@ -116,7 +123,7 @@ export function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setPageTabs]);
 
   useEffect(() => {
     loadData();
@@ -301,7 +308,7 @@ export function ReportsPage() {
       </Group>
 
       <Paper withBorder>
-        <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs value={activeTab} onChange={(v) => setTab('reports', v || 'recently-changed')}>
           <Tabs.List>
             <Tabs.Tab value="recently-changed" leftSection={<IconHistory size={16} />}>
               Recently Changed

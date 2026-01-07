@@ -22,6 +22,7 @@ import {
   Column,
   ColumnFilterPopover,
   NumericFilterPopover,
+  TypeBadge,
 } from '@/components';
 import { ViewSort, useColumnFilter } from '@/hooks';
 import { Log, LogErr, matchesFilter, matchesNumericFilter, intersectFilter } from '@/utils';
@@ -190,7 +191,7 @@ export function OrganizationsPage() {
         key: 'type',
         label: 'Type',
         width: '10%',
-        render: (o) => o.type,
+        render: (o) => <TypeBadge value={o.type} />,
         filterElement: (
           <ColumnFilterPopover
             options={availableTypes}
@@ -233,7 +234,7 @@ export function OrganizationsPage() {
         key: 'timing',
         label: 'Timing',
         width: '10%',
-        render: (o) => o.timing || '-',
+        render: (o) => <TypeBadge value={o.timing} />,
         filterElement: (
           <ColumnFilterPopover
             options={availableTimings}

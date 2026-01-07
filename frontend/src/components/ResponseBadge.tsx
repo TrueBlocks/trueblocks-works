@@ -11,7 +11,7 @@ export function ResponseBadge({ response }: ResponseBadgeProps) {
   const color =
     responseColors[displayValue as keyof typeof responseColors] || hashColor(displayValue);
   return (
-    <Badge color={color} variant="dot">
+    <Badge color={color} variant="light">
       {displayValue}
     </Badge>
   );

@@ -1138,6 +1138,7 @@ export namespace state {
 	    windowHeight?: number;
 	    viewSorts?: Record<string, ViewSort>;
 	    searchHistory?: string[];
+	    lastCollectionType?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppState(source);
@@ -1176,6 +1177,7 @@ export namespace state {
 	        this.windowHeight = source["windowHeight"];
 	        this.viewSorts = this.convertValues(source["viewSorts"], ViewSort, true);
 	        this.searchHistory = source["searchHistory"];
+	        this.lastCollectionType = source["lastCollectionType"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

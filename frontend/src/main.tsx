@@ -3,6 +3,7 @@ import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { BrowserRouter } from 'react-router-dom';
 import { theme } from '@/theme';
+import { TabProvider } from '@/stores';
 import App from './App';
 
 import '@mantine/core/styles.css';
@@ -16,7 +17,9 @@ root.render(
   <MantineProvider theme={theme} defaultColorScheme="light">
     <Notifications position="top-right" />
     <BrowserRouter>
-      <App />
+      <TabProvider>
+        <App />
+      </TabProvider>
     </BrowserRouter>
   </MantineProvider>
 );

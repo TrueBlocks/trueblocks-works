@@ -14,7 +14,7 @@ import {
   SetSubmissionsStatusFilter,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { ResponseBadge, DataTable, Column, ColumnFilterPopover } from '@/components';
+import { ResponseBadge, DataTable, Column, ColumnFilterPopover, TypeBadge } from '@/components';
 import { ViewSort, useColumnFilter } from '@/hooks';
 import dayjs from 'dayjs';
 
@@ -123,7 +123,7 @@ export function SubmissionsPage() {
         key: 'submissionType',
         label: 'Type',
         width: '12%',
-        render: (s) => s.submissionType || '-',
+        render: (s) => <TypeBadge value={s.submissionType} />,
         filterElement: (
           <ColumnFilterPopover
             options={typeOptions}
@@ -160,11 +160,11 @@ export function SubmissionsPage() {
         render: (s) => {
           const status = getStatus(s);
           return status === 'Active' ? (
-            <Badge color="green" variant="light" size="sm">
+            <Badge color="green" variant="light">
               Active
             </Badge>
           ) : (
-            <Badge color="gray" variant="light" size="sm">
+            <Badge color="gray" variant="light">
               Closed
             </Badge>
           );

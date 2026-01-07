@@ -7,7 +7,7 @@ import { IconArrowLeft, IconExternalLink, IconTrash } from '@tabler/icons-react'
 import { GetSubmission, GetWork, GetOrganization, DeleteSubmission } from '@wailsjs/go/main/App';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import { models } from '@wailsjs/go/models';
-import { ResponseBadge } from '@/components';
+import { SubmissionFieldSelect } from '@/components';
 import dayjs from 'dayjs';
 
 function Field({ label, value }: { label: string; value?: string | number }) {
@@ -93,31 +93,41 @@ export function SubmissionDetailPage() {
               Submission #{submission.submissionID}
             </Text>
             <Group gap="xs" mt="xs">
-              <ResponseBadge response={submission.responseType} />
-              {isActive ? (
-                <Badge color="green" variant="light">
-                  Active
-                </Badge>
-              ) : (
-                <Badge color="gray" variant="light">
-                  Closed
-                </Badge>
-              )}
-              {submission.submissionType && (
-                <Badge variant="outline">{submission.submissionType}</Badge>
-              )}
+              <SubmissionFieldSelect
+                submission={submission}
+                field="responseType"
+                width={100}
+                onUpdate={setSubmission}
+              />
+              <SubmissionFieldSelect
+                submission={submission}
+                field="submissionType"
+                width={100}
+                onUpdate={setSubmission}
+              />
             </Group>
           </div>
         </Group>
-        <Button
-          color="red"
-          variant="light"
-          size="xs"
-          leftSection={<IconTrash size={14} />}
-          onClick={handleDelete}
-        >
-          Delete
-        </Button>
+        <Group>
+          {isActive ? (
+            <Badge color="green" variant="light" size="lg">
+              Active
+            </Badge>
+          ) : (
+            <Badge color="gray" variant="light" size="lg">
+              Closed
+            </Badge>
+          )}
+          <Button
+            color="red"
+            variant="light"
+            size="xs"
+            leftSection={<IconTrash size={14} />}
+            onClick={handleDelete}
+          >
+            Delete
+          </Button>
+        </Group>
       </Group>
 
       <Grid>
@@ -196,7 +206,6 @@ export function SubmissionDetailPage() {
                 : undefined
             }
           />
-          <Field label="Response Type" value={submission.responseType} />
           <Field label="Contest Name" value={submission.contestName} />
           <Field label="Cost" value={submission.cost ? `$${submission.cost}` : undefined} />
         </SimpleGrid>

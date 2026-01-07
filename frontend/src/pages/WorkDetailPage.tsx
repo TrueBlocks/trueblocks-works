@@ -18,6 +18,7 @@ import {
   NotesPortal,
   SubmissionsPortal,
   CollectionsPortal,
+  CollectionPickerModal,
   FileActionsToolbar,
   PDFPreview,
 } from '@/components';
@@ -30,6 +31,7 @@ export function WorkDetailPage() {
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
 
   const workId = id ? parseInt(id, 10) : null;
   const {
@@ -78,6 +80,12 @@ export function WorkDetailPage() {
     [workId]
   );
 
+  const refreshCollections = useCallback(async () => {
+    if (!workId) return;
+    const updated = await GetWorkCollections(workId);
+    setCollections(updated || []);
+  }, [workId]);
+
   const handleDeleteSubmission = useCallback(
     async (subId: number) => {
       if (!workId) return;
@@ -124,7 +132,17 @@ export function WorkDetailPage() {
           style={{ maxHeight: 'calc(100vh - 240px)', overflow: 'auto' }}
         >
           <Stack gap="md">
-            <CollectionsPortal collections={collections} onRemove={handleRemoveFromCollection} />
+            <CollectionsPortal
+              collections={collections}
+              onAdd={() => setCollectionPickerOpen(true)}
+              onRemove={handleRemoveFromCollection}
+            />
+            <CollectionPickerModal
+              opened={collectionPickerOpen}
+              onClose={() => setCollectionPickerOpen(false)}
+              workID={work.workID}
+              onUpdate={refreshCollections}
+            />
             <SubmissionsPortal
               submissions={submissions}
               onRowClick={(sub) => navigate(`/submissions/${sub.submissionID}`)}

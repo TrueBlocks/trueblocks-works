@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { LogErr, matchesFilter } from '@/utils';
 import { GetCollections, GetAppState, SetCollectionsFilter } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { DataTable, Column, ColumnFilterPopover } from '@/components';
+import { DataTable, Column, ColumnFilterPopover, TypeBadge } from '@/components';
 import { ViewSort, useColumnFilter } from '@/hooks';
 import { useNavigate } from 'react-router';
 
@@ -83,7 +83,7 @@ export function CollectionsPage() {
         key: 'type',
         label: 'Type',
         width: '15%',
-        render: (c) => c.type || '-',
+        render: (c) => <TypeBadge value={c.type} />,
         filterElement: (
           <ColumnFilterPopover
             options={availableTypes}

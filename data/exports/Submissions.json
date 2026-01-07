@@ -1,5 +1,5 @@
 {
-  "count": 246,
+  "count": 244,
   "records": [
     {
       "attributes": "",
@@ -4114,40 +4114,6 @@
       "userID": "jrush@greathill.com",
       "webAddress": "http://www.bu.edu/dbin/agni/",
       "workID": 3511
-    },
-    {
-      "attributes": "",
-      "contestName": null,
-      "cost": null,
-      "draft": "2nd",
-      "orgID": 1833,
-      "password": null,
-      "queryDate": null,
-      "responseDate": "7/21/2019",
-      "responseType": "No Response",
-      "submissionDate": "4/19/2016",
-      "submissionID": 40318,
-      "submissionType": "submittable",
-      "userID": null,
-      "webAddress": "https://medium.com/@tjayrush/the-daos-first-big-decision-a71efe6c662a#.a88eeq448",
-      "workID": 3769
-    },
-    {
-      "attributes": "",
-      "contestName": null,
-      "cost": null,
-      "draft": "3rd",
-      "orgID": 1833,
-      "password": null,
-      "queryDate": null,
-      "responseDate": "7/21/2019",
-      "responseType": "No Response",
-      "submissionDate": "4/19/2016",
-      "submissionID": 40319,
-      "submissionType": "submittable",
-      "userID": null,
-      "webAddress": null,
-      "workID": 3848
     },
     {
       "attributes": "",

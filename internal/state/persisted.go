@@ -49,6 +49,7 @@ type AppState struct {
 	WindowHeight              int                 `json:"windowHeight,omitempty"`
 	ViewSorts                 map[string]ViewSort `json:"viewSorts,omitempty"`
 	SearchHistory             []string            `json:"searchHistory,omitempty"`
+	LastCollectionType        string              `json:"lastCollectionType,omitempty"`
 }
 
 type Manager struct {
@@ -131,6 +132,13 @@ func (m *Manager) SetLastCollectionID(id int64) {
 func (m *Manager) SetLastSubmissionID(id int64) {
 	m.mu.Lock()
 	m.state.LastSubmissionID = &id
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetLastCollectionType(collType string) {
+	m.mu.Lock()
+	m.state.LastCollectionType = collType
 	m.mu.Unlock()
 	_ = m.Save()
 }

@@ -167,6 +167,8 @@ export function SetCollectionsFilter(arg1:string):Promise<void>;
 
 export function SetLastCollectionID(arg1:number):Promise<void>;
 
+export function SetLastCollectionType(arg1:string):Promise<void>;
+
 export function SetLastOrgID(arg1:number):Promise<void>;
 
 export function SetLastRoute(arg1:string):Promise<void>;

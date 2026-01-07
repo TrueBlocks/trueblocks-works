@@ -1,30 +1,29 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import {
-  Stack,
-  Grid,
-  Loader,
-  Flex,
-  Text,
-  Group,
-  Paper,
-  ActionIcon,
-  NumberInput,
-  Table,
-} from '@mantine/core';
-import { IconFolder, IconArrowLeft, IconX } from '@tabler/icons-react';
-import { LogErr } from '@/utils';
-import { useNotes } from '@/hooks';
+import { Stack, Grid, Loader, Flex, Text, Group, Paper, ActionIcon, Table } from '@mantine/core';
+import { IconFolder, IconArrowLeft, IconX, IconPlus } from '@tabler/icons-react';
+import { LogErr, matchesFilter } from '@/utils';
+import { useNotes, useColumnFilter } from '@/hooks';
 import {
   GetCollection,
   GetCollectionWorks,
   RemoveWorkFromCollection,
-  ReorderCollectionWorks,
   SetLastCollectionID,
   UpdateCollection,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { NotesPortal, DataTable, EditableField, Column, CollectionFieldSelect } from '@/components';
+import {
+  NotesPortal,
+  DataTable,
+  EditableField,
+  Column,
+  CollectionFieldSelect,
+  WorkPickerModal,
+  ColumnFilterPopover,
+  StatusBadge,
+  QualityBadge,
+  TypeBadge,
+} from '@/components';
 
 export function CollectionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,8 +31,7 @@ export function CollectionDetailPage() {
   const [collection, setCollection] = useState<models.Collection | null>(null);
   const [works, setWorks] = useState<models.CollectionWork[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingWorkId, setEditingWorkId] = useState<number | null>(null);
-  const [editingPosition, setEditingPosition] = useState<number | string>(0);
+  const [workPickerOpen, setWorkPickerOpen] = useState(false);
 
   const collId = id ? parseInt(id, 10) : null;
   const {
@@ -42,6 +40,28 @@ export function CollectionDetailPage() {
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
   } = useNotes('collection', collId);
+
+  const availableYears = useMemo(
+    () => [...new Set(works.map((w) => w.year).filter(Boolean))].sort() as string[],
+    [works]
+  );
+  const availableTypes = useMemo(
+    () => [...new Set(works.map((w) => w.type).filter(Boolean))].sort() as string[],
+    [works]
+  );
+  const availableStatuses = useMemo(
+    () => [...new Set(works.map((w) => w.status).filter(Boolean))].sort() as string[],
+    [works]
+  );
+  const availableQualities = useMemo(
+    () => [...new Set(works.map((w) => w.quality).filter(Boolean))].sort() as string[],
+    [works]
+  );
+
+  const yearFilter = useColumnFilter(availableYears);
+  const typeFilter = useColumnFilter(availableTypes);
+  const statusFilter = useColumnFilter(availableStatuses);
+  const qualityFilter = useColumnFilter(availableQualities);
 
   const loadData = useCallback(async () => {
     if (!collId) return;
@@ -74,38 +94,6 @@ export function CollectionDetailPage() {
     [collId]
   );
 
-  const handlePositionChange = useCallback(
-    async (workId: number, newPosition: number) => {
-      if (!collId) return;
-
-      const sortedWorks = [...works].sort((a, b) => a.position - b.position);
-      const currentIndex = sortedWorks.findIndex((w) => w.workID === workId);
-      if (currentIndex === -1) return;
-
-      const clampedPosition = Math.max(0, Math.min(newPosition, sortedWorks.length - 1));
-      if (clampedPosition === sortedWorks[currentIndex].position) {
-        setEditingWorkId(null);
-        return;
-      }
-
-      const [movedWork] = sortedWorks.splice(currentIndex, 1);
-      sortedWorks.splice(clampedPosition, 0, movedWork);
-
-      const reorderedIds = sortedWorks.map((w) => w.workID);
-      const updatedWorks = sortedWorks.map((w, i) => ({ ...w, position: i }));
-      setWorks(updatedWorks);
-      setEditingWorkId(null);
-
-      try {
-        await ReorderCollectionWorks(collId, reorderedIds);
-      } catch (err) {
-        LogErr('Failed to reorder works:', err);
-        loadData();
-      }
-    },
-    [collId, works, loadData]
-  );
-
   const handleNameChange = useCallback(
     async (newName: string) => {
       if (!collection) return;
@@ -116,67 +104,13 @@ export function CollectionDetailPage() {
     [collection]
   );
 
-  const startEditing = useCallback((work: models.CollectionWork) => {
-    setEditingWorkId(work.workID);
-    setEditingPosition(work.position);
-  }, []);
-
-  const commitPosition = useCallback(
-    (workId: number) => {
-      const pos =
-        typeof editingPosition === 'string' ? parseInt(editingPosition, 10) : editingPosition;
-      if (!isNaN(pos)) {
-        handlePositionChange(workId, pos);
-      } else {
-        setEditingWorkId(null);
-      }
-    },
-    [editingPosition, handlePositionChange]
-  );
-
   const columns: Column<models.CollectionWork>[] = useMemo(
     () => [
       {
-        key: 'position',
-        label: 'Pos',
-        width: '70px',
-        render: (work) =>
-          editingWorkId === work.workID ? (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <NumberInput
-                size="xs"
-                w={50}
-                min={0}
-                max={works.length - 1}
-                value={editingPosition}
-                onChange={(val) => setEditingPosition(val)}
-                onBlur={() => commitPosition(work.workID)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    commitPosition(work.workID);
-                  } else if (e.key === 'Escape') {
-                    setEditingWorkId(null);
-                  }
-                }}
-                autoFocus
-              />
-            </div>
-          ) : (
-            <Text
-              size="sm"
-              style={{ cursor: 'pointer' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                startEditing(work);
-              }}
-            >
-              {work.position}
-            </Text>
-          ),
+        key: 'workID',
+        label: 'ID',
+        width: '60px',
+        render: (work) => <Text size="sm">{work.workID}</Text>,
       },
       {
         key: 'title',
@@ -188,42 +122,108 @@ export function CollectionDetailPage() {
         ),
       },
       {
+        key: 'year',
+        label: 'Year',
+        width: '80px',
+        render: (work) => <Text size="sm">{work.year || '-'}</Text>,
+        filterElement: (
+          <ColumnFilterPopover
+            options={availableYears}
+            selected={yearFilter.selected}
+            onChange={yearFilter.toggle}
+            onSelectAll={yearFilter.selectAll}
+            onSelectNone={yearFilter.selectNone}
+            onSelectOnly={yearFilter.selectOnly}
+            label="Year"
+          />
+        ),
+      },
+      {
         key: 'type',
         label: 'Type',
         width: '100px',
-        render: (work) => <Text size="sm">{work.type || '-'}</Text>,
+        render: (work) => <TypeBadge value={work.type} />,
+        filterElement: (
+          <ColumnFilterPopover
+            options={availableTypes}
+            selected={typeFilter.selected}
+            onChange={typeFilter.toggle}
+            onSelectAll={typeFilter.selectAll}
+            onSelectNone={typeFilter.selectNone}
+            onSelectOnly={typeFilter.selectOnly}
+            label="Type"
+          />
+        ),
       },
       {
-        key: 'year',
-        label: 'Year',
-        width: '70px',
-        render: (work) => <Text size="sm">{work.year || '-'}</Text>,
+        key: 'status',
+        label: 'Status',
+        width: '100px',
+        render: (work) => <StatusBadge status={work.status} />,
+        filterElement: (
+          <ColumnFilterPopover
+            options={availableStatuses}
+            selected={statusFilter.selected}
+            onChange={statusFilter.toggle}
+            onSelectAll={statusFilter.selectAll}
+            onSelectNone={statusFilter.selectNone}
+            onSelectOnly={statusFilter.selectOnly}
+            label="Status"
+          />
+        ),
       },
       {
-        key: 'nWords',
-        label: 'Words',
-        width: '80px',
-        render: (work) => <Text size="sm">{work.nWords ? work.nWords.toLocaleString() : '-'}</Text>,
+        key: 'quality',
+        label: 'Quality',
+        width: '100px',
+        render: (work) => <QualityBadge quality={work.quality} />,
+        filterElement: (
+          <ColumnFilterPopover
+            options={availableQualities}
+            selected={qualityFilter.selected}
+            onChange={qualityFilter.toggle}
+            onSelectAll={qualityFilter.selectAll}
+            onSelectNone={qualityFilter.selectNone}
+            onSelectOnly={qualityFilter.selectOnly}
+            label="Quality"
+          />
+        ),
       },
     ],
-    [editingWorkId, editingPosition, works.length, startEditing, commitPosition]
+    [
+      availableYears,
+      yearFilter,
+      availableTypes,
+      typeFilter,
+      availableStatuses,
+      statusFilter,
+      availableQualities,
+      qualityFilter,
+    ]
   );
 
-  const filterFn = useCallback((work: models.CollectionWork, search: string) => {
-    const s = search.toLowerCase();
-    return (
-      work.title.toLowerCase().includes(s) ||
-      (work.type?.toLowerCase().includes(s) ?? false) ||
-      (work.year?.toLowerCase().includes(s) ?? false)
-    );
-  }, []);
+  const filterFn = useCallback(
+    (work: models.CollectionWork, search: string) => {
+      if (!matchesFilter(yearFilter.selected, work.year)) return false;
+      if (!matchesFilter(typeFilter.selected, work.type)) return false;
+      if (!matchesFilter(statusFilter.selected, work.status)) return false;
+      if (!matchesFilter(qualityFilter.selected, work.quality)) return false;
+
+      const s = search.toLowerCase();
+      return (
+        work.title.toLowerCase().includes(s) ||
+        (work.type?.toLowerCase().includes(s) ?? false) ||
+        (work.year?.toLowerCase().includes(s) ?? false) ||
+        String(work.workID).includes(s)
+      );
+    },
+    [yearFilter.selected, typeFilter.selected, statusFilter.selected, qualityFilter.selected]
+  );
 
   const valueGetter = useCallback((item: models.CollectionWork, column: string) => {
     switch (column) {
-      case 'position':
-        return item.position;
-      case 'nWords':
-        return item.nWords ?? 0;
+      case 'workID':
+        return item.workID;
       default:
         return (item as unknown as Record<string, unknown>)[column];
     }
@@ -280,6 +280,7 @@ export function CollectionDetailPage() {
             onRowClick={(work) => navigate(`/works/${work.workID}`)}
             filterFn={filterFn}
             viewName="collectionDetailWorks"
+            pageSize={15}
             initialSort={{
               primary: { column: 'position', direction: 'asc' },
               secondary: { column: '', direction: '' },
@@ -301,6 +302,17 @@ export function CollectionDetailPage() {
                 </ActionIcon>
               </Table.Td>
             )}
+            headerActions={
+              <ActionIcon variant="light" onClick={() => setWorkPickerOpen(true)}>
+                <IconPlus size={16} />
+              </ActionIcon>
+            }
+          />
+          <WorkPickerModal
+            opened={workPickerOpen}
+            onClose={() => setWorkPickerOpen(false)}
+            collectionID={collId || 0}
+            onUpdate={loadData}
           />
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 4 }}>

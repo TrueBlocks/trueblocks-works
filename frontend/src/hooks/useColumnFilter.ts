@@ -16,9 +16,10 @@ export function useColumnFilter(
   availableOptions: string[],
   persistFn?: PersistFn
 ): UseColumnFilterResult {
-  const [selected, setSelectedState] = useState<Set<string>>(new Set(availableOptions));
+  const [selected, setSelectedState] = useState<Set<string>>(() => new Set(availableOptions));
   const persistFnRef = useRef(persistFn);
   const availableOptionsRef = useRef(availableOptions);
+  const prevOptionsRef = useRef<Set<string>>(new Set(availableOptions));
 
   useEffect(() => {
     persistFnRef.current = persistFn;
@@ -26,10 +27,35 @@ export function useColumnFilter(
 
   useEffect(() => {
     availableOptionsRef.current = availableOptions;
+    const prevOptions = prevOptionsRef.current;
+    const currentOptions = new Set(availableOptions);
+    const newOptions = availableOptions.filter((opt) => !prevOptions.has(opt));
+    prevOptionsRef.current = currentOptions;
+
+    if (newOptions.length > 0) {
+      setSelectedState((prev) => {
+        const nextSelected = new Set(prev);
+        newOptions.forEach((opt) => nextSelected.add(opt));
+        return nextSelected;
+      });
+    } else if (availableOptions.length === 0 && prevOptions.size > 0) {
+      setSelectedState(new Set());
+    }
   }, [availableOptions]);
 
   const initialize = useCallback((values: Set<string>) => {
     setSelectedState(values);
+    prevOptionsRef.current = values;
+  }, []);
+
+  const addValue = useCallback((value: string) => {
+    setSelectedState((prev) => {
+      if (prev.has(value)) return prev;
+      const next = new Set(prev);
+      next.add(value);
+      persistFnRef.current?.(Array.from(next));
+      return next;
+    });
   }, []);
 
   const toggle = useCallback((value: string) => {
@@ -61,16 +87,6 @@ export function useColumnFilter(
     const singleSet = new Set([value]);
     setSelectedState(singleSet);
     persistFnRef.current?.([value]);
-  }, []);
-
-  const addValue = useCallback((value: string) => {
-    setSelectedState((prev) => {
-      if (prev.has(value)) return prev;
-      const next = new Set(prev);
-      next.add(value);
-      persistFnRef.current?.(Array.from(next));
-      return next;
-    });
   }, []);
 
   return useMemo(

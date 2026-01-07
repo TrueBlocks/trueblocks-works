@@ -179,9 +179,9 @@ func (i *Importer) ReimportCollections() error {
 	for _, row := range rows {
 		collID := parseInt(row["Collection ID"])
 		query := `INSERT OR REPLACE INTO Collections 
-			(collID, collection_name, is_status, type, attributes, modified_at) 
-			VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
-		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["isStatus"]), strPtr(row["Type"]), row["Attributes"])
+			(collID, collection_name, type, attributes, modified_at) 
+			VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`
+		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["Type"]), row["Attributes"])
 		if err != nil {
 			return fmt.Errorf("reimport collection %d: %w", collID, err)
 		}
@@ -275,8 +275,8 @@ func (i *Importer) ImportCollections() error {
 	}
 	for _, row := range rows {
 		collID := parseInt(row["Collection ID"])
-		query := "INSERT OR IGNORE INTO Collections (collID, collection_name, is_status, type, attributes) VALUES (?, ?, ?, ?, ?)"
-		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["isStatus"]), strPtr(row["Type"]), row["Attributes"])
+		query := "INSERT OR IGNORE INTO Collections (collID, collection_name, type, attributes) VALUES (?, ?, ?, ?)"
+		_, err := i.db.Conn().Exec(query, collID, row["Collection Name"], strPtr(row["Type"]), row["Attributes"])
 		if err != nil {
 			return fmt.Errorf("insert collection %d: %w", collID, err)
 		}

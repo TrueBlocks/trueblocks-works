@@ -1,5 +1,5 @@
 {
-  "count": 264,
+  "count": 260,
   "records": [
     {
       "createdAt": "2026-01-05T19:07:00-05:00",
@@ -1821,24 +1821,6 @@
     },
     {
       "createdAt": "2026-01-05T19:07:00-05:00",
-      "entityID": 3769,
-      "entityType": "work",
-      "id": 256,
-      "modifiedAt": "2026-01-05T19:07:00-05:00",
-      "note": "Work was rejected by 'Brittney Noakes Poetry Award' on 7/21/2019.",
-      "type": "Rejection"
-    },
-    {
-      "createdAt": "2026-01-05T19:07:00-05:00",
-      "entityID": 3848,
-      "entityType": "work",
-      "id": 259,
-      "modifiedAt": "2026-01-05T19:07:00-05:00",
-      "note": "Work was rejected by 'Brittney Noakes Poetry Award' on 7/21/2019.",
-      "type": "Rejection"
-    },
-    {
-      "createdAt": "2026-01-05T19:07:00-05:00",
       "entityID": 21233,
       "entityType": "work",
       "id": 78,
@@ -2132,24 +2114,6 @@
       "id": 192,
       "modifiedAt": "2026-01-05T19:07:00-05:00",
       "note": "Submitted to 'Bartleby Snopes' on 3/29/2015",
-      "type": "Submission"
-    },
-    {
-      "createdAt": "2026-01-05T19:07:00-05:00",
-      "entityID": 3769,
-      "entityType": "work",
-      "id": 257,
-      "modifiedAt": "2026-01-05T19:07:00-05:00",
-      "note": "Submitted to 'Brittney Noakes Poetry Award' on 4/19/2016",
-      "type": "Submission"
-    },
-    {
-      "createdAt": "2026-01-05T19:07:00-05:00",
-      "entityID": 3848,
-      "entityType": "work",
-      "id": 260,
-      "modifiedAt": "2026-01-05T19:07:00-05:00",
-      "note": "Submitted to 'Brittney Noakes Poetry Award' on 4/19/2016",
       "type": "Submission"
     },
     {

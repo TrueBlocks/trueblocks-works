@@ -1,5 +1,6 @@
 import { Paper, Title, Text, Group, ActionIcon, Stack } from '@mantine/core';
-import { IconPlus, IconX, IconFolder } from '@tabler/icons-react';
+import { IconPlus, IconX, IconFolder, IconExternalLink } from '@tabler/icons-react';
+import { useNavigate } from 'react-router';
 import { models } from '@wailsjs/go/models';
 
 interface CollectionsPortalProps {
@@ -9,6 +10,8 @@ interface CollectionsPortalProps {
 }
 
 export function CollectionsPortal({ collections, onAdd, onRemove }: CollectionsPortalProps) {
+  const navigate = useNavigate();
+
   return (
     <Paper p="md" withBorder>
       <Group justify="space-between" mb="md">
@@ -30,17 +33,32 @@ export function CollectionsPortal({ collections, onAdd, onRemove }: CollectionsP
             <Group key={coll.id} justify="space-between">
               <Group gap="xs">
                 <IconFolder size={16} />
-                <Text size="sm">{coll.collectionName}</Text>
+                <Text
+                  size="sm"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => navigate(`/collections/${coll.collID}`)}
+                >
+                  {coll.collectionName}
+                </Text>
               </Group>
               {onRemove && (
-                <ActionIcon
-                  variant="subtle"
-                  size="sm"
-                  color="red"
-                  onClick={() => onRemove(coll.collID)}
-                >
-                  <IconX size={14} />
-                </ActionIcon>
+                <Group gap={4}>
+                  <ActionIcon
+                    variant="subtle"
+                    size="sm"
+                    color="red"
+                    onClick={() => onRemove(coll.collID)}
+                  >
+                    <IconX size={14} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => navigate(`/collections/${coll.collID}`)}
+                  >
+                    <IconExternalLink size={14} />
+                  </ActionIcon>
+                </Group>
               )}
             </Group>
           ))}

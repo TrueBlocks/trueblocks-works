@@ -7,48 +7,78 @@ import (
 	"works/internal/models"
 )
 
-func (db *DB) Search(query string, limit int) ([]models.SearchResult, error) {
-	if strings.TrimSpace(query) == "" {
-		return []models.SearchResult{}, nil
+var entityFilters = map[string]string{
+	"works":       "works",
+	"orgs":        "orgs",
+	"journals":    "orgs",
+	"notes":       "notes",
+	"submissions": "submissions",
+}
+
+func (db *DB) Search(query string, limit int) (*models.SearchResponse, error) {
+	parsed := parseQuery(query)
+
+	response := &models.SearchResponse{
+		Results:     []models.SearchResult{},
+		ParsedQuery: parsed,
+	}
+
+	if len(parsed.Terms) == 0 && len(parsed.Phrases) == 0 {
+		return response, nil
 	}
 
 	if limit <= 0 {
 		limit = 20
 	}
 
-	ftsQuery := escapeFTSQuery(query)
-
-	results := []models.SearchResult{}
-
-	worksResults, err := db.searchWorks(ftsQuery, limit)
-	if err != nil {
-		return nil, fmt.Errorf("search works: %w", err)
-	}
-	results = append(results, worksResults...)
-
-	orgsResults, err := db.searchOrganizations(ftsQuery, limit)
-	if err != nil {
-		return nil, fmt.Errorf("search organizations: %w", err)
-	}
-	results = append(results, orgsResults...)
-
-	notesResults, err := db.searchNotes(ftsQuery, limit)
-	if err != nil {
-		return nil, fmt.Errorf("search notes: %w", err)
-	}
-	results = append(results, notesResults...)
-
-	submissionsResults, err := db.searchSubmissions(ftsQuery, limit)
-	if err != nil {
-		return nil, fmt.Errorf("search submissions: %w", err)
-	}
-	results = append(results, submissionsResults...)
-
-	if len(results) > limit {
-		results = results[:limit]
+	ftsQuery := buildFTSQuery(parsed)
+	if ftsQuery == "" {
+		return response, nil
 	}
 
-	return results, nil
+	searchAll := len(parsed.EntityFilter) == 0
+	filterSet := make(map[string]bool)
+	for _, f := range parsed.EntityFilter {
+		filterSet[f] = true
+	}
+
+	if searchAll || filterSet["works"] {
+		worksResults, err := db.searchWorks(ftsQuery, limit)
+		if err != nil {
+			return nil, fmt.Errorf("search works: %w", err)
+		}
+		response.Results = append(response.Results, worksResults...)
+	}
+
+	if searchAll || filterSet["orgs"] {
+		orgsResults, err := db.searchOrganizations(ftsQuery, limit)
+		if err != nil {
+			return nil, fmt.Errorf("search organizations: %w", err)
+		}
+		response.Results = append(response.Results, orgsResults...)
+	}
+
+	if searchAll || filterSet["notes"] {
+		notesResults, err := db.searchNotes(ftsQuery, limit)
+		if err != nil {
+			return nil, fmt.Errorf("search notes: %w", err)
+		}
+		response.Results = append(response.Results, notesResults...)
+	}
+
+	if searchAll || filterSet["submissions"] {
+		submissionsResults, err := db.searchSubmissions(ftsQuery, limit)
+		if err != nil {
+			return nil, fmt.Errorf("search submissions: %w", err)
+		}
+		response.Results = append(response.Results, submissionsResults...)
+	}
+
+	if len(response.Results) > limit {
+		response.Results = response.Results[:limit]
+	}
+
+	return response, nil
 }
 
 func (db *DB) searchWorks(ftsQuery string, limit int) ([]models.SearchResult, error) {
@@ -322,13 +352,126 @@ func (db *DB) searchSubmissions(ftsQuery string, limit int) ([]models.SearchResu
 	return results, rows.Err()
 }
 
-func escapeFTSQuery(query string) string {
-	query = strings.TrimSpace(query)
-	words := strings.Fields(query)
-	for i, word := range words {
-		word = strings.ReplaceAll(word, "\"", "")
-		word = strings.ReplaceAll(word, "'", "")
-		words[i] = "\"" + word + "\"*"
+func parseQuery(raw string) models.ParsedQuery {
+	result := models.ParsedQuery{
+		RawQuery:     raw,
+		Terms:        []string{},
+		Phrases:      []string{},
+		Exclusions:   []string{},
+		EntityFilter: []string{},
 	}
-	return strings.Join(words, " ")
+
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return result
+	}
+
+	tokens := tokenize(raw)
+
+	for _, token := range tokens {
+		lower := strings.ToLower(token)
+
+		if strings.HasPrefix(lower, "in:") {
+			key := strings.TrimPrefix(lower, "in:")
+			if canonical, ok := entityFilters[key]; ok {
+				result.EntityFilter = append(result.EntityFilter, canonical)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(token, "-") {
+			exclusion := strings.TrimPrefix(token, "-")
+			if strings.HasPrefix(exclusion, "\"") && strings.HasSuffix(exclusion, "\"") {
+				exclusion = strings.Trim(exclusion, "\"")
+			}
+			if exclusion != "" {
+				result.Exclusions = append(result.Exclusions, exclusion)
+			}
+			continue
+		}
+
+		if strings.HasPrefix(token, "\"") && strings.HasSuffix(token, "\"") {
+			phrase := strings.Trim(token, "\"")
+			if phrase != "" {
+				result.Phrases = append(result.Phrases, phrase)
+			}
+			continue
+		}
+
+		if token != "" {
+			result.Terms = append(result.Terms, token)
+		}
+	}
+
+	return result
+}
+
+func tokenize(input string) []string {
+	var tokens []string
+	var current strings.Builder
+	inQuotes := false
+
+	for i := 0; i < len(input); i++ {
+		c := input[i]
+
+		if c == '"' {
+			if inQuotes {
+				current.WriteByte(c)
+				tokens = append(tokens, current.String())
+				current.Reset()
+				inQuotes = false
+			} else {
+				inQuotes = true
+				current.WriteByte(c)
+			}
+			continue
+		}
+
+		if c == '-' && current.Len() == 0 && !inQuotes {
+			current.WriteByte(c)
+			continue
+		}
+
+		if c == ' ' && !inQuotes {
+			if current.Len() > 0 {
+				tokens = append(tokens, current.String())
+				current.Reset()
+			}
+			continue
+		}
+
+		current.WriteByte(c)
+	}
+
+	if current.Len() > 0 {
+		tokens = append(tokens, current.String())
+	}
+
+	return tokens
+}
+
+func buildFTSQuery(parsed models.ParsedQuery) string {
+	parts := make([]string, 0, len(parsed.Phrases)+len(parsed.Terms)+len(parsed.Exclusions))
+
+	for _, phrase := range parsed.Phrases {
+		parts = append(parts, "\""+phrase+"\"")
+	}
+
+	for _, term := range parsed.Terms {
+		clean := strings.ReplaceAll(term, "\"", "")
+		clean = strings.ReplaceAll(clean, "'", "")
+		if clean != "" {
+			parts = append(parts, "\""+clean+"\"*")
+		}
+	}
+
+	for _, exclusion := range parsed.Exclusions {
+		clean := strings.ReplaceAll(exclusion, "\"", "")
+		clean = strings.ReplaceAll(clean, "'", "")
+		if clean != "" {
+			parts = append(parts, "NOT \""+clean+"\"")
+		}
+	}
+
+	return strings.Join(parts, " ")
 }

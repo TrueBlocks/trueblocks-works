@@ -10,3 +10,16 @@ type SearchResult struct {
 	ParentEntityType string  `json:"parentEntityType,omitempty"`
 	ParentEntityID   int64   `json:"parentEntityID,omitempty"`
 }
+
+type ParsedQuery struct {
+	Terms        []string `json:"terms"`
+	Phrases      []string `json:"phrases"`
+	Exclusions   []string `json:"exclusions"`
+	EntityFilter []string `json:"entityFilter"`
+	RawQuery     string   `json:"rawQuery"`
+}
+
+type SearchResponse struct {
+	Results     []SearchResult `json:"results"`
+	ParsedQuery ParsedQuery    `json:"parsedQuery"`
+}

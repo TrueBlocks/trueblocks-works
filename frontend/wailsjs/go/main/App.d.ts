@@ -159,7 +159,7 @@ export function RestoreBackup(arg1:string):Promise<void>;
 
 export function SaveWindowGeometry(arg1:number,arg2:number,arg3:number,arg4:number):Promise<void>;
 
-export function Search(arg1:string,arg2:number):Promise<Array<models.SearchResult>>;
+export function Search(arg1:string,arg2:number):Promise<models.SearchResponse>;
 
 export function SelectExportFolder():Promise<string>;
 

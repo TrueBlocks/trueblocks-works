@@ -9,6 +9,7 @@ import {
   UnstyledButton,
   Kbd,
   Loader,
+  Pill,
 } from '@mantine/core';
 import {
   IconSearch,
@@ -17,11 +18,13 @@ import {
   IconNote,
   IconSend,
   IconHistory,
+  IconX,
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { Search, AddSearchHistory, GetSearchHistory } from '@wailsjs/go/main/App';
 import { LogErr } from '@/utils';
 import { models } from '@wailsjs/go/models';
+import classes from './SearchModal.module.css';
 
 interface SearchModalProps {
   opened: boolean;
@@ -31,6 +34,7 @@ interface SearchModalProps {
 export function SearchModal({ opened, onClose }: SearchModalProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<models.SearchResult[]>([]);
+  const [parsedQuery, setParsedQuery] = useState<models.ParsedQuery | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -51,6 +55,7 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
     } else {
       setQuery('');
       setResults([]);
+      setParsedQuery(null);
       setSelectedIndex(0);
     }
   }, [opened]);
@@ -59,18 +64,21 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
+      setParsedQuery(null);
       return;
     }
 
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
-        const searchResults = await Search(query, 20);
-        setResults(searchResults || []);
+        const response = await Search(query, 20);
+        setResults(response?.results || []);
+        setParsedQuery(response?.parsedQuery || null);
         setSelectedIndex(0);
       } catch (err) {
         LogErr('Search failed:', err);
         setResults([]);
+        setParsedQuery(null);
       } finally {
         setLoading(false);
       }
@@ -78,6 +86,41 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
 
     return () => clearTimeout(timer);
   }, [query]);
+
+  const removeFilter = useCallback(
+    (filterType: 'entityFilter' | 'phrases' | 'exclusions', value: string) => {
+      if (!parsedQuery) return;
+
+      let newQuery = query;
+
+      if (filterType === 'entityFilter') {
+        const patterns = [`in:${value}`, `in:journals`];
+        for (const pattern of patterns) {
+          const regex = new RegExp(`\\s*${pattern}\\s*`, 'gi');
+          newQuery = newQuery.replace(regex, ' ');
+        }
+      } else if (filterType === 'phrases') {
+        const regex = new RegExp(`\\s*"${value}"\\s*`, 'g');
+        newQuery = newQuery.replace(regex, ' ');
+      } else if (filterType === 'exclusions') {
+        const patterns = [`-"${value}"`, `-${value}`];
+        for (const pattern of patterns) {
+          const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const regex = new RegExp(`\\s*${escaped}\\s*`, 'g');
+          newQuery = newQuery.replace(regex, ' ');
+        }
+      }
+
+      setQuery(newQuery.trim());
+    },
+    [query, parsedQuery]
+  );
+
+  const hasActiveFilters =
+    parsedQuery &&
+    ((parsedQuery.entityFilter?.length || 0) > 0 ||
+      (parsedQuery.phrases?.length || 0) > 0 ||
+      (parsedQuery.exclusions?.length || 0) > 0);
 
   const navigateToResult = useCallback(
     (result: models.SearchResult) => {
@@ -149,7 +192,7 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
       <Stack gap="sm">
         <TextInput
           ref={inputRef}
-          placeholder="Search works, journals, notes, submissions..."
+          placeholder="Search works, journals, notes, submissions... (try in:works)"
           value={query}
           onChange={(e) => setQuery(e.currentTarget.value)}
           onKeyDown={handleKeyDown}
@@ -157,6 +200,41 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
           rightSection={<Kbd size="xs">↵</Kbd>}
           data-autofocus
         />
+
+        {hasActiveFilters && (
+          <Group gap="xs" className={classes.filterChips}>
+            {parsedQuery?.entityFilter?.map((filter) => (
+              <Pill
+                key={`filter-${filter}`}
+                withRemoveButton
+                onRemove={() => removeFilter('entityFilter', filter)}
+                className={classes.filterPill}
+              >
+                in:{filter}
+              </Pill>
+            ))}
+            {parsedQuery?.phrases?.map((phrase) => (
+              <Pill
+                key={`phrase-${phrase}`}
+                withRemoveButton
+                onRemove={() => removeFilter('phrases', phrase)}
+                className={classes.phrasePill}
+              >
+                &quot;{phrase}&quot;
+              </Pill>
+            ))}
+            {parsedQuery?.exclusions?.map((exclusion) => (
+              <Pill
+                key={`exclusion-${exclusion}`}
+                withRemoveButton
+                onRemove={() => removeFilter('exclusions', exclusion)}
+                className={classes.exclusionPill}
+              >
+                <IconX size={10} /> {exclusion}
+              </Pill>
+            ))}
+          </Group>
+        )}
 
         {results.length > 0 && (
           <Stack gap={4}>

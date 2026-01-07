@@ -1,0 +1,18 @@
+.filterChips {
+  padding: 4px 0;
+}
+
+.filterPill {
+  background-color: var(--mantine-color-blue-light);
+  color: var(--mantine-color-blue-filled);
+}
+
+.phrasePill {
+  background-color: var(--mantine-color-teal-light);
+  color: var(--mantine-color-teal-filled);
+}
+
+.exclusionPill {
+  background-color: var(--mantine-color-red-light);
+  color: var(--mantine-color-red-filled);
+}

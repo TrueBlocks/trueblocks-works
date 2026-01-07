@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { LogErr } from '@/utils';
-import { GetCollections, SetLastCollectionID } from '@wailsjs/go/main/App';
+import { GetCollections, SetLastCollectionID, GetAppState } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { DataTable, Column, TypeBadge } from '@/components';
 
 interface CollectionsListProps {
   onCollectionClick: (coll: models.CollectionView) => void;
+  onFilteredDataChange: (colls: models.CollectionView[]) => void;
 }
 
-export function CollectionsList({ onCollectionClick }: CollectionsListProps) {
+export function CollectionsList({ onCollectionClick, onFilteredDataChange }: CollectionsListProps) {
+  const location = useLocation();
   const [collections, setCollections] = useState<models.CollectionView[]>([]);
   const [loading, setLoading] = useState(true);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
@@ -24,10 +27,16 @@ export function CollectionsList({ onCollectionClick }: CollectionsListProps) {
         setCollections(data);
         const types = [...new Set(data.map((c) => c.type).filter(Boolean))] as string[];
         setAvailableTypes(types);
+
+        const state = location.state as { selectID?: number } | null;
+        if (state?.selectID) {
+          SetLastCollectionID(state.selectID);
+          window.history.replaceState({}, document.title);
+        }
       })
       .catch((err) => LogErr('Failed to load collections:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [location.state]);
 
   const searchFn = useCallback((coll: models.CollectionView, search: string) => {
     return coll.collectionName.toLowerCase().includes(search.toLowerCase());
@@ -37,6 +46,11 @@ export function CollectionsList({ onCollectionClick }: CollectionsListProps) {
     SetLastCollectionID(coll.collID).catch((err) => {
       LogErr('Failed to set lastCollectionID:', err);
     });
+  }, []);
+
+  const getLastSelectedID = useCallback(async () => {
+    const state = await GetAppState();
+    return state.lastCollectionID;
   }, []);
 
   const columns: Column<models.CollectionView>[] = useMemo(
@@ -76,6 +90,8 @@ export function CollectionsList({ onCollectionClick }: CollectionsListProps) {
       getRowKey={(c) => c.collID}
       onRowClick={onCollectionClick}
       onSelectedChange={handleSelectedChange}
+      getLastSelectedID={getLastSelectedID}
+      onFilteredSortedChange={onFilteredDataChange}
       searchFn={searchFn}
     />
   );

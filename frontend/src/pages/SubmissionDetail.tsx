@@ -12,8 +12,16 @@ import {
   Badge,
   ActionIcon,
   Button,
+  Tooltip,
 } from '@mantine/core';
-import { IconArrowLeft, IconExternalLink, IconTrash } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconExternalLink,
+  IconTrash,
+  IconChevronUp,
+  IconChevronDown,
+} from '@tabler/icons-react';
+import { useHotkeys } from '@mantine/hooks';
 import { LogErr } from '@/utils';
 import { GetSubmission, GetWork, GetOrganization, DeleteSubmission } from '@wailsjs/go/main/App';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
@@ -35,9 +43,10 @@ function Field({ label, value }: { label: string; value?: string | number }) {
 
 interface SubmissionDetailProps {
   submissionId: number;
+  filteredSubmissions: models.SubmissionView[];
 }
 
-export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
+export function SubmissionDetail({ submissionId, filteredSubmissions }: SubmissionDetailProps) {
   const navigate = useNavigate();
   const [submission, setSubmission] = useState<models.Submission | null>(null);
   const [work, setWork] = useState<models.Work | null>(null);
@@ -68,6 +77,51 @@ export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const currentIndex = filteredSubmissions.findIndex((s) => s.submissionID === submissionId);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < filteredSubmissions.length - 1;
+
+  const handlePrev = useCallback(() => {
+    if (hasPrev) {
+      const prevSub = filteredSubmissions[currentIndex - 1];
+      navigate(`/submissions/${prevSub.submissionID}`);
+    }
+  }, [hasPrev, filteredSubmissions, currentIndex, navigate]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext) {
+      const nextSub = filteredSubmissions[currentIndex + 1];
+      navigate(`/submissions/${nextSub.submissionID}`);
+    }
+  }, [hasNext, filteredSubmissions, currentIndex, navigate]);
+
+  const handleHome = useCallback(() => {
+    if (filteredSubmissions.length > 0 && currentIndex !== 0) {
+      navigate(`/submissions/${filteredSubmissions[0].submissionID}`);
+    }
+  }, [filteredSubmissions, currentIndex, navigate]);
+
+  const handleEnd = useCallback(() => {
+    if (filteredSubmissions.length > 0 && currentIndex !== filteredSubmissions.length - 1) {
+      navigate(`/submissions/${filteredSubmissions[filteredSubmissions.length - 1].submissionID}`);
+    }
+  }, [filteredSubmissions, currentIndex, navigate]);
+
+  const handleReturnToList = useCallback(() => {
+    navigate('/submissions', { replace: true });
+  }, [navigate]);
+
+  useHotkeys([
+    ['ArrowDown', handleNext],
+    ['ArrowUp', handlePrev],
+    ['ArrowRight', handleNext],
+    ['ArrowLeft', handlePrev],
+    ['Home', handleHome],
+    ['End', handleEnd],
+    ['mod+shift+ArrowLeft', handleReturnToList],
+    ['mod+shift+ArrowUp', handleReturnToList],
+  ]);
 
   const handleDelete = useCallback(async () => {
     if (!submissionId) return;
@@ -100,6 +154,28 @@ export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
           <ActionIcon variant="subtle" onClick={() => navigate('/submissions')}>
             <IconArrowLeft size={20} />
           </ActionIcon>
+          <Tooltip label="Previous submission (↑)">
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              aria-label="Previous submission"
+            >
+              <IconChevronUp />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Next submission (↓)">
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              onClick={handleNext}
+              disabled={!hasNext}
+              aria-label="Next submission"
+            >
+              <IconChevronDown />
+            </ActionIcon>
+          </Tooltip>
           <div>
             <Text size="lg" fw={600}>
               Submission #{submission.submissionID}
@@ -156,7 +232,12 @@ export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
                     {work.type}
                   </Text>
                 </div>
-                <ActionIcon variant="light" onClick={() => navigate(`/works/${work.workID}`)}>
+                <ActionIcon
+                  variant="light"
+                  onClick={() =>
+                    navigate(`/works/${work.workID}`, { state: { selectID: work.workID } })
+                  }
+                >
                   <IconExternalLink size={16} />
                 </ActionIcon>
               </Group>
@@ -179,7 +260,12 @@ export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
                     {org.type}
                   </Text>
                 </div>
-                <ActionIcon variant="light" onClick={() => navigate(`/organizations/${org.orgID}`)}>
+                <ActionIcon
+                  variant="light"
+                  onClick={() =>
+                    navigate(`/organizations/${org.orgID}`, { state: { selectID: org.orgID } })
+                  }
+                >
                   <IconExternalLink size={16} />
                 </ActionIcon>
               </Group>

@@ -49,6 +49,8 @@ interface DataTableProps<T> {
   getRowKey: (item: T) => string | number;
   onRowClick?: (item: T) => void;
   onSelectedChange?: (item: T) => void;
+  onFilteredSortedChange?: (items: T[]) => void;
+  getLastSelectedID?: () => Promise<number | null | undefined>;
   valueGetter?: (item: T, column: string) => unknown;
   extraColumns?: React.ReactNode;
   renderExtraCells?: (item: T) => React.ReactNode;
@@ -75,6 +77,8 @@ export function DataTable<T>({
   getRowKey,
   onRowClick,
   onSelectedChange,
+  onFilteredSortedChange,
+  getLastSelectedID,
   valueGetter,
   extraColumns,
   renderExtraCells,
@@ -92,8 +96,10 @@ export function DataTable<T>({
     {}
   );
   const [stateLoaded, setStateLoaded] = useState(false);
+  const [selectionRestored, setSelectionRestored] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const tableRef = useRef<HTMLTableElement>(null);
+  const selectedRowRef = useRef<HTMLTableRowElement>(null);
   const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -359,6 +365,43 @@ export function DataTable<T>({
     return sorted.slice(start, start + pageSize);
   }, [sorted, effectivePage, pageSize]);
 
+  useEffect(() => {
+    if (onFilteredSortedChange) {
+      onFilteredSortedChange(sorted);
+    }
+  }, [sorted, onFilteredSortedChange]);
+
+  useEffect(() => {
+    async function restoreSelection() {
+      if (!getLastSelectedID || selectionRestored || sorted.length === 0 || !stateLoaded) {
+        return;
+      }
+
+      const lastID = await getLastSelectedID();
+      if (lastID) {
+        const globalIndex = sorted.findIndex((item) => getRowKey(item) === lastID);
+        if (globalIndex >= 0) {
+          const newPage = Math.floor(globalIndex / pageSize) + 1;
+          const newLocalIndex = globalIndex % pageSize;
+          setPage(newPage);
+          setSelectedIndex(newLocalIndex);
+          setSelectionRestored(true);
+        }
+      }
+    }
+
+    restoreSelection();
+  }, [getLastSelectedID, selectionRestored, sorted, stateLoaded, pageSize, getRowKey]);
+
+  useEffect(() => {
+    if (selectionRestored && selectedRowRef.current) {
+      selectedRowRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [selectionRestored, effectivePage]);
+
   const effectiveSelectedIndex = useMemo(() => {
     if (selectedIndex >= paginated.length && paginated.length > 0) {
       return paginated.length - 1;
@@ -572,6 +615,7 @@ export function DataTable<T>({
           {paginated.map((item, index) => (
             <Table.Tr
               key={getRowKey(item)}
+              ref={index === effectiveSelectedIndex ? selectedRowRef : null}
               style={{
                 cursor: onRowClick ? 'pointer' : 'default',
                 backgroundColor:

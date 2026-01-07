@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Table, Group, ActionIcon, Tooltip } from '@mantine/core';
 import { IconWorld, IconBook } from '@tabler/icons-react';
+import { useLocation } from 'react-router-dom';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import {
   GetOrganizationsWithNotes,
   GetOrgsFilterOptions,
   SetLastOrgID,
+  GetAppState,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { OrgStatusBadge, DataTable, Column, TypeBadge } from '@/components';
@@ -20,9 +22,11 @@ const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown
 
 interface OrganizationsListProps {
   onOrgClick: (org: models.OrganizationWithNotes) => void;
+  onFilteredDataChange: (orgs: models.OrganizationWithNotes[]) => void;
 }
 
-export function OrganizationsList({ onOrgClick }: OrganizationsListProps) {
+export function OrganizationsList({ onOrgClick, onFilteredDataChange }: OrganizationsListProps) {
+  const location = useLocation();
   const [orgs, setOrgs] = useState<models.OrganizationWithNotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<{
@@ -45,12 +49,18 @@ export function OrganizationsList({ onOrgClick }: OrganizationsListProps) {
           types: options.types || [],
           timings: options.timings || [],
         });
+
+        const state = location.state as { selectID?: number } | null;
+        if (state?.selectID) {
+          SetLastOrgID(state.selectID);
+          window.history.replaceState({}, document.title);
+        }
       })
       .catch((err) => {
         LogErr('Failed to load organizations:', err);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [location.state]);
 
   const searchFn = useCallback((org: models.OrganizationWithNotes, search: string) => {
     return org.name.toLowerCase().includes(search.toLowerCase());
@@ -60,6 +70,11 @@ export function OrganizationsList({ onOrgClick }: OrganizationsListProps) {
     SetLastOrgID(org.orgID).catch((err) => {
       LogErr('Failed to set lastOrgID:', err);
     });
+  }, []);
+
+  const getLastSelectedID = useCallback(async () => {
+    const state = await GetAppState();
+    return state.lastOrgID;
   }, []);
 
   const columns: Column<models.OrganizationWithNotes>[] = useMemo(
@@ -168,6 +183,8 @@ export function OrganizationsList({ onOrgClick }: OrganizationsListProps) {
       getRowKey={(o) => o.orgID}
       onRowClick={onOrgClick}
       onSelectedChange={handleSelectedChange}
+      getLastSelectedID={getLastSelectedID}
+      onFilteredSortedChange={onFilteredDataChange}
       searchFn={searchFn}
       valueGetter={getOrgValue}
       extraColumns={<Table.Th style={{ width: '10%' }}>Actions</Table.Th>}

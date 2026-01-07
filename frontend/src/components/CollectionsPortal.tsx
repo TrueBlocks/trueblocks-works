@@ -7,9 +7,15 @@ interface CollectionsPortalProps {
   collections: models.CollectionDetail[];
   onAdd?: () => void;
   onRemove?: (collID: number) => void;
+  onCollectionClick?: (collID: number) => void;
 }
 
-export function CollectionsPortal({ collections, onAdd, onRemove }: CollectionsPortalProps) {
+export function CollectionsPortal({
+  collections,
+  onAdd,
+  onRemove,
+  onCollectionClick,
+}: CollectionsPortalProps) {
   const navigate = useNavigate();
 
   return (
@@ -36,7 +42,11 @@ export function CollectionsPortal({ collections, onAdd, onRemove }: CollectionsP
                 <Text
                   size="sm"
                   style={{ cursor: 'pointer' }}
-                  onClick={() => navigate(`/collections/${coll.collID}`)}
+                  onClick={() =>
+                    onCollectionClick
+                      ? onCollectionClick(coll.collID)
+                      : navigate(`/collections/${coll.collID}`)
+                  }
                 >
                   {coll.collectionName}
                 </Text>

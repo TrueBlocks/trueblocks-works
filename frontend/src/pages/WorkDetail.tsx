@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
+import { Stack, Grid, Loader, Flex, Text, ActionIcon, Group, Tooltip } from '@mantine/core';
+import { IconChevronUp, IconChevronDown } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
+import { useHotkeys } from '@mantine/hooks';
 import { LogErr } from '@/utils';
 import { useNotes } from '@/hooks';
 import {
@@ -24,10 +27,11 @@ import {
 
 interface WorkDetailProps {
   workId: number;
-  onNavigateSubmission: (subId: number) => void;
+  filteredWorks: models.WorkView[];
 }
 
-export function WorkDetail({ workId, onNavigateSubmission }: WorkDetailProps) {
+export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
+  const navigate = useNavigate();
   const [work, setWork] = useState<models.Work | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
@@ -41,6 +45,51 @@ export function WorkDetail({ workId, onNavigateSubmission }: WorkDetailProps) {
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
   } = useNotes('work', workId);
+
+  const currentIndex = filteredWorks.findIndex((w) => w.workID === workId);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < filteredWorks.length - 1;
+
+  const handlePrev = useCallback(() => {
+    if (hasPrev) {
+      const prevWork = filteredWorks[currentIndex - 1];
+      navigate(`/works/${prevWork.workID}`);
+    }
+  }, [hasPrev, filteredWorks, currentIndex, navigate]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext) {
+      const nextWork = filteredWorks[currentIndex + 1];
+      navigate(`/works/${nextWork.workID}`);
+    }
+  }, [hasNext, filteredWorks, currentIndex, navigate]);
+
+  const handleHome = useCallback(() => {
+    if (filteredWorks.length > 0 && currentIndex !== 0) {
+      navigate(`/works/${filteredWorks[0].workID}`);
+    }
+  }, [filteredWorks, currentIndex, navigate]);
+
+  const handleEnd = useCallback(() => {
+    if (filteredWorks.length > 0 && currentIndex !== filteredWorks.length - 1) {
+      navigate(`/works/${filteredWorks[filteredWorks.length - 1].workID}`);
+    }
+  }, [filteredWorks, currentIndex, navigate]);
+
+  const handleReturnToList = useCallback(() => {
+    navigate('/works', { replace: true });
+  }, [navigate]);
+
+  useHotkeys([
+    ['ArrowDown', handleNext],
+    ['ArrowUp', handlePrev],
+    ['ArrowRight', handleNext],
+    ['ArrowLeft', handlePrev],
+    ['Home', handleHome],
+    ['End', handleEnd],
+    ['mod+shift+ArrowLeft', handleReturnToList],
+    ['mod+shift+ArrowUp', handleReturnToList],
+  ]);
 
   const handleWorkUpdate = useCallback((updatedWork: models.Work) => {
     setWork(updatedWork);
@@ -118,7 +167,31 @@ export function WorkDetail({ workId, onNavigateSubmission }: WorkDetailProps) {
       <WorkHeader
         work={work}
         actions={
-          <FileActionsToolbar workID={work.workID} refreshKey={refreshKey} onMoved={loadData} />
+          <Group gap="xs">
+            <Tooltip label="Previous work (↑)">
+              <ActionIcon
+                variant="subtle"
+                size="lg"
+                onClick={handlePrev}
+                disabled={!hasPrev}
+                aria-label="Previous work"
+              >
+                <IconChevronUp />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Next work (↓)">
+              <ActionIcon
+                variant="subtle"
+                size="lg"
+                onClick={handleNext}
+                disabled={!hasNext}
+                aria-label="Next work"
+              >
+                <IconChevronDown />
+              </ActionIcon>
+            </Tooltip>
+            <FileActionsToolbar workID={work.workID} refreshKey={refreshKey} onMoved={loadData} />
+          </Group>
         }
         onWorkUpdate={handleWorkUpdate}
       />
@@ -137,6 +210,9 @@ export function WorkDetail({ workId, onNavigateSubmission }: WorkDetailProps) {
               collections={collections}
               onAdd={() => setCollectionPickerOpen(true)}
               onRemove={handleRemoveFromCollection}
+              onCollectionClick={(collID) =>
+                navigate(`/collections/${collID}`, { state: { selectID: collID } })
+              }
             />
             <CollectionPickerModal
               opened={collectionPickerOpen}
@@ -146,7 +222,11 @@ export function WorkDetail({ workId, onNavigateSubmission }: WorkDetailProps) {
             />
             <SubmissionsPortal
               submissions={submissions}
-              onRowClick={(sub) => onNavigateSubmission(sub.submissionID)}
+              onRowClick={(sub) =>
+                navigate(`/submissions/${sub.submissionID}`, {
+                  state: { selectID: sub.submissionID },
+                })
+              }
               onDelete={handleDeleteSubmission}
             />
             <NotesPortal

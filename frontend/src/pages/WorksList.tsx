@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { ActionIcon } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 import { Log, LogErr } from '@/utils';
-import { GetWorks, GetWorksFilterOptions, SetLastWorkID } from '@wailsjs/go/main/App';
+import { GetWorks, GetWorksFilterOptions, SetLastWorkID, GetAppState } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import {
   StatusBadge,
@@ -15,9 +16,11 @@ import {
 
 interface WorksListProps {
   onWorkClick: (work: models.WorkView) => void;
+  onFilteredDataChange: (works: models.WorkView[]) => void;
 }
 
-export function WorksList({ onWorkClick }: WorksListProps) {
+export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps) {
+  const location = useLocation();
   const [works, setWorks] = useState<models.WorkView[]>([]);
   const [loading, setLoading] = useState(true);
   const [newModalOpen, setNewModalOpen] = useState(false);
@@ -51,10 +54,16 @@ export function WorksList({ onWorkClick }: WorksListProps) {
           statuses: options.statuses || [],
           qualities: options.qualities || [],
         });
+
+        const state = location.state as { selectID?: number } | null;
+        if (state?.selectID) {
+          SetLastWorkID(state.selectID);
+          window.history.replaceState({}, document.title);
+        }
       })
       .catch((err) => LogErr('Failed to load works:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [location.state]);
 
   const handleCreated = (work: models.Work) => {
     loadWorks();
@@ -65,6 +74,11 @@ export function WorksList({ onWorkClick }: WorksListProps) {
     SetLastWorkID(work.workID).catch((err) => {
       LogErr('Failed to set lastWorkID:', err);
     });
+  }, []);
+
+  const getLastSelectedID = useCallback(async () => {
+    const state = await GetAppState();
+    return state.lastWorkID;
   }, []);
 
   const searchFn = useCallback((work: models.WorkView, search: string) => {
@@ -133,6 +147,8 @@ export function WorksList({ onWorkClick }: WorksListProps) {
         getRowKey={(w) => w.workID}
         onRowClick={onWorkClick}
         onSelectedChange={handleSelectedChange}
+        onFilteredSortedChange={onFilteredDataChange}
+        getLastSelectedID={getLastSelectedID}
         searchFn={searchFn}
         headerActions={
           <ActionIcon variant="light" size="lg" onClick={() => setNewModalOpen(true)}>

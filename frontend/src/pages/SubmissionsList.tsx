@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Badge, ActionIcon } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
+import { useLocation } from 'react-router-dom';
 import { Log, LogErr } from '@/utils';
 import {
   GetAllSubmissionViews,
   GetSubmissionsFilterOptions,
   SetLastSubmissionID,
+  GetAppState,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { ResponseBadge, DataTable, Column, TypeBadge } from '@/components';
@@ -24,9 +26,11 @@ const getSubmissionValue = (sub: models.SubmissionView, column: string): unknown
 
 interface SubmissionsListProps {
   onSubmissionClick: (sub: models.SubmissionView) => void;
+  onFilteredDataChange: (subs: models.SubmissionView[]) => void;
 }
 
-export function SubmissionsList({ onSubmissionClick }: SubmissionsListProps) {
+export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: SubmissionsListProps) {
+  const location = useLocation();
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<{
@@ -47,10 +51,16 @@ export function SubmissionsList({ onSubmissionClick }: SubmissionsListProps) {
           types: filterOpts.types || [],
           responses: filterOpts.responses || [],
         });
+
+        const state = location.state as { selectID?: number } | null;
+        if (state?.selectID) {
+          SetLastSubmissionID(state.selectID);
+          window.history.replaceState({}, document.title);
+        }
       })
       .catch((err) => LogErr('Failed to load submissions:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [location.state]);
 
   const searchFn = useCallback((sub: models.SubmissionView, search: string) => {
     return (
@@ -65,6 +75,11 @@ export function SubmissionsList({ onSubmissionClick }: SubmissionsListProps) {
     SetLastSubmissionID(sub.submissionID).catch((err) => {
       LogErr('Failed to set lastSubmissionID:', err);
     });
+  }, []);
+
+  const getLastSelectedID = useCallback(async () => {
+    const state = await GetAppState();
+    return state.lastSubmissionID;
   }, []);
 
   const columns: Column<models.SubmissionView>[] = useMemo(
@@ -133,6 +148,8 @@ export function SubmissionsList({ onSubmissionClick }: SubmissionsListProps) {
       getRowKey={(s) => s.submissionID}
       onRowClick={onSubmissionClick}
       onSelectedChange={handleSelectedChange}
+      getLastSelectedID={getLastSelectedID}
+      onFilteredSortedChange={onFilteredDataChange}
       searchFn={searchFn}
       valueGetter={getSubmissionValue}
       headerActions={

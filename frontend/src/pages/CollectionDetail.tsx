@@ -1,7 +1,26 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack, Paper, Group, ActionIcon, Flex, Loader, Text, Grid, Table } from '@mantine/core';
-import { IconFolder, IconArrowLeft, IconPlus, IconX } from '@tabler/icons-react';
+import {
+  Stack,
+  Paper,
+  Group,
+  ActionIcon,
+  Flex,
+  Loader,
+  Text,
+  Grid,
+  Table,
+  Tooltip,
+} from '@mantine/core';
+import {
+  IconFolder,
+  IconArrowLeft,
+  IconPlus,
+  IconX,
+  IconChevronUp,
+  IconChevronDown,
+} from '@tabler/icons-react';
+import { useHotkeys } from '@mantine/hooks';
 import { Log, LogErr } from '@/utils';
 import {
   GetCollection,
@@ -25,9 +44,10 @@ import { useNotes } from '@/hooks';
 
 interface CollectionDetailProps {
   collectionId: number;
+  filteredCollections: models.CollectionView[];
 }
 
-export function CollectionDetail({ collectionId }: CollectionDetailProps) {
+export function CollectionDetail({ collectionId, filteredCollections }: CollectionDetailProps) {
   const navigate = useNavigate();
   const [collection, setCollection] = useState<models.CollectionView | null>(null);
   const [works, setWorks] = useState<models.CollectionWork[]>([]);
@@ -47,6 +67,51 @@ export function CollectionDetail({ collectionId }: CollectionDetailProps) {
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
   } = useNotes('collection', collectionId);
+
+  const currentIndex = filteredCollections.findIndex((c) => c.collID === collectionId);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < filteredCollections.length - 1;
+
+  const handlePrev = useCallback(() => {
+    if (hasPrev) {
+      const prevColl = filteredCollections[currentIndex - 1];
+      navigate(`/collections/${prevColl.collID}`);
+    }
+  }, [hasPrev, filteredCollections, currentIndex, navigate]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext) {
+      const nextColl = filteredCollections[currentIndex + 1];
+      navigate(`/collections/${nextColl.collID}`);
+    }
+  }, [hasNext, filteredCollections, currentIndex, navigate]);
+
+  const handleHome = useCallback(() => {
+    if (filteredCollections.length > 0 && currentIndex !== 0) {
+      navigate(`/collections/${filteredCollections[0].collID}`);
+    }
+  }, [filteredCollections, currentIndex, navigate]);
+
+  const handleEnd = useCallback(() => {
+    if (filteredCollections.length > 0 && currentIndex !== filteredCollections.length - 1) {
+      navigate(`/collections/${filteredCollections[filteredCollections.length - 1].collID}`);
+    }
+  }, [filteredCollections, currentIndex, navigate]);
+
+  const handleReturnToList = useCallback(() => {
+    navigate('/collections', { replace: true });
+  }, [navigate]);
+
+  useHotkeys([
+    ['ArrowDown', handleNext],
+    ['ArrowUp', handlePrev],
+    ['ArrowRight', handleNext],
+    ['ArrowLeft', handlePrev],
+    ['Home', handleHome],
+    ['End', handleEnd],
+    ['mod+shift+ArrowLeft', handleReturnToList],
+    ['mod+shift+ArrowUp', handleReturnToList],
+  ]);
 
   const loadData = useCallback(() => {
     if (!collectionId) return;
@@ -180,6 +245,28 @@ export function CollectionDetail({ collectionId }: CollectionDetailProps) {
           <ActionIcon variant="subtle" size="lg" onClick={() => navigate('/collections')}>
             <IconArrowLeft size={20} />
           </ActionIcon>
+          <Tooltip label="Previous collection (↑)">
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              onClick={handlePrev}
+              disabled={!hasPrev}
+              aria-label="Previous collection"
+            >
+              <IconChevronUp />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="Next collection (↓)">
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              onClick={handleNext}
+              disabled={!hasNext}
+              aria-label="Next collection"
+            >
+              <IconChevronDown />
+            </ActionIcon>
+          </Tooltip>
           <IconFolder size={32} />
           <div style={{ flex: 1 }}>
             <EditableField value={collection.collectionName} onChange={handleNameChange} />
@@ -206,7 +293,9 @@ export function CollectionDetail({ collectionId }: CollectionDetailProps) {
             data={works}
             columns={columns}
             getRowKey={(work) => work.workID}
-            onRowClick={(work) => navigate(`/works/${work.workID}`)}
+            onRowClick={(work) =>
+              navigate(`/works/${work.workID}`, { state: { selectID: work.workID } })
+            }
             searchFn={searchFn}
             valueGetter={valueGetter}
             extraColumns={<Table.Th style={{ width: '50px' }} />}

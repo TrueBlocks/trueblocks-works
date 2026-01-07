@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack, Grid, Loader, Flex, Text } from '@mantine/core';
+import { Stack, Grid, Loader, Flex, Text, ActionIcon, Tooltip, Group } from '@mantine/core';
+import { IconChevronUp, IconChevronDown } from '@tabler/icons-react';
+import { useHotkeys } from '@mantine/hooks';
 import { LogErr } from '@/utils';
 import { useNotes } from '@/hooks';
 import {
@@ -15,9 +17,13 @@ import { OrgHeader, OrgDetails, NotesPortal, SubmissionsPortal } from '@/compone
 
 interface OrganizationDetailProps {
   organizationId: number;
+  filteredOrganizations: models.OrganizationWithNotes[];
 }
 
-export function OrganizationDetail({ organizationId }: OrganizationDetailProps) {
+export function OrganizationDetail({
+  organizationId,
+  filteredOrganizations,
+}: OrganizationDetailProps) {
   const navigate = useNavigate();
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
@@ -29,7 +35,50 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
   } = useNotes('journal', organizationId);
+  const currentIndex = filteredOrganizations.findIndex((o) => o.orgID === organizationId);
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < filteredOrganizations.length - 1;
 
+  const handlePrev = useCallback(() => {
+    if (hasPrev) {
+      const prevOrg = filteredOrganizations[currentIndex - 1];
+      navigate(`/organizations/${prevOrg.orgID}`);
+    }
+  }, [hasPrev, filteredOrganizations, currentIndex, navigate]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext) {
+      const nextOrg = filteredOrganizations[currentIndex + 1];
+      navigate(`/organizations/${nextOrg.orgID}`);
+    }
+  }, [hasNext, filteredOrganizations, currentIndex, navigate]);
+
+  const handleHome = useCallback(() => {
+    if (filteredOrganizations.length > 0 && currentIndex !== 0) {
+      navigate(`/organizations/${filteredOrganizations[0].orgID}`);
+    }
+  }, [filteredOrganizations, currentIndex, navigate]);
+
+  const handleEnd = useCallback(() => {
+    if (filteredOrganizations.length > 0 && currentIndex !== filteredOrganizations.length - 1) {
+      navigate(`/organizations/${filteredOrganizations[filteredOrganizations.length - 1].orgID}`);
+    }
+  }, [filteredOrganizations, currentIndex, navigate]);
+
+  const handleReturnToList = useCallback(() => {
+    navigate('/organizations', { replace: true });
+  }, [navigate]);
+
+  useHotkeys([
+    ['ArrowDown', handleNext],
+    ['ArrowUp', handlePrev],
+    ['ArrowRight', handleNext],
+    ['ArrowLeft', handlePrev],
+    ['Home', handleHome],
+    ['End', handleEnd],
+    ['mod+shift+ArrowLeft', handleReturnToList],
+    ['mod+shift+ArrowUp', handleReturnToList],
+  ]);
   const loadData = useCallback(async () => {
     if (!organizationId) return;
     setLoading(true);
@@ -75,6 +124,30 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
 
   return (
     <Stack gap="lg">
+      <Group gap="xs">
+        <Tooltip label="Previous organization (↑)">
+          <ActionIcon
+            variant="subtle"
+            size="lg"
+            onClick={handlePrev}
+            disabled={!hasPrev}
+            aria-label="Previous organization"
+          >
+            <IconChevronUp />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label="Next organization (↓)">
+          <ActionIcon
+            variant="subtle"
+            size="lg"
+            onClick={handleNext}
+            disabled={!hasNext}
+            aria-label="Next organization"
+          >
+            <IconChevronDown />
+          </ActionIcon>
+        </Tooltip>
+      </Group>
       <OrgHeader
         org={org}
         onOrgUpdate={(updated) => setOrg(updated)}
@@ -106,7 +179,11 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
             />
             <SubmissionsPortal
               submissions={submissions}
-              onRowClick={(sub) => navigate(`/submissions/${sub.submissionID}`)}
+              onRowClick={(sub) =>
+                navigate(`/submissions/${sub.submissionID}`, {
+                  state: { selectID: sub.submissionID },
+                })
+              }
               onDelete={handleDeleteSubmission}
               displayField="work"
             />

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTabContext } from '@/stores';
-import { GetAppState, OpenDocument, GetTab } from '@wailsjs/go/main/App';
+import { GetAppState, OpenDocument, GetTab, ToggleShowDeleted } from '@wailsjs/go/main/App';
 import { LogErr } from '@/utils';
 import { notifications } from '@mantine/notifications';
 
@@ -38,6 +38,24 @@ export function useKeyboardShortcuts() {
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent) {
       if (!e.metaKey) return;
+
+      // Cmd+Shift+D: Toggle show deleted items
+      if (e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        try {
+          const newValue = await ToggleShowDeleted();
+          window.dispatchEvent(new CustomEvent('showDeletedChanged', { detail: newValue }));
+          notifications.show({
+            title: 'Show Deleted Toggled',
+            message: newValue ? 'Deleted items are now visible' : 'Deleted items are now hidden',
+            color: newValue ? 'blue' : 'gray',
+            autoClose: 2000,
+          });
+        } catch (err) {
+          LogErr('Failed to toggle show deleted:', err);
+        }
+        return;
+      }
 
       // Cmd+O: Open current work's document
       if (e.key === 'o') {

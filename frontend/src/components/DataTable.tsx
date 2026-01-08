@@ -9,9 +9,11 @@ import {
   Select,
   Title,
   CloseButton,
+  ActionIcon,
+  Tooltip,
 } from '@mantine/core';
 import { useDebouncedValue, useHotkeys } from '@mantine/hooks';
-import { IconSearch } from '@tabler/icons-react';
+import { IconSearch, IconTrash, IconRestore } from '@tabler/icons-react';
 import { SortableHeader } from './SortableHeader';
 import { ColumnFilterPopover } from './ColumnFilterPopover';
 import { NumericFilterPopover } from './NumericFilterPopover';
@@ -56,6 +58,8 @@ interface DataTableProps<T> {
   renderExtraCells?: (item: T) => React.ReactNode;
   headerActions?: React.ReactNode;
   searchFn?: (item: T, search: string) => boolean;
+  onDelete?: (item: T) => void | Promise<void>;
+  onUndelete?: (item: T) => void | Promise<void>;
 }
 
 const PAGE_SIZE_OPTIONS = [
@@ -84,6 +88,8 @@ export function DataTable<T>({
   renderExtraCells,
   headerActions,
   searchFn,
+  onDelete,
+  onUndelete,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 200);
@@ -609,30 +615,75 @@ export function DataTable<T>({
               );
             })}
             {extraColumns}
+            {(onDelete || onUndelete) && (
+              <Table.Th style={{ width: '80px', textAlign: 'center' }}>Actions</Table.Th>
+            )}
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {paginated.map((item, index) => (
-            <Table.Tr
-              key={getRowKey(item)}
-              ref={index === effectiveSelectedIndex ? selectedRowRef : null}
-              style={{
-                cursor: onRowClick ? 'pointer' : 'default',
-                backgroundColor:
-                  index === effectiveSelectedIndex ? 'var(--mantine-color-blue-light)' : undefined,
-              }}
-              onClick={() => handleRowClick(item, index)}
-            >
-              {columns.map((col) => (
-                <Table.Td key={col.key}>
-                  {col.render
-                    ? col.render(item)
-                    : String((item as Record<string, unknown>)[col.key] ?? '-')}
-                </Table.Td>
-              ))}
-              {renderExtraCells?.(item)}
-            </Table.Tr>
-          ))}
+          {paginated.map((item, index) => {
+            const isDeleted = (item as { isDeleted?: boolean }).isDeleted || false;
+            return (
+              <Table.Tr
+                key={getRowKey(item)}
+                ref={index === effectiveSelectedIndex ? selectedRowRef : null}
+                style={{
+                  cursor: onRowClick ? 'pointer' : 'default',
+                  backgroundColor:
+                    index === effectiveSelectedIndex
+                      ? 'var(--mantine-color-blue-light)'
+                      : undefined,
+                  opacity: isDeleted ? 0.6 : 1,
+                  textDecoration: isDeleted ? 'line-through' : 'none',
+                }}
+                onClick={() => handleRowClick(item, index)}
+              >
+                {columns.map((col) => (
+                  <Table.Td key={col.key}>
+                    {col.render
+                      ? col.render(item)
+                      : String((item as Record<string, unknown>)[col.key] ?? '-')}
+                  </Table.Td>
+                ))}
+                {renderExtraCells?.(item)}
+                {(onDelete || onUndelete) && (
+                  <Table.Td style={{ textAlign: 'center' }}>
+                    {isDeleted
+                      ? onUndelete && (
+                          <Tooltip label="Restore">
+                            <ActionIcon
+                              size="sm"
+                              variant="subtle"
+                              color="green"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onUndelete(item);
+                              }}
+                            >
+                              <IconRestore size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )
+                      : onDelete && (
+                          <Tooltip label="Delete">
+                            <ActionIcon
+                              size="sm"
+                              variant="subtle"
+                              color="red"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(item);
+                              }}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+                  </Table.Td>
+                )}
+              </Table.Tr>
+            );
+          })}
         </Table.Tbody>
       </Table>
 

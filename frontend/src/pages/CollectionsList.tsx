@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LogErr } from '@/utils';
-import { GetCollections, SetLastCollectionID, GetAppState } from '@wailsjs/go/main/App';
+import {
+  GetCollections,
+  SetLastCollectionID,
+  GetAppState,
+  DeleteCollection,
+  UndeleteCollection,
+} from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { DataTable, Column, TypeBadge } from '@/components';
+import { notifications } from '@mantine/notifications';
 
 interface CollectionsListProps {
   onCollectionClick: (coll: models.CollectionView) => void;
@@ -16,6 +23,19 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
   const [loading, setLoading] = useState(true);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const hasInitialized = useRef(false);
+
+  const loadCollections = useCallback(() => {
+    setLoading(true);
+    GetCollections()
+      .then((colls) => {
+        const data = colls || [];
+        setCollections(data);
+        const types = [...new Set(data.map((c) => c.type).filter(Boolean))] as string[];
+        setAvailableTypes(types);
+      })
+      .catch((err) => LogErr('Failed to load collections:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -38,6 +58,15 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
       .finally(() => setLoading(false));
   }, [location.state]);
 
+  // Reload when showDeleted changes
+  useEffect(() => {
+    function handleShowDeletedChanged() {
+      loadCollections();
+    }
+    window.addEventListener('showDeletedChanged', handleShowDeletedChanged);
+    return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
+  }, [loadCollections]);
+
   const searchFn = useCallback((coll: models.CollectionView, search: string) => {
     return coll.collectionName.toLowerCase().includes(search.toLowerCase());
   }, []);
@@ -46,6 +75,34 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     SetLastCollectionID(coll.collID).catch((err) => {
       LogErr('Failed to set lastCollectionID:', err);
     });
+  }, []);
+
+  const handleDelete = useCallback(async (coll: models.CollectionView) => {
+    try {
+      await DeleteCollection(coll.collID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to delete collection:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete collection',
+        color: 'red',
+      });
+    }
+  }, []);
+
+  const handleUndelete = useCallback(async (coll: models.CollectionView) => {
+    try {
+      await UndeleteCollection(coll.collID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to restore collection:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore collection',
+        color: 'red',
+      });
+    }
   }, []);
 
   const getLastSelectedID = useCallback(async () => {
@@ -93,6 +150,8 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
       getLastSelectedID={getLastSelectedID}
       onFilteredSortedChange={onFilteredDataChange}
       searchFn={searchFn}
+      onDelete={handleDelete}
+      onUndelete={handleUndelete}
     />
   );
 }

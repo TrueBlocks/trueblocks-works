@@ -75,21 +75,74 @@ func (db *DB) UpdateWork(w *models.Work) error {
 }
 
 func (db *DB) DeleteWork(id int64) error {
-	if err := db.DeleteNotesByEntity("work", id); err != nil {
-		return fmt.Errorf("delete work notes: %w", err)
-	}
-	_, err := db.conn.Exec("DELETE FROM Works WHERE workID = ?", id)
+	work, err := db.GetWork(id)
 	if err != nil {
-		return fmt.Errorf("delete work: %w", err)
+		return fmt.Errorf("get work: %w", err)
 	}
+	if work == nil {
+		return fmt.Errorf("work not found")
+	}
+
+	work.Attributes = models.MarkDeleted(work.Attributes)
+	if err := db.UpdateWork(work); err != nil {
+		return fmt.Errorf("mark work deleted: %w", err)
+	}
+
+	submissions, _ := db.ListSubmissionsByWork(id)
+	for _, sub := range submissions {
+		_ = db.DeleteSubmission(sub.SubmissionID)
+	}
+
+	notes, _ := db.GetNotes("work", id, true)
+	for _, note := range notes {
+		_ = db.DeleteNote(note.ID)
+	}
+
 	return nil
 }
 
-func (db *DB) ListWorks() ([]models.WorkView, error) {
+func (db *DB) UndeleteWork(id int64) error {
+	work, err := db.GetWork(id)
+	if err != nil {
+		return fmt.Errorf("get work: %w", err)
+	}
+	if work == nil {
+		return fmt.Errorf("work not found")
+	}
+
+	work.Attributes = models.Undelete(work.Attributes)
+	if err := db.UpdateWork(work); err != nil {
+		return fmt.Errorf("undelete work: %w", err)
+	}
+
+	submissions, _ := db.ListSubmissionsByWork(id)
+	for _, sub := range submissions {
+		if models.IsDeleted(sub.Attributes) {
+			_ = db.UndeleteSubmission(sub.SubmissionID)
+		}
+	}
+
+	notes, _ := db.GetNotes("work", id, true)
+	for _, note := range notes {
+		if models.IsDeleted(note.Attributes) {
+			_ = db.UndeleteNote(note.ID)
+		}
+	}
+
+	return nil
+}
+
+func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
 	query := `SELECT workID, title, type, year, status, quality, doc_type,
 		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at,
 		age_days, n_submissions, collection_list
-		FROM WorksView ORDER BY title`
+		FROM WorksView`
+
+	if !showDeleted {
+		query += whereNotDeleted
+	}
+
+	query += ` ORDER BY title`
 
 	rows, err := db.conn.Query(query)
 	if err != nil {
@@ -109,6 +162,7 @@ func (db *DB) ListWorks() ([]models.WorkView, error) {
 		if err != nil {
 			return nil, fmt.Errorf("scan work: %w", err)
 		}
+		w.IsDeleted = w.Work.IsDeleted()
 		works = append(works, w)
 	}
 	return works, rows.Err()

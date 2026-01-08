@@ -9,10 +9,10 @@ import (
 
 func (db *DB) CreateNote(n *models.Note) error {
 	now := time.Now().Format(time.RFC3339)
-	query := `INSERT INTO Notes (entity_type, entity_id, type, note, modified_at, created_at)
-		VALUES (?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO Notes (entity_type, entity_id, type, note, attributes, modified_at, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	result, err := db.conn.Exec(query, n.EntityType, n.EntityID, n.Type, n.Note, now, now)
+	result, err := db.conn.Exec(query, n.EntityType, n.EntityID, n.Type, n.Note, n.Attributes, now, now)
 	if err != nil {
 		return fmt.Errorf("insert note: %w", err)
 	}
@@ -27,9 +27,30 @@ func (db *DB) CreateNote(n *models.Note) error {
 	return nil
 }
 
-func (db *DB) GetNotes(entityType string, entityID int64) ([]models.Note, error) {
-	query := `SELECT id, entity_type, entity_id, type, note, modified_at, created_at
-		FROM Notes WHERE entity_type = ? AND entity_id = ? ORDER BY created_at DESC`
+func (db *DB) GetNote(id int64) (*models.Note, error) {
+	query := `SELECT id, entity_type, entity_id, type, note, attributes, modified_at, created_at
+		FROM Notes WHERE id = ?`
+
+	n := &models.Note{}
+	err := db.conn.QueryRow(query, id).Scan(
+		&n.ID, &n.EntityType, &n.EntityID, &n.Type, &n.Note,
+		&n.Attributes, &n.ModifiedAt, &n.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("query note: %w", err)
+	}
+	return n, nil
+}
+
+func (db *DB) GetNotes(entityType string, entityID int64, showDeleted bool) ([]models.Note, error) {
+	query := `SELECT id, entity_type, entity_id, type, note, attributes, modified_at, created_at
+		FROM Notes WHERE entity_type = ? AND entity_id = ?`
+
+	if !showDeleted {
+		query += ` AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')`
+	}
+
+	query += ` ORDER BY created_at DESC`
 
 	rows, err := db.conn.Query(query, entityType, entityID)
 	if err != nil {
@@ -41,7 +62,7 @@ func (db *DB) GetNotes(entityType string, entityID int64) ([]models.Note, error)
 	for rows.Next() {
 		var n models.Note
 		err := rows.Scan(&n.ID, &n.EntityType, &n.EntityID, &n.Type, &n.Note,
-			&n.ModifiedAt, &n.CreatedAt)
+			&n.Attributes, &n.ModifiedAt, &n.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan note: %w", err)
 		}
@@ -52,8 +73,8 @@ func (db *DB) GetNotes(entityType string, entityID int64) ([]models.Note, error)
 
 func (db *DB) UpdateNote(n *models.Note) error {
 	now := time.Now().Format(time.RFC3339)
-	query := `UPDATE Notes SET type=?, note=?, modified_at=? WHERE id=?`
-	_, err := db.conn.Exec(query, n.Type, n.Note, now, n.ID)
+	query := `UPDATE Notes SET type=?, note=?, attributes=?, modified_at=? WHERE id=?`
+	_, err := db.conn.Exec(query, n.Type, n.Note, n.Attributes, now, n.ID)
 	if err != nil {
 		return fmt.Errorf("update note: %w", err)
 	}
@@ -62,24 +83,42 @@ func (db *DB) UpdateNote(n *models.Note) error {
 }
 
 func (db *DB) DeleteNote(id int64) error {
-	_, err := db.conn.Exec("DELETE FROM Notes WHERE id = ?", id)
+	note, err := db.GetNote(id)
 	if err != nil {
-		return fmt.Errorf("delete note: %w", err)
+		return fmt.Errorf("get note: %w", err)
 	}
+
+	note.Attributes = models.MarkDeleted(note.Attributes)
+	if err := db.UpdateNote(note); err != nil {
+		return fmt.Errorf("mark note deleted: %w", err)
+	}
+
 	return nil
 }
 
-func (db *DB) DeleteNotesByEntity(entityType string, entityID int64) error {
-	_, err := db.conn.Exec("DELETE FROM Notes WHERE entity_type = ? AND entity_id = ?", entityType, entityID)
+func (db *DB) UndeleteNote(id int64) error {
+	note, err := db.GetNote(id)
 	if err != nil {
-		return fmt.Errorf("delete notes by entity: %w", err)
+		return fmt.Errorf("get note: %w", err)
 	}
+
+	note.Attributes = models.Undelete(note.Attributes)
+	if err := db.UpdateNote(note); err != nil {
+		return fmt.Errorf("undelete note: %w", err)
+	}
+
 	return nil
 }
 
-func (db *DB) GetAllNotes() ([]models.Note, error) {
-	query := `SELECT id, entity_type, entity_id, type, note, modified_at, created_at
-		FROM Notes ORDER BY type, entity_type, note`
+func (db *DB) GetAllNotes(showDeleted bool) ([]models.Note, error) {
+	query := `SELECT id, entity_type, entity_id, type, note, attributes, modified_at, created_at
+		FROM Notes`
+
+	if !showDeleted {
+		query += whereNotDeleted
+	}
+
+	query += ` ORDER BY type, entity_type, note`
 
 	rows, err := db.conn.Query(query)
 	if err != nil {
@@ -91,7 +130,7 @@ func (db *DB) GetAllNotes() ([]models.Note, error) {
 	for rows.Next() {
 		var n models.Note
 		err := rows.Scan(&n.ID, &n.EntityType, &n.EntityID, &n.Type, &n.Note,
-			&n.ModifiedAt, &n.CreatedAt)
+			&n.Attributes, &n.ModifiedAt, &n.CreatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan note: %w", err)
 		}

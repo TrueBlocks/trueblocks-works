@@ -10,9 +10,10 @@ interface OrgHeaderProps {
   org: models.Organization;
   onOrgUpdate?: (org: models.Organization) => void;
   onNameChange?: (newName: string) => void;
+  actions?: React.ReactNode;
 }
 
-export function OrgHeader({ org, onOrgUpdate, onNameChange }: OrgHeaderProps) {
+export function OrgHeader({ org, onOrgUpdate, onNameChange, actions }: OrgHeaderProps) {
   const navigate = useNavigate();
 
   const handleOpenURL = () => OpenOrgURL(org.orgID);
@@ -86,6 +87,7 @@ export function OrgHeader({ org, onOrgUpdate, onNameChange }: OrgHeaderProps) {
             Ranking: {org.ranking}
           </Badge>
         )}
+        {actions}
       </Stack>
     </Group>
   );

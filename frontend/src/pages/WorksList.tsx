@@ -3,8 +3,16 @@ import { useLocation } from 'react-router-dom';
 import { ActionIcon } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 import { Log, LogErr } from '@/utils';
-import { GetWorks, GetWorksFilterOptions, SetLastWorkID, GetAppState } from '@wailsjs/go/main/App';
+import {
+  GetWorks,
+  GetWorksFilterOptions,
+  SetLastWorkID,
+  GetAppState,
+  DeleteWork,
+  UndeleteWork,
+} from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
+import { notifications } from '@mantine/notifications';
 import {
   StatusBadge,
   QualityBadge,
@@ -65,10 +73,47 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
       .finally(() => setLoading(false));
   }, [location.state]);
 
+  // Reload when showDeleted changes
+  useEffect(() => {
+    function handleShowDeletedChanged() {
+      loadWorks();
+    }
+    window.addEventListener('showDeletedChanged', handleShowDeletedChanged);
+    return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
+  }, [loadWorks]);
+
   const handleCreated = (work: models.Work) => {
     loadWorks();
     onWorkClick({ ...work, collectionList: '', nWords: 0 } as models.WorkView);
   };
+
+  const handleDelete = useCallback(async (work: models.WorkView) => {
+    try {
+      await DeleteWork(work.workID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to delete work:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete work',
+        color: 'red',
+      });
+    }
+  }, []);
+
+  const handleUndelete = useCallback(async (work: models.WorkView) => {
+    try {
+      await UndeleteWork(work.workID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to restore work:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore work',
+        color: 'red',
+      });
+    }
+  }, []);
 
   const handleSelectedChange = useCallback((work: models.WorkView) => {
     SetLastWorkID(work.workID).catch((err) => {
@@ -150,6 +195,8 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         onFilteredSortedChange={onFilteredDataChange}
         getLastSelectedID={getLastSelectedID}
         searchFn={searchFn}
+        onDelete={handleDelete}
+        onUndelete={handleUndelete}
         headerActions={
           <ActionIcon variant="light" size="lg" onClick={() => setNewModalOpen(true)}>
             <IconPlus size={18} />

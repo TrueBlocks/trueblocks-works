@@ -43,3 +43,7 @@ type OrganizationWithNotes struct {
 	NSubmissions int     `json:"nSubmissions" db:"n_submissions"`
 	Notes        *string `json:"notes,omitempty"`
 }
+
+func (o *Organization) IsDeleted() bool {
+	return IsDeleted(o.Attributes)
+}

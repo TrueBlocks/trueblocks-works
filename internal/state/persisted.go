@@ -66,6 +66,7 @@ type AppState struct {
 	LastCollectionType        string                `json:"lastCollectionType,omitempty"`
 	Tables                    map[string]TableState `json:"tables,omitempty"`
 	Tabs                      map[string]string     `json:"tabs,omitempty"`
+	ShowDeleted               bool                  `json:"showDeleted"`
 }
 
 type Manager struct {
@@ -264,4 +265,26 @@ func (m *Manager) SetTab(pageName string, tab string) {
 	m.state.Tabs[pageName] = tab
 	m.mu.Unlock()
 	_ = m.Save()
+}
+
+func (m *Manager) GetShowDeleted() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.state.ShowDeleted
+}
+
+func (m *Manager) SetShowDeleted(show bool) {
+	m.mu.Lock()
+	m.state.ShowDeleted = show
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) ToggleShowDeleted() bool {
+	m.mu.Lock()
+	m.state.ShowDeleted = !m.state.ShowDeleted
+	newValue := m.state.ShowDeleted
+	m.mu.Unlock()
+	_ = m.Save()
+	return newValue
 }

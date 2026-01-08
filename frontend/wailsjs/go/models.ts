@@ -658,6 +658,7 @@ export namespace models {
 	    entityID: number;
 	    type?: string;
 	    note?: string;
+	    attributes: string;
 	    modifiedAt?: string;
 	    createdAt: string;
 	
@@ -672,6 +673,7 @@ export namespace models {
 	        this.entityID = source["entityID"];
 	        this.type = source["type"];
 	        this.note = source["note"];
+	        this.attributes = source["attributes"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.createdAt = source["createdAt"];
 	    }
@@ -1049,6 +1051,7 @@ export namespace models {
 	    accessDate?: string;
 	    createdAt: string;
 	    modifiedAt: string;
+	    isDeleted: boolean;
 	    ageDays?: number;
 	    nSubmissions: number;
 	    collectionList?: string;
@@ -1074,6 +1077,7 @@ export namespace models {
 	        this.accessDate = source["accessDate"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
+	        this.isDeleted = source["isDeleted"];
 	        this.ageDays = source["ageDays"];
 	        this.nSubmissions = source["nSubmissions"];
 	        this.collectionList = source["collectionList"];
@@ -1248,6 +1252,7 @@ export namespace state {
 	    lastCollectionType?: string;
 	    tables?: Record<string, TableState>;
 	    tabs?: Record<string, string>;
+	    showDeleted: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new AppState(source);
@@ -1289,6 +1294,7 @@ export namespace state {
 	        this.lastCollectionType = source["lastCollectionType"];
 	        this.tables = this.convertValues(source["tables"], TableState, true);
 	        this.tabs = source["tabs"];
+	        this.showDeleted = source["showDeleted"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

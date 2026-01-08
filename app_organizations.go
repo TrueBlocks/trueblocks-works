@@ -3,7 +3,7 @@ package main
 import "works/internal/models"
 
 func (a *App) GetOrganizations() ([]models.Organization, error) {
-	return a.db.ListOrganizations()
+	return a.db.ListOrganizations(a.state.GetShowDeleted())
 }
 
 func (a *App) GetOrganizationsWithNotes() ([]models.OrganizationWithNotes, error) {
@@ -24,4 +24,8 @@ func (a *App) UpdateOrganization(org *models.Organization) error {
 
 func (a *App) DeleteOrganization(id int64) error {
 	return a.db.DeleteOrganization(id)
+}
+
+func (a *App) UndeleteOrganization(id int64) error {
+	return a.db.UndeleteOrganization(id)
 }

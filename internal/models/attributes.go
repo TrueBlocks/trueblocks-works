@@ -43,3 +43,15 @@ func GetAttributes(attributes string) []string {
 	}
 	return strings.Split(attributes, ",")
 }
+
+func IsDeleted(attributes string) bool {
+	return HasAttribute(attributes, "deleted")
+}
+
+func MarkDeleted(attributes string) string {
+	return AddAttribute(attributes, "deleted")
+}
+
+func Undelete(attributes string) string {
+	return RemoveAttribute(attributes, "deleted")
+}

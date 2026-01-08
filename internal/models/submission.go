@@ -34,3 +34,7 @@ type SubmissionView struct {
 func (s *Submission) IsPending() bool {
 	return s.ResponseType == nil || *s.ResponseType == "" || *s.ResponseType == "Waiting"
 }
+
+func (s *Submission) IsDeleted() bool {
+	return IsDeleted(s.Attributes)
+}

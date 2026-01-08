@@ -20,10 +20,18 @@ import {
   IconTrash,
   IconChevronUp,
   IconChevronDown,
+  IconRestore,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
-import { GetSubmission, GetWork, GetOrganization, DeleteSubmission } from '@wailsjs/go/main/App';
+import {
+  GetSubmission,
+  GetWork,
+  GetOrganization,
+  DeleteSubmission,
+  UndeleteSubmission,
+} from '@wailsjs/go/main/App';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import { models } from '@wailsjs/go/models';
 import { SubmissionFieldSelect } from '@/components';
@@ -124,10 +132,36 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
   ]);
 
   const handleDelete = useCallback(async () => {
-    if (!submissionId) return;
-    await DeleteSubmission(submissionId);
-    navigate('/submissions');
-  }, [submissionId, navigate]);
+    if (!submission) return;
+    try {
+      await DeleteSubmission(submission.submissionID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to delete submission:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete submission',
+        color: 'red',
+      });
+    }
+  }, [submission, loadData]);
+
+  const handleUndelete = useCallback(async () => {
+    if (!submission) return;
+    try {
+      await UndeleteSubmission(submission.submissionID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to restore submission:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore submission',
+        color: 'red',
+      });
+    }
+  }, [submission, loadData]);
 
   if (loading) {
     return (
@@ -206,15 +240,27 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
               Closed
             </Badge>
           )}
-          <Button
-            color="red"
-            variant="light"
-            size="xs"
-            leftSection={<IconTrash size={14} />}
-            onClick={handleDelete}
-          >
-            Delete
-          </Button>
+          {submission.attributes?.includes('deleted') ? (
+            <Button
+              size="xs"
+              variant="light"
+              color="green"
+              leftSection={<IconRestore size={14} />}
+              onClick={handleUndelete}
+            >
+              Restore
+            </Button>
+          ) : (
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              leftSection={<IconTrash size={14} />}
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          )}
         </Group>
       </Group>
 

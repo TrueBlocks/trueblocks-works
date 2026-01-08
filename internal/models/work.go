@@ -20,9 +20,14 @@ type Work struct {
 
 type WorkView struct {
 	Work
+	IsDeleted      bool    `json:"isDeleted"`
 	AgeDays        *int    `json:"ageDays,omitempty" db:"age_days"`
 	NSubmissions   int     `json:"nSubmissions" db:"n_submissions"`
 	CollectionList *string `json:"collectionList,omitempty" db:"collection_list"`
+}
+
+func (w *Work) IsDeleted() bool {
+	return IsDeleted(w.Attributes)
 }
 
 func (w *Work) GeneratedPath() string {

@@ -3,11 +3,11 @@ package main
 import "works/internal/models"
 
 func (a *App) GetSubmissions() ([]models.Submission, error) {
-	return a.db.ListSubmissions()
+	return a.db.ListSubmissions(a.state.GetShowDeleted())
 }
 
 func (a *App) GetAllSubmissionViews() ([]models.SubmissionView, error) {
-	return a.db.ListAllSubmissionViews()
+	return a.db.ListAllSubmissionViews(a.state.GetShowDeleted())
 }
 
 func (a *App) GetSubmission(id int64) (*models.Submission, error) {
@@ -19,11 +19,11 @@ func (a *App) GetSubmissionsByWork(workID int64) ([]models.Submission, error) {
 }
 
 func (a *App) GetSubmissionViewsByWork(workID int64) ([]models.SubmissionView, error) {
-	return a.db.ListSubmissionViewsByWork(workID)
+	return a.db.ListSubmissionViewsByWork(workID, a.state.GetShowDeleted())
 }
 
 func (a *App) GetSubmissionViewsByOrg(orgID int64) ([]models.SubmissionView, error) {
-	return a.db.ListSubmissionViewsByOrg(orgID)
+	return a.db.ListSubmissionViewsByOrg(orgID, a.state.GetShowDeleted())
 }
 
 func (a *App) CreateSubmission(sub *models.Submission) error {
@@ -36,4 +36,8 @@ func (a *App) UpdateSubmission(sub *models.Submission) error {
 
 func (a *App) DeleteSubmission(id int64) error {
 	return a.db.DeleteSubmission(id)
+}
+
+func (a *App) UndeleteSubmission(id int64) error {
+	return a.db.UndeleteSubmission(id)
 }

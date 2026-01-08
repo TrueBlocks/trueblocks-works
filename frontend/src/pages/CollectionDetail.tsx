@@ -11,6 +11,7 @@ import {
   Grid,
   Table,
   Tooltip,
+  Button,
 } from '@mantine/core';
 import {
   IconFolder,
@@ -19,14 +20,19 @@ import {
   IconX,
   IconChevronUp,
   IconChevronDown,
+  IconTrash,
+  IconRestore,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
 import { Log, LogErr } from '@/utils';
 import {
   GetCollection,
   GetCollectionWorks,
   UpdateCollection,
   RemoveWorkFromCollection,
+  DeleteCollection,
+  UndeleteCollection,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import {
@@ -138,6 +144,38 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     hasInitialized.current = true;
     loadData();
   }, [loadData]);
+
+  const handleDelete = useCallback(async () => {
+    if (!collection) return;
+    try {
+      await DeleteCollection(collection.collID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to delete collection:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete collection',
+        color: 'red',
+      });
+    }
+  }, [collection, loadData]);
+
+  const handleUndelete = useCallback(async () => {
+    if (!collection) return;
+    try {
+      await UndeleteCollection(collection.collID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to restore collection:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore collection',
+        color: 'red',
+      });
+    }
+  }, [collection, loadData]);
 
   const handleNameChange = useCallback(
     (newName: string) => {
@@ -282,6 +320,27 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
               </Text>
             </Group>
           </div>
+          {collection.attributes?.includes('deleted') ? (
+            <Button
+              size="xs"
+              variant="light"
+              color="green"
+              leftSection={<IconRestore size={14} />}
+              onClick={handleUndelete}
+            >
+              Restore
+            </Button>
+          ) : (
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              leftSection={<IconTrash size={14} />}
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          )}
         </Group>
       </Paper>
 

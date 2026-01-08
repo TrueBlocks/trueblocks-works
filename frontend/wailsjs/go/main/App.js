@@ -58,6 +58,10 @@ export function DeleteBackup(arg1) {
   return window['go']['main']['App']['DeleteBackup'](arg1);
 }
 
+export function DeleteCollection(arg1) {
+  return window['go']['main']['App']['DeleteCollection'](arg1);
+}
+
 export function DeleteNote(arg1) {
   return window['go']['main']['App']['DeleteNote'](arg1);
 }
@@ -346,6 +350,10 @@ export function SetLastWorkID(arg1) {
   return window['go']['main']['App']['SetLastWorkID'](arg1);
 }
 
+export function SetShowDeleted(arg1) {
+  return window['go']['main']['App']['SetShowDeleted'](arg1);
+}
+
 export function SetTab(arg1, arg2) {
   return window['go']['main']['App']['SetTab'](arg1, arg2);
 }
@@ -354,8 +362,28 @@ export function SetTableState(arg1, arg2) {
   return window['go']['main']['App']['SetTableState'](arg1, arg2);
 }
 
+export function ToggleShowDeleted() {
+  return window['go']['main']['App']['ToggleShowDeleted']();
+}
+
 export function TouchWorkAccessDate(arg1) {
   return window['go']['main']['App']['TouchWorkAccessDate'](arg1);
+}
+
+export function UndeleteCollection(arg1) {
+  return window['go']['main']['App']['UndeleteCollection'](arg1);
+}
+
+export function UndeleteOrganization(arg1) {
+  return window['go']['main']['App']['UndeleteOrganization'](arg1);
+}
+
+export function UndeleteSubmission(arg1) {
+  return window['go']['main']['App']['UndeleteSubmission'](arg1);
+}
+
+export function UndeleteWork(arg1) {
+  return window['go']['main']['App']['UndeleteWork'](arg1);
 }
 
 export function UpdateCollection(arg1) {

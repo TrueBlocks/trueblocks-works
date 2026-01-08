@@ -30,3 +30,7 @@ type CollectionWork struct {
 	Work
 	Position int64 `json:"position" db:"position"`
 }
+
+func (c *Collection) IsDeleted() bool {
+	return IsDeleted(c.Attributes)
+}

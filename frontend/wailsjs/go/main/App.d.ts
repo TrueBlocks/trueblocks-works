@@ -35,6 +35,8 @@ export function CreateWork(arg1:models.Work):Promise<void>;
 
 export function DeleteBackup(arg1:string):Promise<void>;
 
+export function DeleteCollection(arg1:number):Promise<void>;
+
 export function DeleteNote(arg1:number):Promise<void>;
 
 export function DeleteOrganization(arg1:number):Promise<void>;
@@ -179,11 +181,23 @@ export function SetLastSubmissionID(arg1:number):Promise<void>;
 
 export function SetLastWorkID(arg1:number):Promise<void>;
 
+export function SetShowDeleted(arg1:boolean):Promise<void>;
+
 export function SetTab(arg1:string,arg2:string):Promise<void>;
 
 export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;
 
+export function ToggleShowDeleted():Promise<boolean>;
+
 export function TouchWorkAccessDate(arg1:number):Promise<void>;
+
+export function UndeleteCollection(arg1:number):Promise<void>;
+
+export function UndeleteOrganization(arg1:number):Promise<void>;
+
+export function UndeleteSubmission(arg1:number):Promise<void>;
+
+export function UndeleteWork(arg1:number):Promise<void>;
 
 export function UpdateCollection(arg1:models.Collection):Promise<void>;
 

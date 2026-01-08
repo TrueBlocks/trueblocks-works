@@ -66,11 +66,17 @@ func (db *DB) UpdateCollection(c *models.Collection) error {
 	return nil
 }
 
-func (db *DB) ListCollections() ([]models.CollectionView, error) {
+func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error) {
 	query := `SELECT c.collID, c.collection_name, c.type, c.attributes,
 		c.created_at, c.modified_at,
 		COALESCE((SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID), 0) as n_items
-		FROM Collections c ORDER BY collection_name`
+		FROM Collections c`
+
+	if !showDeleted {
+		query += ` WHERE (c.attributes IS NULL OR c.attributes NOT LIKE '%deleted%')`
+	}
+
+	query += ` ORDER BY collection_name`
 
 	rows, err := db.conn.Query(query)
 	if err != nil {
@@ -153,14 +159,19 @@ func (db *DB) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 	return details, rows.Err()
 }
 
-func (db *DB) GetCollectionWorks(collID int64) ([]models.CollectionWork, error) {
+func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.CollectionWork, error) {
 	query := `SELECT w.workID, w.title, w.type, w.year, w.status, w.quality, w.doc_type,
 		w.path, w.draft, w.n_words, w.course_name, w.attributes, w.access_date, w.created_at, w.modified_at,
 		cd.position
 		FROM Works w
 		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
-		WHERE cd.collID = ?
-		ORDER BY cd.position, w.title`
+		WHERE cd.collID = ?`
+
+	if !showDeleted {
+		query += ` AND (w.attributes IS NULL OR w.attributes NOT LIKE '%deleted%')`
+	}
+
+	query += ` ORDER BY cd.position, w.title`
 
 	rows, err := db.conn.Query(query, collID)
 	if err != nil {
@@ -213,6 +224,54 @@ func (db *DB) ReorderCollectionWorks(collID int64, workIDs []int64) error {
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (db *DB) DeleteCollection(id int64) error {
+	collection, err := db.GetCollection(id)
+	if err != nil {
+		return fmt.Errorf("get collection: %w", err)
+	}
+	if collection == nil {
+		return fmt.Errorf("collection not found")
+	}
+
+	collection.Attributes = models.MarkDeleted(collection.Attributes)
+	if err := db.UpdateCollection(collection); err != nil {
+		return fmt.Errorf("mark collection deleted: %w", err)
+	}
+
+	// Cascade to owned notes
+	notes, _ := db.GetNotes("collection", id, true)
+	for _, note := range notes {
+		_ = db.DeleteNote(note.ID)
+	}
+
+	return nil
+}
+
+func (db *DB) UndeleteCollection(id int64) error {
+	collection, err := db.GetCollection(id)
+	if err != nil {
+		return fmt.Errorf("get collection: %w", err)
+	}
+	if collection == nil {
+		return fmt.Errorf("collection not found")
+	}
+
+	collection.Attributes = models.Undelete(collection.Attributes)
+	if err := db.UpdateCollection(collection); err != nil {
+		return fmt.Errorf("undelete collection: %w", err)
+	}
+
+	// Un-cascade notes
+	notes, _ := db.GetNotes("collection", id, true)
+	for _, note := range notes {
+		if models.IsDeleted(note.Attributes) {
+			_ = db.UndeleteNote(note.ID)
+		}
 	}
 
 	return nil

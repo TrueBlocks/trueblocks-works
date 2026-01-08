@@ -119,11 +119,11 @@ func (a *App) getWorksStats() WorksStats {
 	}
 
 	// Total
-	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Works")
+	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
 	_ = row.Scan(&stats.Total)
 
 	// By type
-	rows, _ := a.db.Conn().Query("SELECT COALESCE(type, '" + defaultUnknown + "'), COUNT(*) FROM Works GROUP BY type")
+	rows, _ := a.db.Conn().Query("SELECT COALESCE(type, '" + defaultUnknown + "'), COUNT(*) FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY type")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -138,7 +138,7 @@ func (a *App) getWorksStats() WorksStats {
 	}
 
 	// By status
-	rows, _ = a.db.Conn().Query("SELECT COALESCE(status, '" + defaultUnknown + "'), COUNT(*) FROM Works GROUP BY status")
+	rows, _ = a.db.Conn().Query("SELECT COALESCE(status, '" + defaultUnknown + "'), COUNT(*) FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY status")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -153,7 +153,7 @@ func (a *App) getWorksStats() WorksStats {
 	}
 
 	// By year (top 10)
-	rows, _ = a.db.Conn().Query("SELECT COALESCE(year, '" + defaultUnknown + "'), COUNT(*) FROM Works GROUP BY year ORDER BY year DESC LIMIT 10")
+	rows, _ = a.db.Conn().Query("SELECT COALESCE(year, '" + defaultUnknown + "'), COUNT(*) FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY year ORDER BY year DESC LIMIT 10")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -168,7 +168,7 @@ func (a *App) getWorksStats() WorksStats {
 	}
 
 	// By quality
-	rows, _ = a.db.Conn().Query("SELECT COALESCE(quality, '" + defaultUnknown + "'), COUNT(*) FROM Works GROUP BY quality")
+	rows, _ = a.db.Conn().Query("SELECT COALESCE(quality, '" + defaultUnknown + "'), COUNT(*) FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY quality")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -187,6 +187,7 @@ func (a *App) getWorksStats() WorksStats {
 		SELECT date(created_at), COUNT(*) 
 		FROM Works 
 		WHERE created_at >= date('now', '-30 days')
+		  AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 		GROUP BY date(created_at)
 		ORDER BY date(created_at)
 	`)
@@ -218,11 +219,11 @@ func (a *App) getOrganizationsStats() OrganizationsStats {
 	}
 
 	// Total
-	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Organizations")
+	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Organizations WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
 	_ = row.Scan(&stats.Total)
 
 	// By status
-	rows, _ := a.db.Conn().Query("SELECT COALESCE(status, '" + defaultUnknown + "'), COUNT(*) FROM Organizations GROUP BY status")
+	rows, _ := a.db.Conn().Query("SELECT COALESCE(status, '" + defaultUnknown + "'), COUNT(*) FROM Organizations WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY status")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -237,7 +238,7 @@ func (a *App) getOrganizationsStats() OrganizationsStats {
 	}
 
 	// By type
-	rows, _ = a.db.Conn().Query("SELECT COALESCE(type, '" + defaultUnknown + "'), COUNT(*) FROM Organizations GROUP BY type")
+	rows, _ = a.db.Conn().Query("SELECT COALESCE(type, '" + defaultUnknown + "'), COUNT(*) FROM Organizations WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY type")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -256,6 +257,8 @@ func (a *App) getOrganizationsStats() OrganizationsStats {
 		SELECT o.name, COUNT(s.submissionID) as cnt
 		FROM Organizations o
 		JOIN Submissions s ON o.orgID = s.orgID
+		WHERE (o.attributes IS NULL OR o.attributes NOT LIKE '%deleted%')
+		  AND (s.attributes IS NULL OR s.attributes NOT LIKE '%deleted%')
 		GROUP BY o.orgID
 		ORDER BY cnt DESC
 		LIMIT 5
@@ -275,6 +278,7 @@ func (a *App) getOrganizationsStats() OrganizationsStats {
 		SELECT date(date_added), COUNT(*) 
 		FROM Organizations 
 		WHERE date_added >= date('now', '-30 days')
+		  AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 		GROUP BY date(date_added)
 		ORDER BY date(date_added)
 	`)
@@ -304,19 +308,19 @@ func (a *App) getSubmissionsStats(year int) SubmissionsStats {
 	}
 
 	// Total
-	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions")
+	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
 	_ = row.Scan(&stats.Total)
 
 	// Pending (no response)
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type IS NULL OR response_type = '' OR response_type = 'Waiting'")
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE (response_type IS NULL OR response_type = '' OR response_type = 'Waiting') AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
 	_ = row.Scan(&stats.Pending)
 
 	// This year
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE submission_date >= ?", time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"))
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE submission_date >= ? AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')", time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02"))
 	_ = row.Scan(&stats.ThisYear)
 
 	// By response
-	rows, _ := a.db.Conn().Query("SELECT COALESCE(response_type, 'Pending'), COUNT(*) FROM Submissions GROUP BY response_type")
+	rows, _ := a.db.Conn().Query("SELECT COALESCE(response_type, 'Pending'), COUNT(*) FROM Submissions WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY response_type")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -335,6 +339,7 @@ func (a *App) getSubmissionsStats(year int) SubmissionsStats {
 		SELECT strftime('%Y-%m', submission_date), COUNT(*) 
 		FROM Submissions 
 		WHERE submission_date >= date('now', '-12 months')
+		  AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 		GROUP BY strftime('%Y-%m', submission_date)
 		ORDER BY strftime('%Y-%m', submission_date)
 	`)
@@ -350,9 +355,9 @@ func (a *App) getSubmissionsStats(year int) SubmissionsStats {
 
 	// Accept rate (all time)
 	var accepted, total int
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type = 'Accepted'")
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type = 'Accepted' AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
 	_ = row.Scan(&accepted)
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type IS NOT NULL AND response_type != '' AND response_type != 'Waiting'")
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type IS NOT NULL AND response_type != '' AND response_type != 'Waiting' AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
 	_ = row.Scan(&total)
 	if total > 0 {
 		stats.AcceptRate = float64(accepted) / float64(total) * 100
@@ -363,6 +368,7 @@ func (a *App) getSubmissionsStats(year int) SubmissionsStats {
 		SELECT date(submission_date), COUNT(*) 
 		FROM Submissions 
 		WHERE submission_date >= date('now', '-30 days')
+		  AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 		GROUP BY date(submission_date)
 		ORDER BY date(submission_date)
 	`)
@@ -391,7 +397,7 @@ func (a *App) getCollectionsStats() CollectionsStats {
 	}
 
 	// Total
-	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Collections")
+	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Collections WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
 	_ = row.Scan(&stats.Total)
 
 	// Largest collections
@@ -399,6 +405,9 @@ func (a *App) getCollectionsStats() CollectionsStats {
 		SELECT c.collection_name, COUNT(cd.workID) as cnt
 		FROM Collections c
 		LEFT JOIN CollectionDetails cd ON c.collID = cd.collID
+		LEFT JOIN Works w ON cd.workID = w.workID
+		WHERE (c.attributes IS NULL OR c.attributes NOT LIKE '%deleted%')
+		  AND (w.workID IS NULL OR w.attributes IS NULL OR w.attributes NOT LIKE '%deleted%')
 		GROUP BY c.collID
 		ORDER BY cnt DESC
 		LIMIT 5
@@ -418,6 +427,7 @@ func (a *App) getCollectionsStats() CollectionsStats {
 		SELECT date(created_at), COUNT(*) 
 		FROM Collections 
 		WHERE created_at >= date('now', '-30 days')
+		  AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 		GROUP BY date(created_at)
 		ORDER BY date(created_at)
 	`)
@@ -444,11 +454,11 @@ func (a *App) getYearProgress(year int) YearProgressStats {
 	startDate := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
 
 	// Submissions this year
-	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE submission_date >= ?", startDate)
+	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE submission_date >= ? AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')", startDate)
 	_ = row.Scan(&stats.Submissions)
 
 	// Acceptances this year
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE submission_date >= ? AND response_type = 'Accepted'", startDate)
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE submission_date >= ? AND response_type = 'Accepted' AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')", startDate)
 	_ = row.Scan(&stats.Acceptances)
 
 	// Success rate
@@ -465,17 +475,17 @@ func (a *App) getRecentItems(limit int) []RecentItem {
 	rows, _ := a.db.Conn().Query(`
 		SELECT entity_type, entity_id, name, created_at FROM (
 			SELECT 'work' as entity_type, workID as entity_id, title as name, created_at
-			FROM Works WHERE created_at IS NOT NULL
+			FROM Works WHERE created_at IS NOT NULL AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 			UNION ALL
 			SELECT 'organization', orgID, name, date_added as created_at
-			FROM Organizations WHERE date_added IS NOT NULL
+			FROM Organizations WHERE date_added IS NOT NULL AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 			UNION ALL
 			SELECT 'submission', submissionID, 
 				(SELECT title FROM Works WHERE workID = s.workID) as name, created_at
-			FROM Submissions s WHERE created_at IS NOT NULL
+			FROM Submissions s WHERE created_at IS NOT NULL AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 			UNION ALL
 			SELECT 'collection', collID, collection_name as name, created_at
-			FROM Collections WHERE created_at IS NOT NULL
+			FROM Collections WHERE created_at IS NOT NULL AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')
 		)
 		ORDER BY datetime(created_at) DESC
 		LIMIT ?
@@ -508,6 +518,9 @@ func (a *App) getPendingAlerts(daysThreshold int) []PendingAlert {
 		JOIN Organizations o ON s.orgID = o.orgID
 		WHERE (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting')
 		AND s.submission_date <= ?
+		AND (s.attributes IS NULL OR s.attributes NOT LIKE '%deleted%')
+		AND (w.attributes IS NULL OR w.attributes NOT LIKE '%deleted%')
+		AND (o.attributes IS NULL OR o.attributes NOT LIKE '%deleted%')
 		ORDER BY s.submission_date ASC
 	`, cutoffDate)
 	if rows != nil {

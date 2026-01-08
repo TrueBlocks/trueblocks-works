@@ -9,6 +9,10 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+const (
+	whereNotDeleted = ` WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')`
+)
+
 type DB struct {
 	conn *sql.DB
 	path string

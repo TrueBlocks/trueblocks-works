@@ -90,23 +90,64 @@ func (db *DB) UpdateOrganization(o *models.Organization) error {
 }
 
 func (db *DB) DeleteOrganization(id int64) error {
-	if err := db.DeleteNotesByEntity("journal", id); err != nil {
-		return fmt.Errorf("delete journal notes: %w", err)
-	}
-	_, err := db.conn.Exec("DELETE FROM Organizations WHERE orgID = ?", id)
+	org, err := db.GetOrganization(id)
 	if err != nil {
-		return fmt.Errorf("delete organization: %w", err)
+		return fmt.Errorf("get organization: %w", err)
 	}
+	if org == nil {
+		return fmt.Errorf("organization not found")
+	}
+
+	org.Attributes = models.MarkDeleted(org.Attributes)
+	if err := db.UpdateOrganization(org); err != nil {
+		return fmt.Errorf("mark organization deleted: %w", err)
+	}
+
+	notes, _ := db.GetNotes("journal", id, true)
+	for _, note := range notes {
+		_ = db.DeleteNote(note.ID)
+	}
+
 	return nil
 }
 
-func (db *DB) ListOrganizations() ([]models.Organization, error) {
+func (db *DB) UndeleteOrganization(id int64) error {
+	org, err := db.GetOrganization(id)
+	if err != nil {
+		return fmt.Errorf("get organization: %w", err)
+	}
+	if org == nil {
+		return fmt.Errorf("organization not found")
+	}
+
+	org.Attributes = models.Undelete(org.Attributes)
+	if err := db.UpdateOrganization(org); err != nil {
+		return fmt.Errorf("undelete organization: %w", err)
+	}
+
+	notes, _ := db.GetNotes("journal", id, true)
+	for _, note := range notes {
+		if models.IsDeleted(note.Attributes) {
+			_ = db.UndeleteNote(note.ID)
+		}
+	}
+
+	return nil
+}
+
+func (db *DB) ListOrganizations(showDeleted bool) ([]models.Organization, error) {
 	query := `SELECT orgID, name, other_name, url, other_url, status, type,
 		timing, submission_types, accepts, my_interest, ranking, source,
 		website_menu, duotrope_num, n_push_fiction, n_push_nonfiction,
 		n_push_poetry, contest_ends, contest_fee, contest_prize,
 		contest_prize_2, attributes, date_added, modified_at
-		FROM Organizations ORDER BY name`
+		FROM Organizations`
+
+	if !showDeleted {
+		query += ` WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')`
+	}
+
+	query += ` ORDER BY name`
 
 	rows, err := db.conn.Query(query)
 	if err != nil {

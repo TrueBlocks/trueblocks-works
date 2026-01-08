@@ -3,7 +3,7 @@ package main
 import "works/internal/models"
 
 func (a *App) GetCollections() ([]models.CollectionView, error) {
-	return a.db.ListCollections()
+	return a.db.ListCollections(a.state.GetShowDeleted())
 }
 
 func (a *App) GetCollection(id int64) (*models.Collection, error) {
@@ -31,9 +31,17 @@ func (a *App) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 }
 
 func (a *App) GetCollectionWorks(collID int64) ([]models.CollectionWork, error) {
-	return a.db.GetCollectionWorks(collID)
+	return a.db.GetCollectionWorks(collID, a.state.GetShowDeleted())
 }
 
 func (a *App) ReorderCollectionWorks(collID int64, workIDs []int64) error {
 	return a.db.ReorderCollectionWorks(collID, workIDs)
+}
+
+func (a *App) DeleteCollection(id int64) error {
+	return a.db.DeleteCollection(id)
+}
+
+func (a *App) UndeleteCollection(id int64) error {
+	return a.db.UndeleteCollection(id)
 }

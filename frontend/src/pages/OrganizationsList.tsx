@@ -8,10 +8,13 @@ import {
   GetOrgsFilterOptions,
   SetLastOrgID,
   GetAppState,
+  DeleteOrganization,
+  UndeleteOrganization,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { OrgStatusBadge, DataTable, Column, TypeBadge } from '@/components';
 import { Log, LogErr } from '@/utils';
+import { notifications } from '@mantine/notifications';
 
 const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown => {
   if (column === 'nPushcarts') {
@@ -35,6 +38,14 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     timings: string[];
   }>({ statuses: [], types: [], timings: [] });
   const hasInitialized = useRef(false);
+
+  const loadOrgs = useCallback(() => {
+    setLoading(true);
+    GetOrganizationsWithNotes()
+      .then((data) => setOrgs(data || []))
+      .catch((err) => LogErr('Failed to load organizations:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -62,6 +73,15 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
       .finally(() => setLoading(false));
   }, [location.state]);
 
+  // Reload when showDeleted changes
+  useEffect(() => {
+    function handleShowDeletedChanged() {
+      loadOrgs();
+    }
+    window.addEventListener('showDeletedChanged', handleShowDeletedChanged);
+    return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
+  }, [loadOrgs]);
+
   const searchFn = useCallback((org: models.OrganizationWithNotes, search: string) => {
     return org.name.toLowerCase().includes(search.toLowerCase());
   }, []);
@@ -70,6 +90,34 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     SetLastOrgID(org.orgID).catch((err) => {
       LogErr('Failed to set lastOrgID:', err);
     });
+  }, []);
+
+  const handleDelete = useCallback(async (org: models.OrganizationWithNotes) => {
+    try {
+      await DeleteOrganization(org.orgID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to delete organization:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete organization',
+        color: 'red',
+      });
+    }
+  }, []);
+
+  const handleUndelete = useCallback(async (org: models.OrganizationWithNotes) => {
+    try {
+      await UndeleteOrganization(org.orgID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to restore organization:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore organization',
+        color: 'red',
+      });
+    }
   }, []);
 
   const getLastSelectedID = useCallback(async () => {
@@ -187,6 +235,8 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
       onFilteredSortedChange={onFilteredDataChange}
       searchFn={searchFn}
       valueGetter={getOrgValue}
+      onDelete={handleDelete}
+      onUndelete={handleUndelete}
       extraColumns={<Table.Th style={{ width: '10%' }}>Actions</Table.Th>}
       renderExtraCells={renderExtraCells}
     />

@@ -8,9 +8,12 @@ import {
   GetSubmissionsFilterOptions,
   SetLastSubmissionID,
   GetAppState,
+  DeleteSubmission,
+  UndeleteSubmission,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { ResponseBadge, DataTable, Column, TypeBadge } from '@/components';
+import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
 
 function getStatus(sub: models.SubmissionView): string {
@@ -39,6 +42,14 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
   }>({ types: [], responses: [] });
   const hasInitialized = useRef(false);
 
+  const loadSubmissions = useCallback(() => {
+    setLoading(true);
+    GetAllSubmissionViews()
+      .then((data) => setSubmissions(data || []))
+      .catch((err) => LogErr('Failed to load submissions:', err))
+      .finally(() => setLoading(false));
+  }, []);
+
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
@@ -62,6 +73,15 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
       .finally(() => setLoading(false));
   }, [location.state]);
 
+  // Reload when showDeleted changes
+  useEffect(() => {
+    function handleShowDeletedChanged() {
+      loadSubmissions();
+    }
+    window.addEventListener('showDeletedChanged', handleShowDeletedChanged);
+    return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
+  }, [loadSubmissions]);
+
   const searchFn = useCallback((sub: models.SubmissionView, search: string) => {
     return (
       sub.titleOfWork.toLowerCase().includes(search.toLowerCase()) ||
@@ -75,6 +95,34 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     SetLastSubmissionID(sub.submissionID).catch((err) => {
       LogErr('Failed to set lastSubmissionID:', err);
     });
+  }, []);
+
+  const handleDelete = useCallback(async (sub: models.SubmissionView) => {
+    try {
+      await DeleteSubmission(sub.submissionID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to delete submission:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete submission',
+        color: 'red',
+      });
+    }
+  }, []);
+
+  const handleUndelete = useCallback(async (sub: models.SubmissionView) => {
+    try {
+      await UndeleteSubmission(sub.submissionID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to restore submission:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore submission',
+        color: 'red',
+      });
+    }
   }, []);
 
   const getLastSelectedID = useCallback(async () => {
@@ -152,6 +200,8 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
       onFilteredSortedChange={onFilteredDataChange}
       searchFn={searchFn}
       valueGetter={getSubmissionValue}
+      onDelete={handleDelete}
+      onUndelete={handleUndelete}
       headerActions={
         <ActionIcon variant="filled" size="lg">
           <IconPlus size={18} />

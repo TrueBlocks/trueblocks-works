@@ -262,7 +262,7 @@ func (a *App) exportCollectionDetails() (interface{}, int, error) {
 }
 
 func (a *App) exportNotes() (interface{}, int, error) {
-	notes, err := a.db.GetAllNotes()
+	notes, err := a.db.GetAllNotes(true)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -275,6 +275,7 @@ func (a *App) exportNotes() (interface{}, int, error) {
 			"entityID":   n.EntityID,
 			"type":       n.Type,
 			"note":       n.Note,
+			"attributes": n.Attributes,
 			"modifiedAt": n.ModifiedAt,
 			"createdAt":  n.CreatedAt,
 		})

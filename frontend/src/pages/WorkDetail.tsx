@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Stack, Grid, Loader, Flex, Text, ActionIcon, Group, Tooltip } from '@mantine/core';
-import { IconChevronUp, IconChevronDown } from '@tabler/icons-react';
+import { Stack, Grid, Loader, Flex, Text, ActionIcon, Group, Tooltip, Button } from '@mantine/core';
+import { IconChevronUp, IconChevronDown, IconTrash, IconRestore } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useHotkeys } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
 import { useNotes } from '@/hooks';
 import {
@@ -12,6 +13,8 @@ import {
   DeleteSubmission,
   RemoveWorkFromCollection,
   SetLastWorkID,
+  DeleteWork,
+  UndeleteWork,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import {
@@ -146,6 +149,38 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     [workId]
   );
 
+  const handleDelete = useCallback(async () => {
+    if (!work) return;
+    try {
+      await DeleteWork(work.workID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to delete work:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete work',
+        color: 'red',
+      });
+    }
+  }, [work, loadData]);
+
+  const handleUndelete = useCallback(async () => {
+    if (!work) return;
+    try {
+      await UndeleteWork(work.workID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to restore work:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore work',
+        color: 'red',
+      });
+    }
+  }, [work, loadData]);
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -191,6 +226,27 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
               </ActionIcon>
             </Tooltip>
             <FileActionsToolbar workID={work.workID} refreshKey={refreshKey} onMoved={loadData} />
+            {work.attributes?.includes('deleted') ? (
+              <Button
+                size="xs"
+                variant="light"
+                color="green"
+                leftSection={<IconRestore size={14} />}
+                onClick={handleUndelete}
+              >
+                Restore
+              </Button>
+            ) : (
+              <Button
+                size="xs"
+                variant="light"
+                color="red"
+                leftSection={<IconTrash size={14} />}
+                onClick={handleDelete}
+              >
+                Delete
+              </Button>
+            )}
           </Group>
         }
         onWorkUpdate={handleWorkUpdate}

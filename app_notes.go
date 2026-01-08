@@ -3,7 +3,7 @@ package main
 import "works/internal/models"
 
 func (a *App) GetNotes(entityType string, entityID int64) ([]models.Note, error) {
-	return a.db.GetNotes(entityType, entityID)
+	return a.db.GetNotes(entityType, entityID, a.state.GetShowDeleted())
 }
 
 func (a *App) CreateNote(note *models.Note) error {

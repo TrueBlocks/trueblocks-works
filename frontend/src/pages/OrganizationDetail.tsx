@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack, Grid, Loader, Flex, Text, ActionIcon, Tooltip, Group } from '@mantine/core';
-import { IconChevronUp, IconChevronDown } from '@tabler/icons-react';
+import { Stack, Grid, Loader, Flex, Text, ActionIcon, Tooltip, Group, Button } from '@mantine/core';
+import { IconChevronUp, IconChevronDown, IconTrash, IconRestore } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
+import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
 import { useNotes } from '@/hooks';
 import {
@@ -11,6 +12,8 @@ import {
   GetSubmissionViewsByOrg,
   DeleteSubmission,
   UpdateOrganization,
+  DeleteOrganization,
+  UndeleteOrganization,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { OrgHeader, OrgDetails, NotesPortal, SubmissionsPortal } from '@/components';
@@ -106,6 +109,38 @@ export function OrganizationDetail({
     setSubmissions((prev) => prev.filter((s) => s.submissionID !== subId));
   }, []);
 
+  const handleDelete = useCallback(async () => {
+    if (!org) return;
+    try {
+      await DeleteOrganization(org.orgID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to delete organization:', err);
+      notifications.show({
+        title: 'Delete Failed',
+        message: 'Could not delete organization',
+        color: 'red',
+      });
+    }
+  }, [org, loadData]);
+
+  const handleUndelete = useCallback(async () => {
+    if (!org) return;
+    try {
+      await UndeleteOrganization(org.orgID);
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      loadData();
+    } catch (err) {
+      LogErr('Failed to restore organization:', err);
+      notifications.show({
+        title: 'Restore Failed',
+        message: 'Could not restore organization',
+        color: 'red',
+      });
+    }
+  }, [org, loadData]);
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -156,6 +191,29 @@ export function OrganizationDetail({
           setOrg(updatedOrg);
           await UpdateOrganization(updatedOrg);
         }}
+        actions={
+          org.attributes?.includes('deleted') ? (
+            <Button
+              size="xs"
+              variant="light"
+              color="green"
+              leftSection={<IconRestore size={14} />}
+              onClick={handleUndelete}
+            >
+              Restore
+            </Button>
+          ) : (
+            <Button
+              size="xs"
+              variant="light"
+              color="red"
+              leftSection={<IconTrash size={14} />}
+              onClick={handleDelete}
+            >
+              Delete
+            </Button>
+          )
+        }
       />
 
       <Grid>

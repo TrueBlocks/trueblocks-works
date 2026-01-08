@@ -53,3 +53,11 @@ func (a *App) GetTab(pageName string) string {
 func (a *App) SetTab(pageName string, tab string) {
 	a.state.SetTab(pageName, tab)
 }
+
+func (a *App) ToggleShowDeleted() bool {
+	return a.state.ToggleShowDeleted()
+}
+
+func (a *App) SetShowDeleted(show bool) {
+	a.state.SetShowDeleted(show)
+}

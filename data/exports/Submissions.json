@@ -1,5 +1,5 @@
 {
-  "count": 244,
+  "count": 243,
   "records": [
     {
       "attributes": "",
@@ -3842,23 +3842,6 @@
       "userID": null,
       "webAddress": null,
       "workID": 21922
-    },
-    {
-      "attributes": "",
-      "contestName": null,
-      "cost": null,
-      "draft": "4th",
-      "orgID": 1824,
-      "password": null,
-      "queryDate": "10/15/2013",
-      "responseDate": "9/9/2013",
-      "responseType": "Personal",
-      "submissionDate": "9/9/2013",
-      "submissionID": 40271,
-      "submissionType": "email",
-      "userID": null,
-      "webAddress": null,
-      "workID": 21336
     },
     {
       "attributes": "",

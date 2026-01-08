@@ -33,6 +33,11 @@ var migrations = []Migration{
 		Name:    "drop_is_status_column",
 		Up:      migrateDropIsStatusColumn,
 	},
+	{
+		Version: 14,
+		Name:    "add_notes_attributes",
+		Up:      migrateAddNotesAttributes,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -297,5 +302,13 @@ func migrateDropIsStatusColumn(tx *sql.Tx) error {
 		return fmt.Errorf("recreate CollectionsView: %w", err)
 	}
 
+	return nil
+}
+
+func migrateAddNotesAttributes(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Notes ADD COLUMN attributes TEXT NOT NULL DEFAULT ''`)
+	if err != nil {
+		return fmt.Errorf("add attributes column to Notes: %w", err)
+	}
 	return nil
 }

@@ -360,12 +360,12 @@ func (a *App) exportNotesCSV(importsPath string) (int, error) {
 
 	writer := newQuotedCSVWriter(file)
 
-	header := []string{"entity_type", "entity_id", "type", "note", "modified_at"}
+	header := []string{"entity_type", "entity_id", "type", "note", "attributes", "modified_at"}
 	if err := writer.Write(header); err != nil {
 		return 0, err
 	}
 
-	rows, err := a.db.Conn().Query(`SELECT entity_type, entity_id, type, note, modified_at FROM Notes ORDER BY entity_type, entity_id`)
+	rows, err := a.db.Conn().Query(`SELECT entity_type, entity_id, type, note, attributes, modified_at FROM Notes ORDER BY entity_type, entity_id`)
 	if err != nil {
 		return 0, err
 	}
@@ -375,9 +375,9 @@ func (a *App) exportNotesCSV(importsPath string) (int, error) {
 	for rows.Next() {
 		var entityType string
 		var entityID int64
-		var noteType, note, modifiedAt *string
+		var noteType, note, attributes, modifiedAt *string
 
-		if err := rows.Scan(&entityType, &entityID, &noteType, &note, &modifiedAt); err != nil {
+		if err := rows.Scan(&entityType, &entityID, &noteType, &note, &attributes, &modifiedAt); err != nil {
 			return 0, err
 		}
 
@@ -386,6 +386,7 @@ func (a *App) exportNotesCSV(importsPath string) (int, error) {
 			strconv.FormatInt(entityID, 10),
 			strPtrToCSV(noteType),
 			strPtrToCSV(note),
+			strPtrToCSV(attributes),
 			strPtrToCSV(modifiedAt),
 		}
 		records = append(records, record)

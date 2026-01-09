@@ -1,19 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Stack,
-  Title,
-  Text,
-  Paper,
-  Tabs,
-  Badge,
-  Table,
-  Group,
-  Button,
-  Loader,
-  Alert,
-  ActionIcon,
-} from '@mantine/core';
+import { Stack, Text, Badge, Table, Group, Button, Loader, Alert, ActionIcon } from '@mantine/core';
 import {
   IconSend,
   IconBook,
@@ -30,6 +17,7 @@ import { GetReportByName, GetReportCategories, GetRecentlyChanged } from '@wails
 import { models } from '@wailsjs/go/models';
 import { Log, LogErr } from '@/utils';
 import { useTabContext } from '@/stores';
+import { TabView, type Tab } from '@/components/TabView';
 
 interface ReportIssue {
   id: number;
@@ -94,8 +82,7 @@ function formatRelativeTime(dateString: string): string {
 
 export function ReportsPage() {
   const navigate = useNavigate();
-  const { getTab, setTab, setPageTabs } = useTabContext();
-  const activeTab = getTab('reports') || 'recently-changed';
+  const { setPageTabs } = useTabContext();
 
   // Try to restore from sessionStorage
   const [reports, setReports] = useState<ReportCategory[]>(() => {
@@ -223,13 +210,6 @@ export function ReportsPage() {
     return () => window.removeEventListener('reloadCurrentView', handleReload);
   }, [loadData]);
 
-  const handleTabChange = useCallback(
-    (value: string | null) => {
-      setTab('reports', value || 'recently-changed');
-    },
-    [setTab]
-  );
-
   const handleNavigateIssue = (issue: ReportIssue) => {
     switch (issue.entityType) {
       case 'work':
@@ -271,16 +251,19 @@ export function ReportsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <Stack align="center" justify="center" h="100%">
-        <Loader />
-      </Stack>
-    );
-  }
-
   const renderRecentlyChanged = () => (
-    <>
+    <Stack gap="md">
+      <Group justify="flex-end">
+        <Button
+          variant="light"
+          leftSection={<IconRefresh size={16} />}
+          onClick={loadData}
+          loading={loading}
+        >
+          Refresh
+        </Button>
+      </Group>
+
       {recentChanges.length === 0 ? (
         <Alert color="blue" icon={<IconHistory size={16} />}>
           No recent changes found.
@@ -341,126 +324,95 @@ export function ReportsPage() {
           </Table.Tbody>
         </Table>
       )}
-    </>
-  );
-
-  const renderCategoryIssues = (cat: ReportCategory) => (
-    <>
-      {cat.issues.length === 0 ? (
-        <Alert color="green" icon={<IconCheck size={16} />}>
-          No issues found in {cat.name}
-        </Alert>
-      ) : (
-        <Table striped highlightOnHover>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Entity</Table.Th>
-              <Table.Th>Issue</Table.Th>
-              <Table.Th style={{ width: 60 }} />
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {cat.issues.map((issue) => (
-              <Table.Tr key={`${issue.entityType}-${issue.id}`}>
-                <Table.Td>
-                  <Text size="sm" fw={500}>
-                    {issue.entityName}
-                  </Text>
-                  <Text size="xs" c="dimmed">
-                    {issue.entityType} #{issue.entityID}
-                  </Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm">{issue.description}</Text>
-                </Table.Td>
-                <Table.Td>
-                  {['work', 'submission', 'organization', 'collection'].includes(
-                    issue.entityType
-                  ) && (
-                    <ActionIcon
-                      variant="subtle"
-                      onClick={() => handleNavigateIssue(issue)}
-                      title="Go to record"
-                    >
-                      <IconExternalLink size={16} />
-                    </ActionIcon>
-                  )}
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
-      )}
-    </>
-  );
-
-  return (
-    <Stack gap="lg">
-      <Group justify="space-between">
-        <Title order={2}>Reports</Title>
-        <Button
-          variant="light"
-          leftSection={<IconRefresh size={16} />}
-          onClick={loadData}
-          loading={loading}
-        >
-          Refresh
-        </Button>
-      </Group>
-
-      <Paper withBorder>
-        <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tabs.List>
-            <Tabs.Tab value="recently-changed" leftSection={<IconHistory size={16} />}>
-              Recently Changed
-              {recentChanges.length > 0 && (
-                <Badge size="sm" variant="light" ml="xs">
-                  {recentChanges.length}
-                </Badge>
-              )}
-            </Tabs.Tab>
-            {reports.map((cat) => (
-              <Tabs.Tab
-                key={cat.name}
-                value={cat.name}
-                leftSection={iconMap[cat.icon] || <IconAlertTriangle size={16} />}
-                rightSection={
-                  cat.count > 0 ? (
-                    <Badge size="sm" color="red" variant="filled">
-                      {cat.count}
-                    </Badge>
-                  ) : (
-                    <Badge size="sm" color="green" variant="light">
-                      ✓
-                    </Badge>
-                  )
-                }
-              >
-                {cat.name}
-              </Tabs.Tab>
-            ))}
-          </Tabs.List>
-
-          <Tabs.Panel value="recently-changed" p="md">
-            {renderRecentlyChanged()}
-          </Tabs.Panel>
-
-          {reports.map((cat) => (
-            <Tabs.Panel key={cat.name} value={cat.name} p="md">
-              {reportsLoading ? (
-                <Stack align="center" justify="center" h={200}>
-                  <Loader />
-                  <Text size="sm" c="dimmed">
-                    Loading report details...
-                  </Text>
-                </Stack>
-              ) : (
-                renderCategoryIssues(cat)
-              )}
-            </Tabs.Panel>
-          ))}
-        </Tabs>
-      </Paper>
     </Stack>
   );
+
+  const renderCategoryIssues = (cat: ReportCategory) => {
+    if (reportsLoading) {
+      return (
+        <Stack align="center" justify="center" h={200}>
+          <Loader />
+          <Text size="sm" c="dimmed">
+            Loading report details...
+          </Text>
+        </Stack>
+      );
+    }
+
+    return (
+      <>
+        {cat.issues.length === 0 ? (
+          <Alert color="green" icon={<IconCheck size={16} />}>
+            No issues found in {cat.name}
+          </Alert>
+        ) : (
+          <Table striped highlightOnHover>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Entity</Table.Th>
+                <Table.Th>Issue</Table.Th>
+                <Table.Th style={{ width: 60 }} />
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {cat.issues.map((issue) => (
+                <Table.Tr key={`${issue.entityType}-${issue.id}`}>
+                  <Table.Td>
+                    <Text size="sm" fw={500}>
+                      {issue.entityName}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {issue.entityType} #{issue.entityID}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm">{issue.description}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    {['work', 'submission', 'organization', 'collection'].includes(
+                      issue.entityType
+                    ) && (
+                      <ActionIcon
+                        variant="subtle"
+                        onClick={() => handleNavigateIssue(issue)}
+                        title="Go to record"
+                      >
+                        <IconExternalLink size={16} />
+                      </ActionIcon>
+                    )}
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        )}
+      </>
+    );
+  };
+
+  if (loading) {
+    return (
+      <Stack align="center" justify="center" h="100%">
+        <Loader />
+      </Stack>
+    );
+  }
+
+  // Build tabs array
+  const tabs: Tab[] = [
+    {
+      value: 'recently-changed',
+      label: 'Recently Changed',
+      icon: <IconHistory size={16} />,
+      content: renderRecentlyChanged(),
+    },
+    ...reports.map((cat) => ({
+      value: cat.name,
+      label: cat.name,
+      icon: iconMap[cat.icon] || <IconAlertTriangle size={16} />,
+      content: renderCategoryIssues(cat),
+    })),
+  ];
+
+  return <TabView pageName="reports" tabs={tabs} defaultTab="recently-changed" />;
 }

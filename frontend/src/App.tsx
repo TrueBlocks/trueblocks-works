@@ -134,11 +134,10 @@ function App() {
       Log(`Export complete: ${successCount} succeeded, ${failCount} failed`);
       notifications.update({
         id: 'export-progress',
-        title: 'Export Complete',
-        message: `Exported ${successCount} tables${failCount > 0 ? `, ${failCount} failed` : ''}`,
+        message: `Exported ${successCount}${failCount > 0 ? ` (${failCount} failed)` : ''}`,
         color: failCount > 0 ? 'yellow' : 'green',
         loading: false,
-        autoClose: 3000,
+        autoClose: 1500,
       });
     } catch (err) {
       LogErr('Export failed:', err);
@@ -167,11 +166,10 @@ function App() {
       Log('Reimport complete');
       notifications.update({
         id: 'reimport-progress',
-        title: 'Reimport Complete',
-        message: 'Data reimported successfully. Refresh the page to see changes.',
+        message: 'Reimported',
         color: 'green',
         loading: false,
-        autoClose: 3000,
+        autoClose: 1500,
       });
     } catch (err) {
       LogErr('Reimport failed:', err);

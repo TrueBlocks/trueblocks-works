@@ -1,6 +1,7 @@
 import { ReactNode, useEffect, useState, useCallback } from 'react';
 import { Tabs } from '@mantine/core';
 import { GetTab, SetTab } from '@wailsjs/go/main/App';
+import { useTabContext } from '@/stores';
 
 export interface Tab {
   value: string;
@@ -18,6 +19,8 @@ interface TabViewProps {
   children?: ReactNode;
 }
 
+const CONTEXT_PAGES = new Set(['settings', 'reports']);
+
 export function TabView({
   pageName,
   tabs,
@@ -27,6 +30,9 @@ export function TabView({
   children,
 }: TabViewProps) {
   const isControlled = controlledTab !== undefined;
+  const usesContext = CONTEXT_PAGES.has(pageName);
+  const tabContext = useTabContext();
+
   const [internalTab, setInternalTab] = useState<string | null>(() => {
     if (isControlled) return controlledTab;
     return null;
@@ -49,16 +55,25 @@ export function TabView({
       if (value) {
         if (isControlled && controlledOnChange) {
           controlledOnChange(value);
+        } else if (usesContext) {
+          tabContext.setTab(pageName as 'settings' | 'reports', value);
         } else {
           setInternalTab(value);
           SetTab(pageName, value);
         }
       }
     },
-    [isControlled, controlledOnChange, pageName]
+    [isControlled, controlledOnChange, pageName, usesContext, tabContext]
   );
 
-  const activeTab = isControlled ? controlledTab : internalTab;
+  let activeTab: string | null;
+  if (isControlled) {
+    activeTab = controlledTab;
+  } else if (usesContext) {
+    activeTab = tabContext.getTab(pageName as 'settings' | 'reports');
+  } else {
+    activeTab = internalTab;
+  }
 
   if (!activeTab) {
     return null;

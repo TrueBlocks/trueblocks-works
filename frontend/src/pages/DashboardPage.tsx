@@ -80,6 +80,15 @@ export function DashboardPage() {
     loadStats();
   }, [loadStats]);
 
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadStats();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
+  }, [loadStats]);
+
   if (loading) {
     return (
       <Stack align="center" justify="center" h="100%">

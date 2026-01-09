@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Table, Group, ActionIcon, Tooltip } from '@mantine/core';
+import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconWorld, IconBook } from '@tabler/icons-react';
 import { useLocation } from 'react-router-dom';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
@@ -82,6 +82,15 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadOrgs]);
 
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadOrgs();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
+  }, [loadOrgs]);
+
   const searchFn = useCallback((org: models.OrganizationWithNotes, search: string) => {
     return org.name.toLowerCase().includes(search.toLowerCase());
   }, []);
@@ -99,9 +108,9 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     } catch (err) {
       LogErr('Failed to delete organization:', err);
       notifications.show({
-        title: 'Delete Failed',
-        message: 'Could not delete organization',
+        message: 'Delete failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);
@@ -113,9 +122,9 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     } catch (err) {
       LogErr('Failed to restore organization:', err);
       notifications.show({
-        title: 'Restore Failed',
-        message: 'Could not restore organization',
+        message: 'Restore failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);
@@ -187,36 +196,36 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
 
   const renderExtraCells = useCallback(
     (org: models.OrganizationWithNotes) => (
-      <Table.Td>
-        <Group gap="xs">
-          <Tooltip label="Open website">
-            <ActionIcon
-              variant="subtle"
-              disabled={!org.url}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (org.url) BrowserOpenURL(org.url);
-              }}
-            >
-              <IconWorld size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Open Duotrope">
-            <ActionIcon
-              variant="subtle"
-              disabled={!org.duotropeNum}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (org.duotropeNum) {
-                  BrowserOpenURL(`https://duotrope.com/listing/${org.duotropeNum}`);
-                }
-              }}
-            >
-              <IconBook size={16} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      </Table.Td>
+      <>
+        <Tooltip label="Open website">
+          <ActionIcon
+            size="sm"
+            variant="subtle"
+            disabled={!org.url}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (org.url) BrowserOpenURL(org.url);
+            }}
+          >
+            <IconWorld size={16} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label="Open Duotrope">
+          <ActionIcon
+            size="sm"
+            variant="subtle"
+            disabled={!org.duotropeNum}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (org.duotropeNum) {
+                BrowserOpenURL(`https://duotrope.com/listing/${org.duotropeNum}`);
+              }
+            }}
+          >
+            <IconBook size={16} />
+          </ActionIcon>
+        </Tooltip>
+      </>
     ),
     []
   );
@@ -237,7 +246,6 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
       valueGetter={getOrgValue}
       onDelete={handleDelete}
       onUndelete={handleUndelete}
-      extraColumns={<Table.Th style={{ width: '10%' }}>Actions</Table.Th>}
       renderExtraCells={renderExtraCells}
     />
   );

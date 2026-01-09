@@ -95,6 +95,10 @@ export function GetPreviewURL(arg1:number):Promise<string>;
 
 export function GetRecentlyChanged(arg1:number):Promise<Array<models.RecentChange>>;
 
+export function GetReportByName(arg1:string):Promise<main.ReportCategory>;
+
+export function GetReportCategories():Promise<Array<main.ReportCategory>>;
+
 export function GetReports():Promise<main.ReportsResult>;
 
 export function GetSearchHistory():Promise<Array<string>>;

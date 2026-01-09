@@ -56,6 +56,57 @@ func (a *App) GetReports() (ReportsResult, error) {
 	return ReportsResult{Categories: categories, TotalCount: totalCount}, nil
 }
 
+// GetReportByName returns a single report category by name.
+func (a *App) GetReportByName(name string) (ReportCategory, error) {
+	var category ReportCategory
+
+	switch name {
+	case "Submissions":
+		category = a.reportSubmissionsIntegrity()
+	case "Works":
+		category = a.reportWorksIntegrity()
+	case "Collections":
+		category = a.reportCollectionsIntegrity()
+	case "Organizations":
+		category = a.reportOrganizationsIntegrity()
+	case "Notes":
+		category = a.reportNotesIntegrity()
+	case "Data Quality":
+		category = a.reportDataQuality()
+	default:
+		return category, fmt.Errorf("unknown report category: %s", name)
+	}
+
+	category.Count = len(category.Issues)
+	return category, nil
+}
+
+// GetReportCategories returns just the category names and counts (fast).
+func (a *App) GetReportCategories() ([]ReportCategory, error) {
+	// Run all reports but only return metadata
+	categories := []ReportCategory{
+		a.reportSubmissionsIntegrity(),
+		a.reportWorksIntegrity(),
+		a.reportCollectionsIntegrity(),
+		a.reportOrganizationsIntegrity(),
+		a.reportNotesIntegrity(),
+		a.reportDataQuality(),
+	}
+
+	// Strip issues, only keep counts
+	result := make([]ReportCategory, len(categories))
+	for i, cat := range categories {
+		result[i] = ReportCategory{
+			Name:   cat.Name,
+			Icon:   cat.Icon,
+			Count:  len(cat.Issues),
+			Issues: []ReportIssue{}, // Empty array instead of nil
+		}
+	}
+
+	return result, nil
+}
+
 func (a *App) reportSubmissionsIntegrity() ReportCategory {
 	issues := make([]ReportIssue, 0)
 

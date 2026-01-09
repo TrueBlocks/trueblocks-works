@@ -62,7 +62,9 @@ export function CollectionsPage() {
 
   const handleCollectionClick = useCallback(
     (coll: models.CollectionView) => {
-      navigate(`/collections/${coll.collID}`);
+      navigate(`/collections/${coll.collID}`, {
+        state: { fromList: true },
+      });
     },
     [navigate]
   );

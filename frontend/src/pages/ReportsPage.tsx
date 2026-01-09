@@ -26,7 +26,7 @@ import {
   IconCheck,
   IconHistory,
 } from '@tabler/icons-react';
-import { GetReports, GetRecentlyChanged } from '@wailsjs/go/main/App';
+import { GetReportByName, GetReportCategories, GetRecentlyChanged } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { Log, LogErr } from '@/utils';
 import { useTabContext } from '@/stores';
@@ -44,11 +44,6 @@ interface ReportCategory {
   icon: string;
   issues: ReportIssue[];
   count: number;
-}
-
-interface ReportsResult {
-  categories: ReportCategory[];
-  totalCount: number;
 }
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -100,34 +95,140 @@ function formatRelativeTime(dateString: string): string {
 export function ReportsPage() {
   const navigate = useNavigate();
   const { getTab, setTab, setPageTabs } = useTabContext();
-  const activeTab = getTab('reports');
-  const [reports, setReports] = useState<ReportsResult | null>(null);
-  const [recentChanges, setRecentChanges] = useState<models.RecentChange[]>([]);
-  const [loading, setLoading] = useState(true);
+  const activeTab = getTab('reports') || 'recently-changed';
+
+  // Try to restore from sessionStorage
+  const [reports, setReports] = useState<ReportCategory[]>(() => {
+    const cached = sessionStorage.getItem('reports-cache');
+    return cached ? JSON.parse(cached) : [];
+  });
+  const [recentChanges, setRecentChanges] = useState<models.RecentChange[]>(() => {
+    const cached = sessionStorage.getItem('recent-changes-cache');
+    return cached ? JSON.parse(cached) : [];
+  });
+
+  // Initialize loading states based on cached data
+  const hasCachedData = reports.length > 0 && recentChanges.length > 0;
+  const [loading, setLoading] = useState(!hasCachedData);
+  const [reportsLoading, setReportsLoading] = useState(!hasCachedData);
+
+  useEffect(() => {
+    // If we have cached data, don't reload
+    if (hasCachedData) {
+      Log('Using cached reports');
+      return;
+    }
+
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        // Load recent changes immediately (fast)
+        const changesData = await GetRecentlyChanged(50);
+        if (cancelled) return;
+        setRecentChanges(changesData || []);
+        sessionStorage.setItem('recent-changes-cache', JSON.stringify(changesData || []));
+        setLoading(false); // Show the UI immediately
+
+        // Load all reports in background
+        setReportsLoading(true);
+        const categories = await GetReportCategories();
+        if (cancelled) return;
+        setReports(categories || []);
+
+        const tabNames = [
+          'recently-changed',
+          ...(categories?.map((c: ReportCategory) => c.name) || []),
+        ];
+        setPageTabs('reports', tabNames);
+
+        Log('Recent changes loaded:', changesData?.length || 0);
+        Log('Report categories loaded:', categories?.length || 0);
+
+        // Now load full details for all reports in background
+        const fullReports = await Promise.all(
+          (categories || []).map((cat) => GetReportByName(cat.name))
+        );
+        if (cancelled) return;
+        setReports(fullReports);
+        sessionStorage.setItem('reports-cache', JSON.stringify(fullReports));
+        setReportsLoading(false);
+
+        Log('All reports loaded with details');
+      } catch (err) {
+        if (cancelled) return;
+        LogErr('Failed to load reports:', err);
+        setLoading(false);
+        setReportsLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [setPageTabs, hasCachedData]);
 
   const loadData = useCallback(async () => {
+    // Clear cache on manual reload
+    sessionStorage.removeItem('reports-cache');
+    sessionStorage.removeItem('recent-changes-cache');
+
     setLoading(true);
     try {
-      const [reportsData, changesData] = await Promise.all([GetReports(), GetRecentlyChanged(50)]);
-      setReports(reportsData);
+      // Load recent changes immediately (fast)
+      const changesData = await GetRecentlyChanged(50);
       setRecentChanges(changesData || []);
+      sessionStorage.setItem('recent-changes-cache', JSON.stringify(changesData || []));
+      setLoading(false); // Show the UI immediately
+
+      // Load all reports in background
+      setReportsLoading(true);
+      const categories = await GetReportCategories();
+      setReports(categories || []);
+
       const tabNames = [
         'recently-changed',
-        ...(reportsData?.categories?.map((c: ReportCategory) => c.name) || []),
+        ...(categories?.map((c: ReportCategory) => c.name) || []),
       ];
       setPageTabs('reports', tabNames);
-      Log('Reports loaded:', reportsData);
+
       Log('Recent changes loaded:', changesData?.length || 0);
+      Log('Report categories loaded:', categories?.length || 0);
+
+      // Now load full details for all reports in background
+      const fullReports = await Promise.all(
+        (categories || []).map((cat) => GetReportByName(cat.name))
+      );
+      setReports(fullReports);
+      sessionStorage.setItem('reports-cache', JSON.stringify(fullReports));
+      setReportsLoading(false);
+
+      Log('All reports loaded with details');
     } catch (err) {
       LogErr('Failed to load reports:', err);
-    } finally {
       setLoading(false);
+      setReportsLoading(false);
     }
   }, [setPageTabs]);
 
+  // Reload on Cmd+R
   useEffect(() => {
-    loadData();
+    function handleReload() {
+      loadData();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
   }, [loadData]);
+
+  const handleTabChange = useCallback(
+    (value: string | null) => {
+      setTab('reports', value || 'recently-changed');
+    },
+    [setTab]
+  );
 
   const handleNavigateIssue = (issue: ReportIssue) => {
     switch (issue.entityType) {
@@ -308,7 +409,7 @@ export function ReportsPage() {
       </Group>
 
       <Paper withBorder>
-        <Tabs value={activeTab} onChange={(v) => setTab('reports', v || 'recently-changed')}>
+        <Tabs value={activeTab} onChange={handleTabChange}>
           <Tabs.List>
             <Tabs.Tab value="recently-changed" leftSection={<IconHistory size={16} />}>
               Recently Changed
@@ -318,7 +419,7 @@ export function ReportsPage() {
                 </Badge>
               )}
             </Tabs.Tab>
-            {reports?.categories.map((cat) => (
+            {reports.map((cat) => (
               <Tabs.Tab
                 key={cat.name}
                 value={cat.name}
@@ -344,9 +445,18 @@ export function ReportsPage() {
             {renderRecentlyChanged()}
           </Tabs.Panel>
 
-          {reports?.categories.map((cat) => (
+          {reports.map((cat) => (
             <Tabs.Panel key={cat.name} value={cat.name} p="md">
-              {renderCategoryIssues(cat)}
+              {reportsLoading ? (
+                <Stack align="center" justify="center" h={200}>
+                  <Loader />
+                  <Text size="sm" c="dimmed">
+                    Loading report details...
+                  </Text>
+                </Stack>
+              ) : (
+                renderCategoryIssues(cat)
+              )}
             </Tabs.Panel>
           ))}
         </Tabs>

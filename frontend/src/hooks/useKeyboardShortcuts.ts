@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTabContext } from '@/stores';
-import { GetAppState, OpenDocument, GetTab, ToggleShowDeleted } from '@wailsjs/go/main/App';
+import { GetAppState, OpenDocument, ToggleShowDeleted } from '@wailsjs/go/main/App';
 import { LogErr } from '@/utils';
 import { notifications } from '@mantine/notifications';
 
@@ -15,19 +15,23 @@ const shortcuts: Record<string, string> = {
   '7': '/settings',
 };
 
-const tabbedPages: Record<string, 'settings' | 'reports'> = {
+const tabbedPages: Record<
+  string,
+  'works' | 'collections' | 'organizations' | 'submissions' | 'settings' | 'reports'
+> = {
+  '/works': 'works',
+  '/collections': 'collections',
+  '/organizations': 'organizations',
+  '/submissions': 'submissions',
   '/settings': 'settings',
   '/reports': 'reports',
 };
 
-const entityPages: Record<
-  string,
-  { pageName: 'works' | 'collections' | 'organizations' | 'submissions'; idField: string }
-> = {
-  '/works': { pageName: 'works', idField: 'lastWorkID' },
-  '/collections': { pageName: 'collections', idField: 'lastCollectionID' },
-  '/organizations': { pageName: 'organizations', idField: 'lastOrgID' },
-  '/submissions': { pageName: 'submissions', idField: 'lastSubmissionID' },
+const entityPages: Record<string, { idField: keyof Awaited<ReturnType<typeof GetAppState>> }> = {
+  '/works': { idField: 'lastWorkID' },
+  '/collections': { idField: 'lastCollectionID' },
+  '/organizations': { idField: 'lastOrgID' },
+  '/submissions': { idField: 'lastSubmissionID' },
 };
 
 export function useKeyboardShortcuts() {
@@ -78,35 +82,31 @@ export function useKeyboardShortcuts() {
         const currentPath = location.pathname;
         const basePath = '/' + currentPath.split('/')[1];
 
-        // Simple tabbed pages (Settings, Reports) - cycle through their tabs
-        if (currentPath === targetPath && tabbedPages[targetPath]) {
-          cycleTab(tabbedPages[targetPath]);
-          return;
-        }
+        // If on the same page, cycle tabs
+        if (basePath === targetPath && tabbedPages[targetPath]) {
+          const pageName = tabbedPages[targetPath];
+          cycleTab(pageName);
 
-        // Entity pages (Works, Collections, etc.) - cycle between list/detail
-        if (basePath === targetPath && entityPages[targetPath]) {
-          const { pageName, idField } = entityPages[targetPath];
-          const currentTab = await GetTab(pageName);
-
-          if (currentTab === 'detail' || !currentTab) {
-            // Go to list
-            navigate(targetPath);
-          } else {
-            // Go to detail - get last entity ID
+          // For entity pages, cycling requires navigation
+          if (entityPages[targetPath]) {
+            const { idField } = entityPages[targetPath];
             const state = await GetAppState();
-            const lastId = (state as unknown as Record<string, number | undefined>)[idField];
+            const lastId = state[idField] as number | undefined;
 
-            if (lastId && lastId > 0) {
-              navigate(`${targetPath}/${lastId}`);
+            // After cycling, check the new tab state - if it's detail, navigate to detail
+            // We just cycled, so if we were on list, we're now on detail
+            const isOnDetail = currentPath !== targetPath;
+
+            if (isOnDetail) {
+              // Was on detail, cycled to list
+              navigate(targetPath);
             } else {
-              // Should never happen - show error toast
-              notifications.show({
-                title: 'Tab Cycling Failed',
-                message: `Cannot switch to Detail tab: no ${pageName} ID available. Page: ${pageName}, CurrentTab: ${currentTab || 'null'}, LastID: ${lastId || 'undefined'}, Location: ${location.pathname}`,
-                color: 'red',
-                autoClose: 10000,
-              });
+              // Was on list, cycled to detail
+              if (lastId && lastId > 0) {
+                navigate(`${targetPath}/${lastId}`);
+              } else {
+                navigate(targetPath);
+              }
             }
           }
           return;

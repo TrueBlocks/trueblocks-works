@@ -645,40 +645,42 @@ export function DataTable<T>({
                       : String((item as Record<string, unknown>)[col.key] ?? '-')}
                   </Table.Td>
                 ))}
-                {renderExtraCells?.(item)}
                 {(onDelete || onUndelete) && (
                   <Table.Td style={{ textAlign: 'center' }}>
-                    {isDeleted
-                      ? onUndelete && (
-                          <Tooltip label="Restore">
-                            <ActionIcon
-                              size="sm"
-                              variant="subtle"
-                              color="green"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onUndelete(item);
-                              }}
-                            >
-                              <IconRestore size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )
-                      : onDelete && (
-                          <Tooltip label="Delete">
-                            <ActionIcon
-                              size="sm"
-                              variant="subtle"
-                              color="red"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(item);
-                              }}
-                            >
-                              <IconTrash size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )}
+                    <Group gap="xs" justify="center" wrap="nowrap">
+                      {renderExtraCells?.(item)}
+                      {isDeleted
+                        ? onUndelete && (
+                            <Tooltip label="Restore">
+                              <ActionIcon
+                                size="sm"
+                                variant="subtle"
+                                color="green"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onUndelete(item);
+                                }}
+                              >
+                                <IconRestore size={16} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )
+                        : onDelete && (
+                            <Tooltip label="Delete">
+                              <ActionIcon
+                                size="sm"
+                                variant="subtle"
+                                color="red"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onDelete(item);
+                                }}
+                              >
+                                <IconTrash size={16} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
+                    </Group>
                   </Table.Td>
                 )}
               </Table.Tr>

@@ -6,6 +6,7 @@ export const LogDbg = (...args: unknown[]): void => LogDebug(args.map(String).jo
 export const LogWarn = (...args: unknown[]): void => LogWarning(args.map(String).join(' '));
 
 export { matchesFilter, matchesNumericFilter, intersectFilter } from './filterHelpers';
+export { getEntityPageURL, toggleEntityPageTab } from './navigation';
 
 const HASH_COLORS = [
   'blue',

@@ -86,6 +86,15 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
     loadData();
   }, [loadData]);
 
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadData();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
+  }, [loadData]);
+
   const currentIndex = filteredSubmissions.findIndex((s) => s.submissionID === submissionId);
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex >= 0 && currentIndex < filteredSubmissions.length - 1;
@@ -121,10 +130,54 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
   }, [navigate]);
 
   useHotkeys([
-    ['ArrowDown', handleNext],
-    ['ArrowUp', handlePrev],
-    ['ArrowRight', handleNext],
-    ['ArrowLeft', handlePrev],
+    [
+      'ArrowDown',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handleNext();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowUp',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handlePrev();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowRight',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handleNext();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowLeft',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handlePrev();
+        }
+      },
+      { preventDefault: false },
+    ],
     ['Home', handleHome],
     ['End', handleEnd],
     ['mod+shift+ArrowLeft', handleReturnToList],
@@ -140,9 +193,9 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
     } catch (err) {
       LogErr('Failed to delete submission:', err);
       notifications.show({
-        title: 'Delete Failed',
-        message: 'Could not delete submission',
+        message: 'Delete failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, [submission, loadData]);
@@ -156,9 +209,9 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
     } catch (err) {
       LogErr('Failed to restore submission:', err);
       notifications.show({
-        title: 'Restore Failed',
-        message: 'Could not restore submission',
+        message: 'Restore failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, [submission, loadData]);

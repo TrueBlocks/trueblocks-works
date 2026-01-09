@@ -84,15 +84,16 @@ function FieldValues({ field }: FieldValuesProps) {
         renameModal.newValue.trim()
       );
       notifications.show({
-        title: 'Renamed',
-        message: `Changed "${renameModal.oldValue}" to "${renameModal.newValue.trim()}"`,
+        message: 'Renamed',
         color: 'green',
+        autoClose: 1000,
       });
       await loadValues();
     } catch (err) {
       notifications.show({
-        title: 'Error',
+        title: 'Rename Failed',
         message: String(err),
+        autoClose: 5000,
         color: 'red',
       });
     }
@@ -113,16 +114,17 @@ function FieldValues({ field }: FieldValuesProps) {
         mergeModal.targetValue
       );
       notifications.show({
-        title: 'Merged',
-        message: `Merged "${mergeModal.oldValue}" into "${mergeModal.targetValue}"`,
+        message: 'Merged',
         color: 'green',
+        autoClose: 1000,
       });
       await loadValues();
     } catch (err) {
       notifications.show({
-        title: 'Error',
+        title: 'Merge Failed',
         message: String(err),
         color: 'red',
+        autoClose: 5000,
       });
     }
     setMergeModal({ open: false, oldValue: '', targetValue: '' });

@@ -18,6 +18,17 @@ export default defineConfig({
       '@runtime': path.resolve(__dirname, './wailsjs/runtime'),
     },
   },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        // Suppress "use client" warnings from react-router-dom
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+          return;
+        }
+        warn(warning);
+      },
+    },
+  },
   server: {
     hmr: {
       host: 'localhost',

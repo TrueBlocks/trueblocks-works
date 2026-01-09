@@ -82,6 +82,15 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadWorks]);
 
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadWorks();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
+  }, [loadWorks]);
+
   const handleCreated = (work: models.Work) => {
     loadWorks();
     onWorkClick({ ...work, collectionList: '', nWords: 0 } as models.WorkView);
@@ -94,9 +103,9 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
     } catch (err) {
       LogErr('Failed to delete work:', err);
       notifications.show({
-        title: 'Delete Failed',
-        message: 'Could not delete work',
+        message: 'Delete failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);
@@ -108,9 +117,9 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
     } catch (err) {
       LogErr('Failed to restore work:', err);
       notifications.show({
-        title: 'Restore Failed',
-        message: 'Could not restore work',
+        message: 'Restore failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);

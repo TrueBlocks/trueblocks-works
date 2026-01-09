@@ -82,6 +82,15 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadSubmissions]);
 
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadSubmissions();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
+  }, [loadSubmissions]);
+
   const searchFn = useCallback((sub: models.SubmissionView, search: string) => {
     return (
       sub.titleOfWork.toLowerCase().includes(search.toLowerCase()) ||
@@ -104,9 +113,9 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     } catch (err) {
       LogErr('Failed to delete submission:', err);
       notifications.show({
-        title: 'Delete Failed',
-        message: 'Could not delete submission',
+        message: 'Delete failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);
@@ -118,9 +127,9 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     } catch (err) {
       LogErr('Failed to restore submission:', err);
       notifications.show({
-        title: 'Restore Failed',
-        message: 'Could not restore submission',
+        message: 'Restore failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);

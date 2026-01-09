@@ -1,7 +1,13 @@
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { GetTab, SetTab } from '@wailsjs/go/main/App';
 
-type TabbedPage = 'settings' | 'reports';
+type TabbedPage =
+  | 'works'
+  | 'collections'
+  | 'organizations'
+  | 'submissions'
+  | 'reports'
+  | 'settings';
 
 interface TabContextValue {
   getTab: (page: TabbedPage) => string;
@@ -11,11 +17,19 @@ interface TabContextValue {
 }
 
 const defaultTabs: Record<TabbedPage, string[]> = {
+  works: ['list', 'detail'],
+  collections: ['list', 'detail'],
+  organizations: ['list', 'detail'],
+  submissions: ['list', 'detail'],
   settings: ['paths', 'field-values'],
   reports: ['recently-changed'],
 };
 
 const defaultActiveTab: Record<TabbedPage, string> = {
+  works: 'list',
+  collections: 'list',
+  organizations: 'list',
+  submissions: 'list',
   settings: 'paths',
   reports: 'recently-changed',
 };
@@ -28,8 +42,19 @@ export function TabProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    Promise.all([GetTab('settings'), GetTab('reports')]).then(([settingsTab, reportsTab]) => {
+    Promise.all([
+      GetTab('works'),
+      GetTab('collections'),
+      GetTab('organizations'),
+      GetTab('submissions'),
+      GetTab('settings'),
+      GetTab('reports'),
+    ]).then(([worksTab, collectionsTab, orgsTab, subsTab, settingsTab, reportsTab]) => {
       const newState: Record<TabbedPage, string> = { ...defaultActiveTab };
+      if (worksTab) newState.works = worksTab;
+      if (collectionsTab) newState.collections = collectionsTab;
+      if (orgsTab) newState.organizations = orgsTab;
+      if (subsTab) newState.submissions = subsTab;
       if (settingsTab) newState.settings = settingsTab;
       if (reportsTab) newState.reports = reportsTab;
       setTabState(newState);

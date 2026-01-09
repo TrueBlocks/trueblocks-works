@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Stack, Grid, Loader, Flex, Text, ActionIcon, Group, Tooltip, Button } from '@mantine/core';
 import { IconChevronUp, IconChevronDown, IconTrash, IconRestore } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
@@ -35,6 +35,7 @@ interface WorkDetailProps {
 
 export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [work, setWork] = useState<models.Work | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
@@ -49,45 +50,108 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     handleDelete: handleDeleteNote,
   } = useNotes('work', workId);
 
-  const currentIndex = filteredWorks.findIndex((w) => w.workID === workId);
+  // Check if we came from a collection
+  const collectionContext = location.state as {
+    fromCollection?: number;
+    collectionWorks?: number[];
+  } | null;
+
+  // Use collection works if present, otherwise use filtered works
+  const worksToNavigate = collectionContext?.collectionWorks || filteredWorks.map((w) => w.workID);
+  const currentIndex = worksToNavigate.indexOf(workId);
   const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < filteredWorks.length - 1;
+  const hasNext = currentIndex >= 0 && currentIndex < worksToNavigate.length - 1;
 
   const handlePrev = useCallback(() => {
     if (hasPrev) {
-      const prevWork = filteredWorks[currentIndex - 1];
-      navigate(`/works/${prevWork.workID}`);
+      const prevWorkID = worksToNavigate[currentIndex - 1];
+      navigate(`/works/${prevWorkID}`, { state: collectionContext });
     }
-  }, [hasPrev, filteredWorks, currentIndex, navigate]);
+  }, [hasPrev, worksToNavigate, currentIndex, navigate, collectionContext]);
 
   const handleNext = useCallback(() => {
     if (hasNext) {
-      const nextWork = filteredWorks[currentIndex + 1];
-      navigate(`/works/${nextWork.workID}`);
+      const nextWorkID = worksToNavigate[currentIndex + 1];
+      navigate(`/works/${nextWorkID}`, { state: collectionContext });
     }
-  }, [hasNext, filteredWorks, currentIndex, navigate]);
+  }, [hasNext, worksToNavigate, currentIndex, navigate, collectionContext]);
 
   const handleHome = useCallback(() => {
-    if (filteredWorks.length > 0 && currentIndex !== 0) {
-      navigate(`/works/${filteredWorks[0].workID}`);
+    if (worksToNavigate.length > 0 && currentIndex !== 0) {
+      navigate(`/works/${worksToNavigate[0]}`, { state: collectionContext });
     }
-  }, [filteredWorks, currentIndex, navigate]);
+  }, [worksToNavigate, currentIndex, navigate, collectionContext]);
 
   const handleEnd = useCallback(() => {
-    if (filteredWorks.length > 0 && currentIndex !== filteredWorks.length - 1) {
-      navigate(`/works/${filteredWorks[filteredWorks.length - 1].workID}`);
+    if (worksToNavigate.length > 0 && currentIndex !== worksToNavigate.length - 1) {
+      navigate(`/works/${worksToNavigate[worksToNavigate.length - 1]}`, {
+        state: collectionContext,
+      });
     }
-  }, [filteredWorks, currentIndex, navigate]);
+  }, [worksToNavigate, currentIndex, navigate, collectionContext]);
 
   const handleReturnToList = useCallback(() => {
-    navigate('/works', { replace: true });
-  }, [navigate]);
+    // If we came from a collection, go back to that collection
+    if (collectionContext?.fromCollection) {
+      navigate(`/collections/${collectionContext.fromCollection}`, {
+        state: { selectID: workId },
+      });
+    } else {
+      navigate('/works', {
+        state: { selectID: workId },
+      });
+    }
+  }, [navigate, collectionContext, workId]);
 
   useHotkeys([
-    ['ArrowDown', handleNext],
-    ['ArrowUp', handlePrev],
-    ['ArrowRight', handleNext],
-    ['ArrowLeft', handlePrev],
+    [
+      'ArrowDown',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handleNext();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowUp',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handlePrev();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowRight',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handleNext();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowLeft',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handlePrev();
+        }
+      },
+      { preventDefault: false },
+    ],
     ['Home', handleHome],
     ['End', handleEnd],
     ['mod+shift+ArrowLeft', handleReturnToList],
@@ -121,6 +185,15 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
 
   useEffect(() => {
     loadData();
+  }, [loadData]);
+
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadData();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
   }, [loadData]);
 
   const handleRemoveFromCollection = useCallback(
@@ -158,9 +231,9 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     } catch (err) {
       LogErr('Failed to delete work:', err);
       notifications.show({
-        title: 'Delete Failed',
-        message: 'Could not delete work',
+        message: 'Delete failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, [work, loadData]);
@@ -174,9 +247,9 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     } catch (err) {
       LogErr('Failed to restore work:', err);
       notifications.show({
-        title: 'Restore Failed',
-        message: 'Could not restore work',
+        message: 'Restore failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, [work, loadData]);

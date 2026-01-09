@@ -73,10 +73,54 @@ export function OrganizationDetail({
   }, [navigate]);
 
   useHotkeys([
-    ['ArrowDown', handleNext],
-    ['ArrowUp', handlePrev],
-    ['ArrowRight', handleNext],
-    ['ArrowLeft', handlePrev],
+    [
+      'ArrowDown',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handleNext();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowUp',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handlePrev();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowRight',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handleNext();
+        }
+      },
+      { preventDefault: false },
+    ],
+    [
+      'ArrowLeft',
+      (e) => {
+        const target = e.target as HTMLElement;
+        const isInTable = target.closest('table, [role="grid"], .mantine-ScrollArea-viewport');
+        const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+        if (!isInTable && !isInput) {
+          handlePrev();
+        }
+      },
+      { preventDefault: false },
+    ],
     ['Home', handleHome],
     ['End', handleEnd],
     ['mod+shift+ArrowLeft', handleReturnToList],
@@ -104,6 +148,15 @@ export function OrganizationDetail({
     loadData();
   }, [loadData]);
 
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadData();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
+  }, [loadData]);
+
   const handleDeleteSubmission = useCallback(async (subId: number) => {
     await DeleteSubmission(subId);
     setSubmissions((prev) => prev.filter((s) => s.submissionID !== subId));
@@ -118,9 +171,9 @@ export function OrganizationDetail({
     } catch (err) {
       LogErr('Failed to delete organization:', err);
       notifications.show({
-        title: 'Delete Failed',
-        message: 'Could not delete organization',
+        message: 'Delete failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, [org, loadData]);
@@ -134,9 +187,9 @@ export function OrganizationDetail({
     } catch (err) {
       LogErr('Failed to restore organization:', err);
       notifications.show({
-        title: 'Restore Failed',
-        message: 'Could not restore organization',
+        message: 'Restore failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, [org, loadData]);

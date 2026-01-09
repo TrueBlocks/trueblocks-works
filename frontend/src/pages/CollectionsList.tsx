@@ -67,6 +67,15 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadCollections]);
 
+  // Reload on Cmd+R
+  useEffect(() => {
+    function handleReload() {
+      loadCollections();
+    }
+    window.addEventListener('reloadCurrentView', handleReload);
+    return () => window.removeEventListener('reloadCurrentView', handleReload);
+  }, [loadCollections]);
+
   const searchFn = useCallback((coll: models.CollectionView, search: string) => {
     return coll.collectionName.toLowerCase().includes(search.toLowerCase());
   }, []);
@@ -84,9 +93,9 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     } catch (err) {
       LogErr('Failed to delete collection:', err);
       notifications.show({
-        title: 'Delete Failed',
-        message: 'Could not delete collection',
+        message: 'Delete failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);
@@ -98,9 +107,9 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     } catch (err) {
       LogErr('Failed to restore collection:', err);
       notifications.show({
-        title: 'Restore Failed',
-        message: 'Could not restore collection',
+        message: 'Restore failed',
         color: 'red',
+        autoClose: 5000,
       });
     }
   }, []);

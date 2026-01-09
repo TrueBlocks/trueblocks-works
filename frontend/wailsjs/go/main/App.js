@@ -178,6 +178,14 @@ export function GetRecentlyChanged(arg1) {
   return window['go']['main']['App']['GetRecentlyChanged'](arg1);
 }
 
+export function GetReportByName(arg1) {
+  return window['go']['main']['App']['GetReportByName'](arg1);
+}
+
+export function GetReportCategories() {
+  return window['go']['main']['App']['GetReportCategories']();
+}
+
 export function GetReports() {
   return window['go']['main']['App']['GetReports']();
 }

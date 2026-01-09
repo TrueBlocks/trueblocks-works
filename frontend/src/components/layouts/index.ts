@@ -1,0 +1,1 @@
+export { TabContentWrapper } from './TabContentWrapper';

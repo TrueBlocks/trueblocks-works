@@ -15,6 +15,7 @@ type Settings struct {
 	LibreOfficePath      string `json:"libreOfficePath,omitempty"`
 	ExportFolderPath     string `json:"exportFolderPath,omitempty"`
 	SetupCompleted       bool   `json:"setupCompleted"`
+	Theme                string `json:"theme"`
 }
 
 type Manager struct {
@@ -45,6 +46,7 @@ func defaultSettings() *Settings {
 		TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "00 New Work"),
 		LibreOfficePath:      "/Applications/LibreOffice.app/Contents/MacOS/soffice",
 		SetupCompleted:       false,
+		Theme:                "default",
 	}
 }
 

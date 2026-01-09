@@ -1096,6 +1096,7 @@ export namespace settings {
 	    libreOfficePath?: string;
 	    exportFolderPath?: string;
 	    setupCompleted: boolean;
+	    theme: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -1110,6 +1111,7 @@ export namespace settings {
 	        this.libreOfficePath = source["libreOfficePath"];
 	        this.exportFolderPath = source["exportFolderPath"];
 	        this.setupCompleted = source["setupCompleted"];
+	        this.theme = source["theme"];
 	    }
 	}
 

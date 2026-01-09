@@ -45,3 +45,5 @@ export { SelectablePopover } from './SelectablePopover';
 export { DataTable } from './DataTable';
 export { EnumManagement } from './EnumManagement';
 export type { Column, ViewSort, SortColumn, SortDirection } from './DataTable';
+export { TabContentWrapper } from './layouts';
+export { ThemeSelector } from './ThemeSelector';

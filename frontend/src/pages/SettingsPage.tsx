@@ -4,7 +4,7 @@ import { notifications } from '@mantine/notifications';
 import { IconFolder, IconCheck, IconSettings, IconList } from '@tabler/icons-react';
 import { GetSettings, UpdateSettings, BrowseForFolder } from '@wailsjs/go/main/App';
 import { settings } from '@wailsjs/go/models';
-import { TabView, Tab, EnumManagement } from '@/components';
+import { TabView, Tab, EnumManagement, ThemeSelector } from '@/components';
 
 export function SettingsPage() {
   const [config, setConfig] = useState<settings.Settings | null>(null);
@@ -156,6 +156,8 @@ export function SettingsPage() {
               <Text size="xs" c="dimmed">
                 Default: /Applications/LibreOffice.app/Contents/MacOS/soffice
               </Text>
+
+              <ThemeSelector />
             </Stack>
           </Paper>
 

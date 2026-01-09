@@ -16,6 +16,7 @@ type Settings struct {
 	ExportFolderPath     string `json:"exportFolderPath,omitempty"`
 	SetupCompleted       bool   `json:"setupCompleted"`
 	Theme                string `json:"theme"`
+	DarkMode             bool   `json:"darkMode"`
 }
 
 type Manager struct {
@@ -47,6 +48,7 @@ func defaultSettings() *Settings {
 		LibreOfficePath:      "/Applications/LibreOffice.app/Contents/MacOS/soffice",
 		SetupCompleted:       false,
 		Theme:                "default",
+		DarkMode:             false,
 	}
 }
 

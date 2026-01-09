@@ -11,6 +11,7 @@ import {
   IconDashboard,
 } from '@tabler/icons-react';
 import { GetTab, GetAppState } from '@wailsjs/go/main/App';
+import { DarkModeToggle } from './DarkModeToggle';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: IconDashboard, hasTabs: false },
@@ -24,9 +25,12 @@ export function Navigation() {
   return (
     <Group h="100%" px="md" justify="space-between">
       <Title order={3}>Works</Title>
-      <Text size="sm" c="dimmed">
-        Creative Writing Tracker
-      </Text>
+      <Group gap="md">
+        <Text size="sm" c="dimmed">
+          Creative Writing Tracker
+        </Text>
+        <DarkModeToggle />
+      </Group>
     </Group>
   );
 }

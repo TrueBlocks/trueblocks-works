@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { MantineProvider } from '@mantine/core';
+import { MantineProvider, MantineColorScheme } from '@mantine/core';
 import { GetSettings, UpdateSettings } from '@wailsjs/go/main/App';
 import { createAppTheme, ThemeName } from '@/theme';
 import { Log, LogErr } from '@/utils';
@@ -7,6 +7,9 @@ import { Log, LogErr } from '@/utils';
 interface ThemeContextValue {
   themeName: ThemeName;
   setTheme: (theme: ThemeName) => Promise<void>;
+  darkMode: boolean;
+  setDarkMode: (dark: boolean) => Promise<void>;
+  toggleDarkMode: () => Promise<void>;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -25,6 +28,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [themeName, setThemeName] = useState<ThemeName>('default');
+  const [darkMode, setDarkModeState] = useState(false);
   const [theme, setTheme] = useState(() => createAppTheme('default'));
   const [loading, setLoading] = useState(true);
 
@@ -32,8 +36,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     GetSettings()
       .then((settings) => {
         const savedTheme = (settings.theme as ThemeName) || 'default';
-        Log('Loaded theme from settings:', savedTheme);
+        const savedDarkMode = settings.darkMode || false;
+        Log('Loaded theme from settings:', savedTheme, 'dark mode:', savedDarkMode);
         setThemeName(savedTheme);
+        setDarkModeState(savedDarkMode);
         setTheme(createAppTheme(savedTheme));
       })
       .catch((err) => {
@@ -58,13 +64,40 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     }
   };
 
+  const handleSetDarkMode = async (dark: boolean) => {
+    try {
+      const settings = await GetSettings();
+      settings.darkMode = dark;
+      await UpdateSettings(settings);
+      setDarkModeState(dark);
+      Log('Dark mode changed to:', dark);
+    } catch (err) {
+      LogErr('Failed to save dark mode:', err);
+      throw err;
+    }
+  };
+
+  const handleToggleDarkMode = async () => {
+    await handleSetDarkMode(!darkMode);
+  };
+
   if (loading) {
     return null;
   }
 
+  const colorScheme: MantineColorScheme = darkMode ? 'dark' : 'light';
+
   return (
-    <ThemeContext.Provider value={{ themeName, setTheme: handleSetTheme }}>
-      <MantineProvider theme={theme} defaultColorScheme="light">
+    <ThemeContext.Provider
+      value={{
+        themeName,
+        setTheme: handleSetTheme,
+        darkMode,
+        setDarkMode: handleSetDarkMode,
+        toggleDarkMode: handleToggleDarkMode,
+      }}
+    >
+      <MantineProvider theme={theme} defaultColorScheme={colorScheme}>
         {children}
       </MantineProvider>
     </ThemeContext.Provider>

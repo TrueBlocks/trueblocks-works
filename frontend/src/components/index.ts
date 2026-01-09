@@ -47,3 +47,4 @@ export { EnumManagement } from './EnumManagement';
 export type { Column, ViewSort, SortColumn, SortDirection } from './DataTable';
 export { TabContentWrapper } from './layouts';
 export { ThemeSelector } from './ThemeSelector';
+export { DarkModeToggle } from './DarkModeToggle';

@@ -1097,6 +1097,7 @@ export namespace settings {
 	    exportFolderPath?: string;
 	    setupCompleted: boolean;
 	    theme: string;
+	    darkMode: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -1112,6 +1113,7 @@ export namespace settings {
 	        this.exportFolderPath = source["exportFolderPath"];
 	        this.setupCompleted = source["setupCompleted"];
 	        this.theme = source["theme"];
+	        this.darkMode = source["darkMode"];
 	    }
 	}
 

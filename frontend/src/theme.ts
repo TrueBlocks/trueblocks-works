@@ -54,7 +54,7 @@ export function createAppTheme(themeName: ThemeName = 'default') {
 
   return createTheme({
     primaryColor: config.primaryColor,
-    colors: config.colors,
+    ...(config.colors && { colors: config.colors }),
     fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
     headings: {
       fontFamily:

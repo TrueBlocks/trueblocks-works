@@ -4,7 +4,9 @@ import { notifications } from '@mantine/notifications';
 import { IconFolder, IconCheck, IconSettings, IconList } from '@tabler/icons-react';
 import { GetSettings, UpdateSettings, BrowseForFolder } from '@wailsjs/go/main/App';
 import { settings } from '@wailsjs/go/models';
-import { TabView, Tab, EnumManagement, ThemeSelector } from '@/components';
+import { TabView, Tab, EnumManagement } from '@/components';
+import { ThemeSelector } from '@/components/ThemeSelector';
+import { DarkModeSwitch } from '@/components/DarkModeSwitch';
 
 export function SettingsPage() {
   const [config, setConfig] = useState<settings.Settings | null>(null);
@@ -158,6 +160,7 @@ export function SettingsPage() {
               </Text>
 
               <ThemeSelector />
+              <DarkModeSwitch />
             </Stack>
           </Paper>
 

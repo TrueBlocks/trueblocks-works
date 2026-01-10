@@ -32,9 +32,10 @@
 
 | Layer | Responsibility | Examples |
 |-------|----------------|----------|
-| **Frontend (React)** | Immediate feedback | Required fields, format hints |
-| **Backend (Go)** | Business logic | Cross-field validation, value list membership |
+| **Backend (Go)** | Primary validation | Required fields, business logic, duplicate prevention, cross-field validation |
 | **Database (SQLite)** | Data integrity | Foreign keys, unique constraints, NOT NULL |
+
+**Note:** Frontend validation is minimal - the backend is the authoritative validator. The UI displays errors returned from backend validation.
 
 ---
 
@@ -227,6 +228,29 @@ var StatusValidation = ValueListValidation{
     Default:      "Gestating",
     AllowUnknown: true, // Allow legacy values, just warn
 }
+
+### 3.4 Duplicate Prevention
+
+**Critical:** Works must not have duplicate `generatedPath` values to prevent file overwrites.
+
+```go
+type DuplicateValidation struct {
+    CheckFunc func(work *Work) ([]Work, error) // Returns existing works with same generatedPath
+}
+
+var GeneratedPathValidation = DuplicateValidation{
+    CheckFunc: func(work *Work) ([]Work, error) {
+        genPath := fileops.GeneratePath(work)
+        return db.FindWorksByGeneratedPath(genPath, work.WorkID)
+    },
+}
+```
+
+**Implementation:**
+- Check before `CreateWork`: Reject if duplicate exists
+- Check before `UpdateWork`: Reject if change creates duplicate
+- Check before file operations: Ensure no collision
+- User-facing error: "A work with this title, type, year, and quality already exists"
 ```
 
 ---
@@ -285,30 +309,7 @@ package validation
 type ValidationResult struct {
     Valid    bool
     Errors   []FieldError
-    Warnings []FieldWarning
-}
-
-type FieldError struct {
-    Field   string
-    Message string
-    Code    string
-}
-
-type FieldWarning struct {
-    Field   string
-    Message string
-}
-
-type Validatable interface {
-    Validate() ValidationResult
-}
-```
-
-### 5.2 Work Validation
-
-```go
-// internal/models/work.go
-func (w *Work) Validate() validation.ValidationResult {
+    Warnings []FieldWarndb *DB, fileOps *fileops.FileOps) validation.ValidationResult {
     result := validation.ValidationResult{Valid: true}
     
     // Required: Title
@@ -381,6 +382,48 @@ func (w *Work) Validate() validation.ValidationResult {
         w.NWords = 0
     }
     
+    // CRITICAL: Check for duplicate generatedPath
+    genPath := fileOps.GeneratePath(w)
+    duplicates, err := db.FindWorksByGeneratedPath(genPath, w.WorkID)
+    if err != nil {
+        result.Valid = false
+        result.Errors = append(result.Errors, validation.FieldError{
+            Field:   "Path",
+            Message: "Failed to check for duplicates",
+            Code:    "VAL_SYSTEM_ERROR",
+        })
+    } else if len(duplicates) > 0 {
+        result.Valid = false
+        result.Errors = append(result.Errors, validation.FieldError{
+            Field:   "Title",
+            Message: fmt.Sprintf("A work with this title, type, year, and quality already exists (ID: %d)", duplicates[0].WorkID),
+            Code:    "VAL_DUPLICATE",
+        })"Okay"
+    }
+    
+    // Year: validate range
+    if w.Year != "" {
+        year, err := strconv.Atoi(w.Year)
+        if err != nil {
+            result.Valid = false
+            result.Errors = append(result.Errors, validation.FieldError{
+                Field:   "Year",
+                Message: "Year must be a 4-digit number",
+                Code:    "VAL_INVALID",
+            })
+        } else if year < 1900 || year > 2100 {
+            result.Warnings = append(result.Warnings, validation.FieldWarning{
+                Field:   "Year",
+                Message: fmt.Sprintf("Unusual year: %d", year),
+            })
+        }
+    }
+    
+    // nWords: must be non-negative
+    if w.NWords < 0 {
+        w.NWords = 0
+    }
+    
     return result
 }
 ```
@@ -395,56 +438,69 @@ func (s *Submission) Validate() validation.ValidationResult {
     if s.WorkID <= 0 {
         result.Valid = false
         result.Errors = append(result.Errors, validation.FieldError{
-            Field:   "WorkID",
-            Message: "Work is required",
-            Code:    "VAL_REQUIRED",
-        })
-    }
-    
-    // Required: orgID
-    if s.OrgID <= 0 {
-        result.Valid = false
-        result.Errors = append(result.Errors, validation.FieldError{
-            Field:   "OrgID",
-            Message: "Organization is required",
-            Code:    "VAL_REQUIRED",
-        })
-    }
-    
-    // Cross-field: ResponseDate requires SubmissionDate
-    if !s.ResponseDate.IsZero() && s.SubmissionDate.IsZero() {
-        result.Valid = false
-        result.Errors = append(result.Errors, validation.FieldError{
-            Field:   "ResponseDate",
-            Message: "Cannot have response date without submission date",
-            Code:    "VAL_CROSS_FIELD",
-        })
-    }
-    
-    // Cross-field: ResponseDate should be after SubmissionDate
-    if !s.ResponseDate.IsZero() && !s.SubmissionDate.IsZero() {
-        if s.ResponseDate.Before(s.SubmissionDate) {
-            result.Valid = false
-            result.Errors = append(result.Errors, validation.FieldError{
-                Field:   "ResponseDate",
-                Message: "Response date cannot be before submission date",
-                Code:    "VAL_CROSS_FIELD",
-            })
-        }
-    }
-    
-    return result
-}
-```
+### 5.4 Database Helper Methods
 
----
+```go
+// internal/db/works.go
+func7.1 Client-Side Validation (Limited)
 
-## 6. React Form Validation
+**Philosophy:** The backend is the authoritative validator. Frontend only provides basic input constraints and displays backend validation errors.
 
-### 6.1 Validation Hook
+**Frontend responsibilities:**
+- Disable submit button when required fields are empty
+- Display error messages returned from backend
+- Provide input format hints (placeholders, labels)
+- Client-side validation is NOT duplicated from backend
 
 ```typescript
-// src/hooks/useValidation.ts
+// src/components/NewWorkModal.tsx
+function NewWorkModal() {
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = async () => {
+    try {
+      setError('');
+      const result = await CreateNewWork({ title, type, /* ... */ });
+      
+      if (!result.success) {
+        setError(result.error); // Display backend validation error
+        return;
+      }
+      
+      // Success - close modal, navigate
+    } catch (err) {
+      setError('Failed to create work');
+    }
+  };
+
+  return (
+    <Modal>
+      {error && <Alert color="red">{error}</Alert>}
+      
+      <TextInput
+        label="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        required
+      />
+      
+      <Select
+        label="Type"
+        value={type}
+        onChange={setType}
+        data={workTypes}
+        required
+      />
+      
+      <Button
+        onClick={handleSubmit}
+        disabled={!title || !type}
+      >
+        Create
+      </Button>
+    </Modalc/hooks/useValidation.ts
 import { useState, useCallback } from 'react';
 
 interface ValidationRule<T> {
@@ -543,9 +599,9 @@ export const validURL = () => ({
     if (value && !value.match(/^https?:\/\//)) {
       return 'Must start with http:// or https://';
     }
-    return null;
+   8return null;
   },
-});
+});8
 
 export const dateAfter = (otherField: string, otherLabel: string) => ({
   validate: (value: Date | null, allValues: Record<string, any>) => {
@@ -611,7 +667,7 @@ CREATE TABLE works (
     year TEXT DEFAULT (strftime('%Y', 'now')),
     status TEXT DEFAULT 'Gestating',
     quality TEXT DEFAULT 'Okay',
-    n_words INTEGER DEFAULT 0 CHECK(n_words >= 0),
+    8_words INTEGER DEFAULT 0 CHECK(n_words >= 0),
     -- ... other fields
 );
 

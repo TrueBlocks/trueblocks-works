@@ -117,7 +117,7 @@ func (a *App) GetWorksFilterOptions() WorksFilterOptions {
 	}
 
 	// Get distinct years (include empty if any exist)
-	rows, err := a.db.Conn().Query(`SELECT DISTINCT COALESCE(year, '') as year FROM Works ORDER BY year DESC`)
+	rows, err := a.db.Conn().Query(`SELECT DISTINCT COALESCE(year, '') as year FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') ORDER BY year DESC`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -129,7 +129,7 @@ func (a *App) GetWorksFilterOptions() WorksFilterOptions {
 	}
 
 	// Get distinct types (include empty if any exist)
-	rows, err = a.db.Conn().Query(`SELECT DISTINCT COALESCE(type, '') as type FROM Works ORDER BY type`)
+	rows, err = a.db.Conn().Query(`SELECT DISTINCT COALESCE(type, '') as type FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') ORDER BY type`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -141,7 +141,7 @@ func (a *App) GetWorksFilterOptions() WorksFilterOptions {
 	}
 
 	// Get distinct statuses (include empty if any exist)
-	rows, err = a.db.Conn().Query(`SELECT DISTINCT COALESCE(status, '') as status FROM Works ORDER BY status`)
+	rows, err = a.db.Conn().Query(`SELECT DISTINCT COALESCE(status, '') as status FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') ORDER BY status`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -153,7 +153,7 @@ func (a *App) GetWorksFilterOptions() WorksFilterOptions {
 	}
 
 	// Get distinct qualities (include empty if any exist)
-	rows, err = a.db.Conn().Query(`SELECT DISTINCT COALESCE(quality, '') as quality FROM Works ORDER BY quality`)
+	rows, err = a.db.Conn().Query(`SELECT DISTINCT COALESCE(quality, '') as quality FROM Works WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') ORDER BY quality`)
 	if err == nil {
 		defer rows.Close()
 		for rows.Next() {

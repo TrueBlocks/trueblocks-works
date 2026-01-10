@@ -210,11 +210,19 @@ Cmd+Shift+P → "Developer: Reload Window"
 
 ---
 
-## 14. Git
+## 14. Git & GitHub
 
-- **NEVER ask if user wants to commit** — only commit when explicitly told
-- Clear messages: `feat:`, `fix:`, `refactor:`, `docs:`
+### Git Operations
+- **NEVER run `git add`, `git commit`, or `git push`** unless explicitly told to do so
+- **NO exceptions** — even if changes are complete, wait for explicit instruction
+- When explicitly told to commit, use clear messages: `feat:`, `fix:`, `refactor:`, `docs:`
 - Never commit `node_modules/`, `build/`, or `.db` files
+
+### GitHub Operations
+- **ALWAYS use `gh` CLI** for GitHub operations (issues, PRs, releases, etc.)
+- Issue management: `gh issue create`, `gh issue close`, `gh issue edit`, `gh issue list`
+- Pull requests: `gh pr create`, `gh pr merge`, `gh pr view`, `gh pr list`
+- If `gh` CLI cannot accomplish a task, use alternative mechanisms as needed
 
 ---
 

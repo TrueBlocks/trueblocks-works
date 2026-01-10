@@ -15,13 +15,14 @@ import (
 )
 
 type App struct {
-	ctx        context.Context
-	db         *db.DB
-	fileOps    *fileops.FileOps
-	state      *state.Manager
-	backup     *backup.Manager
-	settings   *settings.Manager
-	fileServer *server.FileServer
+	ctx           context.Context
+	db            *db.DB
+	fileOps       *fileops.FileOps
+	state         *state.Manager
+	backup        *backup.Manager
+	settings      *settings.Manager
+	fileServer    *server.FileServer
+	importSession *ImportSession
 }
 
 func NewApp() *App {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ActionIcon } from '@mantine/core';
-import { IconPlus } from '@tabler/icons-react';
+import { ActionIcon, Tooltip } from '@mantine/core';
+import { IconPlus, IconArrowsExchange } from '@tabler/icons-react';
 import { Log, LogErr } from '@/utils';
 import {
   GetWorks,
@@ -10,6 +10,7 @@ import {
   GetAppState,
   DeleteWork,
   UndeleteWork,
+  MoveWorkFile,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { notifications } from '@mantine/notifications';
@@ -124,6 +125,52 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
     }
   }, []);
 
+  const handleMove = useCallback(
+    async (work: models.WorkView) => {
+      try {
+        await MoveWorkFile(work.workID);
+        loadWorks();
+        notifications.show({
+          message: 'File moved successfully',
+          color: 'green',
+          autoClose: 3000,
+        });
+      } catch (err) {
+        LogErr('Failed to move file:', err);
+        notifications.show({
+          message: 'Move failed',
+          color: 'red',
+          autoClose: 5000,
+        });
+      }
+    },
+    [loadWorks]
+  );
+
+  const renderExtraCells = useCallback(
+    (work: models.WorkView) => {
+      // Only show move icon if backend says file needs to be moved
+      if (!work.needsMove) return null;
+
+      return (
+        <Tooltip label="Move file to match metadata">
+          <ActionIcon
+            size="sm"
+            variant="subtle"
+            color="orange"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMove(work);
+            }}
+          >
+            <IconArrowsExchange size={16} />
+          </ActionIcon>
+        </Tooltip>
+      );
+    },
+    [handleMove]
+  );
+
   const handleSelectedChange = useCallback((work: models.WorkView) => {
     SetLastWorkID(work.workID).catch((err) => {
       LogErr('Failed to set lastWorkID:', err);
@@ -206,6 +253,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         searchFn={searchFn}
         onDelete={handleDelete}
         onUndelete={handleUndelete}
+        renderExtraCells={renderExtraCells}
         headerActions={
           <ActionIcon variant="light" size="lg" onClick={() => setNewModalOpen(true)}>
             <IconPlus size={18} />

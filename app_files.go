@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"time"
 
 	"works/internal/fileops"
 	"works/internal/models"
@@ -79,17 +81,6 @@ func (a *App) MoveWorkFile(workID int64) error {
 	}
 
 	work.Path = &newPath
-	return a.db.UpdateWork(work)
-}
-
-func (a *App) UpdateWorkPathToGenerated(workID int64) error {
-	work, err := a.db.GetWork(workID)
-	if err != nil {
-		return err
-	}
-
-	generatedPath := a.fileOps.GeneratePath(work)
-	work.Path = &generatedPath
 	return a.db.UpdateWork(work)
 }
 
@@ -177,7 +168,13 @@ func (a *App) GetPreviewURL(workID int64) (string, error) {
 	}
 
 	filename := filepath.Base(pdfPath)
-	return fmt.Sprintf("http://127.0.0.1:%d/pdf/%s", a.fileServer.Port(), filename), nil
+	// Add timestamp to prevent browser caching
+	fileInfo, _ := os.Stat(pdfPath)
+	timestamp := time.Now().Unix()
+	if fileInfo != nil {
+		timestamp = fileInfo.ModTime().Unix()
+	}
+	return fmt.Sprintf("http://127.0.0.1:%d/pdf/%s?t=%d", a.fileServer.Port(), filename, timestamp), nil
 }
 
 func (a *App) RegeneratePDF(workID int64) (string, error) {
@@ -197,5 +194,55 @@ func (a *App) RegeneratePDF(workID int64) (string, error) {
 	}
 
 	filename := filepath.Base(pdfPath)
-	return fmt.Sprintf("http://127.0.0.1:%d/pdf/%s", a.fileServer.Port(), filename), nil
+	// Add current timestamp to force browser to reload the PDF
+	return fmt.Sprintf("http://127.0.0.1:%d/pdf/%s?t=%d", a.fileServer.Port(), filename, time.Now().Unix()), nil
+}
+
+type FileModTimes struct {
+	DocxPath    string `json:"docxPath"`
+	DocxModTime string `json:"docxModTime"`
+	PdfPath     string `json:"pdfPath"`
+	PdfModTime  string `json:"pdfModTime"`
+	DocxIsNewer bool   `json:"docxIsNewer"`
+	DocxExists  bool   `json:"docxExists"`
+	PdfExists   bool   `json:"pdfExists"`
+}
+
+func (a *App) GetFileModTimes(workID int64) (FileModTimes, error) {
+	work, err := a.db.GetWork(workID)
+	if err != nil {
+		return FileModTimes{}, err
+	}
+
+	result := FileModTimes{}
+
+	// Get docx file path and mod time
+	docPath, docErr := fileops.FindFileWithExtension(a.fileOps.GetFilename(derefPath(work.Path)))
+	if docErr == nil {
+		result.DocxPath = docPath
+		result.DocxExists = true
+		if info, err := fileops.GetFileInfo(docPath); err == nil {
+			result.DocxModTime = info.ModTime().Format("2006-01-02 15:04:05")
+		}
+	}
+
+	// Get PDF file path and mod time
+	pdfFilename := fmt.Sprintf("%d.pdf", workID)
+	pdfPath := filepath.Join(a.fileOps.Config.PDFPreviewPath, pdfFilename)
+	if fileops.FileExists(pdfPath) {
+		result.PdfPath = pdfPath
+		result.PdfExists = true
+		if info, err := fileops.GetFileInfo(pdfPath); err == nil {
+			result.PdfModTime = info.ModTime().Format("2006-01-02 15:04:05")
+		}
+	}
+
+	// Compare modification times if both exist
+	if result.DocxExists && result.PdfExists {
+		docInfo, _ := fileops.GetFileInfo(docPath)
+		pdfInfo, _ := fileops.GetFileInfo(pdfPath)
+		result.DocxIsNewer = docInfo.ModTime().After(pdfInfo.ModTime())
+	}
+
+	return result, nil
 }

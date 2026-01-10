@@ -3,7 +3,7 @@ import { IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { models } from '@wailsjs/go/models';
 import { UpdateWork } from '@wailsjs/go/main/App';
-import { StatusSelect, TypeSelect, QualitySelect, EditableField } from '@/components';
+import { StatusSelect, TypeSelect, QualitySelect, YearSelect, EditableField } from '@/components';
 import { LogErr } from '@/utils';
 import { ReactNode } from 'react';
 
@@ -49,11 +49,7 @@ export function WorkHeader({ work, actions, onWorkUpdate }: WorkHeaderProps) {
             <TypeSelect work={work} onUpdate={onWorkUpdate} />
             <StatusSelect work={work} onUpdate={onWorkUpdate} />
             <QualitySelect work={work} onUpdate={onWorkUpdate} />
-            {work.year && (
-              <Text size="sm" c="dimmed">
-                {work.year}
-              </Text>
-            )}
+            <YearSelect work={work} onUpdate={onWorkUpdate} />
           </Group>
         </div>
       </Group>

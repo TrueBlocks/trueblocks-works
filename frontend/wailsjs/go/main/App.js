@@ -6,12 +6,28 @@ export function AddSearchHistory(arg1) {
   return window['go']['main']['App']['AddSearchHistory'](arg1);
 }
 
+export function AddTypeAndContinue(arg1) {
+  return window['go']['main']['App']['AddTypeAndContinue'](arg1);
+}
+
 export function AddWorkToCollection(arg1, arg2) {
   return window['go']['main']['App']['AddWorkToCollection'](arg1, arg2);
 }
 
+export function AutoImportFiles() {
+  return window['go']['main']['App']['AutoImportFiles']();
+}
+
 export function BrowseForFolder(arg1) {
   return window['go']['main']['App']['BrowseForFolder'](arg1);
+}
+
+export function CancelImport() {
+  return window['go']['main']['App']['CancelImport']();
+}
+
+export function CheckImportConflict(arg1) {
+  return window['go']['main']['App']['CheckImportConflict'](arg1);
 }
 
 export function CheckLibreOffice() {
@@ -146,6 +162,10 @@ export function GetFileConfig() {
   return window['go']['main']['App']['GetFileConfig']();
 }
 
+export function GetFileModTimes(arg1) {
+  return window['go']['main']['App']['GetFileModTimes'](arg1);
+}
+
 export function GetFileServerPort() {
   return window['go']['main']['App']['GetFileServerPort']();
 }
@@ -250,6 +270,10 @@ export function GetWorksFilterOptions() {
   return window['go']['main']['App']['GetWorksFilterOptions']();
 }
 
+export function ImportWork(arg1, arg2) {
+  return window['go']['main']['App']['ImportWork'](arg1, arg2);
+}
+
 export function IsFirstRun() {
   return window['go']['main']['App']['IsFirstRun']();
 }
@@ -324,6 +348,10 @@ export function RestoreBackup(arg1) {
 
 export function SaveWindowGeometry(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SaveWindowGeometry'](arg1, arg2, arg3, arg4);
+}
+
+export function ScanImportFolder() {
+  return window['go']['main']['App']['ScanImportFolder']();
 }
 
 export function Search(arg1, arg2) {
@@ -416,10 +444,6 @@ export function UpdateSubmission(arg1) {
 
 export function UpdateWork(arg1) {
   return window['go']['main']['App']['UpdateWork'](arg1);
-}
-
-export function UpdateWorkPathToGenerated(arg1) {
-  return window['go']['main']['App']['UpdateWorkPathToGenerated'](arg1);
 }
 
 export function UpdateWorkWithWorkflow(arg1) {

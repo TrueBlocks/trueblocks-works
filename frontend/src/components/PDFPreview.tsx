@@ -6,13 +6,15 @@ import { GetPreviewURL, RegeneratePDF } from '@wailsjs/go/main/App';
 interface PDFPreviewProps {
   workID: number;
   height?: number | string;
+  refreshKey?: number;
 }
 
-export function PDFPreview({ workID, height = 500 }: PDFPreviewProps) {
+export function PDFPreview({ workID, height = 500, refreshKey = 0 }: PDFPreviewProps) {
   const [pdfURL, setPdfURL] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [lastRefreshKey, setLastRefreshKey] = useState(0);
 
   const loadPreview = useCallback(async () => {
     if (!workID) return;
@@ -32,6 +34,14 @@ export function PDFPreview({ workID, height = 500 }: PDFPreviewProps) {
   useEffect(() => {
     loadPreview();
   }, [loadPreview]);
+
+  // Only force reload when refreshKey actually increments (Cmd+R pressed)
+  useEffect(() => {
+    if (refreshKey > 0 && refreshKey !== lastRefreshKey) {
+      setLastRefreshKey(refreshKey);
+      loadPreview();
+    }
+  }, [refreshKey, lastRefreshKey, loadPreview]);
 
   const handleRegenerate = async () => {
     setLoading(true);
@@ -93,6 +103,7 @@ export function PDFPreview({ workID, height = 500 }: PDFPreviewProps) {
         </Tooltip>
       </Group>
       <iframe
+        key={pdfURL}
         src={pdfURL}
         style={{
           width: '100%',

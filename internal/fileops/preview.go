@@ -60,6 +60,9 @@ func (f *FileOps) GeneratePDF(docPath string, workID int64) (string, error) {
 		return "", fmt.Errorf("failed to create previews directory: %w", err)
 	}
 
+	// Try to remove existing PDF before regeneration (ignore errors - file might be locked/open)
+	_ = os.Remove(pdfPath)
+
 	soffice := f.GetSofficePath()
 	cmd := exec.Command(soffice,
 		"--headless",
@@ -76,9 +79,14 @@ func (f *FileOps) GeneratePDF(docPath string, workID int64) (string, error) {
 	baseName = baseName[:len(baseName)-len(filepath.Ext(baseName))] + ".pdf"
 	tempPath := filepath.Join(f.Config.PDFPreviewPath, baseName)
 
+	// Verify the converted file exists before trying to rename
+	if _, err := os.Stat(tempPath); err != nil {
+		return "", fmt.Errorf("PDF conversion succeeded but output file not found at %s: %w", tempPath, err)
+	}
+
 	if tempPath != pdfPath {
 		if err := os.Rename(tempPath, pdfPath); err != nil {
-			return "", fmt.Errorf("failed to rename PDF: %w", err)
+			return "", fmt.Errorf("failed to rename PDF from %s to %s: %w", tempPath, pdfPath, err)
 		}
 	}
 

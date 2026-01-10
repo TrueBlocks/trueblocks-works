@@ -41,6 +41,32 @@ export namespace fileops {
 	        this.TemplateFolderPath = source["TemplateFolderPath"];
 	    }
 	}
+	export class ParsedFilename {
+	    QualityMark: string;
+	    Quality: string;
+	    Type: string;
+	    Year: string;
+	    Title: string;
+	    Extension: string;
+	    Valid: boolean;
+	    Errors: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ParsedFilename(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.QualityMark = source["QualityMark"];
+	        this.Quality = source["Quality"];
+	        this.Type = source["Type"];
+	        this.Year = source["Year"];
+	        this.Title = source["Title"];
+	        this.Extension = source["Extension"];
+	        this.Valid = source["Valid"];
+	        this.Errors = source["Errors"];
+	    }
+	}
 
 }
 
@@ -292,6 +318,7 @@ export namespace main {
 	    statusList: string[];
 	    qualityList: string[];
 	    workTypeList: string[];
+	    yearList: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new EnumLists(source);
@@ -302,6 +329,7 @@ export namespace main {
 	        this.statusList = source["statusList"];
 	        this.qualityList = source["qualityList"];
 	        this.workTypeList = source["workTypeList"];
+	        this.yearList = source["yearList"];
 	    }
 	}
 	export class ExportResult {
@@ -322,6 +350,119 @@ export namespace main {
 	        this.error = source["error"];
 	    }
 	}
+	export class FileModTimes {
+	    docxPath: string;
+	    docxModTime: string;
+	    pdfPath: string;
+	    pdfModTime: string;
+	    docxIsNewer: boolean;
+	    docxExists: boolean;
+	    pdfExists: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new FileModTimes(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.docxPath = source["docxPath"];
+	        this.docxModTime = source["docxModTime"];
+	        this.pdfPath = source["pdfPath"];
+	        this.pdfModTime = source["pdfModTime"];
+	        this.docxIsNewer = source["docxIsNewer"];
+	        this.docxExists = source["docxExists"];
+	        this.pdfExists = source["pdfExists"];
+	    }
+	}
+	export class ImportConflict {
+	    type: string;
+	    existingWork?: models.Work;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportConflict(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.existingWork = this.convertValues(source["existingWork"], models.Work);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class InvalidFile {
+	    filename: string;
+	    errors: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new InvalidFile(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.filename = source["filename"];
+	        this.errors = source["errors"];
+	    }
+	}
+	export class ImportResult {
+	    status: string;
+	    imported: number;
+	    updated: number;
+	    invalid: InvalidFile[];
+	    collectionID: number;
+	    unknownType?: string;
+	    currentFile?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ImportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.status = source["status"];
+	        this.imported = source["imported"];
+	        this.updated = source["updated"];
+	        this.invalid = this.convertValues(source["invalid"], InvalidFile);
+	        this.collectionID = source["collectionID"];
+	        this.unknownType = source["unknownType"];
+	        this.currentFile = source["currentFile"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	
 	
 	export class OrgsFilterOptions {
@@ -624,6 +765,7 @@ export namespace models {
 	    courseName?: string;
 	    attributes: string;
 	    accessDate?: string;
+	    fileMtime?: number;
 	    createdAt: string;
 	    modifiedAt: string;
 	    position: number;
@@ -647,6 +789,7 @@ export namespace models {
 	        this.courseName = source["courseName"];
 	        this.attributes = source["attributes"];
 	        this.accessDate = source["accessDate"];
+	        this.fileMtime = source["fileMtime"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.position = source["position"];
@@ -1009,6 +1152,7 @@ export namespace models {
 	    courseName?: string;
 	    attributes: string;
 	    accessDate?: string;
+	    fileMtime?: number;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -1031,6 +1175,7 @@ export namespace models {
 	        this.courseName = source["courseName"];
 	        this.attributes = source["attributes"];
 	        this.accessDate = source["accessDate"];
+	        this.fileMtime = source["fileMtime"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }
@@ -1049,12 +1194,15 @@ export namespace models {
 	    courseName?: string;
 	    attributes: string;
 	    accessDate?: string;
+	    fileMtime?: number;
 	    createdAt: string;
 	    modifiedAt: string;
 	    isDeleted: boolean;
 	    ageDays?: number;
 	    nSubmissions: number;
 	    collectionList?: string;
+	    generatedPath: string;
+	    needsMove: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new WorkView(source);
@@ -1075,12 +1223,15 @@ export namespace models {
 	        this.courseName = source["courseName"];
 	        this.attributes = source["attributes"];
 	        this.accessDate = source["accessDate"];
+	        this.fileMtime = source["fileMtime"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.isDeleted = source["isDeleted"];
 	        this.ageDays = source["ageDays"];
 	        this.nSubmissions = source["nSubmissions"];
 	        this.collectionList = source["collectionList"];
+	        this.generatedPath = source["generatedPath"];
+	        this.needsMove = source["needsMove"];
 	    }
 	}
 

@@ -4,12 +4,12 @@ import { models } from '@wailsjs/go/models';
 import { LogErr, hashColor } from '@/utils';
 import { CreatableSelect } from './CreatableSelect';
 
-type WorkField = 'status' | 'type' | 'quality';
+type WorkField = 'status' | 'type' | 'quality' | 'year';
 
 interface WorkFieldSelectProps {
   work: models.Work;
   field: WorkField;
-  enumListKey: 'statusList' | 'workTypeList' | 'qualityList';
+  enumListKey: 'statusList' | 'workTypeList' | 'qualityList' | 'yearList';
   colorMap?: Record<string, string>;
   width?: number;
   onUpdate?: (work: models.Work) => void;
@@ -24,7 +24,7 @@ export function WorkFieldSelect({
   onUpdate,
 }: WorkFieldSelectProps) {
   const [options, setOptions] = useState<string[]>([]);
-  const [value, setValue] = useState<string | null>(work[field]);
+  const [value, setValue] = useState<string | null>(work[field] ?? null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function WorkFieldSelect({
   }, [enumListKey, field]);
 
   useEffect(() => {
-    setValue(work[field]);
+    setValue(work[field] ?? null);
   }, [work, field]);
 
   const handleChange = async (newValue: string) => {
@@ -48,7 +48,7 @@ export function WorkFieldSelect({
       onUpdate?.(updated as models.Work);
     } catch (err) {
       LogErr(`Failed to update ${field}:`, err);
-      setValue(work[field]);
+      setValue(work[field] ?? null);
     } finally {
       setLoading(false);
     }

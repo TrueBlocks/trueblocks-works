@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import { Notifications } from '@mantine/notifications';
 import { BrowserRouter } from 'react-router-dom';
-import { TabProvider, ThemeProvider } from '@/stores';
+import { TabProvider, ThemeProvider, DebugProvider } from '@/stores';
 import App from './App';
 
 import '@mantine/core/styles.css';
@@ -16,7 +16,9 @@ root.render(
     <Notifications position="top-right" />
     <BrowserRouter>
       <TabProvider>
-        <App />
+        <DebugProvider>
+          <App />
+        </DebugProvider>
       </TabProvider>
     </BrowserRouter>
   </ThemeProvider>

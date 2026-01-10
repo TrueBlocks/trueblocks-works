@@ -9,9 +9,17 @@ import {settings} from '../models';
 
 export function AddSearchHistory(arg1:string):Promise<void>;
 
+export function AddTypeAndContinue(arg1:string):Promise<main.ImportResult>;
+
 export function AddWorkToCollection(arg1:number,arg2:number):Promise<void>;
 
+export function AutoImportFiles():Promise<main.ImportResult>;
+
 export function BrowseForFolder(arg1:string):Promise<string>;
+
+export function CancelImport():Promise<void>;
+
+export function CheckImportConflict(arg1:string):Promise<main.ImportConflict>;
 
 export function CheckLibreOffice():Promise<boolean>;
 
@@ -79,6 +87,8 @@ export function GetExportTables():Promise<Array<main.TableInfo>>;
 
 export function GetFileConfig():Promise<fileops.Config>;
 
+export function GetFileModTimes(arg1:number):Promise<main.FileModTimes>;
+
 export function GetFileServerPort():Promise<number>;
 
 export function GetNotes(arg1:string,arg2:number):Promise<Array<models.Note>>;
@@ -131,6 +141,8 @@ export function GetWorks():Promise<Array<models.WorkView>>;
 
 export function GetWorksFilterOptions():Promise<main.WorksFilterOptions>;
 
+export function ImportWork(arg1:string,arg2:fileops.ParsedFilename):Promise<models.Work>;
+
 export function IsFirstRun():Promise<boolean>;
 
 export function ListBackups():Promise<Array<backup.BackupInfo>>;
@@ -168,6 +180,8 @@ export function ReportFileSystemChecks():Promise<main.ReportCategory>;
 export function RestoreBackup(arg1:string):Promise<void>;
 
 export function SaveWindowGeometry(arg1:number,arg2:number,arg3:number,arg4:number):Promise<void>;
+
+export function ScanImportFolder():Promise<Array<string>>;
 
 export function Search(arg1:string,arg2:number):Promise<models.SearchResponse>;
 
@@ -214,7 +228,5 @@ export function UpdateSettings(arg1:settings.Settings):Promise<void>;
 export function UpdateSubmission(arg1:models.Submission):Promise<void>;
 
 export function UpdateWork(arg1:models.Work):Promise<void>;
-
-export function UpdateWorkPathToGenerated(arg1:number):Promise<void>;
 
 export function UpdateWorkWithWorkflow(arg1:models.Work):Promise<main.WorkUpdateResult>;

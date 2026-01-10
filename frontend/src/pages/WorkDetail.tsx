@@ -6,6 +6,7 @@ import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
 import { useNotes } from '@/hooks';
+import { useDebug } from '@/stores';
 import {
   GetWork,
   GetSubmissionViewsByWork,
@@ -15,6 +16,8 @@ import {
   SetLastWorkID,
   DeleteWork,
   UndeleteWork,
+  OpenDocument,
+  RegeneratePDF,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import {
@@ -26,6 +29,7 @@ import {
   CollectionPickerModal,
   FileActionsToolbar,
   PDFPreview,
+  DebugPopover,
 } from '@/components';
 
 interface WorkDetailProps {
@@ -36,6 +40,7 @@ interface WorkDetailProps {
 export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { debugMode } = useDebug();
   const [work, setWork] = useState<models.Work | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
@@ -103,6 +108,29 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     }
   }, [navigate, collectionContext, workId]);
 
+  const handleOpen = useCallback(async () => {
+    try {
+      await OpenDocument(workId);
+    } catch (err) {
+      LogErr('Failed to open document:', err);
+    }
+  }, [workId]);
+
+  const handleRegeneratePDF = useCallback(async () => {
+    try {
+      await RegeneratePDF(workId);
+      // Force immediate refresh by incrementing key - this will cause PDFPreview to reload
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      LogErr('Failed to regenerate PDF:', err);
+      notifications.show({
+        message: 'Failed to regenerate PDF',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [workId]);
+
   useHotkeys([
     [
       'ArrowDown',
@@ -156,6 +184,8 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     ['End', handleEnd],
     ['mod+shift+ArrowLeft', handleReturnToList],
     ['mod+shift+ArrowUp', handleReturnToList],
+    ['mod+O', handleOpen],
+    ['mod+R', handleRegeneratePDF],
   ]);
 
   const handleWorkUpdate = useCallback((updatedWork: models.Work) => {
@@ -328,7 +358,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
 
       <Grid>
         <Grid.Col span={{ base: 12, md: 8 }}>
-          <PDFPreview workID={work.workID} height="calc(100vh - 240px)" />
+          <PDFPreview workID={work.workID} height="calc(100vh - 240px)" refreshKey={refreshKey} />
         </Grid.Col>
         <Grid.Col
           span={{ base: 12, md: 4 }}
@@ -367,6 +397,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
           </Stack>
         </Grid.Col>
       </Grid>
+      {debugMode && <DebugPopover workId={workId} />}
     </Stack>
   );
 }

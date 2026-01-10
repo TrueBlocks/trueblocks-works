@@ -7,7 +7,7 @@ interface MoveFileModalProps {
   currentPath: string;
   newPath: string;
   onMove: () => void;
-  onUpdatePathOnly: () => void;
+  onUpdatePathOnly?: () => void;
 }
 
 export function MoveFileModal({
@@ -51,9 +51,11 @@ export function MoveFileModal({
           <Button variant="subtle" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="light" onClick={onUpdatePathOnly}>
-            Update DB to match file
-          </Button>
+          {onUpdatePathOnly && (
+            <Button variant="light" onClick={onUpdatePathOnly}>
+              Update DB to match file
+            </Button>
+          )}
           <Button color="yellow" onClick={onMove}>
             Move file to match metadata
           </Button>

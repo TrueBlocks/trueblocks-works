@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"os"
 )
 
 // Migration represents a database schema migration.
@@ -37,6 +38,11 @@ var migrations = []Migration{
 		Version: 14,
 		Name:    "add_notes_attributes",
 		Up:      migrateAddNotesAttributes,
+	},
+	{
+		Version: 15,
+		Name:    "add_file_mtime_and_fix_dates",
+		Up:      migrateAddFileMtimeAndFixDates,
 	},
 }
 
@@ -310,5 +316,68 @@ func migrateAddNotesAttributes(tx *sql.Tx) error {
 	if err != nil {
 		return fmt.Errorf("add attributes column to Notes: %w", err)
 	}
+	return nil
+}
+
+func migrateAddFileMtimeAndFixDates(tx *sql.Tx) error {
+	// Add file_mtime column
+	_, err := tx.Exec(`ALTER TABLE Works ADD COLUMN file_mtime INTEGER`)
+	if err != nil {
+		return fmt.Errorf("add file_mtime column: %w", err)
+	}
+
+	// Populate file_mtime from actual files on disk
+	rows, err := tx.Query(`SELECT workID, path FROM Works WHERE path IS NOT NULL`)
+	if err != nil {
+		return fmt.Errorf("query works with paths: %w", err)
+	}
+	defer rows.Close()
+
+	type workPath struct {
+		workID int64
+		path   string
+	}
+	var workPaths []workPath
+	for rows.Next() {
+		var wp workPath
+		if err := rows.Scan(&wp.workID, &wp.path); err != nil {
+			return fmt.Errorf("scan work path: %w", err)
+		}
+		workPaths = append(workPaths, wp)
+	}
+	rows.Close()
+
+	// Update file_mtime for each work that has a file
+	for _, wp := range workPaths {
+		if fileInfo, err := os.Stat(wp.path); err == nil {
+			mtime := fileInfo.ModTime().Unix()
+			_, _ = tx.Exec(`UPDATE Works SET file_mtime = ? WHERE workID = ?`, mtime, wp.workID)
+		}
+		// Ignore errors - file might not exist anymore
+	}
+
+	// Standardize date formats across all tables
+	// Note: Organizations has date_added (not created_at), Submissions has submission_date/response_date (not submitted_at/responded_at)
+	dateFixQueries := []string{
+		`UPDATE Works SET created_at = datetime(created_at) WHERE created_at LIKE '%T%'`,
+		`UPDATE Works SET modified_at = datetime(modified_at) WHERE modified_at LIKE '%T%'`,
+		`UPDATE Collections SET created_at = datetime(created_at) WHERE created_at LIKE '%T%'`,
+		`UPDATE Collections SET modified_at = datetime(modified_at) WHERE modified_at LIKE '%T%'`,
+		`UPDATE Organizations SET modified_at = datetime(modified_at) WHERE modified_at LIKE '%T%'`,
+		`UPDATE Organizations SET date_added = datetime(date_added) WHERE date_added LIKE '%T%'`,
+		`UPDATE Submissions SET created_at = datetime(created_at) WHERE created_at LIKE '%T%'`,
+		`UPDATE Submissions SET modified_at = datetime(modified_at) WHERE modified_at LIKE '%T%'`,
+		`UPDATE Submissions SET submission_date = datetime(submission_date) WHERE submission_date LIKE '%T%'`,
+		`UPDATE Submissions SET response_date = datetime(response_date) WHERE response_date LIKE '%T%'`,
+		`UPDATE Notes SET created_at = datetime(created_at) WHERE created_at LIKE '%T%'`,
+		`UPDATE Notes SET modified_at = datetime(modified_at) WHERE modified_at LIKE '%T%'`,
+	}
+
+	for _, query := range dateFixQueries {
+		if _, err := tx.Exec(query); err != nil {
+			return fmt.Errorf("fix dates: %w", err)
+		}
+	}
+
 	return nil
 }

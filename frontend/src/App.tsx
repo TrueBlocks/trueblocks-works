@@ -6,6 +6,7 @@ import { Navigation } from '@/components/Navigation';
 import { SearchModal } from '@/components/SearchModal';
 import { BackupRestoreModal } from '@/components/BackupRestoreModal';
 import { SetupWizard } from '@/components/SetupWizard';
+import { ImportReviewModal } from '@/components/ImportReviewModal';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { WorksPage } from '@/pages/WorksPage';
 import { OrganizationsPage } from '@/pages/OrganizationsPage';
@@ -21,15 +22,23 @@ import {
   SetLastRoute,
   ExportAllTables,
   ReimportFromCSV,
+  AutoImportFiles,
+  AddTypeAndContinue,
+  CancelImport,
 } from '@wailsjs/go/main/App';
 import { notifications } from '@mantine/notifications';
 import { Log, LogErr } from '@/utils';
+import type { main } from '@wailsjs/go/models';
+
+type ImportResult = main.ImportResult;
 
 function App() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [backupOpen, setBackupOpen] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [wizardChecked, setWizardChecked] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const saveTimeoutRef = useRef<number | null>(null);
   const hasRestoredRoute = useRef(false);
   const location = useLocation();
@@ -118,6 +127,30 @@ function App() {
     checkFirstRun();
   }, []);
 
+  const handleAddType = useCallback(async (newType: string) => {
+    try {
+      const result = await AddTypeAndContinue(newType);
+      setImportResult(result);
+      if (result.status === 'complete') {
+        // Import finished
+        setImportModalOpen(result.imported > 0 || result.updated > 0 || result.invalid.length > 0);
+      }
+      // If status is still 'needs_type', modal will update to show next unknown type
+    } catch (err) {
+      LogErr('Add type failed:', err);
+      await CancelImport();
+      setImportModalOpen(false);
+    }
+  }, []);
+
+  const handleCancelImport = useCallback(async () => {
+    try {
+      await CancelImport();
+    } catch (err) {
+      LogErr('Cancel import failed:', err);
+    }
+  }, []);
+
   const handleExportAll = useCallback(async () => {
     Log('Starting export of all tables...');
     notifications.show({
@@ -147,6 +180,35 @@ function App() {
         message: String(err),
         color: 'red',
         loading: false,
+        autoClose: 5000,
+      });
+    }
+  }, []);
+
+  const handleImportFiles = useCallback(async () => {
+    Log('Starting file import...');
+    try {
+      const result = await AutoImportFiles();
+      if (
+        result.status === 'needs_type' ||
+        result.imported > 0 ||
+        result.updated > 0 ||
+        result.invalid.length > 0
+      ) {
+        setImportResult(result);
+        setImportModalOpen(true);
+      } else {
+        notifications.show({
+          message: 'No files found to import',
+          color: 'blue',
+          autoClose: 2000,
+        });
+      }
+    } catch (err) {
+      LogErr('File import failed:', err);
+      notifications.show({
+        message: 'Import failed: ' + String(err),
+        color: 'red',
         autoClose: 5000,
       });
     }
@@ -198,14 +260,18 @@ function App() {
         e.preventDefault();
         handleExportAll();
       }
-      if (e.metaKey && e.key === 'i') {
+      if (e.metaKey && e.shiftKey && e.key === 'i') {
         e.preventDefault();
         handleReimportAll();
+      }
+      if (e.metaKey && !e.shiftKey && e.key === 'i') {
+        e.preventDefault();
+        handleImportFiles();
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleExportAll, handleReimportAll]);
+  }, [handleExportAll, handleReimportAll, handleImportFiles]);
 
   if (!wizardChecked) {
     return null;
@@ -216,6 +282,14 @@ function App() {
       <SetupWizard opened={showWizard} onComplete={() => setShowWizard(false)} />
       <SearchModal opened={searchOpen} onClose={() => setSearchOpen(false)} />
       <BackupRestoreModal opened={backupOpen} onClose={() => setBackupOpen(false)} />
+      <ImportReviewModal
+        opened={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        result={importResult}
+        onNavigateToCollection={(id) => navigate(`/collections/${id}`)}
+        onAddType={handleAddType}
+        onCancelImport={handleCancelImport}
+      />
       <AppShell header={{ height: 60 }} navbar={{ width: 220, breakpoint: 'sm' }} padding="md">
         <AppShell.Header>
           <Navigation />

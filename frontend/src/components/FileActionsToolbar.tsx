@@ -6,7 +6,6 @@ import {
   ExportToSubmissions,
   PrintWork,
   CheckWorkPath,
-  UpdateWorkPathToGenerated,
 } from '@wailsjs/go/main/App';
 import { Log, LogErr } from '@/utils';
 import { useState, useEffect, useCallback } from 'react';
@@ -64,17 +63,6 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [pathStatus, handleMove]);
-
-  const handleUpdatePathOnly = async () => {
-    try {
-      await UpdateWorkPathToGenerated(workID);
-      setPathStatus('');
-      setModalOpen(false);
-      onMoved?.();
-    } catch (err) {
-      LogErr('Failed to update path:', err);
-    }
-  };
 
   const handleExport = async () => {
     try {
@@ -134,7 +122,6 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
         currentPath={currentPath}
         newPath={generatedPath}
         onMove={handleMove}
-        onUpdatePathOnly={handleUpdatePathOnly}
       />
     </>
   );

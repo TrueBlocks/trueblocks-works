@@ -51,18 +51,24 @@ func (db *DB) GetCollection(id int64) (*models.Collection, error) {
 }
 
 func (db *DB) UpdateCollection(c *models.Collection) error {
-	now := time.Now().Format(time.RFC3339)
 	query := `UPDATE Collections SET
-		collection_name = ?, type = ?, attributes = ?, modified_at = ?
+		collection_name = ?, type = ?, attributes = ?, modified_at = CURRENT_TIMESTAMP
 		WHERE collID = ?`
 
 	_, err := db.conn.Exec(query,
-		c.CollectionName, c.Type, c.Attributes, now, c.CollID,
+		c.CollectionName, c.Type, c.Attributes, c.CollID,
 	)
 	if err != nil {
 		return fmt.Errorf("update collection: %w", err)
 	}
-	c.ModifiedAt = now
+
+	// Fetch the updated timestamp
+	var modifiedAt string
+	err = db.conn.QueryRow("SELECT modified_at FROM Collections WHERE collID = ?", c.CollID).Scan(&modifiedAt)
+	if err == nil {
+		c.ModifiedAt = modifiedAt
+	}
+
 	return nil
 }
 

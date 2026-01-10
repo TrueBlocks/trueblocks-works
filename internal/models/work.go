@@ -14,6 +14,7 @@ type Work struct {
 	CourseName *string `json:"courseName,omitempty" db:"course_name"`
 	Attributes string  `json:"attributes" db:"attributes"`
 	AccessDate *string `json:"accessDate,omitempty" db:"access_date"`
+	FileMtime  *int64  `json:"fileMtime,omitempty" db:"file_mtime"`
 	CreatedAt  string  `json:"createdAt" db:"created_at"`
 	ModifiedAt string  `json:"modifiedAt" db:"modified_at"`
 }
@@ -24,6 +25,8 @@ type WorkView struct {
 	AgeDays        *int    `json:"ageDays,omitempty" db:"age_days"`
 	NSubmissions   int     `json:"nSubmissions" db:"n_submissions"`
 	CollectionList *string `json:"collectionList,omitempty" db:"collection_list"`
+	GeneratedPath  string  `json:"generatedPath"`
+	NeedsMove      bool    `json:"needsMove"`
 }
 
 func (w *Work) IsDeleted() bool {

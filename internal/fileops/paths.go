@@ -62,6 +62,10 @@ func (f *FileOps) GetFullPath(w *models.Work) string {
 }
 
 func (f *FileOps) GetFilename(partialPath string) string {
+	// If path is absolute, use it directly
+	if filepath.IsAbs(partialPath) {
+		return partialPath
+	}
 	return filepath.Join(f.Config.BaseFolderPath, partialPath)
 }
 
@@ -138,6 +142,10 @@ func FileExists(path string) bool {
 	return err == nil
 }
 
+func GetFileInfo(path string) (os.FileInfo, error) {
+	return os.Stat(path)
+}
+
 func FindFileWithExtension(basePath string) (string, error) {
 	for _, ext := range Extensions {
 		path := basePath + ext
@@ -149,18 +157,21 @@ func FindFileWithExtension(basePath string) (string, error) {
 }
 
 func (f *FileOps) CheckPath(w *models.Work) string {
-	generatedPath := f.GetFullPath(w)
-	storedPath := filepath.Join(f.Config.BaseFolderPath, derefString(w.Path))
+	generatedPath := f.GeneratePath(w)
+	storedPath := derefString(w.Path)
 
 	if generatedPath == storedPath {
 		return ""
 	}
 
-	if _, err := FindFileWithExtension(generatedPath); err == nil {
+	fullGeneratedPath := f.GetFullPath(w)
+	fullStoredPath := f.GetFilename(storedPath)
+
+	if _, err := FindFileWithExtension(fullGeneratedPath); err == nil {
 		return ""
 	}
 
-	if _, err := FindFileWithExtension(storedPath); err == nil {
+	if _, err := FindFileWithExtension(fullStoredPath); err == nil {
 		return "name changed"
 	}
 

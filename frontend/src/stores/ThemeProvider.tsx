@@ -97,7 +97,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         toggleDarkMode: handleToggleDarkMode,
       }}
     >
-      <MantineProvider theme={theme} defaultColorScheme={colorScheme}>
+      <MantineProvider theme={theme} forceColorScheme={colorScheme}>
         {children}
       </MantineProvider>
     </ThemeContext.Provider>

@@ -57,18 +57,18 @@ export function DashboardCard({
       <Card.Section
         withBorder
         inheritPadding
-        py="xs"
+        py="sm"
         style={{ backgroundColor: `var(--mantine-color-${color}-0)` }}
       >
-        <Group justify="space-between">
-          <Group gap="xs">
+        <Group justify="space-between" align="center">
+          <Group gap="xs" align="center">
             <Box c={color}>{icon}</Box>
             <Title order={4} c={color} style={{ cursor: 'pointer' }} onClick={onViewAll}>
               {title}
             </Title>
           </Group>
           {pages.length > 1 && (
-            <Group gap={4}>
+            <Group gap={4} align="center">
               <ActionIcon variant="subtle" size="sm" onClick={handlePrev}>
                 <IconChevronLeft size={16} />
               </ActionIcon>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTabContext } from '@/stores';
+import { useDebug } from '@/stores';
 import { GetAppState, OpenDocument, ToggleShowDeleted } from '@wailsjs/go/main/App';
 import { LogErr } from '@/utils';
 import { notifications } from '@mantine/notifications';
@@ -38,6 +39,7 @@ export function useKeyboardShortcuts() {
   const navigate = useNavigate();
   const location = useLocation();
   const { cycleTab } = useTabContext();
+  const { toggleDebugMode } = useDebug();
 
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent) {
@@ -58,6 +60,20 @@ export function useKeyboardShortcuts() {
         } catch (err) {
           LogErr('Failed to toggle show deleted:', err);
         }
+        return;
+      }
+
+      // Cmd+D: Toggle debug mode
+      if (!e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        toggleDebugMode();
+        return;
+      }
+
+      // Cmd+R: Reload current view
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('reloadCurrentView'));
         return;
       }
 
@@ -119,5 +135,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, location.pathname, cycleTab]);
+  }, [navigate, location.pathname, cycleTab, toggleDebugMode]);
 }

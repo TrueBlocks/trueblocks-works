@@ -47,6 +47,7 @@ type EnumLists struct {
 	StatusList   []string `json:"statusList"`
 	QualityList  []string `json:"qualityList"`
 	WorkTypeList []string `json:"workTypeList"`
+	YearList     []string `json:"yearList"`
 }
 
 func (a *App) GetEnumLists() EnumLists {
@@ -54,10 +55,24 @@ func (a *App) GetEnumLists() EnumLists {
 	qualityList, _ := a.GetDistinctValues("Works", "quality")
 	workTypeList, _ := a.GetDistinctValues("Works", "type")
 
+	// Get distinct years from Works table
+	var yearList []string
+	rows, err := a.db.Conn().Query(`SELECT DISTINCT year FROM Works WHERE year IS NOT NULL AND year != '' ORDER BY year DESC`)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var year string
+			if rows.Scan(&year) == nil {
+				yearList = append(yearList, year)
+			}
+		}
+	}
+
 	return EnumLists{
 		StatusList:   statusList,
 		QualityList:  qualityList,
 		WorkTypeList: workTypeList,
+		YearList:     yearList,
 	}
 }
 

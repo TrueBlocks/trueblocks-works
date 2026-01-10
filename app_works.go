@@ -3,7 +3,16 @@ package main
 import "works/internal/models"
 
 func (a *App) GetWorks() ([]models.WorkView, error) {
-	return a.db.ListWorks(a.state.GetShowDeleted())
+	works, err := a.db.ListWorks(a.state.GetShowDeleted())
+	if err != nil {
+		return nil, err
+	}
+	// Populate NeedsMove field for each work
+	for i := range works {
+		pathStatus := a.fileOps.CheckPath(&works[i].Work)
+		works[i].NeedsMove = pathStatus == "name changed"
+	}
+	return works, nil
 }
 
 func (a *App) GetWork(id int64) (*models.Work, error) {

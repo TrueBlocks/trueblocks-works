@@ -129,4 +129,5 @@ var CollectionTypeList = []string{
 	"Book",
 	"Other",
 	"Hidden",
+	"System",
 }

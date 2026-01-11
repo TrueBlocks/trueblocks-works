@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"works/internal/fileops"
 	"works/internal/models"
@@ -164,15 +163,9 @@ func (a *App) AutoImportFiles() (ImportResult, error) {
 		return ImportResult{Status: ImportComplete}, nil
 	}
 
-	timestamp := time.Now().Format("2006-01-02 15-04-05")
-	collName := fmt.Sprintf("Imported at %s", timestamp)
-	collType := "Import"
-	collection := &models.Collection{
-		CollectionName: collName,
-		Type:           &collType,
-	}
-	if _, err := a.db.CreateCollection(collection); err != nil {
-		return ImportResult{Status: ImportComplete}, fmt.Errorf("create collection: %w", err)
+	collection, err := a.db.GetOrCreateDefaultCollection()
+	if err != nil {
+		return ImportResult{Status: ImportComplete}, fmt.Errorf("get new works collection: %w", err)
 	}
 
 	session := &ImportSession{

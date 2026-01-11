@@ -122,10 +122,10 @@
       "type": "Other"
     },
     {
-      "attributes": "{}",
+      "attributes": "uneditable",
       "collID": 50065,
       "collectionName": "New Works",
-      "type": "Other"
+      "type": "System"
     }
   ],
   "table": "Collections"

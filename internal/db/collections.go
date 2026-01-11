@@ -342,10 +342,11 @@ func (db *DB) GetOrCreateDefaultCollection() (*models.Collection, error) {
 		return nil, fmt.Errorf("query default collection: %w", err)
 	}
 
-	collType := "Manual"
+	collType := "System"
 	c = &models.Collection{
 		CollectionName: defaultName,
 		Type:           &collType,
+		Attributes:     "uneditable",
 	}
 	if _, err := db.CreateCollection(c); err != nil {
 		return nil, err

@@ -11597,21 +11597,6 @@
       "year": "2001"
     },
     {
-      "accessDate": null,
-      "attributes": "",
-      "courseName": null,
-      "docType": "docx",
-      "draft": null,
-      "nWords": null,
-      "path": "35 Open Ideas/cPoem Idea - 2010 - Children Telling Jokes.docx",
-      "quality": "Okay",
-      "status": "Gestating",
-      "title": "Children Telling Jokes",
-      "type": "Poem Idea",
-      "workID": 21138,
-      "year": "2010"
-    },
-    {
       "accessDate": "7/12/2013 4:53:35 PM",
       "attributes": "",
       "courseName": null,
@@ -28560,6 +28545,21 @@
       "type": "Blog Idea",
       "workID": 23752,
       "year": "2021"
+    },
+    {
+      "accessDate": null,
+      "attributes": "{}",
+      "courseName": null,
+      "docType": "docx",
+      "draft": null,
+      "nWords": null,
+      "path": "35 Open Ideas/cPoem Idea - 2010 - Children Telling Jokes.docx",
+      "quality": "Okay",
+      "status": "Gestating",
+      "title": "Children Telling Jokes",
+      "type": "Poem Idea",
+      "workID": 23774,
+      "year": "2010"
     }
   ],
   "table": "Works"

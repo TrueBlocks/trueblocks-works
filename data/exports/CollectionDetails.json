@@ -1,5 +1,5 @@
 {
-  "count": 1396,
+  "count": 1397,
   "records": [
     {
       "collID": 10170,
@@ -6980,6 +6980,11 @@
       "collID": 50063,
       "position": 156,
       "workID": 3949
+    },
+    {
+      "collID": 50065,
+      "position": 0,
+      "workID": 23774
     }
   ],
   "table": "CollectionDetails"

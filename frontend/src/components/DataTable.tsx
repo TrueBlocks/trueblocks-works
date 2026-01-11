@@ -61,6 +61,7 @@ interface DataTableProps<T> {
   onDelete?: (item: T) => void | Promise<void>;
   onUndelete?: (item: T) => void | Promise<void>;
   onPermanentDelete?: (item: T) => void | Promise<void>;
+  canDelete?: (item: T) => boolean;
 }
 
 const PAGE_SIZE_OPTIONS = [
@@ -92,6 +93,7 @@ export function DataTable<T>({
   onDelete,
   onUndelete,
   onPermanentDelete,
+  canDelete,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 200);
@@ -651,56 +653,57 @@ export function DataTable<T>({
                   <Table.Td style={{ textAlign: 'center' }}>
                     <Group gap="xs" justify="center" wrap="nowrap">
                       {renderExtraCells?.(item)}
-                      {isDeleted ? (
-                        <>
-                          {onUndelete && (
-                            <Tooltip label="Restore">
-                              <ActionIcon
-                                size="sm"
-                                variant="subtle"
-                                color="green"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onUndelete(item);
-                                }}
-                              >
-                                <IconRestore size={16} />
-                              </ActionIcon>
-                            </Tooltip>
-                          )}
-                          {onPermanentDelete && (
-                            <Tooltip label="Remove permanently">
+                      {(canDelete?.(item) ?? true) &&
+                        (isDeleted ? (
+                          <>
+                            {onUndelete && (
+                              <Tooltip label="Restore">
+                                <ActionIcon
+                                  size="sm"
+                                  variant="subtle"
+                                  color="green"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUndelete(item);
+                                  }}
+                                >
+                                  <IconRestore size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                            {onPermanentDelete && (
+                              <Tooltip label="Remove permanently">
+                                <ActionIcon
+                                  size="sm"
+                                  variant="subtle"
+                                  color="red"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPermanentDelete(item);
+                                  }}
+                                >
+                                  <IconX size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </>
+                        ) : (
+                          onDelete && (
+                            <Tooltip label="Delete">
                               <ActionIcon
                                 size="sm"
                                 variant="subtle"
                                 color="red"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onPermanentDelete(item);
+                                  onDelete(item);
                                 }}
                               >
-                                <IconX size={16} />
+                                <IconTrash size={16} />
                               </ActionIcon>
                             </Tooltip>
-                          )}
-                        </>
-                      ) : (
-                        onDelete && (
-                          <Tooltip label="Delete">
-                            <ActionIcon
-                              size="sm"
-                              variant="subtle"
-                              color="red"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onDelete(item);
-                              }}
-                            >
-                              <IconTrash size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )
-                      )}
+                          )
+                        ))}
                     </Group>
                   </Table.Td>
                 )}

@@ -338,6 +338,8 @@ export function CollectionDetail({
     );
   }
 
+  const isUneditable = collection.attributes?.includes('uneditable') ?? false;
+
   return (
     <Stack gap="lg">
       <Paper p="md" withBorder>
@@ -347,51 +349,64 @@ export function CollectionDetail({
           </ActionIcon>
           <IconFolder size={32} />
           <div style={{ flex: 1 }}>
-            <EditableField value={collection.collectionName} onChange={handleNameChange} />
+            {isUneditable ? (
+              <Text size="lg" fw={600}>
+                {collection.collectionName}
+              </Text>
+            ) : (
+              <EditableField value={collection.collectionName} onChange={handleNameChange} />
+            )}
             <Group gap="xs" mt={4}>
-              <CollectionFieldSelect
-                collection={collection}
-                field="type"
-                width={100}
-                onUpdate={(updated) => setCollection(updated as models.CollectionView)}
-              />
+              {isUneditable ? (
+                <Text size="sm" c="dimmed">
+                  {collection.type || 'No type'}
+                </Text>
+              ) : (
+                <CollectionFieldSelect
+                  collection={collection}
+                  field="type"
+                  width={100}
+                  onUpdate={(updated) => setCollection(updated as models.CollectionView)}
+                />
+              )}
               <Text size="sm" c="dimmed">
                 {works.length} work{works.length !== 1 ? 's' : ''}
               </Text>
             </Group>
           </div>
-          {collection.attributes?.includes('deleted') ? (
-            <Group gap={4}>
+          {!isUneditable &&
+            (collection.attributes?.includes('deleted') ? (
+              <Group gap={4}>
+                <ActionIcon
+                  size="lg"
+                  variant="light"
+                  color="green"
+                  onClick={handleUndelete}
+                  aria-label="Restore"
+                >
+                  <IconRestore size={18} />
+                </ActionIcon>
+                <ActionIcon
+                  size="lg"
+                  variant="subtle"
+                  color="red"
+                  onClick={handlePermanentDeleteClick}
+                  aria-label="Remove permanently"
+                >
+                  <IconX size={18} />
+                </ActionIcon>
+              </Group>
+            ) : (
               <ActionIcon
                 size="lg"
                 variant="light"
-                color="green"
-                onClick={handleUndelete}
-                aria-label="Restore"
-              >
-                <IconRestore size={18} />
-              </ActionIcon>
-              <ActionIcon
-                size="lg"
-                variant="subtle"
                 color="red"
-                onClick={handlePermanentDeleteClick}
-                aria-label="Remove permanently"
+                onClick={handleDelete}
+                aria-label="Delete"
               >
-                <IconX size={18} />
+                <IconTrash size={18} />
               </ActionIcon>
-            </Group>
-          ) : (
-            <ActionIcon
-              size="lg"
-              variant="light"
-              color="red"
-              onClick={handleDelete}
-              aria-label="Delete"
-            >
-              <IconTrash size={18} />
-            </ActionIcon>
-          )}
+            ))}
         </Group>
       </Paper>
 

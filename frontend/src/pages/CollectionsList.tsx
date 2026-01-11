@@ -210,6 +210,7 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
         onDelete={handleDelete}
         onUndelete={handleUndelete}
         onPermanentDelete={handlePermanentDeleteClick}
+        canDelete={(c) => !c.attributes?.includes('uneditable')}
       />
       <ConfirmDeleteModal
         opened={deleteModalOpen}

@@ -231,7 +231,11 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
   }, []);
 
   const searchFn = useCallback((work: models.WorkView, search: string) => {
-    return work.title.toLowerCase().includes(search.toLowerCase());
+    const lower = search.toLowerCase();
+    return (
+      work.title.toLowerCase().includes(lower) ||
+      (work.collectionList?.toLowerCase().includes(lower) ?? false)
+    );
   }, []);
 
   const columns: Column<models.WorkView>[] = useMemo(

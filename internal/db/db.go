@@ -29,12 +29,20 @@ func New(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
+	// Force single connection to ensure PRAGMA foreign_keys is always active
+	// This prevents connection pool issues where new connections don't have the pragma set
+	conn.SetMaxOpenConns(1)
+	conn.SetMaxIdleConns(1)
+	conn.SetConnMaxLifetime(0) // connections never expire
+
+	// Enable foreign keys
 	_, err = conn.Exec("PRAGMA foreign_keys = ON")
 	if err != nil {
 		conn.Close()
 		return nil, fmt.Errorf("enable foreign keys: %w", err)
 	}
 
+	// Set WAL mode
 	_, err = conn.Exec("PRAGMA journal_mode = WAL")
 	if err != nil {
 		conn.Close()

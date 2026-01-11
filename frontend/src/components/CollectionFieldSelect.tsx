@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GetDistinctValues, UpdateCollection } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { LogErr, hashColor } from '@/utils';
+import { LogErr, hashColor, showValidationResult } from '@/utils';
 import { CreatableSelect } from './CreatableSelect';
 
 type CollectionField = 'type';
@@ -42,8 +42,12 @@ export function CollectionFieldSelect({
     setValue(newValue);
     try {
       const updated = { ...collection, [field]: newValue };
-      await UpdateCollection(updated as models.Collection);
-      onUpdate?.(updated as models.Collection);
+      const result = await UpdateCollection(updated as models.Collection);
+      if (!showValidationResult(result)) {
+        onUpdate?.(updated as models.Collection);
+      } else {
+        setValue(collection.type || null);
+      }
     } catch (err) {
       LogErr(`Failed to update ${field}:`, err);
       setValue(collection[field] || null);

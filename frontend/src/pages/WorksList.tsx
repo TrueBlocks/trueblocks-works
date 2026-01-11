@@ -10,15 +10,18 @@ import {
   GetAppState,
   DeleteWork,
   UndeleteWork,
+  GetWorkDeleteConfirmation,
+  DeleteWorkPermanent,
   MoveWorkFile,
 } from '@wailsjs/go/main/App';
-import { models } from '@wailsjs/go/models';
+import { models, db } from '@wailsjs/go/models';
 import { notifications } from '@mantine/notifications';
 import {
   StatusBadge,
   QualityBadge,
   TypeBadge,
   NewWorkModal,
+  ConfirmDeleteModal,
   DataTable,
   Column,
 } from '@/components';
@@ -33,6 +36,10 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
   const [works, setWorks] = useState<models.WorkView[]>([]);
   const [loading, setLoading] = useState(true);
   const [newModalOpen, setNewModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deletingWorkID, setDeletingWorkID] = useState<number | null>(null);
   const [filterOptions, setFilterOptions] = useState<{
     years: string[];
     types: string[];
@@ -124,6 +131,47 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
       });
     }
   }, []);
+
+  const handlePermanentDeleteClick = useCallback(async (work: models.WorkView) => {
+    try {
+      const conf = await GetWorkDeleteConfirmation(work.workID);
+      setDeleteConfirmation(conf);
+      setDeletingWorkID(work.workID);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, []);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!deletingWorkID) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteWorkPermanent(deletingWorkID);
+      setDeleteModalOpen(false);
+      setDeletingWorkID(null);
+      notifications.show({
+        message: 'Work permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to permanently delete work:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deletingWorkID]);
 
   const handleMove = useCallback(
     async (work: models.WorkView) => {
@@ -253,6 +301,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         searchFn={searchFn}
         onDelete={handleDelete}
         onUndelete={handleUndelete}
+        onPermanentDelete={handlePermanentDeleteClick}
         renderExtraCells={renderExtraCells}
         headerActions={
           <ActionIcon variant="light" size="lg" onClick={() => setNewModalOpen(true)}>
@@ -265,6 +314,17 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         opened={newModalOpen}
         onClose={() => setNewModalOpen(false)}
         onCreated={handleCreated}
+      />
+
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeletingWorkID(null);
+        }}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
       />
     </>
   );

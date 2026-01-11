@@ -21,6 +21,31 @@ export namespace backup {
 
 }
 
+export namespace db {
+	
+	export class DeleteConfirmation {
+	    entityType: string;
+	    entityName: string;
+	    noteCount: number;
+	    submissionCount: number;
+	    collectionCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DeleteConfirmation(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.entityType = source["entityType"];
+	        this.entityName = source["entityName"];
+	        this.noteCount = source["noteCount"];
+	        this.submissionCount = source["submissionCount"];
+	        this.collectionCount = source["collectionCount"];
+	    }
+	}
+
+}
+
 export namespace fileops {
 	
 	export class Config {
@@ -1473,6 +1498,71 @@ export namespace state {
 	
 	
 	
+
+}
+
+export namespace validation {
+	
+	export class FieldError {
+	    field: string;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FieldError(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.field = source["field"];
+	        this.message = source["message"];
+	    }
+	}
+	export class FieldWarning {
+	    field: string;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FieldWarning(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.field = source["field"];
+	        this.message = source["message"];
+	    }
+	}
+	export class ValidationResult {
+	    errors?: FieldError[];
+	    warnings?: FieldWarning[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ValidationResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.errors = this.convertValues(source["errors"], FieldError);
+	        this.warnings = this.convertValues(source["warnings"], FieldWarning);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 
 }
 

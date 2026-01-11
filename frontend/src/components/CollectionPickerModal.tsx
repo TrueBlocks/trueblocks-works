@@ -22,7 +22,7 @@ import {
   SetLastCollectionType,
 } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { LogErr } from '@/utils';
+import { LogErr, showValidationResult } from '@/utils';
 import { TypeBadge } from './TypeBadge';
 
 interface CollectionPickerModalProps {
@@ -107,7 +107,11 @@ export function CollectionPickerModal({
         collectionName: newName.trim(),
         type: newType || 'Other',
       });
-      await CreateCollection(coll);
+      const result = await CreateCollection(coll);
+
+      if (showValidationResult(result)) {
+        return;
+      }
 
       if (newType) {
         await SetLastCollectionType(newType);

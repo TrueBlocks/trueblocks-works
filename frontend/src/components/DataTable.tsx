@@ -13,7 +13,7 @@ import {
   Tooltip,
 } from '@mantine/core';
 import { useDebouncedValue, useHotkeys } from '@mantine/hooks';
-import { IconSearch, IconTrash, IconRestore } from '@tabler/icons-react';
+import { IconSearch, IconTrash, IconRestore, IconX } from '@tabler/icons-react';
 import { SortableHeader } from './SortableHeader';
 import { ColumnFilterPopover } from './ColumnFilterPopover';
 import { NumericFilterPopover } from './NumericFilterPopover';
@@ -60,6 +60,7 @@ interface DataTableProps<T> {
   searchFn?: (item: T, search: string) => boolean;
   onDelete?: (item: T) => void | Promise<void>;
   onUndelete?: (item: T) => void | Promise<void>;
+  onPermanentDelete?: (item: T) => void | Promise<void>;
 }
 
 const PAGE_SIZE_OPTIONS = [
@@ -90,6 +91,7 @@ export function DataTable<T>({
   searchFn,
   onDelete,
   onUndelete,
+  onPermanentDelete,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 200);
@@ -645,12 +647,13 @@ export function DataTable<T>({
                       : String((item as Record<string, unknown>)[col.key] ?? '-')}
                   </Table.Td>
                 ))}
-                {(onDelete || onUndelete) && (
+                {(onDelete || onUndelete || onPermanentDelete) && (
                   <Table.Td style={{ textAlign: 'center' }}>
                     <Group gap="xs" justify="center" wrap="nowrap">
                       {renderExtraCells?.(item)}
-                      {isDeleted
-                        ? onUndelete && (
+                      {isDeleted ? (
+                        <>
+                          {onUndelete && (
                             <Tooltip label="Restore">
                               <ActionIcon
                                 size="sm"
@@ -664,22 +667,40 @@ export function DataTable<T>({
                                 <IconRestore size={16} />
                               </ActionIcon>
                             </Tooltip>
-                          )
-                        : onDelete && (
-                            <Tooltip label="Delete">
+                          )}
+                          {onPermanentDelete && (
+                            <Tooltip label="Remove permanently">
                               <ActionIcon
                                 size="sm"
                                 variant="subtle"
                                 color="red"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  onDelete(item);
+                                  onPermanentDelete(item);
                                 }}
                               >
-                                <IconTrash size={16} />
+                                <IconX size={16} />
                               </ActionIcon>
                             </Tooltip>
                           )}
+                        </>
+                      ) : (
+                        onDelete && (
+                          <Tooltip label="Delete">
+                            <ActionIcon
+                              size="sm"
+                              variant="subtle"
+                              color="red"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(item);
+                              }}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )
+                      )}
                     </Group>
                   </Table.Td>
                 )}

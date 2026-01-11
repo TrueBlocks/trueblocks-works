@@ -3,7 +3,9 @@
 import {main} from '../models';
 import {backup} from '../models';
 import {models} from '../models';
+import {validation} from '../models';
 import {state} from '../models';
+import {db} from '../models';
 import {fileops} from '../models';
 import {settings} from '../models';
 
@@ -29,29 +31,37 @@ export function CompleteSetup():Promise<void>;
 
 export function CreateBackup(arg1:string):Promise<backup.BackupInfo>;
 
-export function CreateCollection(arg1:models.Collection):Promise<void>;
+export function CreateCollection(arg1:models.Collection):Promise<validation.ValidationResult>;
 
 export function CreateNewWork(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<models.Work>;
 
-export function CreateNote(arg1:models.Note):Promise<void>;
+export function CreateNote(arg1:models.Note):Promise<validation.ValidationResult>;
 
-export function CreateOrganization(arg1:models.Organization):Promise<void>;
+export function CreateOrganization(arg1:models.Organization):Promise<validation.ValidationResult>;
 
-export function CreateSubmission(arg1:models.Submission):Promise<void>;
+export function CreateSubmission(arg1:models.Submission):Promise<validation.ValidationResult>;
 
-export function CreateWork(arg1:models.Work):Promise<void>;
+export function CreateWork(arg1:models.Work):Promise<validation.ValidationResult>;
 
 export function DeleteBackup(arg1:string):Promise<void>;
 
 export function DeleteCollection(arg1:number):Promise<void>;
 
+export function DeleteCollectionPermanent(arg1:number):Promise<void>;
+
 export function DeleteNote(arg1:number):Promise<void>;
 
 export function DeleteOrganization(arg1:number):Promise<void>;
 
+export function DeleteOrganizationPermanent(arg1:number):Promise<void>;
+
 export function DeleteSubmission(arg1:number):Promise<void>;
 
+export function DeleteSubmissionPermanent(arg1:number):Promise<void>;
+
 export function DeleteWork(arg1:number):Promise<void>;
+
+export function DeleteWorkPermanent(arg1:number):Promise<void>;
 
 export function DetectLibreOffice():Promise<string>;
 
@@ -68,6 +78,8 @@ export function GetAllSubmissionViews():Promise<Array<models.SubmissionView>>;
 export function GetAppState():Promise<state.AppState>;
 
 export function GetCollection(arg1:number):Promise<models.Collection>;
+
+export function GetCollectionDeleteConfirmation(arg1:number):Promise<db.DeleteConfirmation>;
 
 export function GetCollectionWorks(arg1:number):Promise<Array<models.CollectionWork>>;
 
@@ -95,6 +107,8 @@ export function GetNotes(arg1:string,arg2:number):Promise<Array<models.Note>>;
 
 export function GetOrganization(arg1:number):Promise<models.Organization>;
 
+export function GetOrganizationDeleteConfirmation(arg1:number):Promise<db.DeleteConfirmation>;
+
 export function GetOrganizations():Promise<Array<models.Organization>>;
 
 export function GetOrganizationsWithNotes():Promise<Array<models.OrganizationWithNotes>>;
@@ -117,6 +131,8 @@ export function GetSettings():Promise<settings.Settings>;
 
 export function GetSubmission(arg1:number):Promise<models.Submission>;
 
+export function GetSubmissionDeleteConfirmation(arg1:number):Promise<db.DeleteConfirmation>;
+
 export function GetSubmissionViewsByOrg(arg1:number):Promise<Array<models.SubmissionView>>;
 
 export function GetSubmissionViewsByWork(arg1:number):Promise<Array<models.SubmissionView>>;
@@ -134,6 +150,8 @@ export function GetTableState(arg1:string):Promise<state.TableState>;
 export function GetWork(arg1:number):Promise<models.Work>;
 
 export function GetWorkCollections(arg1:number):Promise<Array<models.CollectionDetail>>;
+
+export function GetWorkDeleteConfirmation(arg1:number):Promise<db.DeleteConfirmation>;
 
 export function GetWorkFullPath(arg1:number):Promise<string>;
 
@@ -209,24 +227,24 @@ export function ToggleShowDeleted():Promise<boolean>;
 
 export function TouchWorkAccessDate(arg1:number):Promise<void>;
 
-export function UndeleteCollection(arg1:number):Promise<void>;
+export function UndeleteCollection(arg1:number):Promise<validation.ValidationResult>;
 
-export function UndeleteOrganization(arg1:number):Promise<void>;
+export function UndeleteOrganization(arg1:number):Promise<validation.ValidationResult>;
 
-export function UndeleteSubmission(arg1:number):Promise<void>;
+export function UndeleteSubmission(arg1:number):Promise<validation.ValidationResult>;
 
-export function UndeleteWork(arg1:number):Promise<void>;
+export function UndeleteWork(arg1:number):Promise<validation.ValidationResult>;
 
-export function UpdateCollection(arg1:models.Collection):Promise<void>;
+export function UpdateCollection(arg1:models.Collection):Promise<validation.ValidationResult>;
 
-export function UpdateNote(arg1:models.Note):Promise<void>;
+export function UpdateNote(arg1:models.Note):Promise<validation.ValidationResult>;
 
-export function UpdateOrganization(arg1:models.Organization):Promise<void>;
+export function UpdateOrganization(arg1:models.Organization):Promise<validation.ValidationResult>;
 
 export function UpdateSettings(arg1:settings.Settings):Promise<void>;
 
-export function UpdateSubmission(arg1:models.Submission):Promise<void>;
+export function UpdateSubmission(arg1:models.Submission):Promise<validation.ValidationResult>;
 
-export function UpdateWork(arg1:models.Work):Promise<void>;
+export function UpdateWork(arg1:models.Work):Promise<validation.ValidationResult>;
 
 export function UpdateWorkWithWorkflow(arg1:models.Work):Promise<main.WorkUpdateResult>;

@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack, Grid, Loader, Flex, Text, ActionIcon, Tooltip, Group, Button } from '@mantine/core';
-import { IconChevronUp, IconChevronDown, IconTrash, IconRestore } from '@tabler/icons-react';
+import { Stack, Grid, Loader, Flex, Text, ActionIcon, Tooltip, Group } from '@mantine/core';
+import { IconChevronUp, IconChevronDown, IconTrash, IconRestore, IconX } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { LogErr } from '@/utils';
+import { LogErr, showValidationResult } from '@/utils';
 import { useNotes } from '@/hooks';
 import {
   GetOrganization,
@@ -14,9 +14,17 @@ import {
   UpdateOrganization,
   DeleteOrganization,
   UndeleteOrganization,
+  GetOrganizationDeleteConfirmation,
+  DeleteOrganizationPermanent,
 } from '@wailsjs/go/main/App';
-import { models } from '@wailsjs/go/models';
-import { OrgHeader, OrgDetails, NotesPortal, SubmissionsPortal } from '@/components';
+import { models, db } from '@wailsjs/go/models';
+import {
+  OrgHeader,
+  OrgDetails,
+  NotesPortal,
+  SubmissionsPortal,
+  ConfirmDeleteModal,
+} from '@/components';
 
 interface OrganizationDetailProps {
   organizationId: number;
@@ -31,6 +39,9 @@ export function OrganizationDetail({
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const {
     notes,
@@ -194,6 +205,47 @@ export function OrganizationDetail({
     }
   }, [org, loadData]);
 
+  const handlePermanentDeleteClick = useCallback(async () => {
+    if (!org) return;
+    try {
+      const conf = await GetOrganizationDeleteConfirmation(org.orgID);
+      setDeleteConfirmation(conf);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [org]);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!org) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteOrganizationPermanent(org.orgID);
+      setDeleteModalOpen(false);
+      notifications.show({
+        message: 'Organization permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      navigate('/organizations');
+    } catch (err) {
+      LogErr('Failed to permanently delete organization:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [org, navigate]);
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -242,29 +294,41 @@ export function OrganizationDetail({
         onNameChange={async (newName) => {
           const updatedOrg = { ...org, name: newName } as models.Organization;
           setOrg(updatedOrg);
-          await UpdateOrganization(updatedOrg);
+          const result = await UpdateOrganization(updatedOrg);
+          showValidationResult(result);
         }}
         actions={
           org.attributes?.includes('deleted') ? (
-            <Button
-              size="xs"
-              variant="light"
-              color="green"
-              leftSection={<IconRestore size={14} />}
-              onClick={handleUndelete}
-            >
-              Restore
-            </Button>
+            <Group gap={4}>
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color="green"
+                onClick={handleUndelete}
+                aria-label="Restore"
+              >
+                <IconRestore size={18} />
+              </ActionIcon>
+              <ActionIcon
+                size="lg"
+                variant="subtle"
+                color="red"
+                onClick={handlePermanentDeleteClick}
+                aria-label="Remove permanently"
+              >
+                <IconX size={18} />
+              </ActionIcon>
+            </Group>
           ) : (
-            <Button
-              size="xs"
+            <ActionIcon
+              size="lg"
               variant="light"
               color="red"
-              leftSection={<IconTrash size={14} />}
               onClick={handleDelete}
+              aria-label="Delete"
             >
-              Delete
-            </Button>
+              <IconTrash size={18} />
+            </ActionIcon>
           )
         }
       />
@@ -275,7 +339,8 @@ export function OrganizationDetail({
             org={org}
             onUpdate={async (updatedOrg) => {
               setOrg(updatedOrg);
-              await UpdateOrganization(updatedOrg);
+              const result = await UpdateOrganization(updatedOrg);
+              showValidationResult(result);
             }}
           />
         </Grid.Col>
@@ -301,6 +366,13 @@ export function OrganizationDetail({
           </Stack>
         </Grid.Col>
       </Grid>
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
+      />
     </Stack>
   );
 }

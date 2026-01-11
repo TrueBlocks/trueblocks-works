@@ -58,7 +58,7 @@ func (a *App) UpdateWorkWithWorkflow(work *models.Work) (*WorkUpdateResult, erro
 		}
 	}
 
-	if err := a.db.UpdateWork(work); err != nil {
+	if _, err := a.db.UpdateWork(work); err != nil {
 		return nil, err
 	}
 
@@ -73,5 +73,8 @@ func (a *App) TouchWorkAccessDate(workID int64) error {
 	}
 	now := time.Now().Format(time.RFC3339)
 	work.AccessDate = &now
-	return a.db.UpdateWork(work)
+	if _, err := a.db.UpdateWork(work); err != nil {
+		return err
+	}
+	return nil
 }

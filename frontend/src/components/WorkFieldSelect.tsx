@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GetEnumLists, UpdateWork } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { LogErr, hashColor } from '@/utils';
+import { LogErr, hashColor, showValidationResult } from '@/utils';
 import { CreatableSelect } from './CreatableSelect';
 
 type WorkField = 'status' | 'type' | 'quality' | 'year';
@@ -44,8 +44,12 @@ export function WorkFieldSelect({
     setValue(newValue);
     try {
       const updated = { ...work, [field]: newValue };
-      await UpdateWork(updated as models.Work);
-      onUpdate?.(updated as models.Work);
+      const result = await UpdateWork(updated as models.Work);
+      if (!showValidationResult(result)) {
+        onUpdate?.(updated as models.Work);
+      } else {
+        setValue((work[field] as string) || null);
+      }
     } catch (err) {
       LogErr(`Failed to update ${field}:`, err);
       setValue(work[field] ?? null);

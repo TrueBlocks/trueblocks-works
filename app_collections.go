@@ -1,6 +1,10 @@
 package main
 
-import "works/internal/models"
+import (
+	"works/internal/db"
+	"works/internal/models"
+	"works/internal/validation"
+)
 
 func (a *App) GetCollections() ([]models.CollectionView, error) {
 	return a.db.ListCollections(a.state.GetShowDeleted())
@@ -10,11 +14,11 @@ func (a *App) GetCollection(id int64) (*models.Collection, error) {
 	return a.db.GetCollection(id)
 }
 
-func (a *App) CreateCollection(coll *models.Collection) error {
+func (a *App) CreateCollection(coll *models.Collection) (*validation.ValidationResult, error) {
 	return a.db.CreateCollection(coll)
 }
 
-func (a *App) UpdateCollection(coll *models.Collection) error {
+func (a *App) UpdateCollection(coll *models.Collection) (*validation.ValidationResult, error) {
 	return a.db.UpdateCollection(coll)
 }
 
@@ -42,6 +46,14 @@ func (a *App) DeleteCollection(id int64) error {
 	return a.db.DeleteCollection(id)
 }
 
-func (a *App) UndeleteCollection(id int64) error {
+func (a *App) UndeleteCollection(id int64) (*validation.ValidationResult, error) {
 	return a.db.UndeleteCollection(id)
+}
+
+func (a *App) GetCollectionDeleteConfirmation(id int64) (*db.DeleteConfirmation, error) {
+	return a.db.GetCollectionDeleteConfirmation(id)
+}
+
+func (a *App) DeleteCollectionPermanent(id int64) error {
+	return a.db.DeleteCollectionPermanent(id)
 }

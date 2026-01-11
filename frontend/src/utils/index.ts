@@ -7,6 +7,7 @@ export const LogWarn = (...args: unknown[]): void => LogWarning(args.map(String)
 
 export { matchesFilter, matchesNumericFilter, intersectFilter } from './filterHelpers';
 export { getEntityPageURL, toggleEntityPageTab } from './navigation';
+export { showValidationResult } from './validation';
 
 const HASH_COLORS = [
   'blue',

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Modal, TextInput, Select, Button, Group, Stack } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { GetEnumLists, CreateNewWork } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { LogErr } from '@/utils';
@@ -32,15 +33,27 @@ export function NewWorkModal({ opened, onClose, onCreated }: NewWorkModalProps) 
   }, [opened]);
 
   const handleSubmit = async () => {
-    if (!title || !workType || !year || !quality || !status) return;
+    if (!title || !workType || !year || !quality || !status) {
+      return;
+    }
 
     setLoading(true);
     try {
       const work = await CreateNewWork(title, workType, year, quality, status);
+      notifications.show({
+        title: 'Success',
+        message: `Created work: ${title}`,
+        color: 'green',
+      });
       onCreated?.(work);
       handleClose();
     } catch (err) {
       LogErr('Failed to create work:', err);
+      notifications.show({
+        title: 'Error',
+        message: String(err) || 'Failed to create work',
+        color: 'red',
+      });
     } finally {
       setLoading(false);
     }
@@ -95,10 +108,10 @@ export function NewWorkModal({ opened, onClose, onCreated }: NewWorkModalProps) 
         <Select label="Status" data={statusOptions} value={status} onChange={setStatus} required />
 
         <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={handleClose}>
+          <Button variant="subtle" onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} loading={loading} disabled={!title}>
+          <Button onClick={handleSubmit} loading={loading} disabled={!title || loading}>
             Create
           </Button>
         </Group>

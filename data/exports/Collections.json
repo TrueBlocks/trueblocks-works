@@ -1,5 +1,5 @@
 {
-  "count": 19,
+  "count": 22,
   "records": [
     {
       "attributes": "",
@@ -113,6 +113,24 @@
       "attributes": "",
       "collID": 50050,
       "collectionName": "May 2015",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50063,
+      "collectionName": "Blog Posts and Ideas",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50064,
+      "collectionName": "Imported at 2026-01-10 10-33-27",
+      "type": "Import"
+    },
+    {
+      "attributes": "{}",
+      "collID": 50065,
+      "collectionName": "New Works",
       "type": "Other"
     }
   ],

@@ -1,6 +1,10 @@
 package main
 
-import "works/internal/models"
+import (
+	"works/internal/db"
+	"works/internal/models"
+	"works/internal/validation"
+)
 
 func (a *App) GetSubmissions() ([]models.Submission, error) {
 	return a.db.ListSubmissions(a.state.GetShowDeleted())
@@ -26,11 +30,11 @@ func (a *App) GetSubmissionViewsByOrg(orgID int64) ([]models.SubmissionView, err
 	return a.db.ListSubmissionViewsByOrg(orgID, a.state.GetShowDeleted())
 }
 
-func (a *App) CreateSubmission(sub *models.Submission) error {
+func (a *App) CreateSubmission(sub *models.Submission) (*validation.ValidationResult, error) {
 	return a.db.CreateSubmission(sub)
 }
 
-func (a *App) UpdateSubmission(sub *models.Submission) error {
+func (a *App) UpdateSubmission(sub *models.Submission) (*validation.ValidationResult, error) {
 	return a.db.UpdateSubmission(sub)
 }
 
@@ -38,6 +42,14 @@ func (a *App) DeleteSubmission(id int64) error {
 	return a.db.DeleteSubmission(id)
 }
 
-func (a *App) UndeleteSubmission(id int64) error {
+func (a *App) UndeleteSubmission(id int64) (*validation.ValidationResult, error) {
 	return a.db.UndeleteSubmission(id)
+}
+
+func (a *App) GetSubmissionDeleteConfirmation(id int64) (*db.DeleteConfirmation, error) {
+	return a.db.GetSubmissionDeleteConfirmation(id)
+}
+
+func (a *App) DeleteSubmissionPermanent(id int64) error {
+	return a.db.DeleteSubmissionPermanent(id)
 }

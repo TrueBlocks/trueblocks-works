@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router';
 import { models } from '@wailsjs/go/models';
 import { UpdateWork } from '@wailsjs/go/main/App';
 import { StatusSelect, TypeSelect, QualitySelect, YearSelect, EditableField } from '@/components';
-import { LogErr } from '@/utils';
+import { LogErr, showValidationResult } from '@/utils';
 import { ReactNode } from 'react';
 
 interface WorkHeaderProps {
@@ -20,8 +20,10 @@ export function WorkHeader({ work, actions, onWorkUpdate }: WorkHeaderProps) {
     if (newTitle === work.title) return;
     const updated = { ...work, title: newTitle };
     try {
-      await UpdateWork(updated as models.Work);
-      onWorkUpdate?.(updated as models.Work);
+      const result = await UpdateWork(updated as models.Work);
+      if (!showValidationResult(result)) {
+        onWorkUpdate?.(updated as models.Work);
+      }
     } catch (err) {
       LogErr('Failed to update title:', err);
     }

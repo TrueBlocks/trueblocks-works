@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GetDistinctValues, UpdateSubmission } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { LogErr, hashColor } from '@/utils';
+import { LogErr, hashColor, showValidationResult } from '@/utils';
 import { CreatableSelect } from './CreatableSelect';
 
 type SubmissionField = 'submissionType' | 'responseType';
@@ -48,8 +48,12 @@ export function SubmissionFieldSelect({
     setValue(newValue);
     try {
       const updated = { ...submission, [field]: newValue };
-      await UpdateSubmission(updated as models.Submission);
-      onUpdate?.(updated as models.Submission);
+      const result = await UpdateSubmission(updated as models.Submission);
+      if (!showValidationResult(result)) {
+        onUpdate?.(updated as models.Submission);
+      } else {
+        setValue((submission[field] as string) || null);
+      }
     } catch (err) {
       LogErr(`Failed to update ${field}:`, err);
       setValue(submission[field] || null);

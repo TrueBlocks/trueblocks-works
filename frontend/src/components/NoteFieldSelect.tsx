@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GetDistinctValues, UpdateNote } from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
-import { LogErr, hashColor } from '@/utils';
+import { LogErr, hashColor, showValidationResult } from '@/utils';
 import { CreatableSelect } from './CreatableSelect';
 
 interface NoteFieldSelectProps {
@@ -33,8 +33,12 @@ export function NoteFieldSelect({ note, colorMap, width = 100, onUpdate }: NoteF
     setValue(newValue);
     try {
       const updated = { ...note, type: newValue };
-      await UpdateNote(updated as models.Note);
-      onUpdate?.(updated as models.Note);
+      const result = await UpdateNote(updated as models.Note);
+      if (!showValidationResult(result)) {
+        onUpdate?.(updated as models.Note);
+      } else {
+        setValue(note.type || null);
+      }
     } catch (err) {
       LogErr('Failed to update note type:', err);
       setValue(note.type || null);

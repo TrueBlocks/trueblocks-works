@@ -10,7 +10,7 @@ import (
 	"works/internal/models"
 )
 
-var Extensions = []string{".rtf", ".docx", ".txt", ""}
+var Extensions = []string{".docx", ".txt", ""}
 
 type Config struct {
 	BaseFolderPath       string

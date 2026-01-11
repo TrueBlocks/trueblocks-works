@@ -11,7 +11,6 @@ import {
   Group,
   Badge,
   ActionIcon,
-  Button,
   Tooltip,
 } from '@mantine/core';
 import {
@@ -21,6 +20,7 @@ import {
   IconChevronUp,
   IconChevronDown,
   IconRestore,
+  IconX,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -31,10 +31,12 @@ import {
   GetOrganization,
   DeleteSubmission,
   UndeleteSubmission,
+  GetSubmissionDeleteConfirmation,
+  DeleteSubmissionPermanent,
 } from '@wailsjs/go/main/App';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
-import { models } from '@wailsjs/go/models';
-import { SubmissionFieldSelect } from '@/components';
+import { models, db } from '@wailsjs/go/models';
+import { SubmissionFieldSelect, ConfirmDeleteModal } from '@/components';
 import dayjs from 'dayjs';
 
 function Field({ label, value }: { label: string; value?: string | number }) {
@@ -60,6 +62,9 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
   const [work, setWork] = useState<models.Work | null>(null);
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!submissionId) return;
@@ -216,6 +221,47 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
     }
   }, [submission, loadData]);
 
+  const handlePermanentDeleteClick = useCallback(async () => {
+    if (!submission) return;
+    try {
+      const conf = await GetSubmissionDeleteConfirmation(submission.submissionID);
+      setDeleteConfirmation(conf);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [submission]);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!submission) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteSubmissionPermanent(submission.submissionID);
+      setDeleteModalOpen(false);
+      notifications.show({
+        message: 'Submission permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      navigate('/submissions');
+    } catch (err) {
+      LogErr('Failed to permanently delete submission:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [submission, navigate]);
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -294,25 +340,36 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
             </Badge>
           )}
           {submission.attributes?.includes('deleted') ? (
-            <Button
-              size="xs"
-              variant="light"
-              color="green"
-              leftSection={<IconRestore size={14} />}
-              onClick={handleUndelete}
-            >
-              Restore
-            </Button>
+            <Group gap={4}>
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color="green"
+                onClick={handleUndelete}
+                aria-label="Restore"
+              >
+                <IconRestore size={18} />
+              </ActionIcon>
+              <ActionIcon
+                size="lg"
+                variant="subtle"
+                color="red"
+                onClick={handlePermanentDeleteClick}
+                aria-label="Remove permanently"
+              >
+                <IconX size={18} />
+              </ActionIcon>
+            </Group>
           ) : (
-            <Button
-              size="xs"
+            <ActionIcon
+              size="lg"
               variant="light"
               color="red"
-              leftSection={<IconTrash size={14} />}
               onClick={handleDelete}
+              aria-label="Delete"
             >
-              Delete
-            </Button>
+              <IconTrash size={18} />
+            </ActionIcon>
           )}
         </Group>
       </Group>
@@ -433,6 +490,13 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
           </SimpleGrid>
         </Paper>
       )}
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
+      />
     </Stack>
   );
 }

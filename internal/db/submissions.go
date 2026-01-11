@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"works/internal/models"
+	"works/internal/validation"
 )
 
 const (
@@ -13,7 +14,66 @@ const (
 	orderBySubmissionDateDesc = ` ORDER BY s.submission_date DESC`
 )
 
-func (db *DB) CreateSubmission(s *models.Submission) error {
+// validateSubmission validates a Submission entity
+func (db *DB) validateSubmission(s *models.Submission) validation.ValidationResult {
+	result := validation.ValidationResult{}
+
+	// Required fields
+	if s.WorkID <= 0 {
+		result.AddError("workID", "workID is required")
+	}
+	if s.OrgID <= 0 {
+		result.AddError("orgID", "orgID is required")
+	}
+
+	// Validate foreign keys exist
+	if s.WorkID > 0 {
+		work, err := db.GetWork(s.WorkID)
+		if err != nil {
+			result.AddError("workID", "Error validating workID: "+err.Error())
+		} else if work == nil {
+			result.AddError("workID", "Work does not exist")
+		}
+	}
+
+	if s.OrgID > 0 {
+		org, err := db.GetOrganization(s.OrgID)
+		if err != nil {
+			result.AddError("orgID", "Error validating orgID: "+err.Error())
+		} else if org == nil {
+			result.AddError("orgID", "Organization does not exist")
+		}
+	}
+
+	// Validate cost is non-negative
+	if s.Cost != nil {
+		result.AddIfError(validation.NonNegativeFloat(*s.Cost, "cost"))
+	}
+
+	// Validate URLs
+	if s.WebAddress != nil {
+		result.AddIfError(validation.ValidURL(*s.WebAddress, "webAddress"))
+	}
+
+	// Apply defaults
+	if s.Attributes == "" {
+		s.Attributes = "{}"
+	}
+	if s.ResponseType == nil || *s.ResponseType == "" {
+		waiting := "Waiting"
+		s.ResponseType = &waiting
+	}
+
+	return result
+}
+
+func (db *DB) CreateSubmission(s *models.Submission) (*validation.ValidationResult, error) {
+	// Validate the submission
+	result := db.validateSubmission(s)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	now := time.Now().Format(time.RFC3339)
 	query := `INSERT INTO Submissions (
 		workID, orgID, draft, submission_date, submission_type,
@@ -21,23 +81,23 @@ func (db *DB) CreateSubmission(s *models.Submission) error {
 		cost, user_id, password, web_address, attributes, created_at, modified_at
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	result, err := db.conn.Exec(query,
+	sqlResult, err := db.conn.Exec(query,
 		s.WorkID, s.OrgID, s.Draft, s.SubmissionDate, s.SubmissionType,
 		s.QueryDate, s.ResponseDate, s.ResponseType, s.ContestName,
 		s.Cost, s.UserID, s.Password, s.WebAddress, s.Attributes, now, now,
 	)
 	if err != nil {
-		return fmt.Errorf("insert submission: %w", err)
+		return nil, fmt.Errorf("insert submission: %w", err)
 	}
 
-	id, err := result.LastInsertId()
+	id, err := sqlResult.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("get last insert id: %w", err)
+		return nil, fmt.Errorf("get last insert id: %w", err)
 	}
 	s.SubmissionID = id
 	s.CreatedAt = now
 	s.ModifiedAt = now
-	return nil
+	return &result, nil
 }
 
 func (db *DB) GetSubmission(id int64) (*models.Submission, error) {
@@ -63,7 +123,13 @@ func (db *DB) GetSubmission(id int64) (*models.Submission, error) {
 	return s, nil
 }
 
-func (db *DB) UpdateSubmission(s *models.Submission) error {
+func (db *DB) UpdateSubmission(s *models.Submission) (*validation.ValidationResult, error) {
+	// Validate the submission
+	result := db.validateSubmission(s)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	now := time.Now().Format(time.RFC3339)
 	query := `UPDATE Submissions SET
 		workID=?, orgID=?, draft=?, submission_date=?, submission_type=?,
@@ -77,10 +143,10 @@ func (db *DB) UpdateSubmission(s *models.Submission) error {
 		s.Cost, s.UserID, s.Password, s.WebAddress, s.Attributes, now, s.SubmissionID,
 	)
 	if err != nil {
-		return fmt.Errorf("update submission: %w", err)
+		return nil, fmt.Errorf("update submission: %w", err)
 	}
 	s.ModifiedAt = now
-	return nil
+	return &result, nil
 }
 
 func (db *DB) DeleteSubmission(id int64) error {
@@ -93,7 +159,7 @@ func (db *DB) DeleteSubmission(id int64) error {
 	}
 
 	submission.Attributes = models.MarkDeleted(submission.Attributes)
-	if err := db.UpdateSubmission(submission); err != nil {
+	if _, err := db.UpdateSubmission(submission); err != nil {
 		return fmt.Errorf("mark submission deleted: %w", err)
 	}
 
@@ -105,18 +171,25 @@ func (db *DB) DeleteSubmission(id int64) error {
 	return nil
 }
 
-func (db *DB) UndeleteSubmission(id int64) error {
+func (db *DB) UndeleteSubmission(id int64) (*validation.ValidationResult, error) {
 	submission, err := db.GetSubmission(id)
 	if err != nil {
-		return fmt.Errorf("get submission: %w", err)
+		return nil, fmt.Errorf("get submission: %w", err)
 	}
 	if submission == nil {
-		return fmt.Errorf("submission not found")
+		return nil, fmt.Errorf("submission not found")
 	}
 
 	submission.Attributes = models.Undelete(submission.Attributes)
-	if err := db.UpdateSubmission(submission); err != nil {
-		return fmt.Errorf("undelete submission: %w", err)
+
+	// Validate before undeleting
+	result := db.validateSubmission(submission)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
+	if validResult, err := db.UpdateSubmission(submission); err != nil || !validResult.IsValid() {
+		return validResult, fmt.Errorf("undelete submission: %w", err)
 	}
 
 	notes, _ := db.GetNotes("submission", id, true)
@@ -126,7 +199,7 @@ func (db *DB) UndeleteSubmission(id int64) error {
 		}
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (db *DB) ListSubmissions(showDeleted bool) ([]models.Submission, error) {
@@ -327,4 +400,50 @@ func (db *DB) ListSubmissionViewsByOrg(orgID int64, showDeleted bool) ([]models.
 		views = append(views, v)
 	}
 	return views, rows.Err()
+}
+
+// GetSubmissionDeleteConfirmation returns information about what will be deleted
+func (db *DB) GetSubmissionDeleteConfirmation(submissionID int64) (*DeleteConfirmation, error) {
+	sub, err := db.GetSubmission(submissionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get work title for display
+	work, _ := db.GetWork(sub.WorkID)
+	org, _ := db.GetOrganization(sub.OrgID)
+	displayName := "Submission"
+	if work != nil && org != nil {
+		displayName = work.Title + " → " + org.Name
+	}
+
+	conf := &DeleteConfirmation{
+		EntityType: "submission",
+		EntityName: displayName,
+	}
+
+	// Count notes
+	err = db.conn.QueryRow(`SELECT COUNT(*) FROM Notes WHERE entity_type = 'submission' AND entity_id = ?`, submissionID).Scan(&conf.NoteCount)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
+}
+
+// DeleteSubmissionPermanent permanently deletes a submission and all its orphaned data
+func (db *DB) DeleteSubmissionPermanent(submissionID int64) error {
+	// Delete notes manually (polymorphic FK)
+	_, err := db.conn.Exec(`DELETE FROM Notes WHERE entity_type = 'submission' AND entity_id = ?`, submissionID)
+	if err != nil {
+		return fmt.Errorf("delete submission notes: %w", err)
+	}
+
+	// Delete submission
+	_, err = db.conn.Exec(`DELETE FROM Submissions WHERE submissionID = ?`, submissionID)
+	if err != nil {
+		return fmt.Errorf("delete submission: %w", err)
+	}
+
+	return nil
 }

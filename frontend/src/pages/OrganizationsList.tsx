@@ -10,9 +10,11 @@ import {
   GetAppState,
   DeleteOrganization,
   UndeleteOrganization,
+  GetOrganizationDeleteConfirmation,
+  DeleteOrganizationPermanent,
 } from '@wailsjs/go/main/App';
-import { models } from '@wailsjs/go/models';
-import { OrgStatusBadge, DataTable, Column, TypeBadge } from '@/components';
+import { models, db } from '@wailsjs/go/models';
+import { OrgStatusBadge, DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
 import { Log, LogErr } from '@/utils';
 import { notifications } from '@mantine/notifications';
 
@@ -38,6 +40,10 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     timings: string[];
   }>({ statuses: [], types: [], timings: [] });
   const hasInitialized = useRef(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deletingOrgID, setDeletingOrgID] = useState<number | null>(null);
 
   const loadOrgs = useCallback(() => {
     setLoading(true);
@@ -128,6 +134,47 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
       });
     }
   }, []);
+
+  const handlePermanentDeleteClick = useCallback(async (org: models.OrganizationWithNotes) => {
+    try {
+      const conf = await GetOrganizationDeleteConfirmation(org.orgID);
+      setDeleteConfirmation(conf);
+      setDeletingOrgID(org.orgID);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, []);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!deletingOrgID) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteOrganizationPermanent(deletingOrgID);
+      setDeleteModalOpen(false);
+      setDeletingOrgID(null);
+      notifications.show({
+        message: 'Organization permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to permanently delete organization:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deletingOrgID]);
 
   const getLastSelectedID = useCallback(async () => {
     const state = await GetAppState();
@@ -231,22 +278,35 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
   );
 
   return (
-    <DataTable<models.OrganizationWithNotes>
-      tableName="organizations"
-      title="Organizations"
-      data={orgs}
-      columns={columns}
-      loading={loading}
-      getRowKey={(o) => o.orgID}
-      onRowClick={onOrgClick}
-      onSelectedChange={handleSelectedChange}
-      getLastSelectedID={getLastSelectedID}
-      onFilteredSortedChange={onFilteredDataChange}
-      searchFn={searchFn}
-      valueGetter={getOrgValue}
-      onDelete={handleDelete}
-      onUndelete={handleUndelete}
-      renderExtraCells={renderExtraCells}
-    />
+    <>
+      <DataTable<models.OrganizationWithNotes>
+        tableName="organizations"
+        title="Organizations"
+        data={orgs}
+        columns={columns}
+        loading={loading}
+        getRowKey={(o) => o.orgID}
+        onRowClick={onOrgClick}
+        onSelectedChange={handleSelectedChange}
+        getLastSelectedID={getLastSelectedID}
+        onFilteredSortedChange={onFilteredDataChange}
+        searchFn={searchFn}
+        valueGetter={getOrgValue}
+        onDelete={handleDelete}
+        onUndelete={handleUndelete}
+        onPermanentDelete={handlePermanentDeleteClick}
+        renderExtraCells={renderExtraCells}
+      />
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeletingOrgID(null);
+        }}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
+      />
+    </>
   );
 }

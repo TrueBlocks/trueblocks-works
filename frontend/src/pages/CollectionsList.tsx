@@ -7,9 +7,11 @@ import {
   GetAppState,
   DeleteCollection,
   UndeleteCollection,
+  GetCollectionDeleteConfirmation,
+  DeleteCollectionPermanent,
 } from '@wailsjs/go/main/App';
-import { models } from '@wailsjs/go/models';
-import { DataTable, Column, TypeBadge } from '@/components';
+import { models, db } from '@wailsjs/go/models';
+import { DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
 import { notifications } from '@mantine/notifications';
 
 interface CollectionsListProps {
@@ -23,6 +25,10 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
   const [loading, setLoading] = useState(true);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
   const hasInitialized = useRef(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deletingCollectionID, setDeletingCollectionID] = useState<number | null>(null);
 
   const loadCollections = useCallback(() => {
     setLoading(true);
@@ -114,6 +120,47 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     }
   }, []);
 
+  const handlePermanentDeleteClick = useCallback(async (coll: models.CollectionView) => {
+    try {
+      const conf = await GetCollectionDeleteConfirmation(coll.collID);
+      setDeleteConfirmation(conf);
+      setDeletingCollectionID(coll.collID);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, []);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!deletingCollectionID) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteCollectionPermanent(deletingCollectionID);
+      setDeleteModalOpen(false);
+      setDeletingCollectionID(null);
+      notifications.show({
+        message: 'Collection permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to permanently delete collection:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deletingCollectionID]);
+
   const getLastSelectedID = useCallback(async () => {
     const state = await GetAppState();
     return state.lastCollectionID;
@@ -147,20 +194,33 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
   );
 
   return (
-    <DataTable<models.CollectionView>
-      tableName="collections"
-      title="Collections"
-      data={collections}
-      columns={columns}
-      loading={loading}
-      getRowKey={(c) => c.collID}
-      onRowClick={onCollectionClick}
-      onSelectedChange={handleSelectedChange}
-      getLastSelectedID={getLastSelectedID}
-      onFilteredSortedChange={onFilteredDataChange}
-      searchFn={searchFn}
-      onDelete={handleDelete}
-      onUndelete={handleUndelete}
-    />
+    <>
+      <DataTable<models.CollectionView>
+        tableName="collections"
+        title="Collections"
+        data={collections}
+        columns={columns}
+        loading={loading}
+        getRowKey={(c) => c.collID}
+        onRowClick={onCollectionClick}
+        onSelectedChange={handleSelectedChange}
+        getLastSelectedID={getLastSelectedID}
+        onFilteredSortedChange={onFilteredDataChange}
+        searchFn={searchFn}
+        onDelete={handleDelete}
+        onUndelete={handleUndelete}
+        onPermanentDelete={handlePermanentDeleteClick}
+      />
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeletingCollectionID(null);
+        }}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
+      />
+    </>
   );
 }

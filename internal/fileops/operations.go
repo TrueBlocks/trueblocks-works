@@ -111,14 +111,12 @@ func (f *FileOps) PrintFile(w *models.Work) error {
 }
 
 func (f *FileOps) GetTemplatePath(workType string) string {
-	if strings.Contains(workType, "Poem") {
-		return filepath.Join(f.Config.TemplateFolderPath, "00 Poem Template.rtf")
-	}
-	return filepath.Join(f.Config.TemplateFolderPath, "00 Prose Template.rtf")
+	_ = workType
+	return filepath.Join(f.Config.TemplateFolderPath, "Template.docx")
 }
 
 func (f *FileOps) CreateWorkFile(w *models.Work) error {
-	destPath := f.GetFullPath(w) + ".rtf"
+	destPath := f.GetFullPath(w) + ".docx"
 
 	if FileExists(destPath) {
 		return nil

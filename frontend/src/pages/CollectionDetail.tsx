@@ -1,17 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Stack,
-  Paper,
-  Group,
-  ActionIcon,
-  Flex,
-  Loader,
-  Text,
-  Grid,
-  Table,
-  Button,
-} from '@mantine/core';
+import { Stack, Paper, Group, ActionIcon, Flex, Loader, Text, Grid, Table } from '@mantine/core';
 import {
   IconFolder,
   IconArrowLeft,
@@ -30,10 +19,12 @@ import {
   RemoveWorkFromCollection,
   DeleteCollection,
   UndeleteCollection,
+  GetCollectionDeleteConfirmation,
+  DeleteCollectionPermanent,
   SetLastWorkID,
   GetAppState,
 } from '@wailsjs/go/main/App';
-import { models } from '@wailsjs/go/models';
+import { models, db } from '@wailsjs/go/models';
 import {
   DataTable,
   Column,
@@ -44,6 +35,7 @@ import {
   WorkPickerModal,
   NotesPortal,
   CollectionFieldSelect,
+  ConfirmDeleteModal,
 } from '@/components';
 import { useNotes } from '@/hooks';
 
@@ -64,6 +56,9 @@ export function CollectionDetail({
   const [loading, setLoading] = useState(true);
   const [initialSelectID, setInitialSelectID] = useState<number | undefined>(undefined);
   const [workPickerOpen, setWorkPickerOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [filterOptions, setFilterOptions] = useState({
     years: [] as string[],
     types: [] as string[],
@@ -146,6 +141,15 @@ export function CollectionDetail({
     return () => window.removeEventListener('reloadCurrentView', handleReload);
   }, [loadData]);
 
+  // Reload when works are deleted/restored
+  useEffect(() => {
+    function handleShowDeletedChanged() {
+      loadData();
+    }
+    window.addEventListener('showDeletedChanged', handleShowDeletedChanged);
+    return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
+  }, [loadData]);
+
   const handleDelete = useCallback(async () => {
     if (!collection) return;
     try {
@@ -177,6 +181,47 @@ export function CollectionDetail({
       });
     }
   }, [collection, loadData]);
+
+  const handlePermanentDeleteClick = useCallback(async () => {
+    if (!collection) return;
+    try {
+      const conf = await GetCollectionDeleteConfirmation(collection.collID);
+      setDeleteConfirmation(conf);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [collection]);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!collection) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteCollectionPermanent(collection.collID);
+      setDeleteModalOpen(false);
+      notifications.show({
+        message: 'Collection permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      navigate('/collections');
+    } catch (err) {
+      LogErr('Failed to permanently delete collection:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [collection, navigate]);
 
   const handleNameChange = useCallback(
     (newName: string) => {
@@ -314,25 +359,36 @@ export function CollectionDetail({
             </Group>
           </div>
           {collection.attributes?.includes('deleted') ? (
-            <Button
-              size="xs"
-              variant="light"
-              color="green"
-              leftSection={<IconRestore size={14} />}
-              onClick={handleUndelete}
-            >
-              Restore
-            </Button>
+            <Group gap={4}>
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color="green"
+                onClick={handleUndelete}
+                aria-label="Restore"
+              >
+                <IconRestore size={18} />
+              </ActionIcon>
+              <ActionIcon
+                size="lg"
+                variant="subtle"
+                color="red"
+                onClick={handlePermanentDeleteClick}
+                aria-label="Remove permanently"
+              >
+                <IconX size={18} />
+              </ActionIcon>
+            </Group>
           ) : (
-            <Button
-              size="xs"
+            <ActionIcon
+              size="lg"
               variant="light"
               color="red"
-              leftSection={<IconTrash size={14} />}
               onClick={handleDelete}
+              aria-label="Delete"
             >
-              Delete
-            </Button>
+              <IconTrash size={18} />
+            </ActionIcon>
           )}
         </Group>
       </Paper>
@@ -401,6 +457,13 @@ export function CollectionDetail({
           />
         </Grid.Col>
       </Grid>
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
+      />
     </Stack>
   );
 }

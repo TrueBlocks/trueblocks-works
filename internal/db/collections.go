@@ -6,29 +6,36 @@ import (
 	"time"
 
 	"works/internal/models"
+	"works/internal/validation"
 )
 
-func (db *DB) CreateCollection(c *models.Collection) error {
+func (db *DB) CreateCollection(c *models.Collection) (*validation.ValidationResult, error) {
+	// Validate the collection
+	result := db.validateCollection(c)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	now := time.Now().Format(time.RFC3339)
 	query := `INSERT INTO Collections (
 		collection_name, type, attributes, created_at, modified_at
 	) VALUES (?, ?, ?, ?, ?)`
 
-	result, err := db.conn.Exec(query,
+	sqlResult, err := db.conn.Exec(query,
 		c.CollectionName, c.Type, c.Attributes, now, now,
 	)
 	if err != nil {
-		return fmt.Errorf("insert collection: %w", err)
+		return nil, fmt.Errorf("insert collection: %w", err)
 	}
 
-	id, err := result.LastInsertId()
+	id, err := sqlResult.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("get last insert id: %w", err)
+		return nil, fmt.Errorf("get last insert id: %w", err)
 	}
 	c.CollID = id
 	c.CreatedAt = now
 	c.ModifiedAt = now
-	return nil
+	return &result, nil
 }
 
 func (db *DB) GetCollection(id int64) (*models.Collection, error) {
@@ -50,7 +57,13 @@ func (db *DB) GetCollection(id int64) (*models.Collection, error) {
 	return c, nil
 }
 
-func (db *DB) UpdateCollection(c *models.Collection) error {
+func (db *DB) UpdateCollection(c *models.Collection) (*validation.ValidationResult, error) {
+	// Validate the collection
+	result := db.validateCollection(c)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	query := `UPDATE Collections SET
 		collection_name = ?, type = ?, attributes = ?, modified_at = CURRENT_TIMESTAMP
 		WHERE collID = ?`
@@ -59,7 +72,7 @@ func (db *DB) UpdateCollection(c *models.Collection) error {
 		c.CollectionName, c.Type, c.Attributes, c.CollID,
 	)
 	if err != nil {
-		return fmt.Errorf("update collection: %w", err)
+		return nil, fmt.Errorf("update collection: %w", err)
 	}
 
 	// Fetch the updated timestamp
@@ -69,7 +82,7 @@ func (db *DB) UpdateCollection(c *models.Collection) error {
 		c.ModifiedAt = modifiedAt
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error) {
@@ -106,8 +119,27 @@ func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error)
 }
 
 func (db *DB) AddWorkToCollection(collID, workID int64) error {
+	// Validate that the collection exists
+	var exists bool
+	err := db.conn.QueryRow(`SELECT EXISTS(SELECT 1 FROM Collections WHERE collID = ?)`, collID).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("check collection exists: %w", err)
+	}
+	if !exists {
+		return fmt.Errorf("collection with ID %d does not exist", collID)
+	}
+
+	// Validate that the work exists
+	err = db.conn.QueryRow(`SELECT EXISTS(SELECT 1 FROM Works WHERE workID = ?)`, workID).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("check work exists: %w", err)
+	}
+	if !exists {
+		return fmt.Errorf("work with ID %d does not exist", workID)
+	}
+
 	var maxPos int64
-	err := db.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) FROM CollectionDetails WHERE collID = ?`, collID).Scan(&maxPos)
+	err = db.conn.QueryRow(`SELECT COALESCE(MAX(position), -1) FROM CollectionDetails WHERE collID = ?`, collID).Scan(&maxPos)
 	if err != nil {
 		return fmt.Errorf("get max position: %w", err)
 	}
@@ -245,7 +277,7 @@ func (db *DB) DeleteCollection(id int64) error {
 	}
 
 	collection.Attributes = models.MarkDeleted(collection.Attributes)
-	if err := db.UpdateCollection(collection); err != nil {
+	if _, err := db.UpdateCollection(collection); err != nil {
 		return fmt.Errorf("mark collection deleted: %w", err)
 	}
 
@@ -258,18 +290,25 @@ func (db *DB) DeleteCollection(id int64) error {
 	return nil
 }
 
-func (db *DB) UndeleteCollection(id int64) error {
+func (db *DB) UndeleteCollection(id int64) (*validation.ValidationResult, error) {
 	collection, err := db.GetCollection(id)
 	if err != nil {
-		return fmt.Errorf("get collection: %w", err)
+		return nil, fmt.Errorf("get collection: %w", err)
 	}
 	if collection == nil {
-		return fmt.Errorf("collection not found")
+		return nil, fmt.Errorf("collection not found")
 	}
 
 	collection.Attributes = models.Undelete(collection.Attributes)
-	if err := db.UpdateCollection(collection); err != nil {
-		return fmt.Errorf("undelete collection: %w", err)
+
+	// Validate before undeleting to check for duplicates
+	result := db.validateCollection(collection)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
+	if validResult, err := db.UpdateCollection(collection); err != nil || !validResult.IsValid() {
+		return validResult, fmt.Errorf("undelete collection: %w", err)
 	}
 
 	// Un-cascade notes
@@ -280,7 +319,7 @@ func (db *DB) UndeleteCollection(id int64) error {
 		}
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (db *DB) GetOrCreateDefaultCollection() (*models.Collection, error) {
@@ -307,8 +346,52 @@ func (db *DB) GetOrCreateDefaultCollection() (*models.Collection, error) {
 		CollectionName: defaultName,
 		Type:           &collType,
 	}
-	if err := db.CreateCollection(c); err != nil {
+	if _, err := db.CreateCollection(c); err != nil {
 		return nil, err
 	}
 	return c, nil
+}
+
+// GetCollectionDeleteConfirmation returns information about what will be deleted
+func (db *DB) GetCollectionDeleteConfirmation(collID int64) (*DeleteConfirmation, error) {
+	coll, err := db.GetCollection(collID)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := &DeleteConfirmation{
+		EntityType: "collection",
+		EntityName: coll.CollectionName,
+	}
+
+	// Count notes
+	err = db.conn.QueryRow(`SELECT COUNT(*) FROM Notes WHERE entity_type = 'collection' AND entity_id = ?`, collID).Scan(&conf.NoteCount)
+	if err != nil {
+		return nil, err
+	}
+
+	// Count works in collection (for info only - won't be deleted)
+	err = db.conn.QueryRow(`SELECT COUNT(*) FROM CollectionDetails WHERE collID = ?`, collID).Scan(&conf.CollectionCount)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
+}
+
+// DeleteCollectionPermanent permanently deletes a collection and all its orphaned data
+func (db *DB) DeleteCollectionPermanent(collID int64) error {
+	// Delete notes manually (polymorphic FK)
+	_, err := db.conn.Exec(`DELETE FROM Notes WHERE entity_type = 'collection' AND entity_id = ?`, collID)
+	if err != nil {
+		return fmt.Errorf("delete collection notes: %w", err)
+	}
+
+	// Delete collection (CASCADE handles collection_details automatically, but NOT the works themselves)
+	_, err = db.conn.Exec(`DELETE FROM Collections WHERE collID = ?`, collID)
+	if err != nil {
+		return fmt.Errorf("delete collection: %w", err)
+	}
+
+	return nil
 }

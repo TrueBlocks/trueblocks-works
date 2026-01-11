@@ -366,7 +366,7 @@ func (i *Importer) ImportNotes() error {
 			Note:       strPtr(row["note"]),
 			ModifiedAt: strPtr(row["modified_at"]),
 		}
-		_ = i.db.CreateNote(n)
+		_, _ = i.db.CreateNote(n)
 	}
 	return nil
 }

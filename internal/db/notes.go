@@ -5,26 +5,33 @@ import (
 	"time"
 
 	"works/internal/models"
+	"works/internal/validation"
 )
 
-func (db *DB) CreateNote(n *models.Note) error {
+func (db *DB) CreateNote(n *models.Note) (*validation.ValidationResult, error) {
+	// Validate the note
+	result := db.validateNote(n)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	now := time.Now().Format(time.RFC3339)
 	query := `INSERT INTO Notes (entity_type, entity_id, type, note, attributes, modified_at, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	result, err := db.conn.Exec(query, n.EntityType, n.EntityID, n.Type, n.Note, n.Attributes, now, now)
+	sqlResult, err := db.conn.Exec(query, n.EntityType, n.EntityID, n.Type, n.Note, n.Attributes, now, now)
 	if err != nil {
-		return fmt.Errorf("insert note: %w", err)
+		return nil, fmt.Errorf("insert note: %w", err)
 	}
 
-	id, err := result.LastInsertId()
+	id, err := sqlResult.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("get last insert id: %w", err)
+		return nil, fmt.Errorf("get last insert id: %w", err)
 	}
 	n.ID = id
 	n.ModifiedAt = &now
 	n.CreatedAt = now
-	return nil
+	return &result, nil
 }
 
 func (db *DB) GetNote(id int64) (*models.Note, error) {
@@ -71,15 +78,21 @@ func (db *DB) GetNotes(entityType string, entityID int64, showDeleted bool) ([]m
 	return notes, rows.Err()
 }
 
-func (db *DB) UpdateNote(n *models.Note) error {
+func (db *DB) UpdateNote(n *models.Note) (*validation.ValidationResult, error) {
+	// Validate the note
+	result := db.validateNote(n)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	now := time.Now().Format(time.RFC3339)
 	query := `UPDATE Notes SET type=?, note=?, attributes=?, modified_at=? WHERE id=?`
 	_, err := db.conn.Exec(query, n.Type, n.Note, n.Attributes, now, n.ID)
 	if err != nil {
-		return fmt.Errorf("update note: %w", err)
+		return nil, fmt.Errorf("update note: %w", err)
 	}
 	n.ModifiedAt = &now
-	return nil
+	return &result, nil
 }
 
 func (db *DB) DeleteNote(id int64) error {
@@ -89,7 +102,7 @@ func (db *DB) DeleteNote(id int64) error {
 	}
 
 	note.Attributes = models.MarkDeleted(note.Attributes)
-	if err := db.UpdateNote(note); err != nil {
+	if _, err := db.UpdateNote(note); err != nil {
 		return fmt.Errorf("mark note deleted: %w", err)
 	}
 
@@ -103,7 +116,7 @@ func (db *DB) UndeleteNote(id int64) error {
 	}
 
 	note.Attributes = models.Undelete(note.Attributes)
-	if err := db.UpdateNote(note); err != nil {
+	if _, err := db.UpdateNote(note); err != nil {
 		return fmt.Errorf("undelete note: %w", err)
 	}
 

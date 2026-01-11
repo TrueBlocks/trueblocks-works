@@ -78,6 +78,10 @@ export function DeleteCollection(arg1) {
   return window['go']['main']['App']['DeleteCollection'](arg1);
 }
 
+export function DeleteCollectionPermanent(arg1) {
+  return window['go']['main']['App']['DeleteCollectionPermanent'](arg1);
+}
+
 export function DeleteNote(arg1) {
   return window['go']['main']['App']['DeleteNote'](arg1);
 }
@@ -86,12 +90,24 @@ export function DeleteOrganization(arg1) {
   return window['go']['main']['App']['DeleteOrganization'](arg1);
 }
 
+export function DeleteOrganizationPermanent(arg1) {
+  return window['go']['main']['App']['DeleteOrganizationPermanent'](arg1);
+}
+
 export function DeleteSubmission(arg1) {
   return window['go']['main']['App']['DeleteSubmission'](arg1);
 }
 
+export function DeleteSubmissionPermanent(arg1) {
+  return window['go']['main']['App']['DeleteSubmissionPermanent'](arg1);
+}
+
 export function DeleteWork(arg1) {
   return window['go']['main']['App']['DeleteWork'](arg1);
+}
+
+export function DeleteWorkPermanent(arg1) {
+  return window['go']['main']['App']['DeleteWorkPermanent'](arg1);
 }
 
 export function DetectLibreOffice() {
@@ -124,6 +140,10 @@ export function GetAppState() {
 
 export function GetCollection(arg1) {
   return window['go']['main']['App']['GetCollection'](arg1);
+}
+
+export function GetCollectionDeleteConfirmation(arg1) {
+  return window['go']['main']['App']['GetCollectionDeleteConfirmation'](arg1);
 }
 
 export function GetCollectionWorks(arg1) {
@@ -178,6 +198,10 @@ export function GetOrganization(arg1) {
   return window['go']['main']['App']['GetOrganization'](arg1);
 }
 
+export function GetOrganizationDeleteConfirmation(arg1) {
+  return window['go']['main']['App']['GetOrganizationDeleteConfirmation'](arg1);
+}
+
 export function GetOrganizations() {
   return window['go']['main']['App']['GetOrganizations']();
 }
@@ -222,6 +246,10 @@ export function GetSubmission(arg1) {
   return window['go']['main']['App']['GetSubmission'](arg1);
 }
 
+export function GetSubmissionDeleteConfirmation(arg1) {
+  return window['go']['main']['App']['GetSubmissionDeleteConfirmation'](arg1);
+}
+
 export function GetSubmissionViewsByOrg(arg1) {
   return window['go']['main']['App']['GetSubmissionViewsByOrg'](arg1);
 }
@@ -256,6 +284,10 @@ export function GetWork(arg1) {
 
 export function GetWorkCollections(arg1) {
   return window['go']['main']['App']['GetWorkCollections'](arg1);
+}
+
+export function GetWorkDeleteConfirmation(arg1) {
+  return window['go']['main']['App']['GetWorkDeleteConfirmation'](arg1);
 }
 
 export function GetWorkFullPath(arg1) {

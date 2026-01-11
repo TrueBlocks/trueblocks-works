@@ -10,9 +10,11 @@ import {
   GetAppState,
   DeleteSubmission,
   UndeleteSubmission,
+  GetSubmissionDeleteConfirmation,
+  DeleteSubmissionPermanent,
 } from '@wailsjs/go/main/App';
-import { models } from '@wailsjs/go/models';
-import { ResponseBadge, DataTable, Column, TypeBadge } from '@/components';
+import { models, db } from '@wailsjs/go/models';
+import { ResponseBadge, DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
 import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
 
@@ -41,6 +43,10 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     responses: string[];
   }>({ types: [], responses: [] });
   const hasInitialized = useRef(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deletingSubmissionID, setDeletingSubmissionID] = useState<number | null>(null);
 
   const loadSubmissions = useCallback(() => {
     setLoading(true);
@@ -134,6 +140,47 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     }
   }, []);
 
+  const handlePermanentDeleteClick = useCallback(async (sub: models.SubmissionView) => {
+    try {
+      const conf = await GetSubmissionDeleteConfirmation(sub.submissionID);
+      setDeleteConfirmation(conf);
+      setDeletingSubmissionID(sub.submissionID);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, []);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!deletingSubmissionID) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteSubmissionPermanent(deletingSubmissionID);
+      setDeleteModalOpen(false);
+      setDeletingSubmissionID(null);
+      notifications.show({
+        message: 'Submission permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+    } catch (err) {
+      LogErr('Failed to permanently delete submission:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [deletingSubmissionID]);
+
   const getLastSelectedID = useCallback(async () => {
     const state = await GetAppState();
     return state.lastSubmissionID;
@@ -196,26 +243,39 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
   );
 
   return (
-    <DataTable<models.SubmissionView>
-      tableName="submissions"
-      title="Submissions"
-      data={submissions}
-      columns={columns}
-      loading={loading}
-      getRowKey={(s) => s.submissionID}
-      onRowClick={onSubmissionClick}
-      onSelectedChange={handleSelectedChange}
-      getLastSelectedID={getLastSelectedID}
-      onFilteredSortedChange={onFilteredDataChange}
-      searchFn={searchFn}
-      valueGetter={getSubmissionValue}
-      onDelete={handleDelete}
-      onUndelete={handleUndelete}
-      headerActions={
-        <ActionIcon variant="filled" size="lg">
-          <IconPlus size={18} />
-        </ActionIcon>
-      }
-    />
+    <>
+      <DataTable<models.SubmissionView>
+        tableName="submissions"
+        title="Submissions"
+        data={submissions}
+        columns={columns}
+        loading={loading}
+        getRowKey={(s) => s.submissionID}
+        onRowClick={onSubmissionClick}
+        onSelectedChange={handleSelectedChange}
+        getLastSelectedID={getLastSelectedID}
+        onFilteredSortedChange={onFilteredDataChange}
+        searchFn={searchFn}
+        valueGetter={getSubmissionValue}
+        onDelete={handleDelete}
+        onUndelete={handleUndelete}
+        onPermanentDelete={handlePermanentDeleteClick}
+        headerActions={
+          <ActionIcon variant="filled" size="lg">
+            <IconPlus size={18} />
+          </ActionIcon>
+        }
+      />
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setDeletingSubmissionID(null);
+        }}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
+      />
+    </>
   );
 }

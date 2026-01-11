@@ -116,13 +116,13 @@ func (a *App) ImportWork(filename string, parsed fileops.ParsedFilename) (*model
 	if conflict.Type == Reimport {
 		work.WorkID = conflict.ExistingWork.WorkID
 		work.CreatedAt = conflict.ExistingWork.CreatedAt
-		if err := a.db.UpdateWork(work); err != nil {
+		if _, err := a.db.UpdateWork(work); err != nil {
 			return nil, fmt.Errorf("update work: %w", err)
 		}
 		return work, nil
 	}
 
-	if err := a.db.CreateWork(work); err != nil {
+	if _, err := a.db.CreateWork(work); err != nil {
 		return nil, fmt.Errorf("create work: %w", err)
 	}
 
@@ -145,7 +145,7 @@ func (a *App) ScanImportFolder() ([]string, error) {
 			return nil
 		}
 		ext := strings.ToLower(filepath.Ext(path))
-		if ext == ".rtf" || ext == ".docx" || ext == ".txt" || ext == ".md" || ext == ".doc" {
+		if ext == ".docx" || ext == ".txt" || ext == ".md" || ext == ".doc" {
 			files = append(files, path)
 		}
 		return nil
@@ -171,7 +171,7 @@ func (a *App) AutoImportFiles() (ImportResult, error) {
 		CollectionName: collName,
 		Type:           &collType,
 	}
-	if err := a.db.CreateCollection(collection); err != nil {
+	if _, err := a.db.CreateCollection(collection); err != nil {
 		return ImportResult{Status: ImportComplete}, fmt.Errorf("create collection: %w", err)
 	}
 
@@ -206,7 +206,7 @@ func (a *App) AddTypeAndContinue(newType string) (ImportResult, error) {
 	}
 	dummyWork.Attributes = models.MarkDeleted("")
 
-	if err := a.db.CreateWork(dummyWork); err != nil {
+	if _, err := a.db.CreateWork(dummyWork); err != nil {
 		return ImportResult{Status: ImportCancelled}, fmt.Errorf("add type: %w", err)
 	}
 

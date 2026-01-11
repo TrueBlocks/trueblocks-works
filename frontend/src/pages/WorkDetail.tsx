@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Stack, Grid, Loader, Flex, Text, ActionIcon, Group, Tooltip, Button } from '@mantine/core';
-import { IconChevronUp, IconChevronDown, IconTrash, IconRestore } from '@tabler/icons-react';
+import { Stack, Grid, Loader, Flex, Text, ActionIcon, Group, Tooltip } from '@mantine/core';
+import { IconChevronUp, IconChevronDown, IconTrash, IconRestore, IconX } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { LogErr } from '@/utils';
+import { LogErr, Log } from '@/utils';
 import { useNotes } from '@/hooks';
 import { useDebug } from '@/stores';
 import {
@@ -16,10 +16,12 @@ import {
   SetLastWorkID,
   DeleteWork,
   UndeleteWork,
+  GetWorkDeleteConfirmation,
+  DeleteWorkPermanent,
   OpenDocument,
   RegeneratePDF,
 } from '@wailsjs/go/main/App';
-import { models } from '@wailsjs/go/models';
+import { models, db } from '@wailsjs/go/models';
 import {
   WorkHeader,
   PathDisplay,
@@ -30,6 +32,7 @@ import {
   FileActionsToolbar,
   PDFPreview,
   DebugPopover,
+  ConfirmDeleteModal,
 } from '@/components';
 
 interface WorkDetailProps {
@@ -47,6 +50,9 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const {
     notes,
@@ -110,11 +116,13 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
 
   const handleOpen = useCallback(async () => {
     try {
+      Log('[WorkDetail] handleOpen called for workId:', workId);
+      Log('[WorkDetail] Current work path:', work?.path);
       await OpenDocument(workId);
     } catch (err) {
       LogErr('Failed to open document:', err);
     }
-  }, [workId]);
+  }, [workId, work?.path]);
 
   const handleRegeneratePDF = useCallback(async () => {
     try {
@@ -284,6 +292,47 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     }
   }, [work, loadData]);
 
+  const handlePermanentDeleteClick = useCallback(async () => {
+    if (!work) return;
+    try {
+      const conf = await GetWorkDeleteConfirmation(work.workID);
+      setDeleteConfirmation(conf);
+      setDeleteModalOpen(true);
+    } catch (err) {
+      LogErr('Failed to get delete confirmation:', err);
+      notifications.show({
+        message: 'Failed to prepare delete',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [work]);
+
+  const handlePermanentDelete = useCallback(async () => {
+    if (!work) return;
+    setDeleteLoading(true);
+    try {
+      await DeleteWorkPermanent(work.workID);
+      setDeleteModalOpen(false);
+      notifications.show({
+        message: 'Work permanently deleted',
+        color: 'green',
+        autoClose: 3000,
+      });
+      window.dispatchEvent(new CustomEvent('showDeletedChanged'));
+      navigate('/works');
+    } catch (err) {
+      LogErr('Failed to permanently delete work:', err);
+      notifications.show({
+        message: 'Permanent delete failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
+  }, [work, navigate]);
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -330,25 +379,36 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
             </Tooltip>
             <FileActionsToolbar workID={work.workID} refreshKey={refreshKey} onMoved={loadData} />
             {work.attributes?.includes('deleted') ? (
-              <Button
-                size="xs"
-                variant="light"
-                color="green"
-                leftSection={<IconRestore size={14} />}
-                onClick={handleUndelete}
-              >
-                Restore
-              </Button>
+              <Group gap={4}>
+                <ActionIcon
+                  size="lg"
+                  variant="light"
+                  color="green"
+                  onClick={handleUndelete}
+                  aria-label="Restore"
+                >
+                  <IconRestore size={18} />
+                </ActionIcon>
+                <ActionIcon
+                  size="lg"
+                  variant="subtle"
+                  color="red"
+                  onClick={handlePermanentDeleteClick}
+                  aria-label="Remove permanently"
+                >
+                  <IconX size={18} />
+                </ActionIcon>
+              </Group>
             ) : (
-              <Button
-                size="xs"
+              <ActionIcon
+                size="lg"
                 variant="light"
                 color="red"
-                leftSection={<IconTrash size={14} />}
                 onClick={handleDelete}
+                aria-label="Delete"
               >
-                Delete
-              </Button>
+                <IconTrash size={18} />
+              </ActionIcon>
             )}
           </Group>
         }
@@ -398,6 +458,13 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
         </Grid.Col>
       </Grid>
       {debugMode && <DebugPopover workId={workId} />}
+      <ConfirmDeleteModal
+        opened={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handlePermanentDelete}
+        confirmation={deleteConfirmation}
+        loading={deleteLoading}
+      />
     </Stack>
   );
 }

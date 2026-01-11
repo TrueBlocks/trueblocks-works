@@ -44,6 +44,16 @@ var migrations = []Migration{
 		Name:    "add_file_mtime_and_fix_dates",
 		Up:      migrateAddFileMtimeAndFixDates,
 	},
+	{
+		Version: 16,
+		Name:    "add_cascade_deletes",
+		Up:      migrateAddCascadeDeletes,
+	},
+	{
+		Version: 17,
+		Name:    "delete_orphan_collection_details",
+		Up:      migrateDeleteOrphanCollectionDetails,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -377,6 +387,268 @@ func migrateAddFileMtimeAndFixDates(tx *sql.Tx) error {
 		if _, err := tx.Exec(query); err != nil {
 			return fmt.Errorf("fix dates: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func migrateAddCascadeDeletes(tx *sql.Tx) error {
+	// Add CASCADE deletes to foreign keys in Submissions and CollectionDetails
+	// This requires recreating the tables since SQLite doesn't support ALTER TABLE for FKs
+
+	// Drop ALL dependent views that reference Submissions or CollectionDetails tables
+	_, _ = tx.Exec(`DROP VIEW IF EXISTS SubmissionsView`)
+	_, _ = tx.Exec(`DROP VIEW IF EXISTS OrganizationsView`)
+	_, _ = tx.Exec(`DROP VIEW IF EXISTS WorksView`)
+	_, _ = tx.Exec(`DROP VIEW IF EXISTS CollectionsView`)
+
+	// Drop FTS for Submissions (will recreate later)
+	_, _ = tx.Exec(`DROP TRIGGER IF EXISTS submissions_fts_insert`)
+	_, _ = tx.Exec(`DROP TRIGGER IF EXISTS submissions_fts_update`)
+	_, _ = tx.Exec(`DROP TRIGGER IF EXISTS submissions_fts_delete`)
+	_, _ = tx.Exec(`DROP TABLE IF EXISTS submissions_fts`)
+
+	// Drop indexes on tables we're recreating
+	_, _ = tx.Exec(`DROP INDEX IF EXISTS idx_submissions_workid`)
+	_, _ = tx.Exec(`DROP INDEX IF EXISTS idx_submissions_orgid`)
+	_, _ = tx.Exec(`DROP INDEX IF EXISTS idx_submissions_response`)
+	_, _ = tx.Exec(`DROP INDEX IF EXISTS idx_submissions_date`)
+	_, _ = tx.Exec(`DROP INDEX IF EXISTS idx_colldet_collid`)
+	_, _ = tx.Exec(`DROP INDEX IF EXISTS idx_colldet_workid`)
+
+	// Recreate Submissions with CASCADE on both foreign keys
+	_, _ = tx.Exec(`DROP TABLE IF EXISTS Submissions_new`)
+	_, err := tx.Exec(`
+		CREATE TABLE Submissions_new (
+			submissionID INTEGER PRIMARY KEY AUTOINCREMENT,
+			workID INTEGER NOT NULL,
+			orgID INTEGER NOT NULL,
+			draft TEXT,
+			submission_date TEXT,
+			submission_type TEXT,
+			query_date TEXT,
+			response_date TEXT,
+			response_type TEXT,
+			contest_name TEXT,
+			cost REAL,
+			user_id TEXT,
+			password TEXT,
+			web_address TEXT,
+			attributes TEXT DEFAULT '',
+			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+			modified_at TEXT DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (workID) REFERENCES Works(workID) ON DELETE CASCADE,
+			FOREIGN KEY (orgID) REFERENCES Organizations(orgID) ON DELETE CASCADE
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create Submissions_new: %w", err)
+	}
+
+	_, err = tx.Exec(`INSERT INTO Submissions_new SELECT * FROM Submissions`)
+	if err != nil {
+		return fmt.Errorf("copy Submissions data: %w", err)
+	}
+
+	_, err = tx.Exec(`DROP TABLE Submissions`)
+	if err != nil {
+		return fmt.Errorf("drop old Submissions: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Submissions_new RENAME TO Submissions`)
+	if err != nil {
+		return fmt.Errorf("rename Submissions_new: %w", err)
+	}
+
+	// Recreate CollectionDetails with CASCADE on collID
+	_, _ = tx.Exec(`DROP TABLE IF EXISTS CollectionDetails_new`)
+	_, err = tx.Exec(`
+		CREATE TABLE CollectionDetails_new (
+			id INTEGER PRIMARY KEY,
+			collID INTEGER NOT NULL,
+			workID INTEGER NOT NULL,
+			position INTEGER DEFAULT 0,
+			FOREIGN KEY (collID) REFERENCES Collections(collID) ON DELETE CASCADE,
+			FOREIGN KEY (workID) REFERENCES Works(workID) ON DELETE CASCADE,
+			UNIQUE(collID, workID)
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create CollectionDetails_new: %w", err)
+	}
+
+	_, err = tx.Exec(`INSERT INTO CollectionDetails_new SELECT * FROM CollectionDetails`)
+	if err != nil {
+		return fmt.Errorf("copy CollectionDetails data: %w", err)
+	}
+
+	_, err = tx.Exec(`DROP TABLE CollectionDetails`)
+	if err != nil {
+		return fmt.Errorf("drop old CollectionDetails: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE CollectionDetails_new RENAME TO CollectionDetails`)
+	if err != nil {
+		return fmt.Errorf("rename CollectionDetails_new: %w", err)
+	}
+
+	// Recreate indexes
+	_, _ = tx.Exec(`CREATE INDEX idx_submissions_workid ON Submissions(workID)`)
+	_, _ = tx.Exec(`CREATE INDEX idx_submissions_orgid ON Submissions(orgID)`)
+	_, _ = tx.Exec(`CREATE INDEX idx_submissions_response ON Submissions(response_type)`)
+	_, _ = tx.Exec(`CREATE INDEX idx_submissions_date ON Submissions(submission_date)`)
+	_, _ = tx.Exec(`CREATE INDEX idx_colldet_collid ON CollectionDetails(collID)`)
+	_, _ = tx.Exec(`CREATE INDEX idx_colldet_workid ON CollectionDetails(workID)`)
+
+	// Recreate SubmissionsView
+	_, err = tx.Exec(`
+		CREATE VIEW SubmissionsView AS
+		SELECT 
+			s.*,
+			w.title AS title_of_work,
+			o.name AS journal_name,
+			COALESCE(o.status, 'Open') AS journal_status,
+			CASE 
+				WHEN s.response_date IS NULL AND (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting')
+				THEN 'yes' 
+				ELSE 'no' 
+			END AS decision_pending
+		FROM Submissions s
+		LEFT JOIN Works w ON s.workID = w.workID
+		LEFT JOIN Organizations o ON s.orgID = o.orgID
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate SubmissionsView: %w", err)
+	}
+
+	// Recreate FTS for Submissions
+	_, err = tx.Exec(`
+		CREATE VIRTUAL TABLE submissions_fts USING fts5(
+			title_of_work,
+			journal_name,
+			draft,
+			submission_type,
+			response_type,
+			contest_name,
+			content=SubmissionsView,
+			content_rowid=submissionID,
+			tokenize='porter unicode61 remove_diacritics 2'
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate submissions_fts: %w", err)
+	}
+
+	// Recreate FTS triggers for Submissions
+	_, err = tx.Exec(`
+		CREATE TRIGGER submissions_fts_insert AFTER INSERT ON Submissions BEGIN
+			INSERT INTO submissions_fts(rowid, title_of_work, journal_name, draft, submission_type, response_type, contest_name)
+			SELECT submissionID, title_of_work, journal_name, draft, submission_type, response_type, contest_name
+			FROM SubmissionsView WHERE submissionID = NEW.submissionID;
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create insert trigger: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		CREATE TRIGGER submissions_fts_update AFTER UPDATE ON Submissions BEGIN
+			DELETE FROM submissions_fts WHERE rowid = OLD.submissionID;
+			INSERT INTO submissions_fts(rowid, title_of_work, journal_name, draft, submission_type, response_type, contest_name)
+			SELECT submissionID, title_of_work, journal_name, draft, submission_type, response_type, contest_name
+			FROM SubmissionsView WHERE submissionID = NEW.submissionID;
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create update trigger: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		CREATE TRIGGER submissions_fts_delete AFTER DELETE ON Submissions BEGIN
+			DELETE FROM submissions_fts WHERE rowid = OLD.submissionID;
+		END
+	`)
+	if err != nil {
+		return fmt.Errorf("create delete trigger: %w", err)
+	}
+
+	// Rebuild FTS index
+	_, err = tx.Exec(`
+		INSERT INTO submissions_fts(rowid, title_of_work, journal_name, draft, submission_type, response_type, contest_name)
+		SELECT submissionID, title_of_work, journal_name, draft, submission_type, response_type, contest_name
+		FROM SubmissionsView
+	`)
+	if err != nil {
+		return fmt.Errorf("rebuild FTS index: %w", err)
+	}
+
+	// Recreate OrganizationsView
+	_, err = tx.Exec(`
+		CREATE VIEW OrganizationsView AS
+		SELECT 
+			o.*,
+			(o.n_push_fiction + o.n_push_nonfiction + o.n_push_poetry) AS n_pushcarts,
+			(CASE WHEN o.n_push_poetry > 0 THEN 1000 ELSE 2000 END + COALESCE(o.ranking, 9999)) AS rating,
+			(SELECT COUNT(*) FROM Submissions s WHERE s.orgID = o.orgID) AS n_submissions
+		FROM Organizations o
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate OrganizationsView: %w", err)
+	}
+
+	// Recreate WorksView
+	_, err = tx.Exec(`
+		CREATE VIEW WorksView AS
+		SELECT 
+			w.*,
+			CAST((julianday('now') - julianday(w.access_date)) AS INTEGER) AS age_days,
+			(SELECT COUNT(*) FROM Submissions s WHERE s.workID = w.workID) AS n_submissions,
+			(SELECT GROUP_CONCAT(c.collection_name, ', ') 
+			 FROM CollectionDetails cd
+			 JOIN Collections c ON cd.collID = c.collID
+			 WHERE cd.workID = w.workID) AS collection_list
+		FROM Works w
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate WorksView: %w", err)
+	}
+
+	// Recreate CollectionsView
+	_, err = tx.Exec(`
+		CREATE VIEW CollectionsView AS
+		SELECT 
+			c.*,
+			(SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID) AS n_items
+		FROM Collections c
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate CollectionsView: %w", err)
+	}
+
+	return nil
+}
+
+func migrateDeleteOrphanCollectionDetails(tx *sql.Tx) error {
+	// Delete orphan CollectionDetails with invalid collID (0 or non-existent collections)
+	result, err := tx.Exec(`DELETE FROM CollectionDetails WHERE collID = 0 OR collID NOT IN (SELECT collID FROM Collections)`)
+	if err != nil {
+		return fmt.Errorf("delete orphan collection details (invalid collID): %w", err)
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected > 0 {
+		fmt.Fprintf(os.Stderr, "INFO | Migration 017: Deleted %d orphan CollectionDetails records (invalid collID)\\n", rowsAffected)
+	}
+
+	// Delete orphan CollectionDetails with invalid workID (non-existent works)
+	result, err = tx.Exec(`DELETE FROM CollectionDetails WHERE workID NOT IN (SELECT workID FROM Works)`)
+	if err != nil {
+		return fmt.Errorf("delete orphan collection details (invalid workID): %w", err)
+	}
+
+	rowsAffected, _ = result.RowsAffected()
+	if rowsAffected > 0 {
+		fmt.Fprintf(os.Stderr, "INFO | Migration 017: Deleted %d orphan CollectionDetails records (invalid workID)\\n", rowsAffected)
 	}
 
 	return nil

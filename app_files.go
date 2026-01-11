@@ -8,6 +8,8 @@ import (
 
 	"works/internal/fileops"
 	"works/internal/models"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type PathCheckResult struct {
@@ -62,10 +64,13 @@ func (a *App) CheckWorkPath(workID int64) (PathCheckResult, error) {
 }
 
 func (a *App) OpenDocument(workID int64) error {
+	runtime.LogDebugf(a.ctx, "OpenDocument called for workID: %d", workID)
 	work, err := a.db.GetWork(workID)
 	if err != nil {
+		runtime.LogErrorf(a.ctx, "GetWork failed: %v", err)
 		return err
 	}
+	runtime.LogInfof(a.ctx, "Opening document: %s (path: %s)", work.Title, *work.Path)
 	return a.fileOps.OpenDocument(work)
 }
 
@@ -81,7 +86,10 @@ func (a *App) MoveWorkFile(workID int64) error {
 	}
 
 	work.Path = &newPath
-	return a.db.UpdateWork(work)
+	if _, err := a.db.UpdateWork(work); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (a *App) ExportToSubmissions(workID int64) (string, error) {
@@ -101,6 +109,8 @@ func (a *App) PrintWork(workID int64) error {
 }
 
 func (a *App) CreateNewWork(title, workType, year, quality, status string) (*models.Work, error) {
+	runtime.LogDebugf(a.ctx, "CreateNewWork: title=%s type=%s year=%s", title, workType, year)
+
 	work := &models.Work{
 		Title:   title,
 		Type:    workType,
@@ -111,23 +121,72 @@ func (a *App) CreateNewWork(title, workType, year, quality, status string) (*mod
 
 	path := a.fileOps.GeneratePath(work)
 	work.Path = &path
+	runtime.LogDebugf(a.ctx, "Generated path (without extension): %s", path)
 
-	if err := a.db.CreateWork(work); err != nil {
+	// Validate and create work in database
+	validResult, err := a.db.CreateWork(work)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "CreateWork failed: %v", err)
 		return nil, err
 	}
+	if !validResult.IsValid() {
+		runtime.LogErrorf(a.ctx, "CreateWork validation failed: %v", validResult.Errors)
+		return nil, fmt.Errorf("validation failed: %v", validResult.Errors)
+	}
+	runtime.LogDebugf(a.ctx, "Work created in database with ID: %d", work.WorkID)
 
+	// Create the file
+	runtime.LogDebugf(a.ctx, "Creating work file...")
 	if err := a.fileOps.CreateWorkFile(work); err != nil {
-		return work, err
+		runtime.LogErrorf(a.ctx, "CreateWorkFile failed: %v", err)
+		// Rollback: delete the work from database
+		_ = a.DeleteWorkPermanent(work.WorkID)
+		return nil, fmt.Errorf("failed to create file: %w", err)
+	}
+	runtime.LogDebugf(a.ctx, "Work file created successfully")
+
+	// Verify file exists
+	fullPath := a.fileOps.GetFullPath(work) + ".docx"
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		runtime.LogErrorf(a.ctx, "File was not created at expected path: %s", fullPath)
+		_ = a.DeleteWorkPermanent(work.WorkID)
+		return nil, fmt.Errorf("file not created at %s", fullPath)
+	}
+	runtime.LogInfof(a.ctx, "File verified to exist at: %s", fullPath)
+
+	// Update the work's path to include the .docx extension
+	pathWithExt := *work.Path + ".docx"
+	work.Path = &pathWithExt
+	runtime.LogDebugf(a.ctx, "Updating work path to include extension: %s", pathWithExt)
+	_, err = a.db.UpdateWork(work)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "UpdateWork path failed: %v", err)
+		return nil, fmt.Errorf("failed to update work path: %w", err)
 	}
 
 	docPath, err := fileops.FindFileWithExtension(a.fileOps.GetFullPath(work))
 	if err == nil {
+		runtime.LogDebugf(a.ctx, "Generating PDF...")
 		_, _ = a.fileOps.GeneratePDF(docPath, work.WorkID)
+	} else {
+		runtime.LogWarningf(a.ctx, "Could not find file for PDF generation: %v", err)
 	}
 
+	// Add to default collection
+	runtime.LogDebugf(a.ctx, "Getting or creating 'New Works' collection...")
 	defaultColl, err := a.db.GetOrCreateDefaultCollection()
-	if err == nil && defaultColl != nil {
-		_ = a.db.AddWorkToCollection(defaultColl.CollID, work.WorkID)
+	if err != nil {
+		runtime.LogErrorf(a.ctx, "GetOrCreateDefaultCollection failed: %v", err)
+	} else if defaultColl == nil {
+		runtime.LogWarningf(a.ctx, "GetOrCreateDefaultCollection returned nil collection")
+	} else {
+		runtime.LogInfof(a.ctx, "Adding work to collection '%s' (ID: %d)", defaultColl.CollectionName, defaultColl.CollID)
+		err = a.db.AddWorkToCollection(defaultColl.CollID, work.WorkID)
+		if err != nil {
+			runtime.LogErrorf(a.ctx, "AddWorkToCollection failed: %v", err)
+		} else {
+			runtime.LogInfof(a.ctx, "Successfully added work to collection")
+		}
 	}
 
 	return work, nil

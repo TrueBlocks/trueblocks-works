@@ -5,26 +5,90 @@ import (
 	"fmt"
 
 	"works/internal/models"
+	"works/internal/validation"
 )
 
-func (db *DB) CreateWork(w *models.Work) error {
+// validateWork validates a Work entity
+func (db *DB) validateWork(w *models.Work) validation.ValidationResult {
+	result := validation.ValidationResult{}
+
+	// Required fields
+	result.AddIfError(validation.Required(w.Title, "title"))
+	result.AddIfError(validation.Required(w.Type, "type"))
+
+	// Field constraints
+	result.AddIfError(validation.MaxLength(w.Title, 500, "title"))
+
+	// Year validation
+	if w.Year != nil && *w.Year != "" {
+		result.AddIfError(validation.MaxLength(*w.Year, 10, "year"))
+	}
+
+	// nWords must be non-negative if present
+	if w.NWords != nil {
+		result.AddIfError(validation.NonNegative(*w.NWords, "nWords"))
+	}
+
+	// Apply defaults if not set
+	if w.Status == "" {
+		w.Status = "New"
+	}
+	if w.Quality == "" {
+		w.Quality = "Good"
+	}
+	if w.DocType == "" {
+		w.DocType = "docx"
+	}
+	if w.Attributes == "" {
+		w.Attributes = "{}"
+	}
+
+	// Check for duplicate generatedPath (only if required fields are present)
+	if result.IsValid() {
+		genPath := w.GeneratedPath()
+		if genPath != "" {
+			matches, err := db.FindWorksByGeneratedPath(genPath)
+			if err != nil {
+				result.AddError("generatedPath", "Error checking for duplicates: "+err.Error())
+			} else {
+				// Filter out the work being validated (if it has an ID)
+				for _, match := range matches {
+					if match.WorkID != w.WorkID {
+						result.AddError("generatedPath", "A work with this title, type, and year already exists")
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return result
+}
+
+func (db *DB) CreateWork(w *models.Work) (*validation.ValidationResult, error) {
+	// Validate the work
+	result := db.validateWork(w)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	query := `INSERT INTO Works (
 		title, type, year, status, quality, doc_type, path, draft,
 		n_words, course_name, attributes, access_date, file_mtime
 	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	result, err := db.conn.Exec(query,
+	sqlResult, err := db.conn.Exec(query,
 		w.Title, w.Type, w.Year, w.Status, w.Quality, w.DocType,
 		w.Path, w.Draft, w.NWords, w.CourseName, w.Attributes,
 		w.AccessDate, w.FileMtime,
 	)
 	if err != nil {
-		return fmt.Errorf("insert work: %w", err)
+		return nil, fmt.Errorf("insert work: %w", err)
 	}
 
-	id, err := result.LastInsertId()
+	id, err := sqlResult.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("get last insert id: %w", err)
+		return nil, fmt.Errorf("get last insert id: %w", err)
 	}
 	w.WorkID = id
 
@@ -36,7 +100,7 @@ func (db *DB) CreateWork(w *models.Work) error {
 		w.ModifiedAt = modifiedAt
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (db *DB) GetWork(id int64) (*models.Work, error) {
@@ -92,7 +156,13 @@ func (db *DB) GetWorkByPath(path string) (*models.Work, error) {
 	return w, nil
 }
 
-func (db *DB) UpdateWork(w *models.Work) error {
+func (db *DB) UpdateWork(w *models.Work) (*validation.ValidationResult, error) {
+	// Validate the work
+	result := db.validateWork(w)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
 	query := `UPDATE Works SET
 		title=?, type=?, year=?, status=?, quality=?, doc_type=?,
 		path=?, draft=?, n_words=?, course_name=?, attributes=?,
@@ -105,7 +175,7 @@ func (db *DB) UpdateWork(w *models.Work) error {
 		w.AccessDate, w.WorkID,
 	)
 	if err != nil {
-		return fmt.Errorf("update work: %w", err)
+		return nil, fmt.Errorf("update work: %w", err)
 	}
 
 	// Fetch the updated timestamp
@@ -115,7 +185,7 @@ func (db *DB) UpdateWork(w *models.Work) error {
 		w.ModifiedAt = modifiedAt
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (db *DB) DeleteWork(id int64) error {
@@ -128,7 +198,7 @@ func (db *DB) DeleteWork(id int64) error {
 	}
 
 	work.Attributes = models.MarkDeleted(work.Attributes)
-	if err := db.UpdateWork(work); err != nil {
+	if _, err := db.UpdateWork(work); err != nil {
 		return fmt.Errorf("mark work deleted: %w", err)
 	}
 
@@ -145,24 +215,31 @@ func (db *DB) DeleteWork(id int64) error {
 	return nil
 }
 
-func (db *DB) UndeleteWork(id int64) error {
+func (db *DB) UndeleteWork(id int64) (*validation.ValidationResult, error) {
 	work, err := db.GetWork(id)
 	if err != nil {
-		return fmt.Errorf("get work: %w", err)
+		return nil, fmt.Errorf("get work: %w", err)
 	}
 	if work == nil {
-		return fmt.Errorf("work not found")
+		return nil, fmt.Errorf("work not found")
 	}
 
 	work.Attributes = models.Undelete(work.Attributes)
-	if err := db.UpdateWork(work); err != nil {
-		return fmt.Errorf("undelete work: %w", err)
+
+	// Validate before undeleting to check for duplicates
+	result := db.validateWork(work)
+	if !result.IsValid() {
+		return &result, nil
+	}
+
+	if validResult, err := db.UpdateWork(work); err != nil || !validResult.IsValid() {
+		return validResult, fmt.Errorf("undelete work: %w", err)
 	}
 
 	submissions, _ := db.ListSubmissionsByWork(id)
 	for _, sub := range submissions {
 		if models.IsDeleted(sub.Attributes) {
-			_ = db.UndeleteSubmission(sub.SubmissionID)
+			_, _ = db.UndeleteSubmission(sub.SubmissionID)
 		}
 	}
 
@@ -173,7 +250,7 @@ func (db *DB) UndeleteWork(id int64) error {
 		}
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
@@ -211,4 +288,94 @@ func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
 		works = append(works, w)
 	}
 	return works, rows.Err()
+}
+
+// FindWorksByGeneratedPath finds all non-deleted works that would have the given generated path
+func (db *DB) FindWorksByGeneratedPath(path string) ([]models.Work, error) {
+	query := `SELECT workID, title, type, year, status, quality, doc_type,
+		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime
+		FROM Works` + whereNotDeleted + ` ORDER BY workID`
+
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("query works: %w", err)
+	}
+	defer rows.Close()
+
+	var matches []models.Work
+	for rows.Next() {
+		var w models.Work
+		err := rows.Scan(
+			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
+			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
+			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan work: %w", err)
+		}
+
+		// Generate path and compare
+		genPath := w.GeneratedPath()
+		if genPath == path {
+			matches = append(matches, w)
+		}
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return matches, nil
+}
+
+// GetWorkDeleteConfirmation returns information about what will be deleted
+func (db *DB) GetWorkDeleteConfirmation(workID int64) (*DeleteConfirmation, error) {
+	work, err := db.GetWork(workID)
+	if err != nil {
+		return nil, err
+	}
+
+	conf := &DeleteConfirmation{
+		EntityType: "work",
+		EntityName: work.Title,
+	}
+
+	// Count notes
+	err = db.conn.QueryRow(`SELECT COUNT(*) FROM Notes WHERE entity_type = 'work' AND entity_id = ?`, workID).Scan(&conf.NoteCount)
+	if err != nil {
+		return nil, err
+	}
+
+	// Count submissions
+	err = db.conn.QueryRow(`SELECT COUNT(*) FROM Submissions WHERE workID = ?`, workID).Scan(&conf.SubmissionCount)
+	if err != nil {
+		return nil, err
+	}
+
+	// Count collections
+	err = db.conn.QueryRow(`SELECT COUNT(DISTINCT collID) FROM CollectionDetails WHERE workID = ?`, workID).Scan(&conf.CollectionCount)
+	if err != nil {
+		return nil, err
+	}
+
+	return conf, nil
+}
+
+// DeleteWorkPermanent permanently deletes a work and all its orphaned data
+// CASCADE will automatically delete submissions and collection_details
+// We manually delete notes since they use a polymorphic pattern
+func (db *DB) DeleteWorkPermanent(workID int64) error {
+	// Delete notes manually (polymorphic FK not supported by CASCADE)
+	_, err := db.conn.Exec(`DELETE FROM Notes WHERE entity_type = 'work' AND entity_id = ?`, workID)
+	if err != nil {
+		return fmt.Errorf("delete work notes: %w", err)
+	}
+
+	// Delete work (CASCADE handles submissions and collection_details automatically)
+	_, err = db.conn.Exec(`DELETE FROM Works WHERE workID = ?`, workID)
+	if err != nil {
+		return fmt.Errorf("delete work: %w", err)
+	}
+
+	return nil
 }

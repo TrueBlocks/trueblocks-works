@@ -123,6 +123,15 @@ func (db *DB) UndeleteNote(id int64) error {
 	return nil
 }
 
+func (db *DB) DeleteNotePermanent(id int64) error {
+	query := `DELETE FROM Notes WHERE id = ?`
+	_, err := db.conn.Exec(query, id)
+	if err != nil {
+		return fmt.Errorf("delete note permanently: %w", err)
+	}
+	return nil
+}
+
 func (db *DB) GetAllNotes(showDeleted bool) ([]models.Note, error) {
 	query := `SELECT id, entity_type, entity_id, type, note, attributes, modified_at, created_at
 		FROM Notes`

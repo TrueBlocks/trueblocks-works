@@ -72,6 +72,8 @@ export function CollectionDetail({
     handleAdd: handleAddNote,
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
+    handleUndelete: handleUndeleteNote,
+    handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('collection', collectionId);
 
   const handleReturnToList = useCallback(() => {
@@ -454,6 +456,8 @@ export function CollectionDetail({
             onAdd={handleAddNote}
             onUpdate={handleUpdateNote}
             onDelete={handleDeleteNote}
+            onUndelete={handleUndeleteNote}
+            onPermanentDelete={handlePermanentDeleteNote}
           />
         </Grid.Col>
       </Grid>

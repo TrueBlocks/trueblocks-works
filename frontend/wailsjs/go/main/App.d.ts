@@ -51,6 +51,8 @@ export function DeleteCollectionPermanent(arg1:number):Promise<void>;
 
 export function DeleteNote(arg1:number):Promise<void>;
 
+export function DeleteNotePermanent(arg1:number):Promise<void>;
+
 export function DeleteOrganization(arg1:number):Promise<void>;
 
 export function DeleteOrganizationPermanent(arg1:number):Promise<void>;
@@ -228,6 +230,8 @@ export function ToggleShowDeleted():Promise<boolean>;
 export function TouchWorkAccessDate(arg1:number):Promise<void>;
 
 export function UndeleteCollection(arg1:number):Promise<validation.ValidationResult>;
+
+export function UndeleteNote(arg1:number):Promise<void>;
 
 export function UndeleteOrganization(arg1:number):Promise<validation.ValidationResult>;
 

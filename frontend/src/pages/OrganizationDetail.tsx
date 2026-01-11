@@ -48,6 +48,8 @@ export function OrganizationDetail({
     handleAdd: handleAddNote,
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
+    handleUndelete: handleUndeleteNote,
+    handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('journal', organizationId);
   const currentIndex = filteredOrganizations.findIndex((o) => o.orgID === organizationId);
   const hasPrev = currentIndex > 0;
@@ -352,6 +354,8 @@ export function OrganizationDetail({
               onAdd={handleAddNote}
               onUpdate={handleUpdateNote}
               onDelete={handleDeleteNote}
+              onUndelete={handleUndeleteNote}
+              onPermanentDelete={handlePermanentDeleteNote}
             />
             <SubmissionsPortal
               submissions={submissions}

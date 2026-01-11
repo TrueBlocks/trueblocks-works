@@ -22,12 +22,12 @@
       "type": null
     },
     {
-      "attributes": "",
+      "attributes": "deleted",
       "createdAt": "2026-01-06 00:07:00",
       "entityID": 3949,
       "entityType": "work",
       "id": 265,
-      "modifiedAt": "2026-01-06 00:07:00",
+      "modifiedAt": "2026-01-10T21:15:07-05:00",
       "note": "Accepted by \"Medium\" self-publishing blog site",
       "type": "Acceptance"
     },

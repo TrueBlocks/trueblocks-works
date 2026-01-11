@@ -1,5 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
-import { GetNotes, CreateNote, UpdateNote, DeleteNote } from '@wailsjs/go/main/App';
+import {
+  GetNotes,
+  CreateNote,
+  UpdateNote,
+  DeleteNote,
+  UndeleteNote,
+  DeleteNotePermanent,
+} from '@wailsjs/go/main/App';
 import { models } from '@wailsjs/go/models';
 import { LogErr } from '@/utils';
 
@@ -9,6 +16,8 @@ interface UseNotesResult {
   handleAdd: (noteText: string) => Promise<void>;
   handleUpdate: (note: models.Note) => Promise<void>;
   handleDelete: (noteId: number) => Promise<void>;
+  handleUndelete: (noteId: number) => Promise<void>;
+  handlePermanentDelete: (noteId: number) => Promise<void>;
   reload: () => Promise<void>;
 }
 
@@ -62,12 +71,30 @@ export function useNotes(entityType: string, entityId: number | null): UseNotesR
     [loadNotes]
   );
 
+  const handleUndelete = useCallback(
+    async (noteId: number) => {
+      await UndeleteNote(noteId);
+      await loadNotes();
+    },
+    [loadNotes]
+  );
+
+  const handlePermanentDelete = useCallback(
+    async (noteId: number) => {
+      await DeleteNotePermanent(noteId);
+      await loadNotes();
+    },
+    [loadNotes]
+  );
+
   return {
     notes,
     loading,
     handleAdd,
     handleUpdate,
     handleDelete,
+    handleUndelete,
+    handlePermanentDelete,
     reload: loadNotes,
   };
 }

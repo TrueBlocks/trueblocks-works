@@ -59,6 +59,8 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     handleAdd: handleAddNote,
     handleUpdate: handleUpdateNote,
     handleDelete: handleDeleteNote,
+    handleUndelete: handleUndeleteNote,
+    handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('work', workId);
 
   // Check if we came from a collection
@@ -453,6 +455,8 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
               onAdd={handleAddNote}
               onUpdate={handleUpdateNote}
               onDelete={handleDeleteNote}
+              onUndelete={handleUndeleteNote}
+              onPermanentDelete={handlePermanentDeleteNote}
             />
           </Stack>
         </Grid.Col>

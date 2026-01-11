@@ -86,6 +86,10 @@ export function DeleteNote(arg1) {
   return window['go']['main']['App']['DeleteNote'](arg1);
 }
 
+export function DeleteNotePermanent(arg1) {
+  return window['go']['main']['App']['DeleteNotePermanent'](arg1);
+}
+
 export function DeleteOrganization(arg1) {
   return window['go']['main']['App']['DeleteOrganization'](arg1);
 }
@@ -440,6 +444,10 @@ export function TouchWorkAccessDate(arg1) {
 
 export function UndeleteCollection(arg1) {
   return window['go']['main']['App']['UndeleteCollection'](arg1);
+}
+
+export function UndeleteNote(arg1) {
+  return window['go']['main']['App']['UndeleteNote'](arg1);
 }
 
 export function UndeleteOrganization(arg1) {

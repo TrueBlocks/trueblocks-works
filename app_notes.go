@@ -20,3 +20,11 @@ func (a *App) UpdateNote(note *models.Note) (*validation.ValidationResult, error
 func (a *App) DeleteNote(id int64) error {
 	return a.db.DeleteNote(id)
 }
+
+func (a *App) UndeleteNote(id int64) error {
+	return a.db.UndeleteNote(id)
+}
+
+func (a *App) DeleteNotePermanent(id int64) error {
+	return a.db.DeleteNotePermanent(id)
+}

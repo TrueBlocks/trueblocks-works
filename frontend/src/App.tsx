@@ -193,7 +193,7 @@ function App() {
         result.status === 'needs_type' ||
         result.imported > 0 ||
         result.updated > 0 ||
-        result.invalid.length > 0
+        (result.invalid?.length ?? 0) > 0
       ) {
         setImportResult(result);
         setImportModalOpen(true);

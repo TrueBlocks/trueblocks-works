@@ -1,5 +1,5 @@
 {
-  "count": 243,
+  "count": 242,
   "records": [
     {
       "attributes": "",
@@ -4097,23 +4097,6 @@
       "userID": "jrush@greathill.com",
       "webAddress": "http://www.bu.edu/dbin/agni/",
       "workID": 3511
-    },
-    {
-      "attributes": "",
-      "contestName": null,
-      "cost": null,
-      "draft": "2nd",
-      "orgID": 1834,
-      "password": null,
-      "queryDate": "5/6/2016",
-      "responseDate": "5/6/2016",
-      "responseType": "Accepted",
-      "submissionDate": "5/6/2016",
-      "submissionID": 40320,
-      "submissionType": "online",
-      "userID": null,
-      "webAddress": null,
-      "workID": 3949
     },
     {
       "attributes": "",

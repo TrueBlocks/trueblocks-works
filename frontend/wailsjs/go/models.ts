@@ -759,6 +759,7 @@ export namespace models {
 	    attributes: string;
 	    createdAt: string;
 	    modifiedAt: string;
+	    isDeleted: boolean;
 	    nItems: number;
 	
 	    static createFrom(source: any = {}) {
@@ -773,6 +774,7 @@ export namespace models {
 	        this.attributes = source["attributes"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
+	        this.isDeleted = source["isDeleted"];
 	        this.nItems = source["nItems"];
 	    }
 	}

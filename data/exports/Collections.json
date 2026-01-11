@@ -1,5 +1,5 @@
 {
-  "count": 22,
+  "count": 21,
   "records": [
     {
       "attributes": "",
@@ -120,12 +120,6 @@
       "collID": 50063,
       "collectionName": "Blog Posts and Ideas",
       "type": "Other"
-    },
-    {
-      "attributes": "",
-      "collID": 50064,
-      "collectionName": "Imported at 2026-01-10 10-33-27",
-      "type": "Import"
     },
     {
       "attributes": "{}",

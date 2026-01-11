@@ -280,9 +280,9 @@ func StatusOrder(status string) int {
 **Template Selection:**
 ```
 IF type contains "Poem"
-    → "/Users/jrush/Documents/Home/00 New Work/00 Poem Template.docx"
+    → "/Users/jrush/Documents/Home/99 Templates/00 Poem Template.docx"
 ELSE
-    → "/Users/jrush/Documents/Home/00 New Work/00 Prose Template.docx"
+    → "/Users/jrush/Documents/Home/99 Templates/00 Prose Template.docx"
 ```
 
 **Go Implementation:**
@@ -419,9 +419,9 @@ func (a *App) createDocumentFromTemplate(work *Work, destPath string) error {
     // Select template based on type
     var templatePath string
     if strings.Contains(work.Type, "Poem") {
-        templatePath = filepath.Join(BaseFolder, "00 New Work/00 Poem Template.docx")
+        templatePath = filepath.Join(BaseFolder, "99 Templates/00 Poem Template.docx")
     } else {
-        templatePath = filepath.Join(BaseFolder, "00 New Work/00 Prose Template.docx")
+        templatePath = filepath.Join(BaseFolder, "99 Templates/00 Prose Template.docx")
     }
     
     // Copy template to destination

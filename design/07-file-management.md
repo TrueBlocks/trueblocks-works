@@ -73,7 +73,7 @@ func DefaultPersistedState() PersistedState {
         BaseFolderPath:       filepath.Join(home, "Documents", "Home"),
         PDFPreviewPath:       filepath.Join(home, "Development", "databases", "support", "dbSubmissions"),
         SubmissionExportPath: filepath.Join(home, "Desktop", "Submissions"),
-        TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "00 New Work"),
+        TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "99 Templates"),
     }
 }
 ```
@@ -412,9 +412,9 @@ The system handles multiple file extensions. When moving/copying:
 **Template Selection:**
 ```
 IF type contains "Poem"
-    → "/Users/jrush/Documents/Home/00 New Work/00 Poem Template.rtf"
+    → "/Users/jrush/Documents/Home/99 Templates/00 Poem Template.rtf"
 ELSE
-    → "/Users/jrush/Documents/Home/00 New Work/00 Prose Template.rtf"
+    → "/Users/jrush/Documents/Home/99 Templates/00 Prose Template.rtf"
 ```
 
 ### 5.2 Move File (moveFile Script)
@@ -661,8 +661,8 @@ const (
     BaseFolder       = "/Users/jrush/Documents/Home/"
     SubmissionsDir   = "/Users/jrush/Desktop/Submissions/"
     PreviewsDir      = "/Users/jrush/Sites/Works/"
-    PoemTemplate     = BaseFolder + "00 New Work/00 Poem Template.rtf"
-    ProseTemplate    = BaseFolder + "00 New Work/00 Prose Template.rtf"
+    PoemTemplate     = BaseFolder + "99 Templates/00 Poem Template.rtf"
+    ProseTemplate    = BaseFolder + "99 Templates/00 Prose Template.rtf"
     NoPreviewPath    = "0000 NoPreview.pdf"
 )
 

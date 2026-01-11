@@ -450,7 +450,7 @@ func DefaultPersistedState() PersistedState {
         BaseFolderPath:       filepath.Join(home, "Documents", "Home"),
         PDFPreviewPath:       filepath.Join(home, "Development", "databases", "support", "dbSubmissions"),
         SubmissionExportPath: filepath.Join(home, "Desktop", "Submissions"),
-        TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "00 New Work"),
+        TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "99 Templates"),
         Theme:                "system",
         Version:              1,
     }
@@ -676,7 +676,7 @@ func (a *App) GetRecentWorks() []int {
   "baseFolderPath": "/Users/jrush/Documents/Home",
   "pdfPreviewPath": "/Users/jrush/Sites/Works",
   "submissionExportPath": "/Users/jrush/Desktop/Submissions",
-  "templateFolderPath": "/Users/jrush/Documents/Home/00 New Work",
+  "templateFolderPath": "/Users/jrush/Documents/Home/99 Templates",
   "theme": "system",
   "sidebarCollapsed": false,
   "version": 1

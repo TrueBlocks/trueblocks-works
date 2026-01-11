@@ -113,6 +113,7 @@ func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error)
 		if err != nil {
 			return nil, fmt.Errorf("scan collection: %w", err)
 		}
+		c.IsDeleted = c.Collection.IsDeleted()
 		cols = append(cols, c)
 	}
 	return cols, rows.Err()

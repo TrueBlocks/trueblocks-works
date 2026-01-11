@@ -25,7 +25,7 @@ func DefaultConfig() Config {
 		BaseFolderPath:       filepath.Join(home, "Documents", "Home"),
 		PDFPreviewPath:       filepath.Join(home, "Development", "databases", "support", "dbSubmissions"),
 		SubmissionExportPath: filepath.Join(home, "Desktop", "Submissions"),
-		TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "00 New Work"),
+		TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "99 Templates"),
 	}
 }
 

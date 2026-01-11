@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -49,6 +50,13 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId: "com.trueblocks.works.8f3a9c2e-4b1d-4e5f-9a7b-2c8d6e0f1a3b",
+			OnSecondInstanceLaunch: func(data options.SecondInstanceData) {
+				_ = data
+				fmt.Println("Cannot start a second instance")
+			},
+		},
 		Bind: []interface{}{
 			app,
 		},

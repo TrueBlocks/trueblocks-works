@@ -44,7 +44,7 @@ func defaultSettings() *Settings {
 		BaseFolderPath:       filepath.Join(home, "Documents", "Home"),
 		PDFPreviewPath:       filepath.Join(home, ".works", "previews"),
 		SubmissionExportPath: filepath.Join(home, "Desktop", "Submissions"),
-		TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "00 New Work"),
+		TemplateFolderPath:   filepath.Join(home, "Documents", "Home", "99 Templates"),
 		LibreOfficePath:      "/Applications/LibreOffice.app/Contents/MacOS/soffice",
 		SetupCompleted:       false,
 		Theme:                "default",

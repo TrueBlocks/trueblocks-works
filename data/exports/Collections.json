@@ -1,0 +1,144 @@
+{
+  "count": 23,
+  "records": [
+    {
+      "attributes": "",
+      "collID": 10170,
+      "collectionName": "Genji Sequence",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 30020,
+      "collectionName": "Math Essays",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 30040,
+      "collectionName": "Papers",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 30050,
+      "collectionName": "Freewrite",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 30060,
+      "collectionName": "365 Challenge",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 30080,
+      "collectionName": "VoiceMemos",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 30090,
+      "collectionName": "Travel Journals",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 40010,
+      "collectionName": "Spiral",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 40020,
+      "collectionName": "Blooming Glen",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 40030,
+      "collectionName": "Doylestown",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 40040,
+      "collectionName": "Sea Isle City",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 40050,
+      "collectionName": "Storey Cotton",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 40060,
+      "collectionName": "Troop Movements",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 50010,
+      "collectionName": "Poetry 2008 and Earlier",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 50020,
+      "collectionName": "Poetry 2009 and 2010",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 50030,
+      "collectionName": "Prose 2010 and Earlier",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 50040,
+      "collectionName": "Prose and Poetry 2011",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 50050,
+      "collectionName": "NaNoWriMay - May 2015",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50063,
+      "collectionName": "Blog Posts",
+      "type": "Other"
+    },
+    {
+      "attributes": "uneditable",
+      "collID": 50065,
+      "collectionName": "New Works",
+      "type": "System"
+    },
+    {
+      "attributes": "",
+      "collID": 50066,
+      "collectionName": "Blog Ideas",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50068,
+      "collectionName": "Ethereum Related",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50069,
+      "collectionName": "Rules for Pennies",
+      "type": "Other"
+    }
+  ],
+  "table": "Collections"
+}

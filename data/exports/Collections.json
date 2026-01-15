@@ -1,5 +1,5 @@
 {
-  "count": 23,
+  "count": 24,
   "records": [
     {
       "attributes": "",
@@ -137,6 +137,12 @@
       "attributes": "",
       "collID": 50069,
       "collectionName": "Rules for Pennies",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50070,
+      "collectionName": "Stony Lane Press",
       "type": "Other"
     }
   ],

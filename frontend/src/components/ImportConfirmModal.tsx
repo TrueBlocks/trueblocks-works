@@ -12,12 +12,11 @@ import {
   Center,
   TextInput,
 } from '@mantine/core';
-import { IconCheck, IconAlertCircle } from '@tabler/icons-react';
+import { IconCheck, IconAlertCircle, IconX } from '@tabler/icons-react';
 import { PreviewImportFiles, GetCollections, GetEnumLists } from '@app';
 import { app, models } from '@models';
 import { LogErr } from '@/utils';
 
-type ImportPreview = app.ImportPreview;
 type FilePreview = app.FilePreview;
 
 interface EditableFile extends FilePreview {
@@ -34,7 +33,6 @@ interface ImportConfirmModalProps {
 }
 
 export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirmModalProps) {
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [editableFiles, setEditableFiles] = useState<EditableFile[]>([]);
   const [collections, setCollections] = useState<models.CollectionView[]>([]);
   const [selectedCollectionID, setSelectedCollectionID] = useState<string | null>(null);
@@ -55,7 +53,6 @@ export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirm
           GetEnumLists(),
         ]);
 
-        setPreview(previewData);
         // Apply defaults for incomplete files
         const currentYear = String(new Date().getFullYear());
         const filesWithDefaults = previewData.files.map((f: FilePreview) => ({
@@ -114,7 +111,6 @@ export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirm
   };
 
   const handleClose = () => {
-    setPreview(null);
     setEditableFiles([]);
     setSelectedCollectionID(null);
     onClose();
@@ -126,6 +122,10 @@ export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirm
       updated[idx] = { ...updated[idx], [field]: value };
       return updated;
     });
+  }, []);
+
+  const removeFile = useCallback((idx: number) => {
+    setEditableFiles((prev) => prev.filter((_, i) => i !== idx));
   }, []);
 
   const isFileComplete = useCallback((file: EditableFile) => {
@@ -159,7 +159,7 @@ export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirm
         <Center py="xl">
           <Loader size="md" />
         </Center>
-      ) : !preview || preview.totalCount === 0 ? (
+      ) : editableFiles.length === 0 ? (
         <Stack gap="md">
           <Text c="dimmed">No files found in ./imports/files/</Text>
           <Group justify="flex-end">
@@ -177,7 +177,7 @@ export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirm
               </Text>{' '}
               of{' '}
               <Text span fw={600}>
-                {preview.totalCount}
+                {editableFiles.length}
               </Text>{' '}
               files ready to import
             </Text>
@@ -196,10 +196,11 @@ export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirm
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th w={40}></Table.Th>
-                  <Table.Th w="30%">Title</Table.Th>
-                  <Table.Th w="25%">Type</Table.Th>
-                  <Table.Th w="15%">Year</Table.Th>
-                  <Table.Th w="20%">Quality</Table.Th>
+                  <Table.Th w="28%">Title</Table.Th>
+                  <Table.Th w="23%">Type</Table.Th>
+                  <Table.Th w="14%">Year</Table.Th>
+                  <Table.Th w="18%">Quality</Table.Th>
+                  <Table.Th w={40}></Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -275,6 +276,14 @@ export function ImportConfirmModal({ opened, onClose, onConfirm }: ImportConfirm
                             placeholder="Quality"
                           />
                         )}
+                      </Table.Td>
+                      <Table.Td>
+                        <IconX
+                          size={16}
+                          color="gray"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => removeFile(idx)}
+                        />
                       </Table.Td>
                     </Table.Tr>
                   );

@@ -1,5 +1,5 @@
 {
-  "count": 243,
+  "count": 216,
   "records": [
     {
       "attributes": "",
@@ -494,16 +494,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1044,
-      "entityType": "journal",
-      "id": 2,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Message from Matt Potter (Editor and Founder of Pure Slush) in response to submission of Celebrate (v3):\n\nHi Thomas,\nI love your poem but it is too short. The competition is for poems or stories 50 to 150 words long. As it's a competition, I have to keep that in mind. Do you have something longer? Thanks,\nMatt [Potter]",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 1295,
       "entityType": "journal",
       "id": 18,
@@ -684,16 +674,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1044,
-      "entityType": "journal",
-      "id": 3,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "mainstream fiction, each week has a theme",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21233,
       "entityType": "work",
       "id": 74,
@@ -809,16 +789,6 @@
       "id": 168,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "I only submitted the first section of this poem to Philadelphia Poets.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21176,
-      "entityType": "work",
-      "id": 69,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Matt published this in the Dec. 2012 issue. Published with \"I Keep Forgetting\" title.",
       "type": "Note"
     },
     {
@@ -1374,236 +1344,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21146,
-      "entityType": "work",
-      "id": 65,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21162,
-      "entityType": "work",
-      "id": 67,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21225,
-      "entityType": "work",
-      "id": 73,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21236,
-      "entityType": "work",
-      "id": 80,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21244,
-      "entityType": "work",
-      "id": 83,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21371,
-      "entityType": "work",
-      "id": 96,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21397,
-      "entityType": "work",
-      "id": 99,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21411,
-      "entityType": "work",
-      "id": 100,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21568,
-      "entityType": "work",
-      "id": 116,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21599,
-      "entityType": "work",
-      "id": 126,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21680,
-      "entityType": "work",
-      "id": 134,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21692,
-      "entityType": "work",
-      "id": 135,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21723,
-      "entityType": "work",
-      "id": 136,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21740,
-      "entityType": "work",
-      "id": 142,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21759,
-      "entityType": "work",
-      "id": 145,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21809,
-      "entityType": "work",
-      "id": 149,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21959,
-      "entityType": "work",
-      "id": 160,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21981,
-      "entityType": "work",
-      "id": 163,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22054,
-      "entityType": "work",
-      "id": 171,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22082,
-      "entityType": "work",
-      "id": 175,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22095,
-      "entityType": "work",
-      "id": 176,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22112,
-      "entityType": "work",
-      "id": 178,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3010,
-      "entityType": "work",
-      "id": 193,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Posted to my blog",
-      "type": "Posting"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21266,
       "entityType": "work",
       "id": 86,
@@ -2029,16 +1769,6 @@
       "id": 190,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Dear Thomas, \n\nThank you for submitting Robert Frost Helps Me Talk to My Father to Bartleby Snopes. We appreciate the chance to read your work. Unfortunately, this piece is not for us. We tend to prefer stories with more dramatic tension and more fully developed characters. This is more of anecdote. It needs more substance to carry the narrative, such as more demonstrated tension and conflict between the father and son and clarification about their relationship. \n\nGood luck with this one elsewhere. Feel free to try us again in the future with something new, but please wait at least one month before submitting again. \n\nSincerely, \nThe Editors \nBartleby Snopes \nwww.bartlebysnopes.com\n\nYou can go here to view the submission:\nhttp://bartlebysnopes.submittable.com/user/submissions/3860190",
-      "type": "Response"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21176,
-      "entityType": "work",
-      "id": 70,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Message from Matt Potter (Editor and Founder of Pure Slush) in response to submission of Celebrate (v3):\n\nHi Thomas,\nI love your poem but it is too short. The competition is for poems or stories 50 to 150 words long. As it's a competition, I have to keep that in mind. Do you have something longer? Thanks,\nMatt [Potter]",
       "type": "Response"
     },
     {

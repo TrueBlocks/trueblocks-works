@@ -4,20 +4,22 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
 type Settings struct {
-	BaseFolderPath       string `json:"baseFolderPath"`
-	PDFPreviewPath       string `json:"pdfPreviewPath"`
-	SubmissionExportPath string `json:"submissionExportPath"`
-	TemplateFolderPath   string `json:"templateFolderPath"`
-	LibreOfficePath      string `json:"libreOfficePath,omitempty"`
-	ExportFolderPath     string `json:"exportFolderPath,omitempty"`
-	SetupCompleted       bool   `json:"setupCompleted"`
-	Theme                string `json:"theme"`
-	DarkMode             bool   `json:"darkMode"`
-	ArchiveOnDelete      bool   `json:"archiveOnDelete"`
+	BaseFolderPath       string   `json:"baseFolderPath"`
+	PDFPreviewPath       string   `json:"pdfPreviewPath"`
+	SubmissionExportPath string   `json:"submissionExportPath"`
+	TemplateFolderPath   string   `json:"templateFolderPath"`
+	LibreOfficePath      string   `json:"libreOfficePath,omitempty"`
+	ExportFolderPath     string   `json:"exportFolderPath,omitempty"`
+	SetupCompleted       bool     `json:"setupCompleted"`
+	Theme                string   `json:"theme"`
+	DarkMode             bool     `json:"darkMode"`
+	ArchiveOnDelete      bool     `json:"archiveOnDelete"`
+	ValidExtensions      []string `json:"validExtensions,omitempty"`
 }
 
 type Manager struct {
@@ -50,7 +52,13 @@ func defaultSettings() *Settings {
 		SetupCompleted:       false,
 		Theme:                "default",
 		DarkMode:             false,
+		ValidExtensions:      DefaultValidExtensions(),
 	}
+}
+
+// DefaultValidExtensions returns the default list of valid file extensions
+func DefaultValidExtensions() []string {
+	return []string{".docx", ".txt", ".md", ".doc", ".xls", ".xlsx", ".pdf"}
 }
 
 func (m *Manager) Load() error {
@@ -108,4 +116,43 @@ func (m *Manager) MarkSetupComplete() error {
 	m.settings.SetupCompleted = true
 	m.mu.Unlock()
 	return m.Save()
+}
+
+// GetValidExtensions returns the configured valid extensions, or defaults if not set
+func (m *Manager) GetValidExtensions() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if len(m.settings.ValidExtensions) == 0 {
+		return DefaultValidExtensions()
+	}
+	return m.settings.ValidExtensions
+}
+
+// IsValidExtension checks if the given extension is in the valid list
+func (m *Manager) IsValidExtension(ext string) bool {
+	ext = strings.ToLower(ext)
+	if !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+	for _, valid := range m.GetValidExtensions() {
+		if strings.ToLower(valid) == ext {
+			return true
+		}
+	}
+	return false
+}
+
+// IsExtractable checks if the extension supports text extraction for FTS
+func (m *Manager) IsExtractable(ext string) bool {
+	ext = strings.ToLower(ext)
+	if !strings.HasPrefix(ext, ".") {
+		ext = "." + ext
+	}
+	// Only these types support text extraction
+	extractable := map[string]bool{
+		".docx": true,
+		".txt":  true,
+		".md":   true,
+	}
+	return extractable[ext]
 }

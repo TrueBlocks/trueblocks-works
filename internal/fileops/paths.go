@@ -10,8 +10,6 @@ import (
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 )
 
-var Extensions = []string{".docx", ".txt", ""}
-
 type Config struct {
 	BaseFolderPath       string
 	PDFPreviewPath       string
@@ -146,13 +144,17 @@ func GetFileInfo(path string) (os.FileInfo, error) {
 }
 
 func FindFileWithExtension(basePath string) (string, error) {
-	for _, ext := range Extensions {
-		path := basePath + ext
-		if FileExists(path) {
-			return path, nil
-		}
+	// Paths MUST have an extension - no wiggle room
+	ext := strings.ToLower(filepath.Ext(basePath))
+	if ext == "" {
+		return "", fmt.Errorf("path has no extension (paths must include extension): %s", basePath)
 	}
-	return "", fmt.Errorf("no file found at %s with any extension", basePath)
+
+	// Exact match required
+	if FileExists(basePath) {
+		return basePath, nil
+	}
+	return "", fmt.Errorf("file not found at exact path: %s", basePath)
 }
 
 func (f *FileOps) CheckPath(w *models.Work) string {

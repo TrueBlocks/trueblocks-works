@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Stack, Paper, Group, Text, Button, Progress, Badge, Modal, Alert } from '@mantine/core';
 import {
   IconDatabase,
@@ -11,14 +12,20 @@ import { EventsOn, EventsOff } from '@wailsjs/runtime/runtime';
 import { FTSGetStatus, FTSBuildIndex, FTSUpdateIndex, FTSDeleteIndex } from '@app';
 import { fts } from '@models';
 import { notifications } from '@mantine/notifications';
-import { LogErr } from '@/utils';
-
+import { LogErr, LogWarn } from '@/utils';
 interface BuildProgress {
   phase: string;
   current: number;
   total: number;
   currentFile: string;
   errors: string[];
+}
+
+interface FailedWork {
+  workID: number;
+  title: string;
+  path: string;
+  error: string;
 }
 
 function formatBytes(bytes: number): string {
@@ -32,12 +39,14 @@ function formatNumber(n: number): string {
 }
 
 export function FTSStatus() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<fts.Status | null>(null);
   const [loading, setLoading] = useState(true);
   const [building, setBuilding] = useState(false);
   const [progress, setProgress] = useState<BuildProgress | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [failedWorks, setFailedWorks] = useState<FailedWork[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,16 +70,34 @@ export function FTSStatus() {
       setProgress(p);
     };
 
-    const handleComplete = () => {
+    const handleComplete = (report: { errors?: string[]; failedWorks?: FailedWork[] }) => {
       setBuilding(false);
       setProgress(null);
       setRefreshKey((k) => k + 1);
-      notifications.show({
-        title: 'Index Built',
-        message: 'Full-text search index has been updated',
-        color: 'green',
-        icon: <IconCheck size={16} />,
-      });
+
+      const failed = report?.failedWorks || [];
+      setFailedWorks(failed);
+
+      if (failed.length > 0) {
+        notifications.show({
+          title: 'Index Updated with Errors',
+          message: `${failed.length} file(s) could not be indexed.`,
+          color: 'yellow',
+          icon: <IconAlertCircle size={16} />,
+          autoClose: 10000,
+        });
+        // Log errors using Wails logging
+        failed.forEach((fw) => {
+          LogWarn(`[FTS] Extraction error: ${fw.path}: ${fw.error}`);
+        });
+      } else {
+        notifications.show({
+          title: 'Index Built',
+          message: 'Full-text search index has been updated',
+          color: 'green',
+          icon: <IconCheck size={16} />,
+        });
+      }
     };
 
     const handleError = (error: string) => {
@@ -188,6 +215,28 @@ export function FTSStatus() {
                   {status.staleCount > 0 && `${status.staleCount} stale document(s). `}
                   {status.missingCount > 0 && `${status.missingCount} missing from index. `}
                   Consider updating the index.
+                </Alert>
+              )}
+
+              {failedWorks.length > 0 && (
+                <Alert icon={<IconAlertCircle size={16} />} color="red" title="Failed to Index">
+                  <Stack gap="xs">
+                    {failedWorks.map((fw) => (
+                      <Group key={fw.workID} gap="xs" wrap="nowrap">
+                        <Text
+                          size="sm"
+                          c="blue"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => navigate(`/works/${fw.workID}`)}
+                        >
+                          {fw.title || `Work #${fw.workID}`}
+                        </Text>
+                        <Text size="xs" c="dimmed" lineClamp={1}>
+                          — {fw.error}
+                        </Text>
+                      </Group>
+                    ))}
+                  </Stack>
                 </Alert>
               )}
 

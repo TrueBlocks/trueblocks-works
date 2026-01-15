@@ -14,7 +14,6 @@ import {
   GetWorkCollections,
   DeleteSubmission,
   UndeleteSubmission,
-  GetSubmissionDeleteConfirmation,
   DeleteSubmissionPermanent,
   RemoveWorkFromCollection,
   AddWorkToCollection,
@@ -64,12 +63,6 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [subDeleteModalOpen, setSubDeleteModalOpen] = useState(false);
-  const [subDeleteConfirmation, setSubDeleteConfirmation] = useState<db.DeleteConfirmation | null>(
-    null
-  );
-  const [subDeleteLoading, setSubDeleteLoading] = useState(false);
-  const [deletingSubID, setDeletingSubID] = useState<number | null>(null);
 
   const {
     notes,
@@ -375,32 +368,20 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     [workId]
   );
 
-  const handlePermanentDeleteSubmissionClick = useCallback(async (subId: number) => {
-    try {
-      const conf = await GetSubmissionDeleteConfirmation(subId);
-      setSubDeleteConfirmation(conf);
-      setDeletingSubID(subId);
-      setSubDeleteModalOpen(true);
-    } catch (err) {
-      LogErr('Failed to get delete confirmation:', err);
-    }
-  }, []);
-
-  const handlePermanentDeleteSubmission = useCallback(async () => {
-    if (!deletingSubID || !workId) return;
-    setSubDeleteLoading(true);
-    try {
-      await DeleteSubmissionPermanent(deletingSubID);
-      setSubDeleteModalOpen(false);
-      setDeletingSubID(null);
-      const updated = await GetSubmissionViewsByWork(workId);
-      setSubmissions(updated || []);
-    } catch (err) {
-      LogErr('Failed to permanently delete submission:', err);
-    } finally {
-      setSubDeleteLoading(false);
-    }
-  }, [deletingSubID, workId]);
+  // Direct delete without confirmation - used in SubmissionsPortal
+  const handlePermanentDeleteSubmissionDirect = useCallback(
+    async (subId: number) => {
+      if (!workId) return;
+      try {
+        await DeleteSubmissionPermanent(subId);
+        const updated = await GetSubmissionViewsByWork(workId);
+        setSubmissions(updated || []);
+      } catch (err) {
+        LogErr('Failed to permanently delete submission:', err);
+      }
+    },
+    [workId]
+  );
 
   const handleDelete = useCallback(async () => {
     if (!work) return;
@@ -575,7 +556,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
               }
               onDelete={handleDeleteSubmission}
               onUndelete={handleUndeleteSubmission}
-              onPermanentDelete={handlePermanentDeleteSubmissionClick}
+              onPermanentDelete={handlePermanentDeleteSubmissionDirect}
             />
             <NotesPortal
               notes={notes}
@@ -595,16 +576,6 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
         onConfirm={handlePermanentDelete}
         confirmation={deleteConfirmation}
         loading={deleteLoading}
-      />
-      <ConfirmDeleteModal
-        opened={subDeleteModalOpen}
-        onClose={() => {
-          setSubDeleteModalOpen(false);
-          setDeletingSubID(null);
-        }}
-        onConfirm={handlePermanentDeleteSubmission}
-        confirmation={subDeleteConfirmation}
-        loading={subDeleteLoading}
       />
     </Stack>
   );

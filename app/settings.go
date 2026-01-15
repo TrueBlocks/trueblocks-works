@@ -1,8 +1,9 @@
 package app
 
 import (
-	"github.com/TrueBlocks/trueblocks-works/v2/internal/settings"
 	"os"
+
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/settings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -59,4 +60,12 @@ func (a *App) DetectLibreOffice() string {
 func (a *App) PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func (a *App) GetValidExtensions() []string {
+	return a.settings.GetValidExtensions()
+}
+
+func (a *App) IsValidExtension(ext string) bool {
+	return a.settings.IsValidExtension(ext)
 }

@@ -75,11 +75,19 @@ type BuildProgress struct {
 }
 
 type BuildReport struct {
-	Success       bool     `json:"success"`
-	DocumentCount int      `json:"documentCount"`
-	WordCount     int      `json:"wordCount"`
-	Duration      float64  `json:"duration"`
-	Errors        []string `json:"errors"`
+	Success       bool         `json:"success"`
+	DocumentCount int          `json:"documentCount"`
+	WordCount     int          `json:"wordCount"`
+	Duration      float64      `json:"duration"`
+	Errors        []string     `json:"errors"`
+	FailedWorks   []FailedWork `json:"failedWorks"`
+}
+
+type FailedWork struct {
+	WorkID int    `json:"workID"`
+	Title  string `json:"title"`
+	Path   string `json:"path"`
+	Error  string `json:"error"`
 }
 
 type WorkInfo struct {

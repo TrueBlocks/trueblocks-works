@@ -22,7 +22,6 @@ import {
   ReorderCollectionWorks,
   DeleteSubmission,
   UndeleteSubmission,
-  GetSubmissionDeleteConfirmation,
   DeleteSubmissionPermanent,
   GetTableState,
   SetTableState,
@@ -65,12 +64,6 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [subDeleteModalOpen, setSubDeleteModalOpen] = useState(false);
-  const [subDeleteConfirmation, setSubDeleteConfirmation] = useState<db.DeleteConfirmation | null>(
-    null
-  );
-  const [subDeleteLoading, setSubDeleteLoading] = useState(false);
-  const [deletingSubID, setDeletingSubID] = useState<number | null>(null);
   const [filterOptions, setFilterOptions] = useState({
     years: [] as string[],
     types: [] as string[],
@@ -310,32 +303,19 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     [collectionId]
   );
 
-  const handlePermanentDeleteSubmissionClick = useCallback(async (subId: number) => {
-    try {
-      const conf = await GetSubmissionDeleteConfirmation(subId);
-      setSubDeleteConfirmation(conf);
-      setDeletingSubID(subId);
-      setSubDeleteModalOpen(true);
-    } catch (err) {
-      LogErr('Failed to get delete confirmation:', err);
-    }
-  }, []);
-
-  const handlePermanentDeleteSubmission = useCallback(async () => {
-    if (!deletingSubID) return;
-    setSubDeleteLoading(true);
-    try {
-      await DeleteSubmissionPermanent(deletingSubID);
-      setSubDeleteModalOpen(false);
-      setDeletingSubID(null);
-      const updated = await GetSubmissionViewsByCollection(collectionId);
-      setSubmissions(updated || []);
-    } catch (err) {
-      LogErr('Failed to permanently delete submission:', err);
-    } finally {
-      setSubDeleteLoading(false);
-    }
-  }, [deletingSubID, collectionId]);
+  // Direct delete without confirmation - used in SubmissionsPortal
+  const handlePermanentDeleteSubmissionDirect = useCallback(
+    async (subId: number) => {
+      try {
+        await DeleteSubmissionPermanent(subId);
+        const updated = await GetSubmissionViewsByCollection(collectionId);
+        setSubmissions(updated || []);
+      } catch (err) {
+        LogErr('Failed to permanently delete submission:', err);
+      }
+    },
+    [collectionId]
+  );
 
   const handleNameChange = useCallback(
     (newName: string) => {
@@ -657,7 +637,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
               }
               onDelete={handleDeleteSubmission}
               onUndelete={handleUndeleteSubmission}
-              onPermanentDelete={handlePermanentDeleteSubmissionClick}
+              onPermanentDelete={handlePermanentDeleteSubmissionDirect}
               displayField="work"
             />
             <NotesPortal
@@ -677,16 +657,6 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         onConfirm={handlePermanentDelete}
         confirmation={deleteConfirmation}
         loading={deleteLoading}
-      />
-      <ConfirmDeleteModal
-        opened={subDeleteModalOpen}
-        onClose={() => {
-          setSubDeleteModalOpen(false);
-          setDeletingSubID(null);
-        }}
-        onConfirm={handlePermanentDeleteSubmission}
-        confirmation={subDeleteConfirmation}
-        loading={subDeleteLoading}
       />
     </Stack>
   );

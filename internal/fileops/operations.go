@@ -146,7 +146,12 @@ func (f *FileOps) GetTemplatePath(workType string) string {
 }
 
 func (f *FileOps) CreateWorkFile(w *models.Work) error {
-	destPath := f.GetFullPath(w) + ".docx"
+	fullPath := f.GetFullPath(w)
+	// Only add .docx if the path doesn't already have an extension
+	destPath := fullPath
+	if filepath.Ext(fullPath) == "" {
+		destPath = fullPath + ".docx"
+	}
 
 	if FileExists(destPath) {
 		return nil

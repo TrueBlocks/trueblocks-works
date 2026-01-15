@@ -611,6 +611,8 @@ func (a *App) reportDataQuality() ReportCategory {
 	rows, err := a.db.Conn().Query(`
 		SELECT workID, title, n_words FROM Works 
 		WHERE n_words IS NOT NULL AND n_words < 10 AND n_words > 0
+		AND title NOT LIKE '%Needed'
+		AND type NOT LIKE '%Chapter%'
 	`)
 	if err == nil {
 		defer rows.Close()
@@ -633,10 +635,11 @@ func (a *App) reportDataQuality() ReportCategory {
 		}
 	}
 
-	// Works with very high word count (> 50000 words)
+	// Works with very high word count (> 50000 words) - exclude Books
 	rows2, err := a.db.Conn().Query(`
 		SELECT workID, title, n_words FROM Works 
-		WHERE n_words IS NOT NULL AND n_words > 50000
+		WHERE n_words IS NOT NULL AND n_words > 50000 AND type NOT LIKE '%Book%'
+		AND title NOT LIKE '%Needed'
 	`)
 	if err == nil {
 		defer rows2.Close()

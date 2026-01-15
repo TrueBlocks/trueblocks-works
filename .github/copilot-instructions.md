@@ -70,8 +70,11 @@ When the user types ONLY these words (no other text), execute the corresponding 
 
 | User types | Execute | Notes |
 |------------|---------|-------|
-| `lint` | `cd <repo-root>; and yarn lint; and yarn type-check` | Run from repo root |
+| `lint` | `cd <repo-root>; and yarn lint --fix; and yarn type-check` | Run from repo root |
 | `run` | `cd <repo-root>; and yarn start &` | Background process, then wait for user |
+| `push` | `git add -A; and git commit -m "<message>"; and git push` | Short, meaningful commit message based on recent changes |
+
+**CRITICAL**: The `push` command is the ONLY exception to the "never git commit" rule. Only execute git commands when user types `push` alone on a line. Never run git add/commit/push otherwise.
 
 After `run`, do NOT take any further action — wait for the user to tell you what to do next.
 

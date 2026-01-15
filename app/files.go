@@ -146,7 +146,10 @@ func (a *App) CreateNewWork(title, workType, year, quality, status string) (*mod
 	runtime.LogDebugf(a.ctx, "Work file created successfully")
 
 	// Verify file exists
-	fullPath := a.fileOps.GetFullPath(work) + ".docx"
+	fullPath := a.fileOps.GetFullPath(work)
+	if filepath.Ext(fullPath) == "" {
+		fullPath = fullPath + ".docx"
+	}
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		runtime.LogErrorf(a.ctx, "File was not created at expected path: %s", fullPath)
 		_ = a.DeleteWorkPermanent(work.WorkID, false)
@@ -154,8 +157,11 @@ func (a *App) CreateNewWork(title, workType, year, quality, status string) (*mod
 	}
 	runtime.LogInfof(a.ctx, "File verified to exist at: %s", fullPath)
 
-	// Update the work's path to include the .docx extension
-	pathWithExt := *work.Path + ".docx"
+	// Update the work's path to include the .docx extension (if not already present)
+	pathWithExt := *work.Path
+	if filepath.Ext(pathWithExt) == "" {
+		pathWithExt = pathWithExt + ".docx"
+	}
 	work.Path = &pathWithExt
 	runtime.LogDebugf(a.ctx, "Updating work path to include extension: %s", pathWithExt)
 	_, err = a.db.UpdateWork(work)

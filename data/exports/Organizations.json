@@ -1,5 +1,5 @@
 {
-  "count": 754,
+  "count": 753,
   "records": [
     {
       "accepts": null,
@@ -18574,31 +18574,6 @@
       "timing": null,
       "type": "Journal",
       "url": null,
-      "websiteMenu": null
-    },
-    {
-      "accepts": null,
-      "attributes": "",
-      "contestEnds": null,
-      "contestFee": null,
-      "contestPrize": null,
-      "contestPrize2": null,
-      "duotropeNum": 8234,
-      "myInterest": "Better",
-      "nPushFiction": 0,
-      "nPushNonfiction": 0,
-      "nPushPoetry": 0,
-      "name": "Animal",
-      "orgID": 1823,
-      "otherName": null,
-      "otherURL": "http://animalliterarymagazine.com/submission-guidelines/",
-      "ranking": null,
-      "source": null,
-      "status": "Open",
-      "submissionTypes": "email",
-      "timing": null,
-      "type": "Journal",
-      "url": "http://animalliterarymagazine.com/",
       "websiteMenu": null
     },
     {

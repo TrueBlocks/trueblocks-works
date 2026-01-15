@@ -310,6 +310,10 @@ export function GetTableState(arg1) {
   return window['go']['app']['App']['GetTableState'](arg1);
 }
 
+export function GetValidExtensions() {
+  return window['go']['app']['App']['GetValidExtensions']();
+}
+
 export function GetWork(arg1) {
   return window['go']['app']['App']['GetWork'](arg1);
 }
@@ -340,6 +344,10 @@ export function ImportWork(arg1, arg2) {
 
 export function IsFirstRun() {
   return window['go']['app']['App']['IsFirstRun']();
+}
+
+export function IsValidExtension(arg1) {
+  return window['go']['app']['App']['IsValidExtension'](arg1);
 }
 
 export function ListBackups() {

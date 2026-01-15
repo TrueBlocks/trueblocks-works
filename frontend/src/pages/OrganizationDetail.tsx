@@ -12,7 +12,6 @@ import {
   GetSubmissionViewsByOrg,
   DeleteSubmission,
   UndeleteSubmission,
-  GetSubmissionDeleteConfirmation,
   DeleteSubmissionPermanent,
   UpdateOrganization,
   DeleteOrganization,
@@ -51,12 +50,6 @@ export function OrganizationDetail({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [subDeleteModalOpen, setSubDeleteModalOpen] = useState(false);
-  const [subDeleteConfirmation, setSubDeleteConfirmation] = useState<db.DeleteConfirmation | null>(
-    null
-  );
-  const [subDeleteLoading, setSubDeleteLoading] = useState(false);
-  const [deletingSubID, setDeletingSubID] = useState<number | null>(null);
 
   const {
     notes,
@@ -177,32 +170,19 @@ export function OrganizationDetail({
     [organizationId]
   );
 
-  const handlePermanentDeleteSubmissionClick = useCallback(async (subId: number) => {
-    try {
-      const conf = await GetSubmissionDeleteConfirmation(subId);
-      setSubDeleteConfirmation(conf);
-      setDeletingSubID(subId);
-      setSubDeleteModalOpen(true);
-    } catch (err) {
-      LogErr('Failed to get delete confirmation:', err);
-    }
-  }, []);
-
-  const handlePermanentDeleteSubmission = useCallback(async () => {
-    if (!deletingSubID) return;
-    setSubDeleteLoading(true);
-    try {
-      await DeleteSubmissionPermanent(deletingSubID);
-      setSubDeleteModalOpen(false);
-      setDeletingSubID(null);
-      const updated = await GetSubmissionViewsByOrg(organizationId);
-      setSubmissions(updated || []);
-    } catch (err) {
-      LogErr('Failed to permanently delete submission:', err);
-    } finally {
-      setSubDeleteLoading(false);
-    }
-  }, [deletingSubID, organizationId]);
+  // Direct delete without confirmation - used in SubmissionsPortal
+  const handlePermanentDeleteSubmissionDirect = useCallback(
+    async (subId: number) => {
+      try {
+        await DeleteSubmissionPermanent(subId);
+        const updated = await GetSubmissionViewsByOrg(organizationId);
+        setSubmissions(updated || []);
+      } catch (err) {
+        LogErr('Failed to permanently delete submission:', err);
+      }
+    },
+    [organizationId]
+  );
 
   const handleNameChange = useCallback(
     async (newName: string) => {
@@ -434,7 +414,7 @@ export function OrganizationDetail({
               }
               onDelete={handleDeleteSubmission}
               onUndelete={handleUndeleteSubmission}
-              onPermanentDelete={handlePermanentDeleteSubmissionClick}
+              onPermanentDelete={handlePermanentDeleteSubmissionDirect}
               displayField="work"
             />
             <NotesPortal
@@ -455,16 +435,6 @@ export function OrganizationDetail({
         onConfirm={handlePermanentDelete}
         confirmation={deleteConfirmation}
         loading={deleteLoading}
-      />
-      <ConfirmDeleteModal
-        opened={subDeleteModalOpen}
-        onClose={() => {
-          setSubDeleteModalOpen(false);
-          setDeletingSubID(null);
-        }}
-        onConfirm={handlePermanentDeleteSubmission}
-        confirmation={subDeleteConfirmation}
-        loading={subDeleteLoading}
       />
     </Stack>
   );

@@ -86,7 +86,14 @@ func (b *IndexBuilder) BuildFull() (*BuildReport, error) {
 
 		result := b.extractWork(work)
 		if result.Error != nil {
+			errMsg := result.Error.Error()
 			report.Errors = append(report.Errors, fmt.Sprintf("%s: %v", work.Path, result.Error))
+			report.FailedWorks = append(report.FailedWorks, FailedWork{
+				WorkID: work.WorkID,
+				Title:  work.Title,
+				Path:   work.Path,
+				Error:  errMsg,
+			})
 			continue
 		}
 
@@ -100,6 +107,12 @@ func (b *IndexBuilder) BuildFull() (*BuildReport, error) {
 		)
 		if err != nil {
 			report.Errors = append(report.Errors, fmt.Sprintf("%s: insert failed: %v", work.Path, err))
+			report.FailedWorks = append(report.FailedWorks, FailedWork{
+				WorkID: work.WorkID,
+				Title:  work.Title,
+				Path:   work.Path,
+				Error:  fmt.Sprintf("insert failed: %v", err),
+			})
 			continue
 		}
 
@@ -177,7 +190,14 @@ func (b *IndexBuilder) UpdateIncremental() (*BuildReport, error) {
 
 		result := b.extractWork(work)
 		if result.Error != nil {
+			errMsg := result.Error.Error()
 			report.Errors = append(report.Errors, fmt.Sprintf("%s: %v", work.Path, result.Error))
+			report.FailedWorks = append(report.FailedWorks, FailedWork{
+				WorkID: work.WorkID,
+				Title:  work.Title,
+				Path:   work.Path,
+				Error:  errMsg,
+			})
 			continue
 		}
 
@@ -200,6 +220,12 @@ func (b *IndexBuilder) UpdateIncremental() (*BuildReport, error) {
 		)
 		if err != nil {
 			report.Errors = append(report.Errors, fmt.Sprintf("%s: upsert failed: %v", work.Path, err))
+			report.FailedWorks = append(report.FailedWorks, FailedWork{
+				WorkID: work.WorkID,
+				Title:  work.Title,
+				Path:   work.Path,
+				Error:  fmt.Sprintf("upsert failed: %v", err),
+			})
 			continue
 		}
 

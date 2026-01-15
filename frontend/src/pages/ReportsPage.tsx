@@ -1,6 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack, Text, Badge, Table, Group, Button, Loader, Alert, ActionIcon } from '@mantine/core';
+import {
+  Stack,
+  Text,
+  Badge,
+  Table,
+  Group,
+  Button,
+  Loader,
+  Alert,
+  ActionIcon,
+  Anchor,
+} from '@mantine/core';
 import {
   IconSend,
   IconBook,
@@ -279,35 +290,34 @@ export function ReportsPage() {
             <Table.Tr>
               <Table.Th>Entity</Table.Th>
               <Table.Th>Issue</Table.Th>
-              <Table.Th style={{ width: 60 }} />
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
             {report.issues.map((issue) => (
               <Table.Tr key={`${issue.entityType}-${issue.id}`}>
                 <Table.Td>
-                  <Text size="sm" fw={500}>
-                    {issue.entityName}
-                  </Text>
+                  {['work', 'submission', 'organization', 'collection'].includes(
+                    issue.entityType
+                  ) ? (
+                    <Anchor
+                      size="sm"
+                      fw={500}
+                      onClick={() => handleNavigateEntity(issue.entityType, issue.entityID)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {issue.entityName}
+                    </Anchor>
+                  ) : (
+                    <Text size="sm" fw={500}>
+                      {issue.entityName}
+                    </Text>
+                  )}
                   <Text size="xs" c="dimmed">
                     {issue.entityType} #{issue.entityID}
                   </Text>
                 </Table.Td>
                 <Table.Td>
                   <Text size="sm">{issue.description}</Text>
-                </Table.Td>
-                <Table.Td>
-                  {['work', 'submission', 'organization', 'collection'].includes(
-                    issue.entityType
-                  ) && (
-                    <ActionIcon
-                      variant="subtle"
-                      onClick={() => handleNavigateEntity(issue.entityType, issue.entityID)}
-                      title="Go to record"
-                    >
-                      <IconExternalLink size={16} />
-                    </ActionIcon>
-                  )}
                 </Table.Td>
               </Table.Tr>
             ))}

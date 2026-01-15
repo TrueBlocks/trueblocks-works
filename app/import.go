@@ -221,7 +221,7 @@ func (a *App) ScanImportFolder() ([]string, error) {
 			return nil
 		}
 		ext := strings.ToLower(filepath.Ext(path))
-		if ext == ".docx" || ext == ".txt" || ext == ".md" || ext == ".doc" {
+		if a.settings.IsValidExtension(ext) {
 			files = append(files, path)
 		}
 		return nil

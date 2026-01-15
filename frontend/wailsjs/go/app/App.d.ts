@@ -164,6 +164,8 @@ export function GetTab(arg1:string):Promise<string>;
 
 export function GetTableState(arg1:string):Promise<state.TableState>;
 
+export function GetValidExtensions():Promise<Array<string>>;
+
 export function GetWork(arg1:number):Promise<models.Work>;
 
 export function GetWorkCollections(arg1:number):Promise<Array<models.CollectionDetail>>;
@@ -179,6 +181,8 @@ export function GetWorksFilterOptions():Promise<app.WorksFilterOptions>;
 export function ImportWork(arg1:string,arg2:fileops.ParsedFilename):Promise<models.Work>;
 
 export function IsFirstRun():Promise<boolean>;
+
+export function IsValidExtension(arg1:string):Promise<boolean>;
 
 export function ListBackups():Promise<Array<backup.BackupInfo>>;
 

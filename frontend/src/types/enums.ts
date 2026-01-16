@@ -1,6 +1,16 @@
 export type WorkType = 'Fiction' | 'Non-Fiction' | 'Poetry' | 'Prose Poetry' | '';
 export type WorkStatus = 'Active' | 'Complete' | 'Dead' | 'Retired' | '';
-export type Quality = 'Excellent' | 'Good' | 'Fair' | 'Poor' | '';
+// Must match internal/fileops/paths.go GetQualityMark()
+export type Quality =
+  | 'Best'
+  | 'Better'
+  | 'Good'
+  | 'Okay'
+  | 'Poor'
+  | 'Bad'
+  | 'Worst'
+  | 'Unknown'
+  | '';
 export type DocType =
   | 'Short Story'
   | 'Flash'

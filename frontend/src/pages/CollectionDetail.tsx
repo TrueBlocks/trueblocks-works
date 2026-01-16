@@ -27,6 +27,7 @@ import {
   SetTableState,
 } from '@app';
 import { models, db } from '@models';
+import { qualitySortOrder, Quality } from '@/types';
 import {
   DetailHeader,
   DataTable,
@@ -100,18 +101,6 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     }
   }, [hasNext, filteredCollections, currentIndex, navigate]);
 
-  const handleHome = useCallback(() => {
-    if (filteredCollections.length > 0 && currentIndex !== 0) {
-      navigate(`/collections/${filteredCollections[0].collID}`);
-    }
-  }, [filteredCollections, currentIndex, navigate]);
-
-  const handleEnd = useCallback(() => {
-    if (filteredCollections.length > 0 && currentIndex !== filteredCollections.length - 1) {
-      navigate(`/collections/${filteredCollections[filteredCollections.length - 1].collID}`);
-    }
-  }, [filteredCollections, currentIndex, navigate]);
-
   const handleReturnToList = useCallback(() => {
     // Check if we came from the collections list
     const fromList = (location.state as { fromList?: boolean } | null)?.fromList;
@@ -124,8 +113,6 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   }, [navigate, location.state]);
 
   useHotkeys([
-    ['Home', handleHome],
-    ['End', handleEnd],
     ['mod+shift+ArrowLeft', handleReturnToList],
     ['mod+shift+ArrowUp', handleReturnToList],
   ]);
@@ -457,6 +444,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         label: 'Quality',
         width: '12%',
         render: (work) => <QualityBadge quality={work.quality} />,
+        sortValue: (work) => qualitySortOrder[(work.quality || '') as Quality] ?? 9,
         filterOptions: filterOptions.qualities,
       },
       {

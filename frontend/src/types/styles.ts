@@ -1,11 +1,30 @@
 import type { Quality, WorkStatus, OrgStatus, ResponseType } from './enums';
 
+// Colors ordered by quality: best (green) → worst (red)
 export const qualityColors: Record<Quality, string> = {
-  Excellent: 'green',
+  Best: 'green',
+  Better: 'teal',
   Good: 'blue',
-  Fair: 'yellow',
-  Poor: 'red',
+  Okay: 'cyan',
+  Poor: 'yellow',
+  Bad: 'orange',
+  Worst: 'red',
+  Unknown: 'gray',
   '': 'gray',
+};
+
+// Sort order for Quality column - matches internal/fileops/paths.go GetQualityMark()
+// aa=Best, a=Better, b=Good, c=Okay, d=Poor, e=Bad, f=Worst, z=Unknown
+export const qualitySortOrder: Record<Quality, number> = {
+  Best: 1,
+  Better: 2,
+  Good: 3,
+  Okay: 4,
+  Poor: 5,
+  Bad: 6,
+  Worst: 7,
+  Unknown: 8,
+  '': 9,
 };
 
 export const workStatusColors: Record<WorkStatus, string> = {

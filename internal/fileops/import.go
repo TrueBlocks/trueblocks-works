@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 )
 
 type ParsedFilename struct {
@@ -49,14 +51,35 @@ func ParseImportFilename(filename string) ParsedFilename {
 	matches := pattern.FindStringSubmatch(nameWithoutExt)
 
 	if len(matches) == 5 {
-		result.QualityMark = matches[1]
-		result.Type = strings.TrimSpace(matches[2])
-		result.Year = matches[3]
-		result.Title = strings.TrimSpace(matches[4])
+		potentialMark := matches[1]
+		potentialQuality := GetQualityFromMark(potentialMark)
+		potentialType := strings.TrimSpace(matches[2])
 
-		result.Quality = GetQualityFromMark(result.QualityMark)
-		if result.Quality == "" {
-			result.Errors = append(result.Errors, fmt.Sprintf("Invalid quality mark: '%s'", result.QualityMark))
+		// Check if quality mark is valid AND the resulting type is known
+		if potentialQuality != "" && isValidWorkType(potentialType) {
+			// Valid quality mark and known type
+			result.QualityMark = potentialMark
+			result.Type = potentialType
+			result.Year = matches[3]
+			result.Title = strings.TrimSpace(matches[4])
+			result.Quality = potentialQuality
+		} else {
+			// Either invalid quality mark OR unknown type - try without quality mark prefix
+			noMarkPattern := regexp.MustCompile(`^([^-]+)\s*-\s*(\d{4})\s*-\s*(.+)$`)
+			noMarkMatches := noMarkPattern.FindStringSubmatch(nameWithoutExt)
+			if len(noMarkMatches) == 4 {
+				result.QualityMark = ""
+				result.Type = strings.TrimSpace(noMarkMatches[1])
+				result.Year = noMarkMatches[2]
+				result.Title = strings.TrimSpace(noMarkMatches[3])
+				result.Quality = "Okay" // Default quality when mark is missing
+			} else {
+				result.Title = nameWithoutExt
+				result.Type = ""
+				result.Year = ""
+				result.Quality = ""
+				result.Errors = append(result.Errors, "Missing type, year, or quality - please fill in")
+			}
 		}
 
 		year, err := strconv.Atoi(result.Year)
@@ -64,12 +87,28 @@ func ParseImportFilename(filename string) ParsedFilename {
 			result.Errors = append(result.Errors, fmt.Sprintf("Invalid year: %s", result.Year))
 		}
 	} else {
-		// Pattern didn't match - use filename as title, mark fields as needing input
-		result.Title = nameWithoutExt
-		result.Type = ""
-		result.Year = ""
-		result.Quality = ""
-		result.Errors = append(result.Errors, "Missing type, year, or quality - please fill in")
+		// Pattern didn't match - try without quality mark prefix
+		noMarkPattern := regexp.MustCompile(`^([^-]+)\s*-\s*(\d{4})\s*-\s*(.+)$`)
+		noMarkMatches := noMarkPattern.FindStringSubmatch(nameWithoutExt)
+		if len(noMarkMatches) == 4 {
+			result.QualityMark = ""
+			result.Type = strings.TrimSpace(noMarkMatches[1])
+			result.Year = noMarkMatches[2]
+			result.Title = strings.TrimSpace(noMarkMatches[3])
+			result.Quality = "Okay" // Default quality when mark is missing
+
+			year, err := strconv.Atoi(result.Year)
+			if err != nil || year < 1900 || year > 2100 {
+				result.Errors = append(result.Errors, fmt.Sprintf("Invalid year: %s", result.Year))
+			}
+		} else {
+			// Pattern didn't match at all - use filename as title
+			result.Title = nameWithoutExt
+			result.Type = ""
+			result.Year = ""
+			result.Quality = ""
+			result.Errors = append(result.Errors, "Missing type, year, or quality - please fill in")
+		}
 	}
 
 	// Only invalid if extension is unsupported (already handled above)
@@ -97,4 +136,13 @@ func GetQualityFromMark(mark string) string {
 		return quality
 	}
 	return ""
+}
+
+func isValidWorkType(workType string) bool {
+	for _, t := range models.WorkTypeList {
+		if t == workType {
+			return true
+		}
+	}
+	return false
 }

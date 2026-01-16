@@ -180,17 +180,17 @@ export function NotesPortal({
                           <ActionIcon
                             variant="subtle"
                             size="sm"
-                            color="red"
-                            onClick={() => onDelete(note.id)}
+                            onClick={() => handleStartEdit(note)}
                           >
-                            <IconTrash size={14} />
+                            <IconEdit size={14} />
                           </ActionIcon>
                           <ActionIcon
                             variant="subtle"
                             size="sm"
-                            onClick={() => handleStartEdit(note)}
+                            color="red"
+                            onClick={() => onDelete(note.id)}
                           >
-                            <IconEdit size={14} />
+                            <IconTrash size={14} />
                           </ActionIcon>
                         </>
                       )}

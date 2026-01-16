@@ -1,5 +1,5 @@
 {
-  "count": 216,
+  "count": 139,
   "records": [
     {
       "attributes": "",
@@ -104,71 +104,11 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 214,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Philadelphia Writer's Workshop Contest",
-      "type": "Contest"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 3649,
       "entityType": "work",
       "id": 252,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Daisy Fried workshop",
-      "type": "Critique"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21266,
-      "entityType": "work",
-      "id": 85,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "at Daisy Fried Workshop",
-      "type": "Critique"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21600,
-      "entityType": "work",
-      "id": 127,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "at Daisy Fried workshop",
-      "type": "Critique"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3085,
-      "entityType": "work",
-      "id": 202,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "at Daisy Fried workshop",
-      "type": "Critique"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3492,
-      "entityType": "work",
-      "id": 205,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "at Daisy Fried workshop",
-      "type": "Critique"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 215,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "at Daisy Fried workshop",
       "type": "Critique"
     },
     {
@@ -189,16 +129,6 @@
       "id": 251,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "at Daisy Fried workshop",
-      "type": "Critique"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3650,
-      "entityType": "work",
-      "id": 253,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "for Daisy Fried Workshop",
       "type": "Critique"
     },
     {
@@ -674,16 +604,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21233,
-      "entityType": "work",
-      "id": 74,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "\"Write This\" accepted it but I withdrew it. It has a great last sentence.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21474,
       "entityType": "work",
       "id": 104,
@@ -714,26 +634,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3503,
-      "entityType": "work",
-      "id": 212,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Another title for this might be \"Pearls of Wisdom from My Sister When My Brother Died.\"",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21233,
-      "entityType": "work",
-      "id": 75,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Blink-Ink sent an email saying they were no longer in business so I withdrew it.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 3561,
       "entityType": "work",
       "id": 236,
@@ -754,16 +654,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3517,
-      "entityType": "work",
-      "id": 223,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Dennis Finn \u003cphillyfictioncontest@gmail.com\u003e\nThank you for your submissions. We will contact you if your work makes it into the anthology. Thanks again!",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21486,
       "entityType": "work",
       "id": 105,
@@ -779,26 +669,6 @@
       "id": 159,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Entire file has been extracted to other works",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22047,
-      "entityType": "work",
-      "id": 168,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "I only submitted the first section of this poem to Philadelphia Poets.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21031,
-      "entityType": "work",
-      "id": 58,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "My first non Rosemont published interview",
       "type": "Note"
     },
     {
@@ -849,16 +719,6 @@
       "id": 226,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Published as part of Storey Cotton - Draft 1",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21233,
-      "entityType": "work",
-      "id": 76,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Queried Jim Harrington at Apollo's Lyre. They closed. Withdrawn.",
       "type": "Note"
     },
     {
@@ -1184,16 +1044,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21556,
-      "entityType": "work",
-      "id": 115,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "This is actually pretty good. I bet I could get this published but who knows where.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21301,
       "entityType": "work",
       "id": 90,
@@ -1209,16 +1059,6 @@
       "id": 152,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "This is kind of funny. It's about Mr. Stankonus, Nate's 6th grade teacher.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3855,
-      "entityType": "work",
-      "id": 262,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "This is me practicing for reading the poem \"Corn\" at some reading.",
       "type": "Note"
     },
     {
@@ -1244,16 +1084,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22015,
-      "entityType": "work",
-      "id": 166,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Uses double spaces between sentences. Fix that. Also, pick up stuff from Evernote, There are many additions to the rule book.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21147,
       "entityType": "work",
       "id": 66,
@@ -1264,29 +1094,9 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3026,
-      "entityType": "work",
-      "id": 195,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Workshopped at Rosemont's Writer's Retreat - J.C. Todd",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 3574,
       "entityType": "work",
       "id": 240,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Written at Blue Yonder Workshop - Rosemont College - JC Todd instructor",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3575,
-      "entityType": "work",
-      "id": 241,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Written at Blue Yonder Workshop - Rosemont College - JC Todd instructor",
       "type": "Note"
@@ -1324,16 +1134,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3580,
-      "entityType": "work",
-      "id": 245,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Written at Blue Yonder Workshop - Rosemont College - JC Todd instructor",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 22120,
       "entityType": "work",
       "id": 182,
@@ -1344,59 +1144,9 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21266,
-      "entityType": "work",
-      "id": 86,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Bernadette Meyer Summer Picnic",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3492,
-      "entityType": "work",
-      "id": 206,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Bernadette Meyer Summer Picnic",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21632,
-      "entityType": "work",
-      "id": 130,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "CCP Faculty Showcase on 4/4/2016",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3492,
-      "entityType": "work",
-      "id": 207,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "CCP Faculty Showcase on 4/4/2016",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 3749,
       "entityType": "work",
       "id": 255,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "CCP Faculty Showcase on 4/4/2016",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3848,
-      "entityType": "work",
-      "id": 258,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "CCP Faculty Showcase on 4/4/2016",
       "type": "Reading"
@@ -1414,81 +1164,11 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21583,
-      "entityType": "work",
-      "id": 117,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "CCP Faculty Showcase on 4/7/2014",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21593,
-      "entityType": "work",
-      "id": 123,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "CCP Faculty Showcase on 4/7/2014",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 22120,
       "entityType": "work",
       "id": 183,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "CCP Faculty Showcase on 4/7/2014",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 216,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "CCP Faculty Showcase on 4/7/2014",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21591,
-      "entityType": "work",
-      "id": 121,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Moonstone Poetry Ink",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 217,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Moonstone Poetry Ink",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21266,
-      "entityType": "work",
-      "id": 87,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Moonstone Poetry Ink - Philadelphia, PA",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3857,
-      "entityType": "work",
-      "id": 263,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Moonstone Poetry Ink – Philadelphia, PA",
       "type": "Reading"
     },
     {
@@ -1504,276 +1184,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21585,
-      "entityType": "work",
-      "id": 119,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "PS Stories Write-a-Thon",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3026,
-      "entityType": "work",
-      "id": 196,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "PS Stories Write-a-Thon",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3085,
-      "entityType": "work",
-      "id": 203,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "PS Stories Write-a-Thon",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3492,
-      "entityType": "work",
-      "id": 208,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "PS Stories Write-a-Thon",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3492,
-      "entityType": "work",
-      "id": 209,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Philadelphia Poets - Fumo Family Branch Philadelphia Public Library - Philadelphia, PA",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21632,
-      "entityType": "work",
-      "id": 131,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Philadelphia Poets Book Launch - 1919 Chestnut St. Philadelphia",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22047,
-      "entityType": "work",
-      "id": 169,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Philadelphia Poets Book Launch - 1919 Chestnut St. Philadelphia",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21549,
-      "entityType": "work",
-      "id": 111,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Philadelphia Writers' Workshop",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3691,
-      "entityType": "work",
-      "id": 254,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Read at 'Transactions: Art \u0026 Poetry Exchange' in Pittsburgh, Spinning Plate Gallery with MaryAnne Miller",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21266,
-      "entityType": "work",
-      "id": 88,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Read at Rosemont Summer Retreat June 2013",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21583,
-      "entityType": "work",
-      "id": 118,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Rosemont Monthly Reading",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3085,
-      "entityType": "work",
-      "id": 204,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Rosemont Writer's Retreat Open Mic",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3503,
-      "entityType": "work",
-      "id": 213,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Rosemont Writer's Retreat Open Mic",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21591,
-      "entityType": "work",
-      "id": 122,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Rosemont Writers Retreat",
-      "type": "Reading"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21233,
-      "entityType": "work",
-      "id": 77,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected 7/10/2013.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 218,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Agni' on 4/27/2016.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22185,
-      "entityType": "work",
-      "id": 189,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Bartleby Snopes' on 3/30/2015.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21336,
-      "entityType": "work",
-      "id": 92,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Beorh Quarterly' on 9/9/2013.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21233,
-      "entityType": "work",
-      "id": 78,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Burning Word' on 10/1/2015.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3604,
-      "entityType": "work",
-      "id": 247,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Lowestoft Chronicle' on 8/6/2015.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 219,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Philly Fiction Contest' on 3/24/2015.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3517,
-      "entityType": "work",
-      "id": 224,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Philly Fiction Contest' on 3/26/2014.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21593,
-      "entityType": "work",
-      "id": 124,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Rattle' on 9/13/2013.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 220,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Rattle' on 9/13/2013.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21593,
-      "entityType": "work",
-      "id": 125,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Sakura Review' on 1/11/2014.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 221,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was rejected by 'Sakura Review' on 1/11/2014.",
-      "type": "Rejection"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22185,
-      "entityType": "work",
-      "id": 190,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Dear Thomas, \n\nThank you for submitting Robert Frost Helps Me Talk to My Father to Bartleby Snopes. We appreciate the chance to read your work. Unfortunately, this piece is not for us. We tend to prefer stories with more dramatic tension and more fully developed characters. This is more of anecdote. It needs more substance to carry the narrative, such as more demonstrated tension and conflict between the father and son and clarification about their relationship. \n\nGood luck with this one elsewhere. Feel free to try us again in the future with something new, but please wait at least one month before submitting again. \n\nSincerely, \nThe Editors \nBartleby Snopes \nwww.bartlebysnopes.com\n\nYou can go here to view the submission:\nhttp://bartlebysnopes.submittable.com/user/submissions/3860190",
-      "type": "Response"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21732,
       "entityType": "work",
       "id": 139,
@@ -1784,41 +1194,11 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3857,
-      "entityType": "work",
-      "id": 264,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "By Grant Clauser - Poet Laureate of Montgomery County",
-      "type": "Review"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21732,
       "entityType": "work",
       "id": 140,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Double Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nScribophile\nDiscussion for Double Word Score\nPaige McKinney\nOpening Comments\nNice Title! The bonus made me smile. I'll try not to spend it all in once place. ;)\nInline Critique\n“C H E A T E R. Since the word is spelled out, not spoken/yelled in all caps I think it would be better if you put a period after each letter. C.H.E.A.T.E.R. Cheater. Let's see, etc. Let’s see – that’s three, four for the ‘H’, that’s seven, eight, nine, ten, eleven. Double letter for the ‘R’, that’s thirteen. And double word score. That’s twenty-six.”\n“A S S H O L E. That’s one, two, double letter, that’s four, four for the ‘H’, double letter for the ‘O’, that’s ten, eleven, twelve. Twelve points. Write it down.”\n“T W O T I M E R.”\n“That’s two words.”\n“Where’s it say you can’t use two words?” “Do you want me to look it up?”\nRight here would be a good place to show the people having this competition/conversation. Are they an old married couple, young married, not married, but partners, or just dating? And where is this taking place? In a house, with a mouse; on a box, with a fox? “T W I T,” muttering Who is doing the muttering? , “that’s one, triple for the ‘W’, that’s twelve, thirteen, fourteen, fifteen, double word for the ‘T’. Thirty points.”\n“You already used the double word for the ‘T’” “So.”\n1 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\n“So you can’t use it again. Cheater.”\nUnder her breath, “You’re the cheater, not me.”\n“What did you say. ? ”\n“Nothing – just play the game.”\n“No. I want to know what you said.”\n“I said it’s your turn.”\n“I Q U I T.”\n“That’s two words.”\n“No, you don’t understand. I quit. Do you need me to spell it out?”\nClosing Comments\nYes, I need you to spell it out. Reading straight dialogue is like overhearing a conversation in a restaurant and not being able to see the feuding couple on the other side of the partition--except when I'm reading I have to supply the tone of voice as well as imagine what the people might look like and their backstory.\nHere, the woman seems passive agressive, and I'm left wondering why the guy didn't quit after the T W O T I M E R jab. Guilt? Pretending innocence?\nI also wonder if this scenario is actually possible. Have you tried it? Did you consider having one of them use a blank tile for one of the letters? Maybe at the end. I. Q. U. I. Blank tile--what's that supposed to spell? I QUIT. That's two words, etc...\nAll my comments and suggestions are yours to take or leave with my best wishes (in a box, with a fox, in a house, with a mouse, here or there, anywhere). :)\nMary Jane\nThis was so clever, so funny. I couldn't see anything to critique. Besides that I'm hopeless at Scrabble.\nDan Hart\n2 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nOpening Comments\nHi Thomas,\nI decided against an in-line critique, as this is all dialog. Since it's all dialog, I won't comment on diction / etc.\nPlease remember these are only my subjective opinions, and must be taken with a heaping of salt.\nPlot\nYes, the plot was believable. It didn't interest me, however. I think it can be summarized as, \"Two people play scrabble and quibble.\"\nPacing\nThe pacing was great.\nDescription\nThere were no descriptions that I could tell.\nPoint Of View\nNo POV; I think this was all dialog.\nCharacters\nThe characters didn't seem real to me, because they had no defining characteristics beyond what they said. Neither voice felt unique to me, and I didn't identify or emphasize with either.\nDialog\nThe dialog seemed strong.\nGrammar and Spelling\nI didn't notice any issues.\n3 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nClosing Comments\nI think it's very well-written, and the dialog flows smooth, but to me it doesn't work as a story.\nI understand it's impossible to incorporate all elements of a story into a work this short, however I think it needs a theme, a voice, an idea, or something unique that makes the story stick in my head. My favorite flash pieces, even those as short as a paragraph, stay with me for years.\nIn this story, I don't understand the point or the message. Linguistically, you play with the language well, and I enjoyed hearing words spelled out in my head, and used to further the argument.\nBut what was the message? What am I going to remember about this work in an hour, a day, or next week? What did you want to convey, that only you can convey?\nGood luck with this. I think the writing is great, and the premise is there, but it seems to be missing something vital.\nMalcom Tent\nGranted this is clever,it is just a snippet of something else. In music no one goes to hear a musician just solo. They want to hear songs. Unless its Jazz,and jazz is just music for musicians who like to hear solos. The rest of us want songs and what you have given us is a very clever solo without the song. All the clever banter going back and forth without any internal monolouge from either character does two things it grabs our interest but leaves us wondering what brought on this conversation and the inevitable breakup. It would work well if you were writing this as a screenplay,mostly for an independant film. But just grabbing our interest and not backing up how all this came to be is just wrong even if you're just writing flash fiction. This is some really good banter but we know nothing about the characters. In fiction internal monolouge is very important. It is the building block for everything else. Even books that are dialouge heavy still have internal monolouge to bridge parts of the story together. By setting up such good banter, I could at least envision maybe a couple of hipsters somewhere in Brooklyn at a pizza parlor trading these words back and forth between themselves in an angry fashion like gun fire. Dialouge has always given me problems,but by itself,it can not sustain a story. This has the makings of a very good short story about a break up that was a long time coming.\nAlso,if youre going to use banter that goes back and forth in rapid fashion,it would have been great to use tage lines that hint at what the characters are thinking while they saying these things to eacth other. Go back and re-do this and cultivate it into the good story it's\n4 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nwaiting to become.\nKC Jotter\n*** even later edit/addition to comments ***\ndang! I had a question about this and then I went back and I noticed that I was the one who messed up with the volley. I'm so sorry. I totally blew it. And I'd delete that part, except that maybe, if nothing else, there's something in my fumbling that will give you an idea how to write to people like me who have a deficit in the brain-cell department. Again, my apologies. I'll just keep my fingers crossed that anything else I said is marginally more intelligent.\n***\nHello, Thomas. I love Scrabble and I've always wanted to have a game like this with someone to whom I REALLY wanted to say some hard-hitting things, but I never got to.\nSo, reading this was kind of a fantasy fulfillment for me.\nI don't have any nitpicking to do. Your work is clean, there are no misspellings that I noticed on first read. The grammar is fine. So I'll continue with what I did find.\nSHE: “C H E A T E R. Let’s see – that’s three, four for the ‘H’, that’s seven, eight, nine, ten, eleven. Double letter for the ‘R’, that’s thirteen. And double word score. That’s twenty-six.”\nMy comments are based on an assumption that you're not limited by word count, but that you still want this to be a flash piece. In this first passage, I'd like to see you ramp it really fast. Instead of just all of those double letter, double word points, why not go for gusto?\nMake it active \"C H E A T I N G\" - and get all of the letters out in one time and getting that bonus, making the score astronomical when added with all of the double letter, double word.\nAlso, when you use that here, and continue with other related accusations couched in Scrabble tiles, when you get to the place where \"Cheater\" takes on two meanings, you won't have used the word itself already. It won't duplicate and the word \"Cheater\" will have a bigger impact.\nHE: “A S S H O L E. That’s one, two, double letter, that’s four, four for the ‘H’, double letter for the ‘O’, that’s ten, eleven, twelve. Twelve points. Write it down.”\n5 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nRight here, a man says this. Men don't usually call women assholes, at least not where I come from, so, for me, this isn't the best choice.\nThe rest of the dialogue, down to the part where you actually identify the speaker as female, works gender-wise. But this one doesn't.\nSHE: “T W O T I M E R.”\nHE: “That’s two words.”\nSHE: “Where’s it say you can’t use two words?”\nHE:“Do you want me to look it up?”\nSHE: “T W I T,” muttering, “that’s one, triple for the ‘W’, that’s twelve, thirteen, fourteen, fifteen, double word for the ‘T’. Thirty points.”\nSHE: “You already used the double word for the ‘T’” HE:“So.”\nSHE: “So you can’t use it again. Cheater.”\n*** - this is where she gets 2 hits\nUnder her breath, “You’re the cheater, not me.”\nI highlighted the rest of this because when you use untagged dialogue, it's like a tennis game. You've got one point in here where \"she\" hits twice, and it comes right at the end of this section.\nI went back through the highlighted bits and bold-tagged the dialogue. If you intend for her to hit twice, I don't think it works.\n“No, you don’t understand. I quit. Do you need me to spell it out?”\nI took out that bit because it's not necessary. It waters down your ending because it's almost like the author is over-explaining. I like that ending and you'll want it to have the maximum impact. Don't clue your audience into what you're ABOUT to say in a clever way.\nJust say it in a clever way.\nThe last quibble I have is that he's the one who ends up saying \"I quit.\" And that doesn't\n6 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nwork for me either because if he is cheating, he's already quit. She needs to be the one to quit. It's a story. She called him on it with her first word on the board, they argued it (maybe some of those words could be \"money\" or \"your mother (or yo mama to give dual meaning - yo mama being the serious implication that an in-law is a pain that's caused problems in the relationship and it can also come of as an FU type comment)\" or \"tightwad\" ... you get the idea.\nBut once the drama has played out on the board, the cheater shouldn't be the one who says \"I quit,\" because that doesn't make sense. Or maybe it does - but it doesn't make sense to me, given my value system because I feel that when people cheat on one another, they've already quit the relationship - everything else is just a formality. So in that regard, saying \"I quit\" when you've cheated is redundant - the quitting has already taken place and is no surprise.\nI like your approach to the subject matter. I really would like to see you start off with a heavy accusation, then use each play of the game to support the accusation, while getting the odd jab in here and there. The follow through with the bang of the conclusion.\nThat's all I've got. I hope you find this helpful.\nedit: additional comment - Oh, and one more thing - I glanced at some of the other critiques, and I disagree. I don't think you need the dialogue tags at all. Just watch your wording - make sure that at least some of the terminology has a male voice and some of the terminology or word choices have a female voice, and also make sure you've got the ball on an opposite side of the court every time so that everybody gets a turn and nobody speaks twice in a row.\nSuzi Harris\nScrabble is one of my favorite games. I loved the rapid fire word choices. They really let me see the first player's anger at the other player and gives me a lot of clues to his character - at least in the eyes of the first player.\nI assumed all the word choices were made by the female in the story. This made it a bit confusing for the I Quit to follow her telling the other player 'it's your turn'. The following 'That's two words.' smoothed out this bump but you might consider adding a response from the other player for clarity.\nYou might consider - 'Yes, I know' instead of 'No, you don't understand.' (just a thought)\nOverall, think it is a wonderful concept and a great read. Wish you the best with this and hope some of my comments are helpful.\n7 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nDebbie Smith\nOpening Comments\nI haven't read anything yet, since I like to critique as I read. I have to say curiousity brought me here. Anxious to read this.\nInline Critique\n“C H E A T E R. Let’s see – that’s three, four for the ‘H’, that’s seven, eight, nine, ten, eleven. Double letter for the ‘R’, that’s thirteen. And double word score. That’s twenty-six.”\n“A S S H O L E. That’s one, two, double letter, that’s four, four for the ‘H’, double letter for the ‘O’, that’s ten, eleven, twelve. Twelve points. Write it down.”\n“T W O T I M E R.”\n“That’s two words.”\n“Where’s it say you can’t use two words?”\n“Do you want me to look it up?”\n“T W I T,” muttering, “that’s one, triple for the ‘W’, that’s twelve, thirteen, fourteen, fifteen, double word for the ‘T’. Thirty points.”\n“You already used the double word for the ‘T’” “So.”\n“So you can’t use it again. Cheater.”\nUnder her breath, “You’re the cheater, not me.” “What did you say.”\n“Nothing – just play the game.” “No. I want to know what you said.” “I said it’s your turn.”\n8 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\n“I Q U I T.”\n“That’s two words.”\n“No, you don’t understand. I quit. Do you need me to spell it out?” cute idea!\nClosing Comments\nOkay, tee hee---this was the first time I've critiqued something that I made NO inline thoughts or corrections. Oops! Red line below says I would be a cheater to do that and it forbids it, so I WILL be typing in words above :-). I really don't know where a piece like this would be used, but I give you big points for creativity. If I were going to complain about anything, it bothered me that there were no tags. A tag after \"So\" would have made me feel a bit better :-) And Asshole wouldn't have been my choice of words. Go with a word we can relate to but won't be as offensive. I feel like you just narrowed your audience with that word. Otherwise, great job!\nTolm Maglinnoc\nKC jotter assumed the cheater was a man. It could easily be a woman and therefore there is no problem with asshole.\nMy take on this is: you've got the dialog, now all you need to do is write some description around it.\nOverall I think it's entertaining.\nKatherine Butler\nThis is great dialog and has the makings of a fabulous piece. I have just a couple of suggestions.\nI had a little trouble keeping straight which character was talking at certain times. You could include dialog tags, as has been suggested, but I think the problem could be solved by giving them sharper male/female voices and by refining the dialog just a bit, especially around the I Quit section.\nI have to agree with other critiques that this piece needs a little description to ground it. I liked Paige McKinney's comparison about overhearing a conversation without being able to see who's talking. It seemed a bit random. That being said, I think you should keep\n9 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nanything other than dialog to a bare minimum, as the dialog is the star of the show.\nThere is one other thing that bothered me- why is the cheater calling the innocent party an asshole? That could just be my own personal experience talking, but if my partner were cheating on me, he'd better not be calling me names if he wants to continue breathing. If there are issues on both sides of the table, you might want to bring that out. The way it stands, the cheater is an even bigger jerk, but there might be extenuating circumstances that would make us not hate him.\nMeandering Fox\nOpening Comments\nI comment as I go (though I read this through once, as I do with flash). Things in (parentheses) are suggested cuts. Feel free to totally ignore me.\nInline Critique\n“C H E A T E R while this works, did you consider using hyphens between letters? I guess there's some part of me that assumes hyphens between letters = spelling out verbally. . Let’s see – that’s three, four for the ‘H’, that’s seven, eight, nine, ten, eleven. Double letter for the ‘R’, that’s thirteen. And double word score. That’s twenty-six.”\n“A S S H O L E. That’s one, two, double letter, that’s four, four for the ‘H’, double letter for the ‘O’, that’s ten, eleven, twelve. Twelve points. Write it down.” I'll assume the scores are accurate. I don't play much scrabble...more of a risk man, myself.\n“T W O T I M E R.”\n“That’s two words.”\n“Where’s it say you can’t use two words?” “Do you want me to look it up?”\n“T W I T,” muttering, it's unclear what's being muttered...twit, or the following score assessment. Also, I don't think you need any dialogue tags (or anything other than dialogue) in this piece. “that’s one, triple for the ‘W’, that’s twelve, thirteen, fourteen,\n10 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nfifteen, double word for the ‘T’. Thirty points.”\n“You already used the double word for the ‘T’” aren't there more than one double word\nboxes?\n“So.” Question mark?\n“So you can’t use it again. Cheater.”\nUnder her breath, “You’re the cheater, not me.”\n“What did you say.”\n“Nothing – just play the game.”\n“No. I want to know what you said.”\n“I said it’s your turn.”\n“I Q U I T.”\n“That’s two words.”\n“No, you don’t understand. I quit. Do you need me to spell it out?”\nClosing Comments\nI like this idea. The scrabble terminology really makes it feel true, though I'd probably enjoy it more (not that I didn't enjoy it) if I was a hardcore (or at least conversant) scrabble player.\nMy main issue with this piece is the clarity. You've made it almost all dialogue (which is awesome, and I think you should cut the non-dialogue parts) but made it a little unclear who is speaking. I'll try to explain my example, but it's been a long week and I'm really tired. Here we go for trying...\nBased on the order of speakers, the man is the one who cheated (in the relationship, I would assume) if we can trust the woman. It may just be me, but I associate \"asshole\" with a man's insult. That may be slightly sexist, but I can't imagine I'm the only one who feels like men use the word asshole more often than women.\nAlso, by the end of the piece, the man is the one who has become disgusted with the situation and \"quits.\"\nBasically, I want each character to have their own voice and thoughts. At the moment, it feels jumbled.\n11 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nAlso, the last line is a little too cutesy. It's clever, but the fact that he did indeed already spell it out makes it a little redundant to ask if she needs it spelled out... if that made sense.\nGenerally this is a very solid piece. If you look back through my critique history of flash pieces (not that I expect you to, so just trust me) I usually suggest lots of cuts. This doesn't need them, except for the non-dialogue tags and description of \"her\" speaking under her breath. The scrabble game creates a setting for the reader familiar with scrabble. If the reader isn't familiar with the game, they're not going to get any of this so adding description of any sort is kind of a waste, imo.\nAnyway, let me know if you have questions or if I totally misinterpreted your piece. Don't crit while exhausted. Well done. Thanks for writing.\nMel Mills\nI stopped by to pick up some extra karma by critiquing, but I read through it, and there's nothing I would change. A very excellent flash. keep up the good work!\nMaru Marichika\nThis was a fun read\nDorian Gray\nI chose to write a free form critique because I only found one grammatical mistake. The quote, \"What did you say?\" should be punctuated with a question mark. I know the author knows that, but my editorial instinct can't let it pass.\nI don't usually comment on plot because it's so subjective. However, this is so well crafted that I had to. The idea of using a Scrabble game as a platform for a tense discussion between a couple. Some might argue that operating a story based on the cliche of keeping score would be a bad idea. However, that's what relationships are reduced to when infedelity has occurred.\nThe best aspect of this piece is that there is no unnecessary dialog. If it were my piece, I might consider cutting \"Nothing\" before \"Just play the game,\" just to make the language\n12 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nthat much tighter. I love the impact of the last line.\nI read recently in a textbook that dialog in fiction should always set up tension. I still don't know if I agree with that completely because it seems to be a massive overstatement. However, if that argument has an merit, this piece serves as evidence of that. Thanks for sharing this.\nSofie Borquelle\nOpening Comments\nThe title drew me in for a look. I didn't get the point of it on the first read. At first I didn't get the point at all. What was the story?\nA closer read showed the entire story beneath the layer of words on the surface. I like that a lot; and with so few total words. The casual reader will probably not like this story. People reading more closely will likely enjoy the story and the craftsmanship of the two layers. I wouldn't worry about the first group.\n................................................................\nThe biggest flaw for me is that I can't believe the game. You have three 'bingos' in a row. At a high level, this can happen, but most people, with just a passing familiarity of the game, will have never seen this happen. This also means that your scoring is wrong, a technical error. These large flaws in the surface layer of the story are going to ruin the experience of real story in the underlying layer. Sure, most people barely know the rules of Scrabble and will not know or easily overlook these things, but I consider it a major problem. I do think, however, that this problem is entirely fixable and that doing so will put a lot of polish on the entire story at the same time.\n................................................................\nI've no problem accepting CHEATER as the first word in the story, and think that you can use the 'bingo' aspect to advantage. However, ASSHOLE and TWO-TIMER are way too convenient, way too overt. That's a big negative for me, being too direct for the real story, which deserves better and which is working so nicely below the surface. The beauty of this problem is that you've got nearly the entire dictionary to work and should be able to replace those words with subtler references to positive effect to both layers of the story.\n................................................................\nThe lead-up to the ending could use adjustment also. It doesn't quite ring as believable.\n13 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\n“I Q U I T.”\n“That’s two words.”\nMaybe just \"QUIT\" - and then let him drop the hammer of the story ending by recasting --- “No, you don’t understand. I quit. Do you need me to spell it out?” --- The end doesn't 'pop' for me and I think that it should.\n................................................................\nIt might also be a good idea to add another reference to who's who, just to smooth things out a bit for the reader. The single mention,\"Under her breath\", wasn't quite enough for me to keep track of who was talking when.\n................................................................ I'd like to see another draft. ................................................................\nInline Critique\n(I started with the intention of an inline critique, but it didn't work out that way once I got into it.) “C H E A T E R. Let’s see – that’s three, four for the ‘H’, that’s seven, eight, nine, ten, eleven. Double letter for the ‘R’, that’s thirteen. And double word score. That’s twenty-six.”\n“A S S H O L E. That’s one, two, double letter, that’s four, four for the ‘H’, double letter for the ‘O’, that’s ten, eleven, twelve. Twelve points. Write it down.”\n“T W O T I M E R.”\n“That’s two words.”\n“Where’s it say you can’t use two words?” “Do you want me to look it up?”\n“T W I T,” muttering, “that’s one, triple for the ‘W’, that’s twelve, thirteen, fourteen, fifteen, double word for the ‘T’. Thirty points.”\n14 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\n“You already used the double word for the ‘T’” “So.”\n“So you can’t use it again. Cheater.”\nUnder her breath, “You’re the cheater, not me.” “What did you say.”\n“Nothing – just play the game.”\n“No. I want to know what you said.”\n“I said it’s your turn.”\n“I Q U I T.”\n“That’s two words.”\n“No, you don’t understand. I quit. Do you need me to spell it out?”\nNessma A. El-ssawy\nOpening Comments\nDear Thomas Jay Rush,\nI've read Double Word Score and I'd like to give you my opinion.\nFirst, the idea itself, I found it cleverly convenient. Although others might find it a cliche, I find it smart, because relationships problems are cliches.\nInline Critique\n“C H E A T E R. Let’s see – that’s three, four for the ‘H’, that’s seven, eight, nine, ten, eleven. Double letter for the ‘R’, that’s thirteen. And double word score. That’s twenty-six.”\n“A S S H O L E. That’s one, two, double letter, that’s four, four for the ‘H’, double letter\n15 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nfor the ‘O’, that’s ten, eleven, twelve. Twelve points. Write it down.” If this is a man who says this, it's not believable. Men don't call women assholes. It's the other way around :)\n“T W O T I M E R.”\n“That’s two words.”\n“Where’s it say you can’t use two words?”\n“Do you want me to look it up?”\n“T W I T,” muttering, “that’s one, triple for the ‘W’, that’s twelve, thirteen, fourteen, fifteen, double word for the ‘T’. Thirty points.”\n“You already used the double word for the ‘T’”\n“So.”\n“So you can’t use it again. Cheater.”\nUnder her breath, “You’re the cheater, not me.”\n“What did you say.” A question mark here would be better than the full stop. “Nothing – just play the game.”\n“No. I want to know what you said.” “I said it’s your turn.”\n“I Q U I T.”\n“That’s two words.”\n“No, you don’t understand. I quit. Do you need me to spell it out?”\nClosing Comments\nNow, the dialogue. I needed to know who's talking. It was utterly confusing for me. Also, As far as I'm concerned, this could be happening between a young couple, an old married one, or just two homosexual females. Unless that is the point, to keep it open that way, I suggest you tell the readers who says what.\nAnd to be honest, the scoring thing didn't really grab my attention at all. I understand\n16 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nit's necessary but I had to skip it as I read.\nI loved the pacing. It's fast and perfectly flowing that I didn't want it to end.\nThere was nothing I would omit. There was nothing unnecessary. I'd like to add more, though.\nIt was entertaining but kept me thinking. I wanted to hear more about the fight. I mean, it suddenly ended. I know men do that, but since he's the one at fault here, he shouldn't be the one to end this.\nOf course, this is solely my opinion, an avid reader and a fellow writer :) Thank you\nNessma\nTess Pfeifle\nOpening Comments\nI like humor and I like wit. This seemed like a good story!\nInline Critique\n“C H E A T E R. Let’s see – that’s three, four for the ‘H’, that’s seven, eight, nine, ten, eleven. Double letter for the ‘R’, that’s thirteen. And double word score. That’s twenty- six.” I like how, already there is a tone of defiance, anger and possible relationship problem\n“A S S H O L E. That’s one, two, double letter, that’s four, four for the ‘H’, double letter for the ‘O’, that’s ten, eleven, twelve. Twelve points. Write it down.” This scrabble repatoire is very intresting\n“T W O T I M E R.”\n“That’s two words.” this sudden use of the actual character as a mouthpiece instead of\nthe game is intresting, as well as the controversey it provokes\n“Where’s it say you can’t use two words?”\n17 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\n“Do you want me to look it up?”\n“T W I T,” muttering, “that’s one, triple for the ‘W’, that’s twelve, thirteen, fourteen, fifteen, double word for the ‘T’. Thirty points.” tone of annoyance in the previous conversation is evident through the game play\n“You already used the double word for the ‘T’” “So.”\n“So you can’t use it again. Cheater.”\nUnder her breath, “You’re the cheater, not me.” “What did you say.”\n“Nothing – just play the game.” “No. I want to know what you said.” “I said it’s your turn.”\n“I Q U I T.”\n“That’s two words.”\n“No, you don’t understand. I quit. Do you need me to spell it out?” Witty ending to a very well played game! I enjoy that the story vacillatates between the game and the conversation.\nClosing Comments\nI thought it'd be intresting, and I was right!\nAlex Hammel\nOpening Comments\nI love dialog and since this was all that, and fast pased, funny and, irreverent, A + from me. But lets see if I can find something useful to say instead of ego stroking.\n18 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nPlot\nPlot was beleivable. Easy to follow, possibly a little unreal in that the words being put on the board and the words being said out loud started to mix, and possibly confuse what was happening if you wanted to allow it to. But I didn't I was on the ride.\nPacing\nTremendous pacing, all dialog, great story.\nDescription\nThis is hard to say, not really, but because the dialog was so good it allowed your mind to presume whatever description it needed to fit the scene.\nPoint Of View\nPoint of view put you directly inbetween the players, like a scene from a film.\nCharacters\nCharacters where very beleivable, you knew nothing of them but after reading this I feel like I could have a conversation with one and know a little of how to aproach that conversation.\nDialog\nExcellent.\nGrammar and Spelling\nI'm in no position to comment on that.\nClosing Comments\nGreat job. I truly enjoyed this and it made me smile. The only thing I have to say is that the words being spoken and the words being laid down got a little conveluted at the end there. But I don't think it made a real difference to the integrity of the story. I'm not that\n19 of 20 2/26/12 9:21 AM\nDouble Word Score - Thomas Jay Rush | Scribophile, serious fe... http://www.scribophile.com/writing/printcomments.php?worki...\nnit picky about things like that but others might be.\nStephanie Lever\nPlease never interpet my tone as hostile or sarcastic. Know that I do not , in any way, think my writing is superior to yours. Onward!\nI agree with one of the previous critiquers, when you write:\nCHEATER ASSHOLE TWOTIMER\nTry using periods, C.H.E.A.T.E.R. or even better C--H--E--A--T--E--R.\n“What did you say.”\nMissing a question mark there.\nNow I liked what you were trying to do overall, but as a reader I'm a stickler for detail. Maybe a name or two in there would be helpful. I got all excited when you wrote: \"Under her breath,\" But then that's as far as you got, nothing more othere than the dialog. Almost seems pointless to have those three words the only words outside dialog.\nI did enjoy this, don't get me wrong. I got what you were trying to put down, but this story just feels like it has a big gaping hole.\n20 of 20 2/26/12 9:21 AM",
-      "type": "Review"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21549,
-      "entityType": "work",
-      "id": 112,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "From Paul Martin at Philadelphia Writer's Conference:\n\nThomas, I've read your poem carefully, noticing, at the top of the page, your identifying it as a humorous poem. The last stanza of the poem suggests that the idea at the heart of the poem was one of those ideas that comes to someone who's had a few too many jars. Whether you take the humorous or a serious approach (earth as living organism), you'd make a stronger poem of you spoke in sharp images rather than in abstractions. Your first and second stanzas contain your most concrete language: \"through the ground,\" \"Through the soles/of our feet, up our legs,/ and deep into our hearts.\" That's where the poem is most effective, and it's because of the imagery. Compare those passage to the abstract language of the rest of the poem, which tells, rather than shows. Poetry enable us to see, hear, taste, touch, smell, and it does that, among other ways, with imagery. If you want to talk about this, let me know. There may be a serious poem in the idea you argue about, not a \"giant, breathing brain,\" but a living earth that expresses itself to people, close to the natural world, people who live in that world and mystics, as well.",
-      "type": "Review"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21834,
-      "entityType": "work",
-      "id": 150,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "From teacher of online workshop at Creative Non Fiction magazine.\n\nDear Thomas,\n\nFirstly, this is a very funny and promising first draft, ripe with potential. I particularly liked the concept of creating a guide for parents of potential writers. At the sentence-level, your prose is glass-clear and economical and works well to deliver those punch lines. The faux-scientific/manifesto-ish diction worked well too. At this point, while the piece is funny, I ultimately think we need to kick this thing into an even more exaggerated state and really aim for hyperbole. With a piece like this, the more outrageous the better.\n\nFor the revision, I wonder if you might let yourself write even more specific prescriptions for what parents of potential writers should do. Perhaps you could invent a daily writing regimen. Perhaps you could develop a reading list for types of writers. “If you want your son or daughter to become a beret-doffing literati, someone who wears a Trotsky mustache and invariably smells like fennel, then have him or her read David Foster Wallace, John Barth, and Mark Leyner.” Or something like that. Also, too, because the “we” voice felt a little forced to me, I wonder whether you could instead offer a different subtext—the idea that you’re writing this guide because your parents didn’t do this and you thus resent them (obviously this would invoke a jokey tone). It’s something to consider and would maybe help with further exaggerated the tone of the piece.\n\nAll things considered, though, this is really solid and funny work. It’s been a pleasure to read your work throughout the term, and I wish you all the best of luck as you complete your MFA. Do let me know if you’ve any questions or concerns. \n\nAll best,\nBarrett",
       "type": "Review"
     },
     {
@@ -1840,16 +1220,6 @@
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "We think the three poets we've had the pleasure of featuring all know how to make a damn good sandwich, different in their own way, but with a common attraction to every day life and its whimsy, sometimes tragedy, despair, hope. They've set out on the journey to, in the words of Raymond Carver, \"endow those things--a chair, a window curtain, a fork, a stone, a woman's earring--with immense, even startling power.\"\n\nWe came upon one of Thomas Jay Rush's short stories in which the unlikely word \"peas\" (empowered by just the right punctuation) gave this startling effect. His poems deal similarly with everyday things and feelings in a language that is non-ornamental but that still (maybe because of this) direct our attention elsewhere, outside the poem, toward some mystery or other. \n\nhttp://kitchenpoet.blogspot.com/2010/12/11-thomas-jay-rush-2-poems.html",
       "type": "Review"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21846,
-      "entityType": "work",
-      "id": 151,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "for Daisy Fried Workshop",
-      "type": "Revised"
     },
     {
       "attributes": "",
@@ -1884,66 +1254,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21549,
-      "entityType": "work",
-      "id": 113,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Poetry Ink - 100 Poet's Reading",
-      "type": "Submission"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21336,
-      "entityType": "work",
-      "id": 93,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Submitted \"Beorh Quarterly\" via email to peekthemorpholux@yahoo.com",
-      "type": "Submission"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3511,
-      "entityType": "work",
-      "id": 222,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Submitted to 'Agni' on 1/14/2016",
-      "type": "Submission"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22185,
-      "entityType": "work",
-      "id": 192,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Submitted to 'Bartleby Snopes' on 3/29/2015",
-      "type": "Submission"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21233,
-      "entityType": "work",
-      "id": 79,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Submitted to 'Burning Wood' on 7/25/2015",
-      "type": "Submission"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3604,
-      "entityType": "work",
-      "id": 248,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Submitted to 'Lowestoft Journal' on 7/25/2015",
-      "type": "Submission"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 22120,
       "entityType": "work",
       "id": 184,
@@ -1954,31 +1264,11 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21589,
-      "entityType": "work",
-      "id": 120,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Changed title to \"A Short Argument March 09, 2012",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21188,
       "entityType": "work",
       "id": 71,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Name changed from 'My Short Career as a Murderer'",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21549,
-      "entityType": "work",
-      "id": 114,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Title changed from 'A Head in the Middle of the Earth' to 'A Short Argument.'",
       "type": "TitleChange"
     },
     {
@@ -2034,41 +1324,11 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 22172,
-      "entityType": "work",
-      "id": 187,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Title changed from 'Elegantly Man Made' to 'I Need Some Grass.'",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 3627,
       "entityType": "work",
       "id": 249,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Title changed from 'I Drink to Forget' to 'Making Wine.'",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21980,
-      "entityType": "work",
-      "id": 162,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Title changed from 'Inside Out' to 'Creep.'",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21134,
-      "entityType": "work",
-      "id": 63,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Title changed from 'My Relationship as an Album Review' to 'Album Review.'",
       "type": "TitleChange"
     },
     {
@@ -2094,26 +1354,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3517,
-      "entityType": "work",
-      "id": 225,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Title changed from 'PW II - Meat' to 'PW II - Meat Speaking.'",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21377,
-      "entityType": "work",
-      "id": 97,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Title changed from 'The Nikon' to 'Vacation.'",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 21985,
       "entityType": "work",
       "id": 164,
@@ -2129,16 +1369,6 @@
       "id": 228,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Title changed from 'Time Sheet' to 'Story Cotton Time Sheet.'",
-      "type": "TitleChange"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 3556,
-      "entityType": "work",
-      "id": 235,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Title changed from 'Twelve Year Old Boy' to 'Twelve.'",
       "type": "TitleChange"
     },
     {

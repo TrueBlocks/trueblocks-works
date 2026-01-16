@@ -1,5 +1,5 @@
 {
-  "count": 1585,
+  "count": 1587,
   "records": [
     {
       "collID": 10170,
@@ -1943,23 +1943,8 @@
     },
     {
       "collID": 30080,
-      "position": 96,
-      "workID": 3099
-    },
-    {
-      "collID": 30080,
       "position": 97,
       "workID": 3098
-    },
-    {
-      "collID": 30080,
-      "position": 99,
-      "workID": 3093
-    },
-    {
-      "collID": 30080,
-      "position": 101,
-      "workID": 3096
     },
     {
       "collID": 30080,
@@ -2340,6 +2325,21 @@
       "collID": 30080,
       "position": 178,
       "workID": 23865
+    },
+    {
+      "collID": 30080,
+      "position": 179,
+      "workID": 23889
+    },
+    {
+      "collID": 30080,
+      "position": 180,
+      "workID": 23890
+    },
+    {
+      "collID": 30080,
+      "position": 181,
+      "workID": 23888
     },
     {
       "collID": 30090,
@@ -7083,13 +7083,8 @@
     },
     {
       "collID": 50065,
-      "position": 10,
-      "workID": 23869
-    },
-    {
-      "collID": 50065,
       "position": 11,
-      "workID": 23871
+      "workID": 23869
     },
     {
       "collID": 50066,
@@ -7925,6 +7920,21 @@
       "collID": 50070,
       "position": 16,
       "workID": 21371
+    },
+    {
+      "collID": 50071,
+      "position": 0,
+      "workID": 23871
+    },
+    {
+      "collID": 50071,
+      "position": 1,
+      "workID": 23793
+    },
+    {
+      "collID": 50071,
+      "position": 2,
+      "workID": 23866
     }
   ],
   "table": "CollectionDetails"

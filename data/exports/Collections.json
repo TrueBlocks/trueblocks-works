@@ -1,5 +1,5 @@
 {
-  "count": 24,
+  "count": 25,
   "records": [
     {
       "attributes": "",
@@ -143,6 +143,12 @@
       "attributes": "",
       "collID": 50070,
       "collectionName": "Stony Lane Press",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50071,
+      "collectionName": "Cartoons",
       "type": "Other"
     }
   ],

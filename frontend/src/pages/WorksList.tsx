@@ -15,6 +15,7 @@ import {
   MoveWorkFile,
 } from '@app';
 import { models, db } from '@models';
+import { qualitySortOrder, Quality } from '@/types';
 import { notifications } from '@mantine/notifications';
 import {
   StatusBadge,
@@ -273,6 +274,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         label: 'Quality',
         width: '12%',
         render: (w) => <QualityBadge quality={w.quality} />,
+        sortValue: (w) => qualitySortOrder[(w.quality || '') as Quality] ?? 9,
         filterOptions: filterOptions.qualities,
       },
       {

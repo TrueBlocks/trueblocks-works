@@ -215,7 +215,7 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
     }
   };
 
-  const showHistory = !query.trim() && history.length > 0 && searchMode === 'metadata';
+  const showHistory = !query.trim() && history.length > 0;
 
   return (
     <Modal
@@ -463,7 +463,7 @@ export function SearchModal({ opened, onClose }: SearchModalProps) {
           </Text>
         )}
 
-        {!query.trim() && searchMode === 'content' && ftsAvailable && (
+        {!query.trim() && searchMode === 'content' && ftsAvailable && history.length === 0 && (
           <Text size="xs" c="dimmed" ta="center" py="md">
             Type to search document content
           </Text>

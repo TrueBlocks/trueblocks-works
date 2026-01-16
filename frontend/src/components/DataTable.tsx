@@ -46,6 +46,7 @@ export interface Column<T> {
   label: string;
   width?: string;
   render?: (item: T) => React.ReactNode;
+  sortValue?: (item: T) => string | number;
   filterOptions?: readonly string[];
   filterRange?: boolean;
   filterElement?: React.ReactNode;
@@ -456,6 +457,14 @@ export function DataTable<T>({
   const sorted = useMemo(() => {
     if (!sort.primary.column) return filtered;
 
+    const getSortValue = (item: T, columnKey: string): unknown => {
+      const col = columns.find((c) => c.key === columnKey);
+      if (col?.sortValue) {
+        return col.sortValue(item);
+      }
+      return getValue(item, columnKey);
+    };
+
     return [...filtered].sort((a, b) => {
       const compareValues = (valA: unknown, valB: unknown, direction: SortDirection): number => {
         if (valA == null && valB == null) return 0;
@@ -475,8 +484,8 @@ export function DataTable<T>({
       };
 
       const primaryResult = compareValues(
-        getValue(a, sort.primary.column),
-        getValue(b, sort.primary.column),
+        getSortValue(a, sort.primary.column),
+        getSortValue(b, sort.primary.column),
         sort.primary.direction
       );
 
@@ -485,8 +494,8 @@ export function DataTable<T>({
       }
 
       const secondaryResult = compareValues(
-        getValue(a, sort.secondary.column),
-        getValue(b, sort.secondary.column),
+        getSortValue(a, sort.secondary.column),
+        getSortValue(b, sort.secondary.column),
         sort.secondary.direction
       );
 
@@ -495,8 +504,8 @@ export function DataTable<T>({
       }
 
       const tertiaryResult = compareValues(
-        getValue(a, sort.tertiary.column),
-        getValue(b, sort.tertiary.column),
+        getSortValue(a, sort.tertiary.column),
+        getSortValue(b, sort.tertiary.column),
         sort.tertiary.direction
       );
 
@@ -505,12 +514,12 @@ export function DataTable<T>({
       }
 
       return compareValues(
-        getValue(a, sort.quaternary.column),
-        getValue(b, sort.quaternary.column),
+        getSortValue(a, sort.quaternary.column),
+        getSortValue(b, sort.quaternary.column),
         sort.quaternary.direction
       );
     });
-  }, [filtered, sort, getValue]);
+  }, [filtered, sort, getValue, columns]);
 
   const totalPages = Math.ceil(sorted.length / pageSize);
 

@@ -92,6 +92,28 @@ func (a *App) MoveWorkFile(workID int64) error {
 	return nil
 }
 
+func (a *App) GetSupportingInfo(workID int64) (fileops.SupportingInfo, error) {
+	work, err := a.db.GetWork(workID)
+	if err != nil {
+		return fileops.SupportingInfo{}, err
+	}
+	if work.Path == nil || *work.Path == "" {
+		return fileops.SupportingInfo{Exists: false}, nil
+	}
+	return a.fileOps.GetSupportingInfo(*work.Path), nil
+}
+
+func (a *App) OpenSupportingItem(workID int64) error {
+	work, err := a.db.GetWork(workID)
+	if err != nil {
+		return err
+	}
+	if work.Path == nil || *work.Path == "" {
+		return fmt.Errorf("work has no path")
+	}
+	return a.fileOps.OpenSupportingItem(*work.Path)
+}
+
 func (a *App) ExportToSubmissions(workID int64) (string, error) {
 	work, err := a.db.GetWork(workID)
 	if err != nil {

@@ -160,6 +160,8 @@ export function GetSubmissionsByWork(arg1:number):Promise<Array<models.Submissio
 
 export function GetSubmissionsFilterOptions():Promise<app.SubmissionsFilterOptions>;
 
+export function GetSupportingInfo(arg1:number):Promise<fileops.SupportingInfo>;
+
 export function GetTab(arg1:string):Promise<string>;
 
 export function GetTableState(arg1:string):Promise<state.TableState>;
@@ -197,6 +199,8 @@ export function OpenExportFolder():Promise<void>;
 export function OpenOrgOtherURL(arg1:number):Promise<void>;
 
 export function OpenOrgURL(arg1:number):Promise<void>;
+
+export function OpenSupportingItem(arg1:number):Promise<void>;
 
 export function OpenURL(arg1:string):Promise<void>;
 

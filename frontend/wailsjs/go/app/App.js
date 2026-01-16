@@ -302,6 +302,10 @@ export function GetSubmissionsFilterOptions() {
   return window['go']['app']['App']['GetSubmissionsFilterOptions']();
 }
 
+export function GetSupportingInfo(arg1) {
+  return window['go']['app']['App']['GetSupportingInfo'](arg1);
+}
+
 export function GetTab(arg1) {
   return window['go']['app']['App']['GetTab'](arg1);
 }
@@ -376,6 +380,10 @@ export function OpenOrgOtherURL(arg1) {
 
 export function OpenOrgURL(arg1) {
   return window['go']['app']['App']['OpenOrgURL'](arg1);
+}
+
+export function OpenSupportingItem(arg1) {
+  return window['go']['app']['App']['OpenSupportingItem'](arg1);
 }
 
 export function OpenURL(arg1) {

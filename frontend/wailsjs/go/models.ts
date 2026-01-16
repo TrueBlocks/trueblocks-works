@@ -769,6 +769,28 @@ export namespace fileops {
 	        this.Errors = source["Errors"];
 	    }
 	}
+	export class SupportingInfo {
+	    exists: boolean;
+	    path: string;
+	    isFolder: boolean;
+	    size: number;
+	    modTime: string;
+	    count: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SupportingInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.exists = source["exists"];
+	        this.path = source["path"];
+	        this.isFolder = source["isFolder"];
+	        this.size = source["size"];
+	        this.modTime = source["modTime"];
+	        this.count = source["count"];
+	    }
+	}
 
 }
 

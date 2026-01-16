@@ -31,6 +31,7 @@ import {
   DetailHeader,
   PathDisplay,
   NotesPortal,
+  SupportingPortal,
   SubmissionsPortal,
   CollectionsPortal,
   CollectionPickerModal,
@@ -566,6 +567,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
               onUndelete={handleUndeleteNote}
               onPermanentDelete={handlePermanentDeleteNote}
             />
+            <SupportingPortal workId={workId} workPath={work.path || undefined} />
           </Stack>
         </Grid.Col>
       </Grid>

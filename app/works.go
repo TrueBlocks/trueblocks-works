@@ -62,12 +62,17 @@ func (a *App) GetWorkDeleteConfirmation(id int64) (*db.DeleteConfirmation, error
 }
 
 func (a *App) DeleteWorkPermanent(id int64, archiveDocument bool) error {
+	work, err := a.db.GetWork(id)
+	if err != nil {
+		return err
+	}
+
 	if archiveDocument {
-		work, err := a.db.GetWork(id)
-		if err != nil {
+		if err := a.fileOps.ArchiveToTrash(work); err != nil {
 			return err
 		}
-		if err := a.fileOps.ArchiveToTrash(work); err != nil {
+	} else if work.Path != nil && *work.Path != "" {
+		if err := a.fileOps.DeleteSupportingItem(*work.Path); err != nil {
 			return err
 		}
 	}

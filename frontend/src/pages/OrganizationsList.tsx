@@ -209,8 +209,15 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
       {
         key: 'nSubmissions',
         label: 'Subs',
-        width: '8%',
+        width: '7%',
         render: (o) => o.nSubmissions || '-',
+        filterRange: true,
+      },
+      {
+        key: 'nAccepted',
+        label: 'Accepted',
+        width: '7%',
+        render: (o) => o.nAccepted || '-',
         filterRange: true,
       },
       {

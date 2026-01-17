@@ -253,7 +253,7 @@ func (db *DB) UndeleteWork(id int64) (*validation.ValidationResult, error) {
 func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
 	query := `SELECT workID, title, type, year, status, quality, doc_type,
 		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at,
-		age_days, n_submissions, collection_list
+		age_days, n_submissions, n_notes, collection_list
 		FROM WorksView`
 
 	if !showDeleted {
@@ -275,7 +275,7 @@ func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
 			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
 			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
-			&w.AgeDays, &w.NSubmissions, &w.CollectionList,
+			&w.AgeDays, &w.NSubmissions, &w.NNotes, &w.CollectionList,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan work: %w", err)

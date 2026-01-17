@@ -247,32 +247,32 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
   const columns: Column<models.WorkView>[] = useMemo(
     () => [
       { key: 'workID', label: 'ID', width: '5%', render: (w) => w.workID },
-      { key: 'title', label: 'Title', width: '35%', render: (w) => w.title },
+      { key: 'title', label: 'Title', width: '28%', render: (w) => w.title },
       {
         key: 'year',
         label: 'Year',
-        width: '8%',
+        width: '6%',
         render: (w) => w.year || '-',
         filterOptions: filterOptions.years,
       },
       {
         key: 'type',
         label: 'Type',
-        width: '10%',
+        width: '8%',
         render: (w) => <TypeBadge value={w.type} />,
         filterOptions: filterOptions.types,
       },
       {
         key: 'status',
         label: 'Status',
-        width: '12%',
+        width: '10%',
         render: (w) => <StatusBadge status={w.status} />,
         filterOptions: filterOptions.statuses,
       },
       {
         key: 'quality',
         label: 'Quality',
-        width: '12%',
+        width: '10%',
         render: (w) => <QualityBadge quality={w.quality} />,
         sortValue: (w) => qualitySortOrder[(w.quality || '') as Quality] ?? 9,
         filterOptions: filterOptions.qualities,
@@ -280,13 +280,27 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
       {
         key: 'nWords',
         label: 'Words',
-        width: '8%',
+        width: '7%',
         render: (w) => w.nWords?.toLocaleString() || '-',
+      },
+      {
+        key: 'nSubmissions',
+        label: 'Subs',
+        width: '5%',
+        render: (w) => w.nSubmissions || '-',
+        filterRange: true,
+      },
+      {
+        key: 'nNotes',
+        label: 'Notes',
+        width: '5%',
+        render: (w) => w.nNotes || '-',
+        filterRange: true,
       },
       {
         key: 'collectionList',
         label: 'Collections',
-        width: '15%',
+        width: '12%',
         render: (w) => {
           const list = w.collectionList || '';
           return list.length > 30 ? list.substring(0, 30) + '…' : list || '-';

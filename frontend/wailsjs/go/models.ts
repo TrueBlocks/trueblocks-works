@@ -1315,6 +1315,7 @@ export namespace models {
 	    dateAdded?: string;
 	    modifiedAt?: string;
 	    nSubmissions: number;
+	    nAccepted: number;
 	    notes?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -1349,6 +1350,7 @@ export namespace models {
 	        this.dateAdded = source["dateAdded"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.nSubmissions = source["nSubmissions"];
+	        this.nAccepted = source["nAccepted"];
 	        this.notes = source["notes"];
 	    }
 	}
@@ -1591,6 +1593,7 @@ export namespace models {
 	    isDeleted: boolean;
 	    ageDays?: number;
 	    nSubmissions: number;
+	    nNotes: number;
 	    collectionList?: string;
 	    generatedPath: string;
 	    needsMove: boolean;
@@ -1620,6 +1623,7 @@ export namespace models {
 	        this.isDeleted = source["isDeleted"];
 	        this.ageDays = source["ageDays"];
 	        this.nSubmissions = source["nSubmissions"];
+	        this.nNotes = source["nNotes"];
 	        this.collectionList = source["collectionList"];
 	        this.generatedPath = source["generatedPath"];
 	        this.needsMove = source["needsMove"];

@@ -1,5 +1,5 @@
 {
-  "count": 139,
+  "count": 130,
   "records": [
     {
       "attributes": "",
@@ -294,31 +294,11 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1817,
-      "entityType": "journal",
-      "id": 52,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Email: redrose108@comcast.net",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 1686,
       "entityType": "journal",
       "id": 42,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "First published pieces were published here",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1817,
-      "entityType": "journal",
-      "id": 53,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "From Michelle Wittle:\n\nDear Poet:\nￊ\nI am writing today on behalf of Rosemary Cappello, Editor of Philadelphia Poets, to ask you to submit your poems for possible publication in Philadelphia Poets Volume 20 due out in Spring 2014. Rosemary was very impressed with your work when she met you back in October at the speed dating round at Push to Publish and would like to give you the first opportunity to possibly have your work published in the Spring 2014 issue. The volumes do fill up fast, so please do not wait too long to send your work.\nￊ\nSubmissions will open up June, 2013. Please see the submission guidelines attached to this email. If you have any further questions, please feel free to email Rosemary or myself. We are happy to help.\nￊ\nBest wishes to you,\nￊ\nMM Wittle\nￊ\nￊￊ\n\n-- \nMM Wittle, Assistant Editor, Philadelphia Poets\nhttp://www.facebook/MMWittle",
       "type": "Note"
     },
     {
@@ -404,16 +384,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1751,
-      "entityType": "journal",
-      "id": 48,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "I sent this to Jen Murphy at jennifer.murphy@rosemont.edu at Rathalla Review. She's a Rosemonter.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 1338,
       "entityType": "journal",
       "id": 21,
@@ -459,26 +429,6 @@
       "id": 49,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Queried",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1150,
-      "entityType": "journal",
-      "id": 12,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Randall Brown's journal at Rosemont",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1608,
-      "entityType": "journal",
-      "id": 37,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Response from Brett at Feathertale: Many thanks for sending this piece our way. It was a fun little read but didn't quite light us up. We're going to pass on this one but would love to read more from you in the future.\n\nMy response: Thanks. I will.",
       "type": "Note"
     },
     {
@@ -534,16 +484,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1608,
-      "entityType": "journal",
-      "id": 38,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "This place is very funny. I like the cartoons and I spent a lot of time looking at this one.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
       "entityID": 1014,
       "entityType": "journal",
       "id": 1,
@@ -589,16 +529,6 @@
       "id": 14,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "literary fiction",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1371,
-      "entityType": "journal",
-      "id": 23,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "literary fiction - Exactly 1 sentence",
       "type": "Note"
     },
     {
@@ -679,16 +609,6 @@
       "id": 173,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "Nice exercise of re-writing cliches with fresh language created some very interesting stuff.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 21190,
-      "entityType": "work",
-      "id": 72,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Notes: I hate the title of this piece and I hate a lot of the lines, but I do like, just a little bit, some of the ideas.",
       "type": "Note"
     },
     {
@@ -1229,16 +1149,6 @@
       "id": 25,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "'Fond' submitted on 1/14/2016",
-      "type": "Submission"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-06 00:07:00",
-      "entityID": 1826,
-      "entityType": "journal",
-      "id": 55,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "'The Queue' submitted on 7/11/2014",
       "type": "Submission"
     },
     {

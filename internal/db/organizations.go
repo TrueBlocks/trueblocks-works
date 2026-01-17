@@ -281,6 +281,7 @@ func (db *DB) ListOrganizationsWithNotes() ([]models.OrganizationWithNotes, erro
 		o.n_push_poetry, o.contest_ends, o.contest_fee, o.contest_prize,
 		o.contest_prize_2, o.attributes, o.date_added, o.modified_at,
 		(SELECT COUNT(*) FROM Submissions s WHERE s.orgID = o.orgID) as n_submissions,
+		(SELECT COUNT(*) FROM Submissions s WHERE s.orgID = o.orgID AND s.response_type = 'Accepted') as n_accepted,
 		GROUP_CONCAT(n.note, ' ') as notes
 		FROM Organizations o
 		LEFT JOIN Notes n ON n.entity_type = 'journal' AND o.orgID = n.entity_id
@@ -302,7 +303,7 @@ func (db *DB) ListOrganizationsWithNotes() ([]models.OrganizationWithNotes, erro
 			&o.MyInterest, &o.Ranking, &o.Source, &o.WebsiteMenu,
 			&o.DuotropeNum, &o.NPushFiction, &o.NPushNonfict, &o.NPushPoetry,
 			&o.ContestEnds, &o.ContestFee, &o.ContestPrize, &o.ContestPrize2,
-			&o.Attributes, &o.DateAdded, &o.ModifiedAt, &o.NSubmissions, &o.Notes,
+			&o.Attributes, &o.DateAdded, &o.ModifiedAt, &o.NSubmissions, &o.NAccepted, &o.Notes,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan organization with notes: %w", err)

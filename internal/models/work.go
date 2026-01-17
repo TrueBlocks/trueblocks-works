@@ -24,6 +24,7 @@ type WorkView struct {
 	IsDeleted      bool    `json:"isDeleted"`
 	AgeDays        *int    `json:"ageDays,omitempty" db:"age_days"`
 	NSubmissions   int     `json:"nSubmissions" db:"n_submissions"`
+	NNotes         int     `json:"nNotes" db:"n_notes"`
 	CollectionList *string `json:"collectionList,omitempty" db:"collection_list"`
 	GeneratedPath  string  `json:"generatedPath"`
 	NeedsMove      bool    `json:"needsMove"`

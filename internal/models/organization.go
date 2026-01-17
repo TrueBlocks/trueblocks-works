@@ -41,6 +41,7 @@ type OrganizationView struct {
 type OrganizationWithNotes struct {
 	Organization
 	NSubmissions int     `json:"nSubmissions" db:"n_submissions"`
+	NAccepted    int     `json:"nAccepted" db:"n_accepted"`
 	Notes        *string `json:"notes,omitempty"`
 }
 

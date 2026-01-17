@@ -54,6 +54,11 @@ var migrations = []Migration{
 		Name:    "delete_orphan_collection_details",
 		Up:      migrateDeleteOrphanCollectionDetails,
 	},
+	{
+		Version: 18,
+		Name:    "add_n_notes_to_works_view",
+		Up:      migrateAddNNotesToWorksView,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -649,6 +654,29 @@ func migrateDeleteOrphanCollectionDetails(tx *sql.Tx) error {
 	rowsAffected, _ = result.RowsAffected()
 	if rowsAffected > 0 {
 		fmt.Fprintf(os.Stderr, "INFO | Migration 017: Deleted %d orphan CollectionDetails records (invalid workID)\\n", rowsAffected)
+	}
+
+	return nil
+}
+
+func migrateAddNNotesToWorksView(tx *sql.Tx) error {
+	_, _ = tx.Exec(`DROP VIEW IF EXISTS WorksView`)
+
+	_, err := tx.Exec(`
+		CREATE VIEW WorksView AS
+		SELECT 
+			w.*,
+			CAST((julianday('now') - julianday(w.access_date)) AS INTEGER) AS age_days,
+			(SELECT COUNT(*) FROM Submissions s WHERE s.workID = w.workID) AS n_submissions,
+			(SELECT COUNT(*) FROM Notes n WHERE n.entity_type = 'work' AND n.entity_id = w.workID) AS n_notes,
+			(SELECT GROUP_CONCAT(c.collection_name, ', ') 
+			 FROM CollectionDetails cd
+			 JOIN Collections c ON cd.collID = c.collID
+			 WHERE cd.workID = w.workID) AS collection_list
+		FROM Works w
+	`)
+	if err != nil {
+		return fmt.Errorf("recreate WorksView with n_notes: %w", err)
 	}
 
 	return nil

@@ -1165,6 +1165,7 @@ export namespace models {
 	    year?: string;
 	    status: string;
 	    quality: string;
+	    qualityAtPublish?: string;
 	    docType: string;
 	    path?: string;
 	    draft?: string;
@@ -1189,6 +1190,7 @@ export namespace models {
 	        this.year = source["year"];
 	        this.status = source["status"];
 	        this.quality = source["quality"];
+	        this.qualityAtPublish = source["qualityAtPublish"];
 	        this.docType = source["docType"];
 	        this.path = source["path"];
 	        this.draft = source["draft"];
@@ -1538,6 +1540,7 @@ export namespace models {
 	    year?: string;
 	    status: string;
 	    quality: string;
+	    qualityAtPublish?: string;
 	    docType: string;
 	    path?: string;
 	    draft?: string;
@@ -1561,6 +1564,7 @@ export namespace models {
 	        this.year = source["year"];
 	        this.status = source["status"];
 	        this.quality = source["quality"];
+	        this.qualityAtPublish = source["qualityAtPublish"];
 	        this.docType = source["docType"];
 	        this.path = source["path"];
 	        this.draft = source["draft"];
@@ -1580,6 +1584,7 @@ export namespace models {
 	    year?: string;
 	    status: string;
 	    quality: string;
+	    qualityAtPublish?: string;
 	    docType: string;
 	    path?: string;
 	    draft?: string;
@@ -1610,6 +1615,7 @@ export namespace models {
 	        this.year = source["year"];
 	        this.status = source["status"];
 	        this.quality = source["quality"];
+	        this.qualityAtPublish = source["qualityAtPublish"];
 	        this.docType = source["docType"];
 	        this.path = source["path"];
 	        this.draft = source["draft"];

@@ -168,6 +168,30 @@ func (i *Importer) ReimportAll() error {
 	if err := i.ReimportCollectionDetails(); err != nil {
 		return fmt.Errorf("reimport collection details: %w", err)
 	}
+	if err := i.ReimportNotes(); err != nil {
+		return fmt.Errorf("reimport notes: %w", err)
+	}
+	return nil
+}
+
+func (i *Importer) ReimportNotes() error {
+	rows, err := i.readCSV("Notes.csv")
+	if err != nil {
+		return err
+	}
+	// Clear existing notes and re-import (CSV has no IDs)
+	if _, err := i.db.Conn().Exec("DELETE FROM Notes"); err != nil {
+		return fmt.Errorf("clear notes: %w", err)
+	}
+	for _, row := range rows {
+		query := `INSERT INTO Notes (entity_type, entity_id, type, note, attributes, modified_at) 
+			VALUES (?, ?, ?, ?, ?, ?)`
+		_, err := i.db.Conn().Exec(query, row["entity_type"], parseInt(row["entity_id"]),
+			strPtr(row["type"]), strPtr(row["note"]), row["attributes"], strPtr(row["modified_at"]))
+		if err != nil {
+			return fmt.Errorf("reimport note for %s/%s: %w", row["entity_type"], row["entity_id"], err)
+		}
+	}
 	return nil
 }
 

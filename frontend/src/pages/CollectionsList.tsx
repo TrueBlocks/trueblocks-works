@@ -169,7 +169,13 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
   const columns: Column<models.CollectionView>[] = useMemo(
     () => [
       { key: 'collID', label: 'ID', width: '8%', render: (c) => c.collID },
-      { key: 'collectionName', label: 'Name', width: '45%', render: (c) => c.collectionName },
+      {
+        key: 'collectionName',
+        label: 'Name',
+        width: '45%',
+        render: (c) => c.collectionName,
+        scrollOnSelect: true,
+      },
       {
         key: 'type',
         label: 'Type',

@@ -70,12 +70,12 @@ func (db *DB) CreateWork(w *models.Work) (*validation.ValidationResult, error) {
 	}
 
 	query := `INSERT INTO Works (
-		title, type, year, status, quality, doc_type, path, draft,
+		title, type, year, status, quality, quality_at_publish, doc_type, path, draft,
 		n_words, course_name, attributes, access_date, file_mtime
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	sqlResult, err := db.conn.Exec(query,
-		w.Title, w.Type, w.Year, w.Status, w.Quality, w.DocType,
+		w.Title, w.Type, w.Year, w.Status, w.Quality, w.QualityAtPublish, w.DocType,
 		w.Path, w.Draft, w.NWords, w.CourseName, w.Attributes,
 		w.AccessDate, w.FileMtime,
 	)
@@ -101,13 +101,13 @@ func (db *DB) CreateWork(w *models.Work) (*validation.ValidationResult, error) {
 }
 
 func (db *DB) GetWork(id int64) (*models.Work, error) {
-	query := `SELECT workID, title, type, year, status, quality, doc_type,
+	query := `SELECT workID, title, type, year, status, quality, quality_at_publish, doc_type,
 		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime
 		FROM Works WHERE workID = ?`
 
 	w := &models.Work{}
 	err := db.conn.QueryRow(query, id).Scan(
-		&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
+		&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.QualityAtPublish,
 		&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 		&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime,
 	)
@@ -134,13 +134,13 @@ func (db *DB) GetWorkByPath(path string) (*models.Work, error) {
 		return nil, nil
 	}
 
-	query := `SELECT workID, title, type, year, status, quality, doc_type,
+	query := `SELECT workID, title, type, year, status, quality, quality_at_publish, doc_type,
 		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime
 		FROM Works WHERE path = ?`
 
 	w := &models.Work{}
 	err = db.conn.QueryRow(query, path).Scan(
-		&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
+		&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.QualityAtPublish,
 		&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 		&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime,
 	)
@@ -161,13 +161,13 @@ func (db *DB) UpdateWork(w *models.Work) (*validation.ValidationResult, error) {
 	}
 
 	query := `UPDATE Works SET
-		title=?, type=?, year=?, status=?, quality=?, doc_type=?,
+		title=?, type=?, year=?, status=?, quality=?, quality_at_publish=?, doc_type=?,
 		path=?, draft=?, n_words=?, course_name=?, attributes=?,
 		access_date=?, modified_at=CURRENT_TIMESTAMP
 		WHERE workID=?`
 
 	_, err := db.conn.Exec(query,
-		w.Title, w.Type, w.Year, w.Status, w.Quality, w.DocType,
+		w.Title, w.Type, w.Year, w.Status, w.Quality, w.QualityAtPublish, w.DocType,
 		w.Path, w.Draft, w.NWords, w.CourseName, w.Attributes,
 		w.AccessDate, w.WorkID,
 	)
@@ -251,7 +251,7 @@ func (db *DB) UndeleteWork(id int64) (*validation.ValidationResult, error) {
 }
 
 func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
-	query := `SELECT workID, title, type, year, status, quality, doc_type,
+	query := `SELECT workID, title, type, year, status, quality, quality_at_publish, doc_type,
 		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at,
 		age_days, n_submissions, n_notes, collection_list
 		FROM WorksView`
@@ -272,7 +272,7 @@ func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
 	for rows.Next() {
 		var w models.WorkView
 		err := rows.Scan(
-			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
+			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.QualityAtPublish,
 			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
 			&w.AgeDays, &w.NSubmissions, &w.NNotes, &w.CollectionList,
@@ -289,7 +289,7 @@ func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
 
 // FindWorksByGeneratedPath finds all non-deleted works that would have the given generated path
 func (db *DB) FindWorksByGeneratedPath(path string) ([]models.Work, error) {
-	query := `SELECT workID, title, type, year, status, quality, doc_type,
+	query := `SELECT workID, title, type, year, status, quality, quality_at_publish, doc_type,
 		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime
 		FROM Works` + whereNotDeleted + ` ORDER BY workID`
 
@@ -303,7 +303,7 @@ func (db *DB) FindWorksByGeneratedPath(path string) ([]models.Work, error) {
 	for rows.Next() {
 		var w models.Work
 		err := rows.Scan(
-			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
+			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.QualityAtPublish,
 			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime,
 		)

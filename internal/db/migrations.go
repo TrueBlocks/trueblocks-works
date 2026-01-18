@@ -59,6 +59,11 @@ var migrations = []Migration{
 		Name:    "add_n_notes_to_works_view",
 		Up:      migrateAddNNotesToWorksView,
 	},
+	{
+		Version: 19,
+		Name:    "add_quality_at_publish",
+		Up:      migrateAddQualityAtPublish,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -677,6 +682,22 @@ func migrateAddNNotesToWorksView(tx *sql.Tx) error {
 	`)
 	if err != nil {
 		return fmt.Errorf("recreate WorksView with n_notes: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddQualityAtPublish(tx *sql.Tx) error {
+	// Add the new column
+	_, err := tx.Exec(`ALTER TABLE Works ADD COLUMN quality_at_publish TEXT`)
+	if err != nil {
+		return fmt.Errorf("add quality_at_publish column: %w", err)
+	}
+
+	// For existing Published works: copy quality to quality_at_publish, set quality to "Published"
+	_, err = tx.Exec(`UPDATE Works SET quality_at_publish = quality, quality = 'Published' WHERE status = 'Published'`)
+	if err != nil {
+		return fmt.Errorf("update existing published works: %w", err)
 	}
 
 	return nil

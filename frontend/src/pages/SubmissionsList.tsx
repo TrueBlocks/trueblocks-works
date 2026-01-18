@@ -192,12 +192,14 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
         key: 'titleOfWork',
         label: 'Work',
         width: '20%',
+        scrollOnSelect: true,
         render: (s) => s.titleOfWork || '-',
       },
       {
         key: 'journalName',
         label: 'Organization',
         width: '20%',
+        scrollOnSelect: true,
         render: (s) => s.journalName || '-',
       },
       {

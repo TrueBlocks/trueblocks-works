@@ -45,7 +45,12 @@ func derefString(s *string) string {
 func (f *FileOps) GeneratePath(w *models.Work) string {
 	year := derefString(w.Year)
 	folder := f.GetMainFolder(w.Type, year, w.Status)
-	qualityMark := GetQualityMark(w.Quality)
+	// For published works, use the original quality (qualityAtPublish) for the mark
+	quality := w.Quality
+	if w.Quality == "Published" && w.QualityAtPublish != nil && *w.QualityAtPublish != "" {
+		quality = *w.QualityAtPublish
+	}
+	qualityMark := GetQualityMark(quality)
 	sanitizedTitle := strings.ReplaceAll(w.Title, "/", "~")
 	filename := fmt.Sprintf("%s%s - %s - %s", qualityMark, w.Type, year, sanitizedTitle)
 	ext := w.DocType
@@ -118,14 +123,15 @@ func GetMainType(workType string) string {
 
 func GetQualityMark(quality string) string {
 	marks := map[string]string{
-		"Best":    "aa",
-		"Better":  "a",
-		"Good":    "b",
-		"Okay":    "c",
-		"Poor":    "d",
-		"Bad":     "e",
-		"Worst":   "f",
-		"Unknown": "z",
+		"Published": "",
+		"Best":      "aa",
+		"Better":    "a",
+		"Good":      "b",
+		"Okay":      "c",
+		"Poor":      "d",
+		"Bad":       "e",
+		"Worst":     "f",
+		"Unknown":   "z",
 	}
 
 	if mark, ok := marks[quality]; ok {

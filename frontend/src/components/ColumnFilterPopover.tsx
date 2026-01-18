@@ -19,6 +19,8 @@ interface ColumnFilterPopoverProps {
   onSelectAll?: () => void;
   onSelectNone?: () => void;
   onSelectOnly?: (value: string) => void;
+  onSelectWorks?: () => void;
+  onSelectIdeas?: () => void;
   label?: string;
 }
 
@@ -29,6 +31,8 @@ export function ColumnFilterPopover({
   onSelectAll,
   onSelectNone,
   onSelectOnly,
+  onSelectWorks,
+  onSelectIdeas,
   label = 'Filter',
 }: ColumnFilterPopoverProps) {
   const [opened, setOpened] = useState(false);
@@ -98,6 +102,21 @@ export function ColumnFilterPopover({
               {label}
             </Text>
             <Group gap="xs">
+              {onSelectWorks && (
+                <Anchor size="xs" onClick={onSelectWorks}>
+                  Works
+                </Anchor>
+              )}
+              {onSelectIdeas && (
+                <Anchor size="xs" onClick={onSelectIdeas}>
+                  Ideas
+                </Anchor>
+              )}
+              {(onSelectWorks || onSelectIdeas) && (
+                <Text size="xs" c="dimmed">
+                  |
+                </Text>
+              )}
               <Anchor size="xs" onClick={handleSelectAll}>
                 All
               </Anchor>

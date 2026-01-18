@@ -1,0 +1,32 @@
+.data-table-cell-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.data-table-cell-content {
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.data-table-cell-content.animating {
+  animation: scroll-text var(--scroll-duration, 3s) ease-in-out 2 alternate;
+  animation-delay: 0.5s;
+  animation-fill-mode: forwards;
+}
+
+@keyframes scroll-text {
+  0%,
+  10% {
+    transform: translateX(0);
+  }
+  90%,
+  100% {
+    transform: translateX(var(--scroll-distance, 0));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .data-table-cell-content.animating {
+    animation: none;
+  }
+}

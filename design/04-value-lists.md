@@ -20,33 +20,34 @@
 ## 1. Overview
 
 The database defines **20 value lists** used for dropdown menus, sorting, and validation. Value lists are either:
+
 - **Static (Custom):** Fixed list of values defined in the database
 - **Dynamic (Field):** Values populated from table data
 
 ### 1.1 Summary
 
-| Value List | Type | Count | Primary Usage |
-|------------|------|-------|---------------|
-| StatusList | Static | 16 | Work lifecycle states |
-| QualityList | Static | 7 | Work quality ratings |
-| WorkType | Static | 31 | Creative work categories |
-| Response Types | Static | 7 | Submission response categories |
-| NoteTypes | Static | 14 | Note categorization |
-| Submission Types | Static | 4 | Submission method |
-| AcceptTypes | Static | 8 | What journals accept |
-| JournalStatus | Static | 2 | Journal availability |
-| GenreTypes | Static | 3 | Genre classification |
-| YesNo | Static | 2 | Boolean choices |
-| Yes | Static | 1 | Single checkbox value |
-| Browser | Static | 1 | UI element identifier |
-| JournalsList | Dynamic | ~755 | Organization names |
-| JournalList | Dynamic | ~755 | Organization ID + Name |
-| WorksList | Dynamic | ~1749 | Work titles |
-| WorkList | Dynamic | ~1749 | Work ID + Title |
-| DraftsList | Dynamic | varies | Draft field values |
-| Timing | Dynamic | varies | Response timing options |
-| Collections | Dynamic | ~31 | Collection names |
-| ContestList | Dynamic | 0 | MISSING FIELDS |
+| Value List       | Type    | Count  | Primary Usage                  |
+| ---------------- | ------- | ------ | ------------------------------ |
+| StatusList       | Static  | 16     | Work lifecycle states          |
+| QualityList      | Static  | 7      | Work quality ratings           |
+| WorkType         | Static  | 31     | Creative work categories       |
+| Response Types   | Static  | 7      | Submission response categories |
+| NoteTypes        | Static  | 14     | Note categorization            |
+| Submission Types | Static  | 4      | Submission method              |
+| AcceptTypes      | Static  | 8      | What journals accept           |
+| JournalStatus    | Static  | 2      | Journal availability           |
+| GenreTypes       | Static  | 3      | Genre classification           |
+| YesNo            | Static  | 2      | Boolean choices                |
+| Yes              | Static  | 1      | Single checkbox value          |
+| Browser          | Static  | 1      | UI element identifier          |
+| JournalsList     | Dynamic | ~755   | Organization names             |
+| JournalList      | Dynamic | ~755   | Organization ID + Name         |
+| WorksList        | Dynamic | ~1749  | Work titles                    |
+| WorkList         | Dynamic | ~1749  | Work ID + Title                |
+| DraftsList       | Dynamic | varies | Draft field values             |
+| Timing           | Dynamic | varies | Response timing options        |
+| Collections      | Dynamic | ~31    | Collection names               |
+| ContestList      | Dynamic | 0      | MISSING FIELDS                 |
 
 ---
 
@@ -57,6 +58,7 @@ The database defines **20 value lists** used for dropdown menus, sorting, and va
 **Purpose:** Work lifecycle status - controls workflow and sorting priority.
 
 **Values (in order):**
+
 ```
 Out
 -
@@ -77,29 +79,31 @@ Done
 ```
 
 **Notes:**
+
 - `-` entries are visual separators in dropdown menus
 - Order determines sort priority (Out = 1, Done = 16)
 - Each status has a corresponding collection for grouping works
 
 **Semantic Meaning:**
 
-| Status | Description | Collection Type |
-|--------|-------------|-----------------|
-| Out | Currently submitted to journal | Active |
-| Focus | Primary focus pieces | Active |
-| Active | Being actively worked on | Active |
-| Working | In progress | Active |
-| Resting | Taking a break from | Active |
-| Waiting | Waiting for feedback/review | Active |
-| Gestating | Ideas developing | Process |
-| Sound | Complete but not submitting | Other |
-| Published | Accepted and published | Other |
-| Sleeping | Dormant, may revisit | Dead |
-| Dying | Low priority, may abandon | Dead |
-| Dead | Abandoned | Dead |
-| Done | Completed, no further action | Dead |
+| Status    | Description                    | Collection Type |
+| --------- | ------------------------------ | --------------- |
+| Out       | Currently submitted to journal | Active          |
+| Focus     | Primary focus pieces           | Active          |
+| Active    | Being actively worked on       | Active          |
+| Working   | In progress                    | Active          |
+| Resting   | Taking a break from            | Active          |
+| Waiting   | Waiting for feedback/review    | Active          |
+| Gestating | Ideas developing               | Process         |
+| Sound     | Complete but not submitting    | Other           |
+| Published | Accepted and published         | Other           |
+| Sleeping  | Dormant, may revisit           | Dead            |
+| Dying     | Low priority, may abandon      | Dead            |
+| Dead      | Abandoned                      | Dead            |
+| Done      | Completed, no further action   | Dead            |
 
 **Sort Order Value:**
+
 ```go
 var StatusOrder = map[string]int{
     "Out":       1,
@@ -123,7 +127,9 @@ var StatusOrder = map[string]int{
 **Purpose:** Subjective quality rating for works and journal interest level.
 
 **Values (in order):**
+
 ```
+Published  (auto-set when status becomes Published)
 Best
 Better
 Good
@@ -134,19 +140,28 @@ Unknown
 ```
 
 **Usage:**
-- `Works.Quality` - Rating of the work itself
+
+- `Works.Quality` - Rating of the work itself (becomes "Published" when status is Published)
+- `Works.QualityAtPublish` - Stores original quality when work is published
 - `Organizations.My Interest` - How interested the user is in submitting to this journal
 
+**Transition Rules:**
+
+- When `Status` changes TO "Published": `QualityAtPublish` = `Quality`, `Quality` = "Published"
+- When `Status` changes FROM "Published": `Quality` = `QualityAtPublish`, `QualityAtPublish` = NULL
+
 **Sort Order Value:**
+
 ```go
 var QualityOrder = map[string]int{
-    "Best":    1,
-    "Better":  2,
-    "Good":    3,
-    "Okay":    4,
-    "Bad":     5,
-    "Worst":   6,
-    "Unknown": 7,
+    "Published": 0,
+    "Best":      1,
+    "Better":    2,
+    "Good":      3,
+    "Okay":      4,
+    "Bad":       5,
+    "Worst":     6,
+    "Unknown":   7,
 }
 ```
 
@@ -155,6 +170,7 @@ var QualityOrder = map[string]int{
 **Purpose:** Categorizes creative works by genre/form.
 
 **Values (in order):**
+
 ```
 Article
 Book
@@ -190,21 +206,23 @@ Other
 ```
 
 **Notes:**
+
 - Main types (19) plus "Idea" variants (9) for planning/brainstorming
 - `-` entries are visual separators
 - Determines folder path in file system (see file management)
 
 **Type Categories:**
 
-| Category | Types |
-|----------|-------|
-| Primary Creative | Poem, Story, Flash, Micro, Essay, Article |
-| Long Form | Book, Chapter |
-| Academic | Paper, Research, Critique, Review, Lesson |
-| Special Format | Song, Interview, Character, Travel, Journal, Freewrite |
-| Planning | *Idea variants |
+| Category         | Types                                                  |
+| ---------------- | ------------------------------------------------------ |
+| Primary Creative | Poem, Story, Flash, Micro, Essay, Article              |
+| Long Form        | Book, Chapter                                          |
+| Academic         | Paper, Research, Critique, Review, Lesson              |
+| Special Format   | Song, Interview, Character, Travel, Journal, Freewrite |
+| Planning         | \*Idea variants                                        |
 
 **Sort Order Value:**
+
 ```go
 var TypeOrder = map[string]int{
     "Article":    1,
@@ -245,6 +263,7 @@ var TypeOrder = map[string]int{
 **Purpose:** Categorizes responses from journals to submissions.
 
 **Values:**
+
 ```
 Accepted
 Email
@@ -257,21 +276,22 @@ Waiting
 
 **Semantic Meaning:**
 
-| Response | Description | Action |
-|----------|-------------|--------|
-| Accepted | Work was accepted for publication | Change work status to "Published" |
-| Email | Standard rejection email | None |
-| Form | Form rejection letter | None |
-| No Response | No response within expected time | None |
-| Personal | Personalized rejection | Consider for future |
-| Personal Note | Rejection with encouraging note | Higher priority for resubmission |
-| Waiting | Still waiting for response | None |
+| Response      | Description                       | Action                            |
+| ------------- | --------------------------------- | --------------------------------- |
+| Accepted      | Work was accepted for publication | Change work status to "Published" |
+| Email         | Standard rejection email          | None                              |
+| Form          | Form rejection letter             | None                              |
+| No Response   | No response within expected time  | None                              |
+| Personal      | Personalized rejection            | Consider for future               |
+| Personal Note | Rejection with encouraging note   | Higher priority for resubmission  |
+| Waiting       | Still waiting for response        | None                              |
 
 ### 2.5 NoteTypes
 
 **Purpose:** Categorizes notes attached to works and journals.
 
 **Values:**
+
 ```
 Acceptance
 Note
@@ -291,28 +311,29 @@ Query
 
 **Usage by Context:**
 
-| Type | Work Notes | Journal Notes | Description |
-|------|:----------:|:-------------:|-------------|
-| Acceptance | ✓ | ✓ | Acceptance notification |
-| Note | ✓ | ✓ | General note |
-| Problem | ✓ | ✓ | Issue or problem |
-| Response | ✓ | ✓ | Response received |
-| Review | ✓ | | Peer review received |
-| Critique | ✓ | | Critique from workshop |
-| TitleChange | ✓ | | Title was changed |
-| Submission | ✓ | ✓ | Submission record |
-| Contest | ✓ | ✓ | Contest entry/result |
-| Reading | ✓ | | Public reading |
-| Export | ✓ | | File exported |
-| Revised | ✓ | | Major revision |
-| Posting | ✓ | | Posted online |
-| Query | | ✓ | Query sent to journal |
+| Type        | Work Notes | Journal Notes | Description             |
+| ----------- | :--------: | :-----------: | ----------------------- |
+| Acceptance  |     ✓      |       ✓       | Acceptance notification |
+| Note        |     ✓      |       ✓       | General note            |
+| Problem     |     ✓      |       ✓       | Issue or problem        |
+| Response    |     ✓      |       ✓       | Response received       |
+| Review      |     ✓      |               | Peer review received    |
+| Critique    |     ✓      |               | Critique from workshop  |
+| TitleChange |     ✓      |               | Title was changed       |
+| Submission  |     ✓      |       ✓       | Submission record       |
+| Contest     |     ✓      |       ✓       | Contest entry/result    |
+| Reading     |     ✓      |               | Public reading          |
+| Export      |     ✓      |               | File exported           |
+| Revised     |     ✓      |               | Major revision          |
+| Posting     |     ✓      |               | Posted online           |
+| Query       |            |       ✓       | Query sent to journal   |
 
 ### 2.6 Submission Types
 
 **Purpose:** How submissions are sent to journals.
 
 **Values:**
+
 ```
 submittable
 online
@@ -321,6 +342,7 @@ email
 ```
 
 **Notes:**
+
 - `submittable` - Via Submittable platform
 - `online` - Journal's own submission system
 - `snail mail` - Physical mail
@@ -331,6 +353,7 @@ email
 **Purpose:** What types of work a journal accepts.
 
 **Values:**
+
 ```
 poetry
 short fiction
@@ -343,6 +366,7 @@ contests
 ```
 
 **Notes:**
+
 - Stored in `Organizations.Accepts` field
 - Can have multiple values (comma-separated)
 - `cnf` = Creative Non-Fiction
@@ -352,6 +376,7 @@ contests
 **Purpose:** Operating status of a journal.
 
 **Values:**
+
 ```
 Open
 On Hiatus
@@ -362,6 +387,7 @@ On Hiatus
 **Purpose:** Genre classification.
 
 **Values:**
+
 ```
 science fiction
 horror
@@ -375,6 +401,7 @@ literary
 **Purpose:** Boolean choices for toggle fields.
 
 **Values:**
+
 ```
 yes
 no
@@ -385,6 +412,7 @@ no
 **Purpose:** Single-value checkbox (checked = "yes", unchecked = empty).
 
 **Values:**
+
 ```
 yes
 ```
@@ -396,6 +424,7 @@ yes
 **Purpose:** UI element identifier.
 
 **Values:**
+
 ```
 browser
 ```
@@ -411,10 +440,12 @@ browser
 **Purpose:** Dropdown of all journal names.
 
 **Source:**
+
 - Field: `Organizations::Name`
 - Sort: Ascending by name
 
 **SQL Equivalent:**
+
 ```sql
 SELECT DISTINCT name FROM Organizations ORDER BY name;
 ```
@@ -424,11 +455,13 @@ SELECT DISTINCT name FROM Organizations ORDER BY name;
 **Purpose:** Dropdown showing journal names but returning journal IDs.
 
 **Source:**
+
 - Primary Field: `Organizations::orgID` (stored value)
 - Secondary Field: `Organizations::Name` (displayed value)
 - Sort: By name
 
 **SQL Equivalent:**
+
 ```sql
 SELECT orgID, name FROM Organizations ORDER BY name;
 ```
@@ -438,10 +471,12 @@ SELECT orgID, name FROM Organizations ORDER BY name;
 **Purpose:** Dropdown of all work titles.
 
 **Source:**
+
 - Field: `Works::Title`
 - Sort: Ascending by title
 
 **SQL Equivalent:**
+
 ```sql
 SELECT DISTINCT title FROM Works ORDER BY title;
 ```
@@ -451,11 +486,13 @@ SELECT DISTINCT title FROM Works ORDER BY title;
 **Purpose:** Dropdown showing work titles but returning work IDs.
 
 **Source:**
+
 - Primary Field: `Works::workID` (stored value)
 - Secondary Field: `Works::Title` (displayed value)
 - Sort: By title
 
 **SQL Equivalent:**
+
 ```sql
 SELECT workID, title FROM Works ORDER BY title;
 ```
@@ -465,6 +502,7 @@ SELECT workID, title FROM Works ORDER BY title;
 **Purpose:** Available draft identifiers.
 
 **Source:**
+
 - Field: `Submissions::Draft`
 - Sort: Ascending
 
@@ -473,6 +511,7 @@ SELECT workID, title FROM Works ORDER BY title;
 **Purpose:** Response timing expectations.
 
 **Source:**
+
 - Field: `Organizations::Timing`
 - Sort: Ascending
 
@@ -481,10 +520,12 @@ SELECT workID, title FROM Works ORDER BY title;
 **Purpose:** All collection names for assignment.
 
 **Source:**
+
 - Field: `CollectionDetails::Collection Name`
 - Sort: Ascending by name
 
 **SQL Equivalent:**
+
 ```sql
 SELECT DISTINCT collection_name FROM CollectionDetails ORDER BY collection_name;
 -- Or from Collections table:
@@ -503,34 +544,34 @@ SELECT collection_name FROM Collections ORDER BY collection_name;
 
 ### 4.1 Usage by Layout
 
-| Layout | Value Lists Used |
-|--------|------------------|
-| Collections | StatusList, QualityList, Collections, Yes |
-| Works | WorkType, StatusList, QualityList, Response Types, NoteTypes, JournalList, YesNo, Yes |
-| Works Light | WorkType, StatusList, QualityList, YesNo |
+| Layout        | Value Lists Used                                                                                                |
+| ------------- | --------------------------------------------------------------------------------------------------------------- |
+| Collections   | StatusList, QualityList, Collections, Yes                                                                       |
+| Works         | WorkType, StatusList, QualityList, Response Types, NoteTypes, JournalList, YesNo, Yes                           |
+| Works Light   | WorkType, StatusList, QualityList, YesNo                                                                        |
 | Organizations | Submission Types, Timing, Response Types, AcceptTypes, JournalStatus, WorkList, QualityList, NoteTypes, Browser |
-| Submissions | Submission Types, Response Types, WorksList, DraftsList, StatusList, JournalList, Browser |
-| Works Notes | WorksList, NoteTypes |
-| Journal Notes | WorksList, NoteTypes |
-| Checking | WorkType |
+| Submissions   | Submission Types, Response Types, WorksList, DraftsList, StatusList, JournalList, Browser                       |
+| Works Notes   | WorksList, NoteTypes                                                                                            |
+| Journal Notes | WorksList, NoteTypes                                                                                            |
+| Checking      | WorkType                                                                                                        |
 
 ### 4.2 Usage by Field
 
-| Table.Field | Value List | Validation |
-|-------------|------------|------------|
-| Works.Type | WorkType | Member of list |
-| Works.Status | StatusList | Member of list |
-| Works.Quality | QualityList | Member of list |
-| Works.ShowOnReading | YesNo | Member of list |
-| Organizations.My Interest | QualityList | Member of list |
-| Organizations.Submit | Submission Types | Member of list |
-| Organizations.Accepts | AcceptTypes | Multiple allowed |
-| Organizations.Status | JournalStatus | Member of list |
-| Organizations.Timing | Timing | Dynamic |
-| Submissions.Response Type | Response Types | Member of list |
-| Submissions.Draft | DraftsList | Dynamic |
-| Work Notes.Type | NoteTypes | Member of list |
-| Journal Notes.Type | NoteTypes | Member of list |
+| Table.Field               | Value List       | Validation       |
+| ------------------------- | ---------------- | ---------------- |
+| Works.Type                | WorkType         | Member of list   |
+| Works.Status              | StatusList       | Member of list   |
+| Works.Quality             | QualityList      | Member of list   |
+| Works.ShowOnReading       | YesNo            | Member of list   |
+| Organizations.My Interest | QualityList      | Member of list   |
+| Organizations.Submit      | Submission Types | Member of list   |
+| Organizations.Accepts     | AcceptTypes      | Multiple allowed |
+| Organizations.Status      | JournalStatus    | Member of list   |
+| Organizations.Timing      | Timing           | Dynamic          |
+| Submissions.Response Type | Response Types   | Member of list   |
+| Submissions.Draft         | DraftsList       | Dynamic          |
+| Work Notes.Type           | NoteTypes        | Member of list   |
+| Journal Notes.Type        | NoteTypes        | Member of list   |
 
 ---
 
@@ -582,7 +623,7 @@ func (s StatusValue) Order() int {
     order := map[StatusValue]int{
         StatusOut: 1, StatusFocus: 2, StatusActive: 3, StatusWorking: 4,
         StatusResting: 5, StatusWaiting: 6, StatusGestating: 7, StatusSound: 8,
-        StatusPublished: 9, StatusSleeping: 10, StatusDying: 11, 
+        StatusPublished: 9, StatusSleeping: 10, StatusDying: 11,
         StatusDead: 12, StatusDone: 13,
     }
     if v, ok := order[s]; ok {
@@ -829,7 +870,7 @@ func (r *Repository) GetJournalList() ([]IdNamePair, error) {
         return nil, err
     }
     defer rows.Close()
-    
+
     var result []IdNamePair
     for rows.Next() {
         var pair IdNamePair
@@ -849,7 +890,7 @@ func (r *Repository) GetWorkList() ([]IdNamePair, error) {
         return nil, err
     }
     defer rows.Close()
-    
+
     var result []IdNamePair
     for rows.Next() {
         var pair IdNamePair
@@ -869,7 +910,7 @@ func (r *Repository) GetCollectionList() ([]string, error) {
         return nil, err
     }
     defer rows.Close()
-    
+
     var result []string
     for rows.Next() {
         var name string
@@ -897,34 +938,81 @@ type IdNamePair struct {
 // src/types/enums.ts
 
 export const STATUS_VALUES = [
-  'Out', 'Focus', 'Active', 'Working', 'Resting', 'Waiting',
-  'Gestating', 'Sound', 'Published',
-  'Sleeping', 'Dying', 'Dead', 'Done'
+  'Out',
+  'Focus',
+  'Active',
+  'Working',
+  'Resting',
+  'Waiting',
+  'Gestating',
+  'Sound',
+  'Published',
+  'Sleeping',
+  'Dying',
+  'Dead',
+  'Done',
 ] as const;
 
-export type Status = typeof STATUS_VALUES[number];
+export type Status = (typeof STATUS_VALUES)[number];
 
 export const QUALITY_VALUES = [
-  'Best', 'Better', 'Good', 'Okay', 'Poor', 'Bad', 'Worst', 'Unknown'
+  'Best',
+  'Better',
+  'Good',
+  'Okay',
+  'Poor',
+  'Bad',
+  'Worst',
+  'Unknown',
 ] as const;
 
-export type Quality = typeof QUALITY_VALUES[number];
+export type Quality = (typeof QUALITY_VALUES)[number];
 
 export const WORK_TYPE_VALUES = [
-  'Article', 'Book', 'Chapter', 'Critique', 'Essay', 'Flash', 'Interview',
-  'Freewrite', 'Journal', 'Micro', 'Poem', 'Paper', 'Lesson', 'Character',
-  'Research', 'Review', 'Song', 'Story', 'Travel',
-  'Essay Idea', 'Poem Idea', 'Article Idea', 'Book Idea', 'Story Idea',
-  'Paper Idea', 'Interview Idea', 'Flash Idea', 'Micro Idea', 'Other'
+  'Article',
+  'Book',
+  'Chapter',
+  'Critique',
+  'Essay',
+  'Flash',
+  'Interview',
+  'Freewrite',
+  'Journal',
+  'Micro',
+  'Poem',
+  'Paper',
+  'Lesson',
+  'Character',
+  'Research',
+  'Review',
+  'Song',
+  'Story',
+  'Travel',
+  'Essay Idea',
+  'Poem Idea',
+  'Article Idea',
+  'Book Idea',
+  'Story Idea',
+  'Paper Idea',
+  'Interview Idea',
+  'Flash Idea',
+  'Micro Idea',
+  'Other',
 ] as const;
 
-export type WorkType = typeof WORK_TYPE_VALUES[number];
+export type WorkType = (typeof WORK_TYPE_VALUES)[number];
 
 export const RESPONSE_TYPE_VALUES = [
-  'Waiting', 'Accepted', 'Form', 'Personal', 'Withdrawn', 'Lost', 'Expired'
+  'Waiting',
+  'Accepted',
+  'Form',
+  'Personal',
+  'Withdrawn',
+  'Lost',
+  'Expired',
 ] as const;
 
-export type ResponseType = typeof RESPONSE_TYPE_VALUES[number];
+export type ResponseType = (typeof RESPONSE_TYPE_VALUES)[number];
 ```
 
 ### 6.2 React Select Components
@@ -1000,42 +1088,42 @@ interface IdNamePair {
 export function useJournalList() {
   const [journals, setJournals] = useState<IdNamePair[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     GetJournalList().then((data) => {
       setJournals(data);
       setLoading(false);
     });
   }, []);
-  
+
   return { journals, loading };
 }
 
 export function useWorkList() {
   const [works, setWorks] = useState<IdNamePair[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     GetWorkList().then((data) => {
       setWorks(data);
       setLoading(false);
     });
   }, []);
-  
+
   return { works, loading };
 }
 
 export function useCollectionList() {
   const [collections, setCollections] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     GetCollectionList().then((data) => {
       setCollections(data);
       setLoading(false);
     });
   }, []);
-  
+
   return { collections, loading };
 }
 ```
@@ -1047,33 +1135,33 @@ export function useCollectionList() {
 import { Status, Quality } from './enums';
 
 export const STATUS_COLORS: Record<Status, string> = {
-  'Out': 'bg-red-100 text-red-800',
-  'Focus': 'bg-yellow-100 text-yellow-800',
-  'Active': 'bg-green-100 text-green-800',
-  'Working': 'bg-blue-100 text-blue-800',
-  'Resting': 'bg-purple-100 text-purple-800',
-  'Waiting': 'bg-orange-100 text-orange-800',
-  'Gestating': 'bg-pink-100 text-pink-800',
-  'Sound': 'bg-teal-100 text-teal-800',
-  'Published': 'bg-emerald-100 text-emerald-800',
-  'Sleeping': 'bg-gray-100 text-gray-800',
-  'Dying': 'bg-gray-200 text-gray-600',
-  'Dead': 'bg-gray-300 text-gray-500',
-  'Done': 'bg-slate-100 text-slate-800',
+  Out: 'bg-red-100 text-red-800',
+  Focus: 'bg-yellow-100 text-yellow-800',
+  Active: 'bg-green-100 text-green-800',
+  Working: 'bg-blue-100 text-blue-800',
+  Resting: 'bg-purple-100 text-purple-800',
+  Waiting: 'bg-orange-100 text-orange-800',
+  Gestating: 'bg-pink-100 text-pink-800',
+  Sound: 'bg-teal-100 text-teal-800',
+  Published: 'bg-emerald-100 text-emerald-800',
+  Sleeping: 'bg-gray-100 text-gray-800',
+  Dying: 'bg-gray-200 text-gray-600',
+  Dead: 'bg-gray-300 text-gray-500',
+  Done: 'bg-slate-100 text-slate-800',
 };
 
 export const QUALITY_COLORS: Record<Quality, string> = {
-  'Best': 'bg-green-100 text-green-800',
-  'Better': 'bg-lime-100 text-lime-800',
-  'Good': 'bg-blue-100 text-blue-800',
-  'Okay': 'bg-gray-100 text-gray-800',
-  'Poor': 'bg-yellow-100 text-yellow-800',
-  'Bad': 'bg-orange-100 text-orange-800',
-  'Worst': 'bg-red-100 text-red-800',
-  'Unknown': 'bg-slate-100 text-slate-800',
+  Best: 'bg-green-100 text-green-800',
+  Better: 'bg-lime-100 text-lime-800',
+  Good: 'bg-blue-100 text-blue-800',
+  Okay: 'bg-gray-100 text-gray-800',
+  Poor: 'bg-yellow-100 text-yellow-800',
+  Bad: 'bg-orange-100 text-orange-800',
+  Worst: 'bg-red-100 text-red-800',
+  Unknown: 'bg-slate-100 text-slate-800',
 };
 ```
 
 ---
 
-*End of Value Lists Specification*
+_End of Value Lists Specification_

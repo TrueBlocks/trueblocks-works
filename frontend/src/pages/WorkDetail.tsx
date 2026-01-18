@@ -508,6 +508,11 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
             <StatusSelect work={work} onUpdate={handleWorkUpdate} />
             <QualitySelect work={work} onUpdate={handleWorkUpdate} />
             <YearSelect work={work} onUpdate={handleWorkUpdate} />
+            {work.status === 'Published' && work.qualityAtPublish && (
+              <Text size="sm" c="dimmed" fs="italic">
+                (was {work.qualityAtPublish})
+              </Text>
+            )}
           </>
         }
         secondaryRow={

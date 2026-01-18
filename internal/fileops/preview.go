@@ -139,7 +139,92 @@ end tell
 // 	return nil
 // }
 
+func (f *FileOps) CheckExcel() bool {
+	return FileExists("/Applications/Microsoft Excel.app")
+}
+
+func (f *FileOps) generatePDFWithExcel(docPath string, pdfPath string) error {
+	script := fmt.Sprintf(`
+tell application "Microsoft Excel"
+	set wasRunning to running
+	set docWasOpen to false
+	
+	-- Check if workbook is already open
+	if wasRunning then
+		try
+			set wbList to every workbook
+			repeat with wb in wbList
+				try
+					set wbPath to POSIX path of (get full name of wb)
+					if wbPath is "%s" then
+						set docWasOpen to true
+						set theWorkbook to wb
+						exit repeat
+					end if
+				end try
+			end repeat
+		end try
+	end if
+	
+	-- Only open if not already open
+	if not docWasOpen then
+		open POSIX file "%s"
+		set theWorkbook to active workbook
+	end if
+	
+	-- Save as PDF
+	save theWorkbook in POSIX file "%s" as PDF file format
+	
+	-- Only close if we opened it
+	if not docWasOpen then
+		close theWorkbook saving no
+	end if
+	
+	if not wasRunning then
+		quit
+	end if
+end tell
+`, docPath, docPath, pdfPath)
+
+	cmd := exec.Command("osascript", "-e", script)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("excel PDF conversion failed: %w (output: %s)", err, strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
+// isExcelFile returns true if the file is an Excel spreadsheet
+func isExcelFile(docPath string) bool {
+	ext := strings.ToLower(filepath.Ext(docPath))
+	return ext == ".xls" || ext == ".xlsx"
+}
+
+// isWordFile returns true if the file can be opened by Word
+func isWordFile(docPath string) bool {
+	ext := strings.ToLower(filepath.Ext(docPath))
+	wordExtensions := map[string]bool{
+		".doc":  true,
+		".docx": true,
+		".rtf":  true,
+		".txt":  true,
+		".odt":  true,
+	}
+	return wordExtensions[ext]
+}
+
+// CanGeneratePDF returns true if the file type can be converted to PDF
+func (f *FileOps) CanGeneratePDF(docPath string) bool {
+	return isWordFile(docPath) || isExcelFile(docPath)
+}
+
 func (f *FileOps) GeneratePDF(docPath string, workID int64) (string, error) {
+	// Check if this file type can be converted
+	if !f.CanGeneratePDF(docPath) {
+		ext := filepath.Ext(docPath)
+		return "", fmt.Errorf("cannot generate PDF preview for %s files", ext)
+	}
+
 	pdfPath := filepath.Join(f.Config.PDFPreviewPath, fmt.Sprintf("%d.pdf", workID))
 
 	if err := os.MkdirAll(f.Config.PDFPreviewPath, 0755); err != nil {
@@ -148,7 +233,18 @@ func (f *FileOps) GeneratePDF(docPath string, workID int64) (string, error) {
 
 	_ = os.Remove(pdfPath)
 
-	// Use Word only - no fallback (debugging)
+	// Use Excel for spreadsheets
+	if isExcelFile(docPath) {
+		if !f.CheckExcel() {
+			return "", fmt.Errorf("MS Excel not found at /Applications/Microsoft Excel.app")
+		}
+		if err := f.generatePDFWithExcel(docPath, pdfPath); err != nil {
+			return "", err
+		}
+		return pdfPath, nil
+	}
+
+	// Use Word for documents
 	if !f.CheckWord() {
 		return "", fmt.Errorf("MS Word not found at /Applications/Microsoft Word.app")
 	}

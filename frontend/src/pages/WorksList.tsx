@@ -247,7 +247,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
   const columns: Column<models.WorkView>[] = useMemo(
     () => [
       { key: 'workID', label: 'ID', width: '5%', render: (w) => w.workID },
-      { key: 'title', label: 'Title', width: '28%', render: (w) => w.title },
+      { key: 'title', label: 'Title', width: '28%', render: (w) => w.title, scrollOnSelect: true },
       {
         key: 'year',
         label: 'Year',
@@ -261,6 +261,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         width: '8%',
         render: (w) => <TypeBadge value={w.type} />,
         filterOptions: filterOptions.types,
+        isWorkTypeColumn: true,
       },
       {
         key: 'status',
@@ -301,6 +302,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         key: 'collectionList',
         label: 'Collections',
         width: '12%',
+        scrollOnSelect: true,
         render: (w) => {
           const list = w.collectionList || '';
           return list.length > 30 ? list.substring(0, 30) + '…' : list || '-';

@@ -417,7 +417,13 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const columns: Column<models.CollectionWork>[] = useMemo(
     () => [
       { key: 'workID', label: 'ID', width: '8%', render: (work) => work.workID },
-      { key: 'title', label: 'Title', width: '30%', render: (work) => work.title },
+      {
+        key: 'title',
+        label: 'Title',
+        width: '30%',
+        render: (work) => work.title,
+        scrollOnSelect: true,
+      },
       {
         key: 'year',
         label: 'Year',

@@ -184,7 +184,7 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
   const columns: Column<models.OrganizationWithNotes>[] = useMemo(
     () => [
       { key: 'orgID', label: 'ID', width: '5%', render: (o) => o.orgID },
-      { key: 'name', label: 'Name', width: '25%', render: (o) => o.name },
+      { key: 'name', label: 'Name', width: '25%', render: (o) => o.name, scrollOnSelect: true },
       {
         key: 'type',
         label: 'Type',
@@ -231,6 +231,7 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
         key: 'notes',
         label: 'Notes',
         width: '20%',
+        scrollOnSelect: true,
         render: (o) => (
           <span
             style={{

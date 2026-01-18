@@ -205,30 +205,15 @@ export function DashboardPage() {
   const ideasMax = Math.max(0, ...ideasYearData.map((d) => d.count));
   const yearChartMax = Math.max(worksMax, ideasMax);
 
-  // Calculate total for percentage threshold
+  // Show all statuses without collapsing to "Other"
   const statusEntries = Object.entries(stats.works.byStatus || {});
-  const statusTotal = statusEntries.reduce((sum, [, count]) => sum + count, 0);
-  const statusThreshold = statusTotal * 0.03; // 3%
-
-  const statusDataRaw = statusEntries.sort((a, b) => b[1] - a[1]);
-  const statusData: { name: string; value: number; color: string }[] = [];
-  const statusOtherStatuses: string[] = [];
-  let statusOtherCount = 0;
-  let colorIdx = 0;
-
-  statusDataRaw.forEach(([name, value]) => {
-    if (value < statusThreshold) {
-      statusOtherCount += value;
-      statusOtherStatuses.push(name);
-    } else {
-      statusData.push({ name, value, color: CHART_COLORS[colorIdx % CHART_COLORS.length] });
-      colorIdx++;
-    }
-  });
-
-  if (statusOtherCount > 0) {
-    statusData.push({ name: 'Other', value: statusOtherCount, color: 'gray.5' });
-  }
+  const statusData = statusEntries
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, value], idx) => ({
+      name,
+      value,
+      color: CHART_COLORS[idx % CHART_COLORS.length],
+    }));
 
   const qualityData = Object.entries(stats.works.byQuality || {})
     .sort((a, b) => b[1] - a[1])
@@ -356,11 +341,7 @@ export function DashboardPage() {
 
   // Status click handler
   const handleStatusClick = (segment: { name: string }) => {
-    if (segment.name === 'Other') {
-      navigateToWorks({ status: statusOtherStatuses });
-    } else {
-      navigateToWorks({ status: [segment.name] });
-    }
+    navigateToWorks({ status: [segment.name] });
   };
 
   // Quality click handler
@@ -732,7 +713,8 @@ export function DashboardPage() {
                         content: ({ payload }) => {
                           if (!payload || !payload[0]) return null;
                           const data = payload[0].payload;
-                          const pct = ((data.value / statusTotal) * 100).toFixed(1);
+                          const total = statusData.reduce((sum, d) => sum + d.value, 0);
+                          const pct = ((data.value / total) * 100).toFixed(1);
                           return (
                             <Paper p="xs" withBorder shadow="sm">
                               <Text size="xs">Count: {data.value}</Text>

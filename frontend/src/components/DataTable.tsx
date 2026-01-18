@@ -2,30 +2,23 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Table,
   TextInput,
-  Group,
   Text,
   Stack,
+  Group,
   Pagination,
   Select,
   Title,
   CloseButton,
-  ActionIcon,
-  Tooltip,
 } from '@mantine/core';
 import { useDebouncedValue, useHotkeys } from '@mantine/hooks';
-import {
-  IconSearch,
-  IconTrash,
-  IconRestore,
-  IconX,
-  IconChevronUp,
-  IconChevronDown,
-} from '@tabler/icons-react';
+import { IconSearch } from '@tabler/icons-react';
 import { SortableHeader } from './SortableHeader';
 import { ColumnFilterPopover } from './ColumnFilterPopover';
 import { NumericFilterPopover } from './NumericFilterPopover';
+import { DataTableRow } from './DataTableRow';
 import { GetTableState, SetTableState } from '@app';
 import { state } from '@models';
+import './DataTable.css';
 
 export type SortDirection = 'asc' | 'desc' | '';
 
@@ -50,6 +43,8 @@ export interface Column<T> {
   filterOptions?: readonly string[];
   filterRange?: boolean;
   filterElement?: React.ReactNode;
+  scrollOnSelect?: boolean;
+  isWorkTypeColumn?: boolean; // Enables Works/Ideas filter shortcuts
 }
 
 interface DataTableProps<T> {
@@ -271,6 +266,8 @@ export function DataTable<T>({
     setFilters(resetFilters);
     // Clear range filters
     setRangeFilters({});
+    // Clear sorting
+    setSort(emptyViewSort);
   }, [columns]);
 
   const handleColumnClick = useCallback((column: string, metaKey: boolean) => {
@@ -621,6 +618,17 @@ export function DataTable<T>({
     [onRowClick, onSelectedChange]
   );
 
+  const handleReorderPageChange = useCallback(
+    (direction: 'up' | 'down', index: number) => {
+      if (direction === 'up' && index === 0 && effectivePage > 1) {
+        setPage(effectivePage - 1);
+      } else if (direction === 'down' && index === pageSize - 1 && effectivePage < totalPages) {
+        setPage(effectivePage + 1);
+      }
+    },
+    [effectivePage, pageSize, totalPages]
+  );
+
   useHotkeys([
     ['mod+/', () => searchRef.current?.focus()],
     [
@@ -719,7 +727,7 @@ export function DataTable<T>({
             placeholder={`Search ${title.toLowerCase()}...`}
             leftSection={<IconSearch size={16} />}
             rightSection={
-              search || hasActiveFilters ? (
+              search || hasActiveFilters || sort.primary.column ? (
                 <CloseButton size="sm" c="dimmed" onClick={handleClearAll} />
               ) : null
             }
@@ -739,6 +747,7 @@ export function DataTable<T>({
         ref={tableRef}
         striped
         highlightOnHover
+        className="data-table"
         style={{ tableLayout: 'fixed', width: '100%' }}
       >
         <Table.Thead>
@@ -748,6 +757,19 @@ export function DataTable<T>({
               let filterElement = col.filterElement;
               if (!filterElement && col.filterOptions) {
                 const selected = filters[col.key] || new Set(col.filterOptions);
+                // Works/Ideas handlers for work type columns
+                const worksHandler = col.isWorkTypeColumn
+                  ? () => {
+                      const works = col.filterOptions!.filter((t) => !t.includes('Idea'));
+                      setFilters((prev) => ({ ...prev, [col.key]: new Set(works) }));
+                    }
+                  : undefined;
+                const ideasHandler = col.isWorkTypeColumn
+                  ? () => {
+                      const ideas = col.filterOptions!.filter((t) => t.includes('Idea'));
+                      setFilters((prev) => ({ ...prev, [col.key]: new Set(ideas) }));
+                    }
+                  : undefined;
                 filterElement = (
                   <ColumnFilterPopover
                     options={col.filterOptions}
@@ -756,6 +778,8 @@ export function DataTable<T>({
                     onSelectAll={() => handleFilterSelectAll(col.key)}
                     onSelectNone={() => handleFilterSelectNone(col.key)}
                     onSelectOnly={(value) => handleFilterSelectOnly(col.key, value)}
+                    onSelectWorks={worksHandler}
+                    onSelectIdeas={ideasHandler}
                     label={col.label}
                   />
                 );
@@ -794,127 +818,30 @@ export function DataTable<T>({
         <Table.Tbody>
           {paginated.map((item, index) => {
             const isDeleted = (item as { isDeleted?: boolean }).isDeleted || false;
+            const globalIdx = (effectivePage - 1) * pageSize + index;
             return (
-              <Table.Tr
+              <DataTableRow<T>
                 key={getRowKey(item)}
                 ref={index === effectiveSelectedIndex ? selectedRowRef : null}
-                style={{
-                  cursor: onRowClick ? 'pointer' : 'default',
-                  backgroundColor:
-                    index === effectiveSelectedIndex
-                      ? 'var(--mantine-color-blue-light)'
-                      : undefined,
-                  opacity: isDeleted ? 0.6 : 1,
-                  textDecoration: isDeleted ? 'line-through' : 'none',
-                }}
-                onClick={() => handleRowClick(item, index)}
-              >
-                {columns.map((col) => (
-                  <Table.Td key={col.key}>
-                    {col.render
-                      ? col.render(item)
-                      : String((item as Record<string, unknown>)[col.key] ?? '-')}
-                  </Table.Td>
-                ))}
-                {onReorder && (
-                  <Table.Td>
-                    <Group gap={2} wrap="nowrap">
-                      <ActionIcon
-                        size="xs"
-                        variant="subtle"
-                        disabled={!canReorder || (effectivePage - 1) * pageSize + index === 0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const itemKey = getRowKey(item);
-                          onReorder(itemKey, 'up');
-                          // Auto-follow: if moving to previous page, go there
-                          if (index === 0 && effectivePage > 1) {
-                            setPage(effectivePage - 1);
-                          }
-                        }}
-                      >
-                        <IconChevronUp size={14} />
-                      </ActionIcon>
-                      <ActionIcon
-                        size="xs"
-                        variant="subtle"
-                        disabled={
-                          !canReorder || (effectivePage - 1) * pageSize + index >= sorted.length - 1
-                        }
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const itemKey = getRowKey(item);
-                          onReorder(itemKey, 'down');
-                          // Auto-follow: if moving to next page, go there
-                          if (index === pageSize - 1 && effectivePage < totalPages) {
-                            setPage(effectivePage + 1);
-                          }
-                        }}
-                      >
-                        <IconChevronDown size={14} />
-                      </ActionIcon>
-                    </Group>
-                  </Table.Td>
-                )}
-                {(onDelete || onUndelete || onPermanentDelete) && (
-                  <Table.Td style={{ textAlign: 'center' }}>
-                    <Group gap="xs" justify="center" wrap="nowrap">
-                      {renderExtraCells?.(item)}
-                      {(canDelete?.(item) ?? true) &&
-                        (isDeleted ? (
-                          <>
-                            {onUndelete && (
-                              <Tooltip label="Restore">
-                                <ActionIcon
-                                  size="sm"
-                                  variant="subtle"
-                                  color="green"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onUndelete(item);
-                                  }}
-                                >
-                                  <IconRestore size={16} />
-                                </ActionIcon>
-                              </Tooltip>
-                            )}
-                            {onPermanentDelete && (
-                              <Tooltip label="Remove permanently">
-                                <ActionIcon
-                                  size="sm"
-                                  variant="subtle"
-                                  color="red"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onPermanentDelete(item);
-                                  }}
-                                >
-                                  <IconX size={16} />
-                                </ActionIcon>
-                              </Tooltip>
-                            )}
-                          </>
-                        ) : (
-                          onDelete && (
-                            <Tooltip label="Delete">
-                              <ActionIcon
-                                size="sm"
-                                variant="subtle"
-                                color="red"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDelete(item);
-                                }}
-                              >
-                                <IconTrash size={16} />
-                              </ActionIcon>
-                            </Tooltip>
-                          )
-                        ))}
-                    </Group>
-                  </Table.Td>
-                )}
-              </Table.Tr>
+                item={item}
+                index={index}
+                columns={columns}
+                isSelected={index === effectiveSelectedIndex}
+                isDeleted={isDeleted}
+                hasClickHandler={!!onRowClick}
+                getRowKey={getRowKey}
+                onClick={handleRowClick}
+                onDelete={onDelete}
+                onUndelete={onUndelete}
+                onPermanentDelete={onPermanentDelete}
+                onReorder={onReorder}
+                onReorderPageChange={handleReorderPageChange}
+                renderExtraCells={renderExtraCells}
+                canDelete={canDelete}
+                canReorder={canReorder}
+                isFirstInList={globalIdx === 0}
+                isLastInList={globalIdx >= sorted.length - 1}
+              />
             );
           })}
         </Table.Tbody>

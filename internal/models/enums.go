@@ -20,6 +20,7 @@ var StatusList = []string{
 }
 
 var QualityList = []string{
+	"Published",
 	"Best",
 	"Better",
 	"Good",

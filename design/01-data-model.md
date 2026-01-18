@@ -29,14 +29,14 @@
 
 ### 1.1 Field Definitions
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `Collection ID` | Number | Yes | Auto-serial (10200, +10) | Primary key |
-| `Collection Name` | Text | Yes | - | Display name of the collection |
-| `isStatus` | Text | No | - | "yes" if this collection represents a workflow status |
-| `Type` | Text | No | - | Category: "Active", "Process", "Dead", "Book", "Other", "Hidden" |
-| `statusList` | Text (calc) | No | - | Returns Collection Name if isStatus="yes", else "None" |
-| `nItems` | Number (calc) | No | - | Count of works in this collection |
+| Field             | Type          | Required | Default                  | Description                                                      |
+| ----------------- | ------------- | -------- | ------------------------ | ---------------------------------------------------------------- |
+| `Collection ID`   | Number        | Yes      | Auto-serial (10200, +10) | Primary key                                                      |
+| `Collection Name` | Text          | Yes      | -                        | Display name of the collection                                   |
+| `isStatus`        | Text          | No       | -                        | "yes" if this collection represents a workflow status            |
+| `Type`            | Text          | No       | -                        | Category: "Active", "Process", "Dead", "Book", "Other", "Hidden" |
+| `statusList`      | Text (calc)   | No       | -                        | Returns Collection Name if isStatus="yes", else "None"           |
+| `nItems`          | Number (calc) | No       | -                        | Count of works in this collection                                |
 
 > **Note:** UI filter flags (gl_showAll, gl_showActive, etc.) have been migrated to AppState.
 > See [09-app-state.md](09-app-state.md) for details.
@@ -48,20 +48,20 @@
 
 ### 1.3 Sample Data
 
-| Collection ID | Collection Name | isStatus | Type |
-|---------------|-----------------|----------|------|
-| 00090 | Out | yes | Process |
-| 10010 | Focus | yes | Active |
-| 10020 | Active | yes | Active |
-| 10030 | Working | yes | Active |
-| 10040 | Resting | yes | Active |
-| 10050 | Waiting | yes | Active |
-| 20010 | Gestating | yes | Process |
-| 40010 | Spiral | - | Book |
-| 60010 | Sleeping | yes | Dead |
-| 60020 | Dying | yes | Dead |
-| 60030 | Dead | yes | Dead |
-| 70010 | Published | yes | Process |
+| Collection ID | Collection Name | isStatus | Type    |
+| ------------- | --------------- | -------- | ------- |
+| 00090         | Out             | yes      | Process |
+| 10010         | Focus           | yes      | Active  |
+| 10020         | Active          | yes      | Active  |
+| 10030         | Working         | yes      | Active  |
+| 10040         | Resting         | yes      | Active  |
+| 10050         | Waiting         | yes      | Active  |
+| 20010         | Gestating       | yes      | Process |
+| 40010         | Spiral          | -        | Book    |
+| 60010         | Sleeping        | yes      | Dead    |
+| 60020         | Dying           | yes      | Dead    |
+| 60030         | Dead            | yes      | Dead    |
+| 70010         | Published       | yes      | Process |
 
 ---
 
@@ -73,11 +73,11 @@
 
 ### 2.1 Field Definitions
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `collID` | Number | Yes | - | Foreign key to Collections |
-| `WorkID` | Number | Yes | - | Foreign key to Works |
-| `Collection Name` | Text | Yes | - | Denormalized collection name for display |
+| Field             | Type   | Required | Default | Description                              |
+| ----------------- | ------ | -------- | ------- | ---------------------------------------- |
+| `collID`          | Number | Yes      | -       | Foreign key to Collections               |
+| `WorkID`          | Number | Yes      | -       | Foreign key to Works                     |
+| `Collection Name` | Text   | Yes      | -       | Denormalized collection name for display |
 
 ### 2.2 Indexes
 
@@ -87,17 +87,19 @@
 
 ### 2.3 Relationship Behaviors
 
-| Direction | Behavior |
-|-----------|----------|
-| Collections → CollectionDetails | Allow creation: No |
-| CollectionDetails → Works | Allow creation: Yes, Delete cascade: Yes |
+| Direction                       | Behavior                                 |
+| ------------------------------- | ---------------------------------------- |
+| Collections → CollectionDetails | Allow creation: No                       |
+| CollectionDetails → Works       | Allow creation: Yes, Delete cascade: Yes |
 
 ### 2.4 Sort Order (in relationship)
 
 When accessed from Collections:
+
 1. `Collection Name` ascending
 
 When accessed from Works (via CollectionDetails):
+
 1. `Status` (custom order by StatusList)
 2. `Quality` (custom order by QualityList)
 3. `Type` (custom order by WorkType)
@@ -113,33 +115,33 @@ When accessed from Works (via CollectionDetails):
 
 ### 3.1 Field Definitions
 
-| Field | Type | Required | Default | Validation | Description |
-|-------|------|----------|---------|------------|-------------|
-| `workID` | Number | Yes | Auto-serial (22200, +1) | Unique | Primary key |
-| `Title` | Text | Yes | - | - | Title of the work |
-| `Type` | Text | Yes | - | Member of WorkType value list | Work type (Poem, Story, Essay, etc.) |
-| `Year` | Text | No | Current year | - | Year created |
-| `Status` | Text | No | "Working" | - | Current workflow status |
-| `Quality` | Text | No | "Okay" | - | Self-assessment quality rating |
-| `DocType` | Text | No | "docx" | - | File extension |
-| `Path` | Text | No | - | - | Legacy file path |
-| `generatedPath` | Text (calc) | No | - | - | Computed file path |
-| `Draft` | Text | No | - | - | Current draft designation |
-| `nWords` | Number | No | - | - | Word count |
-| `CourseName` | Text | No | - | - | Associated course/workshop |
-| `isBlog` | Text | No | - | - | "yes" if posted to blog |
-| `isPrinted` | Text | No | - | - | "yes" if printed |
-| `isProsePoem` | Text | No | - | - | "yes" if prose poem |
-| `isRevised` | Text | No | - | - | "yes" if recently revised |
-| `Mark` | Text | No | - | - | Temporary marker |
-| `accessDate` | Timestamp | No | - | - | Last accessed timestamp |
-| `Age` | Number (calc) | No | - | - | Days since last access |
-| `Check` | Text (calc) | No | - | - | File existence validation |
-| `DelCol` | Text (calc) | No | - | - | Comma-separated collection names |
-| `nSubmissions` | Number (calc) | No | - | - | Count of submissions |
-| `memo` | Container | No | - | - | Attached document/image |
-| `hasMemo` | Text (calc) | No | - | - | "yes" if memo has content |
-| `memoPath` | Text (calc) | No | - | - | Path from layout object |
+| Field           | Type          | Required | Default                 | Validation                    | Description                          |
+| --------------- | ------------- | -------- | ----------------------- | ----------------------------- | ------------------------------------ |
+| `workID`        | Number        | Yes      | Auto-serial (22200, +1) | Unique                        | Primary key                          |
+| `Title`         | Text          | Yes      | -                       | -                             | Title of the work                    |
+| `Type`          | Text          | Yes      | -                       | Member of WorkType value list | Work type (Poem, Story, Essay, etc.) |
+| `Year`          | Text          | No       | Current year            | -                             | Year created                         |
+| `Status`        | Text          | No       | "Working"               | -                             | Current workflow status              |
+| `Quality`       | Text          | No       | "Okay"                  | -                             | Self-assessment quality rating       |
+| `DocType`       | Text          | No       | "docx"                  | -                             | File extension                       |
+| `Path`          | Text          | No       | -                       | -                             | Legacy file path                     |
+| `generatedPath` | Text (calc)   | No       | -                       | -                             | Computed file path                   |
+| `Draft`         | Text          | No       | -                       | -                             | Current draft designation            |
+| `nWords`        | Number        | No       | -                       | -                             | Word count                           |
+| `CourseName`    | Text          | No       | -                       | -                             | Associated course/workshop           |
+| `isBlog`        | Text          | No       | -                       | -                             | "yes" if posted to blog              |
+| `isPrinted`     | Text          | No       | -                       | -                             | "yes" if printed                     |
+| `isProsePoem`   | Text          | No       | -                       | -                             | "yes" if prose poem                  |
+| `isRevised`     | Text          | No       | -                       | -                             | "yes" if recently revised            |
+| `Mark`          | Text          | No       | -                       | -                             | Temporary marker                     |
+| `accessDate`    | Timestamp     | No       | -                       | -                             | Last accessed timestamp              |
+| `Age`           | Number (calc) | No       | -                       | -                             | Days since last access               |
+| `Check`         | Text (calc)   | No       | -                       | -                             | File existence validation            |
+| `DelCol`        | Text (calc)   | No       | -                       | -                             | Comma-separated collection names     |
+| `nSubmissions`  | Number (calc) | No       | -                       | -                             | Count of submissions                 |
+| `memo`          | Container     | No       | -                       | -                             | Attached document/image              |
+| `hasMemo`       | Text (calc)   | No       | -                       | -                             | "yes" if memo has content            |
+| `memoPath`      | Text (calc)   | No       | -                       | -                             | Path from layout object              |
 
 > **Note:** Browser URL globals (g_BrowserURL, g_CurrentPath) have been migrated to AppState.
 > See [09-app-state.md](09-app-state.md) for details.
@@ -157,42 +159,52 @@ When accessed from Works (via CollectionDetails):
 ### 3.3 Calculated Field Formulas
 
 #### generatedPath
+
 ```
 generatePath ( Type ; Year ; Title ; Quality ; Status ) & "." & DocType
 ```
+
 Uses custom functions to build: `{folder}/{qualityMark}{Type} - {Year} - {Title}.{DocType}`
 
 #### Age
+
 ```
 Timestamp ( Get ( CurrentDate ) ; Get ( CurrentTime ) ) - accessDate
 ```
+
 Returns seconds since last access (divide by 86400 for days).
 
 #### DelCol
+
 ```
 Substitute ( List ( CollectionDetails::Collection Name ) ; "¶" ; ", " )
 ```
+
 Aggregates all collection names for this work.
 
 #### nSubmissions
+
 ```
 Count ( Submissions::Title of Work )
 ```
+
 Counts related submission records.
 
 #### Check
+
 ```
-If ( not fileExists ( getFilename ( generatedPath ) ) ; 
-   If ( not fileExists ( getFilename ( Path ) ) ; 
-      "file missing" ; 
-      "name changed" 
-   ) ; 
-   If ( generatedPath ≠ Path ; 
-      "paths disagree" ; 
-      "" 
-   ) 
+If ( not fileExists ( getFilename ( generatedPath ) ) ;
+   If ( not fileExists ( getFilename ( Path ) ) ;
+      "file missing" ;
+      "name changed"
+   ) ;
+   If ( generatedPath ≠ Path ;
+      "paths disagree" ;
+      ""
+   )
 )
 ```
+
 Validates file existence and path consistency.
 
 ### 3.4 Sample Data (CSV Headers)
@@ -211,36 +223,36 @@ Validates file existence and path consistency.
 
 ### 4.1 Field Definitions
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `orgID` | Number | Yes | Auto-serial | Primary key |
-| `Name` | Text | Yes | - | Organization name |
-| `Other Name` | Text | No | - | Alternate name |
-| `URL` | Text | No | - | Main website URL |
-| `Other URL` | Text | No | - | Submission guidelines URL |
-| `Status` | Text | No | "Open" | Organization status |
-| `Type` | Text | No | "Journal" | Organization type |
-| `Timing` | Text | No | - | Submission timing |
-| `Submission Types` | Text | No | - | Accepted methods (online, email, snail mail) |
-| `Accepts` | Text | No | - | Accepted genres (poetry, cnf, short fiction, etc.) |
-| `My Interest` | Text | No | - | Personal interest level (Best, Better, Good, Okay, Unknown) |
-| `Ranking` | Number | No | - | Numerical ranking |
-| `Rating` | Number (calc) | No | - | Computed priority for sorting |
-| `Mark` | Text | No | - | Temporary marker |
-| `Doutrope Num` | Number | No | - | Duotrope database number |
-| `nPushFiction` | Number | No | - | Pushcart nominations for fiction |
-| `nPushNonFiction` | Number | No | - | Pushcart nominations for non-fiction |
-| `nPushPoetry` | Number | No | - | Pushcart nominations for poetry |
-| `nPushcarts` | Number (calc) | No | - | Total Pushcart nominations |
-| `nSubmissions` | Number (calc) | No | - | Count of submissions to this org |
-| `Source` | Text | No | - | How this org was discovered |
-| `Website Menu` | Text | No | - | Website menu structure |
-| `Contest Ends` | Date | No | - | Contest deadline |
-| `Contest Fee` | Text | No | - | Contest entry fee |
-| `Contest Prize` | Text | No | - | Contest prize amount |
-| `Contest Prize 2` | Text | No | - | Secondary prize |
-| `Date Added` | Timestamp | No | Auto-creation | When record was created |
-| `Date Modified` | Timestamp | No | Auto-modification | When record was last modified |
+| Field              | Type          | Required | Default           | Description                                                 |
+| ------------------ | ------------- | -------- | ----------------- | ----------------------------------------------------------- |
+| `orgID`            | Number        | Yes      | Auto-serial       | Primary key                                                 |
+| `Name`             | Text          | Yes      | -                 | Organization name                                           |
+| `Other Name`       | Text          | No       | -                 | Alternate name                                              |
+| `URL`              | Text          | No       | -                 | Main website URL                                            |
+| `Other URL`        | Text          | No       | -                 | Submission guidelines URL                                   |
+| `Status`           | Text          | No       | "Open"            | Organization status                                         |
+| `Type`             | Text          | No       | "Journal"         | Organization type                                           |
+| `Timing`           | Text          | No       | -                 | Submission timing                                           |
+| `Submission Types` | Text          | No       | -                 | Accepted methods (online, email, snail mail)                |
+| `Accepts`          | Text          | No       | -                 | Accepted genres (poetry, cnf, short fiction, etc.)          |
+| `My Interest`      | Text          | No       | -                 | Personal interest level (Best, Better, Good, Okay, Unknown) |
+| `Ranking`          | Number        | No       | -                 | Numerical ranking                                           |
+| `Rating`           | Number (calc) | No       | -                 | Computed priority for sorting                               |
+| `Mark`             | Text          | No       | -                 | Temporary marker                                            |
+| `Doutrope Num`     | Number        | No       | -                 | Duotrope database number                                    |
+| `nPushFiction`     | Number        | No       | -                 | Pushcart nominations for fiction                            |
+| `nPushNonFiction`  | Number        | No       | -                 | Pushcart nominations for non-fiction                        |
+| `nPushPoetry`      | Number        | No       | -                 | Pushcart nominations for poetry                             |
+| `nPushcarts`       | Number (calc) | No       | -                 | Total Pushcart nominations                                  |
+| `nSubmissions`     | Number (calc) | No       | -                 | Count of submissions to this org                            |
+| `Source`           | Text          | No       | -                 | How this org was discovered                                 |
+| `Website Menu`     | Text          | No       | -                 | Website menu structure                                      |
+| `Contest Ends`     | Date          | No       | -                 | Contest deadline                                            |
+| `Contest Fee`      | Text          | No       | -                 | Contest entry fee                                           |
+| `Contest Prize`    | Text          | No       | -                 | Contest prize amount                                        |
+| `Contest Prize 2`  | Text          | No       | -                 | Secondary prize                                             |
+| `Date Added`       | Timestamp     | No       | Auto-creation     | When record was created                                     |
+| `Date Modified`    | Timestamp     | No       | Auto-modification | When record was last modified                               |
 
 > **Note:** Browser globals (g_CurrentURL, g_BrowserOn, g_currentWork) have been migrated to AppState.
 > See [09-app-state.md](09-app-state.md) for details.
@@ -248,20 +260,25 @@ Validates file existence and path consistency.
 ### 4.2 Calculated Field Formulas
 
 #### Rating
+
 ```
 If ( nPushPoetry > 0 ; 1000 ; 2000 ) + Ranking
 ```
+
 Priority calculation: journals with Pushcart nominations sort first.
 
 #### nPushcarts
+
 ```
 nPushFiction + nPushNonFiction + nPushPoetry
 ```
 
 #### nSubmissions
+
 ```
 Count ( Works::Title )
 ```
+
 **Note:** This calculation appears incorrect in the original database. Should count Submissions, not Works.
 
 ### 4.3 Sample Data (CSV Headers)
@@ -280,50 +297,57 @@ Count ( Works::Title )
 
 ### 5.1 Field Definitions
 
-| Field | Type | Required | Default | Validation | Description |
-|-------|------|----------|---------|------------|-------------|
-| `submissionID` | Number | Yes | Auto-serial (40322, +1) | Unique | Primary key |
-| `workID` | Number | Yes | - | - | Foreign key to Works |
-| `orgID` | Number | Yes | - | - | Foreign key to Organizations |
-| `Title of Work` | Text (calc) | No | - | - | Lookup: Works::Title |
-| `Journal Name` | Text (calc) | No | - | - | Lookup: Organizations::Name |
-| `Draft` | Text | No | From last record | Not empty | Draft version submitted |
-| `Submission Date` | Date | No | Creation date | - | Date submitted |
-| `Submission Type` | Text | No | From last record | - | How submitted (online, email, paper) |
-| `Query Date` | Date | No | - | - | Date of follow-up query |
-| `Response Date` | Date | No | - | - | Date response received |
-| `Response Type` | Text | No | - | - | Type of response received |
-| `decisionPending` | Text (calc) | No | - | - | "yes" if awaiting response |
-| `Contest Name` | Text | No | - | - | Contest name if applicable |
-| `Cost` | Number | No | - | - | Submission fee paid |
-| `User ID` | Text | No | - | - | Login credentials |
-| `Password` | Text | No | - | - | Login credentials |
-| `Web Address` | Text | No | - | - | Submission URL |
-| `Mark` | Text | No | - | - | Temporary marker |
+| Field             | Type        | Required | Default                 | Validation | Description                          |
+| ----------------- | ----------- | -------- | ----------------------- | ---------- | ------------------------------------ |
+| `submissionID`    | Number      | Yes      | Auto-serial (40322, +1) | Unique     | Primary key                          |
+| `workID`          | Number      | Yes      | -                       | -          | Foreign key to Works                 |
+| `orgID`           | Number      | Yes      | -                       | -          | Foreign key to Organizations         |
+| `Title of Work`   | Text (calc) | No       | -                       | -          | Lookup: Works::Title                 |
+| `Journal Name`    | Text (calc) | No       | -                       | -          | Lookup: Organizations::Name          |
+| `Draft`           | Text        | No       | From last record        | Not empty  | Draft version submitted              |
+| `Submission Date` | Date        | No       | Creation date           | -          | Date submitted                       |
+| `Submission Type` | Text        | No       | From last record        | -          | How submitted (online, email, paper) |
+| `Query Date`      | Date        | No       | -                       | -          | Date of follow-up query              |
+| `Response Date`   | Date        | No       | -                       | -          | Date response received               |
+| `Response Type`   | Text        | No       | -                       | -          | Type of response received            |
+| `decisionPending` | Text (calc) | No       | -                       | -          | "yes" if awaiting response           |
+| `Contest Name`    | Text        | No       | -                       | -          | Contest name if applicable           |
+| `Cost`            | Number      | No       | -                       | -          | Submission fee paid                  |
+| `User ID`         | Text        | No       | -                       | -          | Login credentials                    |
+| `Password`        | Text        | No       | -                       | -          | Login credentials                    |
+| `Web Address`     | Text        | No       | -                       | -          | Submission URL                       |
+| `Mark`            | Text        | No       | -                       | -          | Temporary marker                     |
 
 ### 5.2 Calculated Field Formulas
 
 #### Title of Work
+
 ```
 Works::Title
 ```
+
 Simple lookup via workID relationship.
 
 #### Journal Name
+
 ```
 Organizations::Name
 ```
+
 Simple lookup via orgID relationship.
 
 #### decisionPending
+
 ```
 If ( Response Type ≠ "" and Response Type ≠ "Waiting" ; "no" ; "yes" )
 ```
+
 Returns "yes" if still awaiting response.
 
 ### 5.3 Relationship Sort Order
 
 When accessed from Works:
+
 1. `Response Date` descending
 2. `Submission Date` descending
 
@@ -343,13 +367,13 @@ When accessed from Works:
 
 ### 6.1 Field Definitions
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `workID` | Number | Yes | - | Foreign key to Works |
-| `Type` | Text | No | - | Note type category |
-| `Note` | Text | No | - | Note content |
-| `Handle` | Text (calc) | No | - | Lookup: Works::Title |
-| `Modifed Date` | Timestamp | No | - | When note was modified |
+| Field          | Type        | Required | Default | Description            |
+| -------------- | ----------- | -------- | ------- | ---------------------- |
+| `workID`       | Number      | Yes      | -       | Foreign key to Works   |
+| `Type`         | Text        | No       | -       | Note type category     |
+| `Note`         | Text        | No       | -       | Note content           |
+| `Handle`       | Text (calc) | No       | -       | Lookup: Works::Title   |
+| `Modifed Date` | Timestamp   | No       | -       | When note was modified |
 
 ### 6.2 Note Types (Value List)
 
@@ -371,10 +395,10 @@ When accessed from Works:
 
 ### 6.3 Relationship Behaviors
 
-| Behavior | Setting |
-|----------|---------|
-| Allow creation via relationship | Yes |
-| Delete related when parent deleted | Yes |
+| Behavior                           | Setting |
+| ---------------------------------- | ------- |
+| Allow creation via relationship    | Yes     |
+| Delete related when parent deleted | Yes     |
 
 ---
 
@@ -386,20 +410,20 @@ When accessed from Works:
 
 ### 7.1 Field Definitions
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `orgID` | Number | Yes | - | Foreign key to Organizations |
-| `Type` | Text | No | - | Note type category |
-| `Note` | Text | No | - | Note content |
-| `Handle` | Text (calc) | No | - | Lookup: Organizations::Name |
-| `Modifed Date` | Timestamp | No | - | When note was modified |
+| Field          | Type        | Required | Default | Description                  |
+| -------------- | ----------- | -------- | ------- | ---------------------------- |
+| `orgID`        | Number      | Yes      | -       | Foreign key to Organizations |
+| `Type`         | Text        | No       | -       | Note type category           |
+| `Note`         | Text        | No       | -       | Note content                 |
+| `Handle`       | Text (calc) | No       | -       | Lookup: Organizations::Name  |
+| `Modifed Date` | Timestamp   | No       | -       | When note was modified       |
 
 ### 7.2 Relationship Behaviors
 
-| Behavior | Setting |
-|----------|---------|
-| Allow creation via relationship | Yes |
-| Delete related when parent deleted | Yes |
+| Behavior                           | Setting |
+| ---------------------------------- | ------- |
+| Allow creation via relationship    | Yes     |
+| Delete related when parent deleted | Yes     |
 
 ---
 
@@ -425,6 +449,7 @@ CREATE TABLE Works (
     year TEXT,
     status TEXT DEFAULT 'Working',
     quality TEXT DEFAULT 'Okay',
+    quality_at_publish TEXT,  -- Stores original quality when status changes to Published
     doc_type TEXT DEFAULT 'docx',
     path TEXT,
     draft TEXT,
@@ -546,21 +571,21 @@ CREATE INDEX idx_orgs_interest ON Organizations(my_interest);
 ```sql
 -- View for Works with computed fields
 CREATE VIEW WorksView AS
-SELECT 
+SELECT
     w.*,
     -- Computed: Age in days
     CAST((julianday('now') - julianday(w.access_date)) AS INTEGER) AS age_days,
     -- Computed: Number of submissions
     (SELECT COUNT(*) FROM Submissions s WHERE s.workID = w.workID) AS n_submissions,
     -- Computed: Collection list
-    (SELECT GROUP_CONCAT(cd.collection_name, ', ') 
-     FROM CollectionDetails cd 
+    (SELECT GROUP_CONCAT(cd.collection_name, ', ')
+     FROM CollectionDetails cd
      WHERE cd.workID = w.workID) AS collection_list
 FROM Works w;
 
 -- View for Organizations with computed fields
 CREATE VIEW OrganizationsView AS
-SELECT 
+SELECT
     o.*,
     -- Computed: Total Pushcarts
     (o.n_push_fiction + o.n_push_nonfiction + o.n_push_poetry) AS n_pushcarts,
@@ -572,14 +597,14 @@ FROM Organizations o;
 
 -- View for Submissions with lookups
 CREATE VIEW SubmissionsView AS
-SELECT 
+SELECT
     s.*,
     w.title AS title_of_work,
     o.name AS journal_name,
-    CASE 
-        WHEN s.response_type IS NOT NULL AND s.response_type != 'Waiting' 
-        THEN 'no' 
-        ELSE 'yes' 
+    CASE
+        WHEN s.response_type IS NOT NULL AND s.response_type != 'Waiting'
+        THEN 'no'
+        ELSE 'yes'
     END AS decision_pending
 FROM Submissions s
 JOIN Works w ON s.workID = w.workID
@@ -587,7 +612,7 @@ JOIN Organizations o ON s.orgID = o.orgID;
 
 -- View for Collections with item count
 CREATE VIEW CollectionsView AS
-SELECT 
+SELECT
     c.*,
     CASE WHEN c.is_status = 'yes' THEN c.collection_name ELSE 'None' END AS status_list,
     (SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID) AS n_items
@@ -724,33 +749,80 @@ export interface JournalNote {
 ```typescript
 // src/types/enums.ts
 
-export type Status = 
-  | 'Out' | 'Focus' | 'Active' | 'Working' | 'Resting' | 'Waiting'
-  | 'Gestating' | 'Sound' | 'Published'
-  | 'Sleeping' | 'Dying' | 'Dead' | 'Done';
+export type Status =
+  | 'Out'
+  | 'Focus'
+  | 'Active'
+  | 'Working'
+  | 'Resting'
+  | 'Waiting'
+  | 'Gestating'
+  | 'Sound'
+  | 'Published'
+  | 'Sleeping'
+  | 'Dying'
+  | 'Dead'
+  | 'Done';
 
-export type Quality = 
-  | 'Best' | 'Better' | 'Good' | 'Okay' | 'Poor' | 'Bad' | 'Worst' | 'Unknown';
+export type Quality = 'Best' | 'Better' | 'Good' | 'Okay' | 'Poor' | 'Bad' | 'Worst' | 'Unknown';
 
-export type WorkType = 
-  | 'Poem' | 'Poem Idea' | 'Prose Poem' | 'Story' | 'Story Idea' 
-  | 'Flash Fiction' | 'Flash Fiction Idea' | 'Micro' | 'Micro Idea'
-  | 'Essay' | 'Essay Idea' | 'Article' | 'Article Idea'
-  | 'CNF' | 'CNF Idea' | 'Memoir' | 'Memoir Idea'
-  | 'Letter' | 'Letter Idea' | 'Review' | 'Review Idea'
-  | 'Travel' | 'Travel Idea' | 'Book' | 'Book Idea'
-  | 'Research' | 'Notes' | 'Blog Post' | 'Other';
+export type WorkType =
+  | 'Poem'
+  | 'Poem Idea'
+  | 'Prose Poem'
+  | 'Story'
+  | 'Story Idea'
+  | 'Flash Fiction'
+  | 'Flash Fiction Idea'
+  | 'Micro'
+  | 'Micro Idea'
+  | 'Essay'
+  | 'Essay Idea'
+  | 'Article'
+  | 'Article Idea'
+  | 'CNF'
+  | 'CNF Idea'
+  | 'Memoir'
+  | 'Memoir Idea'
+  | 'Letter'
+  | 'Letter Idea'
+  | 'Review'
+  | 'Review Idea'
+  | 'Travel'
+  | 'Travel Idea'
+  | 'Book'
+  | 'Book Idea'
+  | 'Research'
+  | 'Notes'
+  | 'Blog Post'
+  | 'Other';
 
-export type ResponseType = 
-  | 'Waiting' | 'Accepted' | 'Form' | 'Personal' | 'Withdrawn' | 'Lost' | 'Expired';
+export type ResponseType =
+  | 'Waiting'
+  | 'Accepted'
+  | 'Form'
+  | 'Personal'
+  | 'Withdrawn'
+  | 'Lost'
+  | 'Expired';
 
-export type NoteType = 
-  | 'Critique' | 'Revision' | 'Workshop' | 'Idea' | 'Research' 
-  | 'Feedback' | 'Draft' | 'Final' | 'Rejected' | 'Accepted'
-  | 'Published' | 'Submitted' | 'Other' | 'General';
+export type NoteType =
+  | 'Critique'
+  | 'Revision'
+  | 'Workshop'
+  | 'Idea'
+  | 'Research'
+  | 'Feedback'
+  | 'Draft'
+  | 'Final'
+  | 'Rejected'
+  | 'Accepted'
+  | 'Published'
+  | 'Submitted'
+  | 'Other'
+  | 'General';
 
-export type CollectionType = 
-  | 'Active' | 'Process' | 'Dead' | 'Book' | 'Other' | 'Hidden';
+export type CollectionType = 'Active' | 'Process' | 'Dead' | 'Book' | 'Other' | 'Hidden';
 ```
 
 ### 9.3 Sort Order Constants
@@ -759,19 +831,41 @@ export type CollectionType =
 // src/types/constants.ts
 
 export const STATUS_ORDER: Record<Status, number> = {
-  'Out': 1, 'Focus': 2, 'Active': 3, 'Working': 4, 'Resting': 5, 'Waiting': 6,
-  'Gestating': 7, 'Sound': 8, 'Published': 9,
-  'Sleeping': 10, 'Dying': 11, 'Dead': 12, 'Done': 13
+  Out: 1,
+  Focus: 2,
+  Active: 3,
+  Working: 4,
+  Resting: 5,
+  Waiting: 6,
+  Gestating: 7,
+  Sound: 8,
+  Published: 9,
+  Sleeping: 10,
+  Dying: 11,
+  Dead: 12,
+  Done: 13,
 };
 
 export const QUALITY_ORDER: Record<Quality, number> = {
-  'Best': 1, 'Better': 2, 'Good': 3, 'Okay': 4, 
-  'Poor': 5, 'Bad': 6, 'Worst': 7, 'Unknown': 8
+  Best: 1,
+  Better: 2,
+  Good: 3,
+  Okay: 4,
+  Poor: 5,
+  Bad: 6,
+  Worst: 7,
+  Unknown: 8,
 };
 
 export const QUALITY_MARKS: Record<Quality, string> = {
-  'Best': 'aa', 'Better': 'a', 'Good': 'b', 'Okay': 'c',
-  'Poor': 'd', 'Bad': 'e', 'Worst': 'f', 'Unknown': 'z'
+  Best: 'aa',
+  Better: 'a',
+  Good: 'b',
+  Okay: 'c',
+  Poor: 'd',
+  Bad: 'e',
+  Worst: 'f',
+  Unknown: 'z',
 };
 ```
 
@@ -895,4 +989,4 @@ type JournalNote struct {
 
 ---
 
-*End of Data Model Specification*
+_End of Data Model Specification_

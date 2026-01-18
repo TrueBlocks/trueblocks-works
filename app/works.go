@@ -6,6 +6,8 @@ import (
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/validation"
 )
 
+const statusPublished = "Published"
+
 func (a *App) GetWorks() ([]models.WorkView, error) {
 	works, err := a.db.ListWorks(a.state.GetShowDeleted())
 	if err != nil {
@@ -28,6 +30,25 @@ func (a *App) CreateWork(work *models.Work) (*validation.ValidationResult, error
 }
 
 func (a *App) UpdateWork(work *models.Work) (*validation.ValidationResult, error) {
+	// Get the existing work to detect status transitions
+	existing, err := a.db.GetWork(work.WorkID)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		// Transition TO Published: save quality, set to "Published"
+		if work.Status == statusPublished && existing.Status != statusPublished {
+			work.QualityAtPublish = &work.Quality
+			work.Quality = statusPublished
+		}
+		// Transition FROM Published: restore quality, clear qualityAtPublish
+		if work.Status != statusPublished && existing.Status == statusPublished {
+			if existing.QualityAtPublish != nil && *existing.QualityAtPublish != "" {
+				work.Quality = *existing.QualityAtPublish
+			}
+			work.QualityAtPublish = nil
+		}
+	}
 	return a.db.UpdateWork(work)
 }
 

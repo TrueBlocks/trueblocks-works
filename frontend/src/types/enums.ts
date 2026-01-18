@@ -2,6 +2,7 @@ export type WorkType = 'Fiction' | 'Non-Fiction' | 'Poetry' | 'Prose Poetry' | '
 export type WorkStatus = 'Active' | 'Complete' | 'Dead' | 'Retired' | '';
 // Must match internal/fileops/paths.go GetQualityMark()
 export type Quality =
+  | 'Published'
   | 'Best'
   | 'Better'
   | 'Good'

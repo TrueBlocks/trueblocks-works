@@ -482,6 +482,10 @@ export function SetShowDeleted(arg1) {
   return window['go']['app']['App']['SetShowDeleted'](arg1);
 }
 
+export function SetSidebarWidth(arg1) {
+  return window['go']['app']['App']['SetSidebarWidth'](arg1);
+}
+
 export function SetTab(arg1, arg2) {
   return window['go']['app']['App']['SetTab'](arg1, arg2);
 }

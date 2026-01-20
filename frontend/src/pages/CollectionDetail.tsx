@@ -496,7 +496,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const isUneditable = collection.attributes?.includes('uneditable') ?? false;
 
   return (
-    <Stack gap="lg">
+    <Stack gap="md">
       <DetailHeader
         hasPrev={hasPrev}
         hasNext={hasNext}
@@ -507,7 +507,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         totalCount={filteredCollections.length}
         icon={<IconFolder size={24} />}
         title={
-          <Group gap="xs" align="baseline">
+          <Group gap="md" align="center">
             {isUneditable ? (
               <Text size="xl">{collection.collectionName}</Text>
             ) : (
@@ -521,10 +521,6 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             <Text c="dark.3" size="md">
               (#{collection.collID})
             </Text>
-          </Group>
-        }
-        subtitle={
-          <>
             {isUneditable ? (
               <Text size="sm" c="dimmed">
                 {collection.type || 'No type'}
@@ -540,7 +536,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             <Text size="sm" c="dimmed">
               {works.length} work{works.length !== 1 ? 's' : ''}
             </Text>
-          </>
+          </Group>
         }
         isDeleted={collection.attributes?.includes('deleted')}
         isUneditable={isUneditable}
@@ -553,8 +549,6 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         <Grid.Col span={{ base: 12, md: 9 }}>
           <DataTable<models.CollectionWork>
             tableName={`collection-${collectionId}`}
-            title="Works"
-            titleOrder={4}
             data={works}
             columns={columns}
             getRowKey={(work) => work.workID}

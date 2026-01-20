@@ -85,7 +85,7 @@ func (f *FileOps) GetMainFolder(workType, year, status string) string {
 	}
 
 	activeStatuses := map[string]bool{
-		"Focus": true, "Active": true, "Out": true, "Working": true, "Gestating": true, "Published": true,
+		"Focus": true, "Active": true, "Out": true, "Working": true, "Resting": true, "Published": true,
 	}
 	if activeStatuses[status] {
 		yearNum, _ := strconv.Atoi(year)

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { ActionIcon, Tooltip } from '@mantine/core';
 import { IconPlus, IconArrowsExchange } from '@tabler/icons-react';
-import { Log, LogErr } from '@/utils';
+import { LogErr } from '@/utils';
 import {
   GetWorks,
   GetWorksFilterOptions,
@@ -63,7 +63,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
 
     Promise.all([GetWorks(), GetWorksFilterOptions()])
       .then(([data, options]) => {
-        Log('Works loaded:', data?.length || 0);
+        // Log('Works loaded:', data?.length || 0);
         setWorks(data || []);
         setFilterOptions({
           years: options.years || [],

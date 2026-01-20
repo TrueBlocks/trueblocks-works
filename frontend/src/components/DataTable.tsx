@@ -49,7 +49,7 @@ export interface Column<T> {
 
 interface DataTableProps<T> {
   tableName: string;
-  title: string;
+  title?: string;
   titleOrder?: 1 | 2 | 3 | 4 | 5 | 6;
   data: T[];
   columns: Column<T>[];
@@ -692,9 +692,11 @@ export function DataTable<T>({
   if (loading) {
     return (
       <Stack>
-        <Group justify="space-between">
-          <Title order={2}>{title}</Title>
-        </Group>
+        {title && (
+          <Group justify="space-between">
+            <Title order={2}>{title}</Title>
+          </Group>
+        )}
         <Text>Loading...</Text>
       </Stack>
     );
@@ -704,9 +706,11 @@ export function DataTable<T>({
     <Stack>
       <Group justify="space-between">
         <Group>
-          <Title order={titleOrder}>
-            {title} ({sorted.length})
-          </Title>
+          {title && (
+            <Title order={titleOrder}>
+              {title} ({sorted.length})
+            </Title>
+          )}
           <Group gap="xs">
             <Select
               size="xs"
@@ -724,7 +728,7 @@ export function DataTable<T>({
           {headerActions}
           <TextInput
             ref={searchRef}
-            placeholder={`Search ${title.toLowerCase()}...`}
+            placeholder={`Search ${(title || 'items').toLowerCase()}...`}
             leftSection={<IconSearch size={16} />}
             rightSection={
               search || hasActiveFilters || sort.primary.column ? (
@@ -848,7 +852,7 @@ export function DataTable<T>({
       </Table>
 
       <Text size="sm" c="dimmed">
-        Showing {paginated.length} of {sorted.length} {title.toLowerCase()}
+        Showing {paginated.length} of {sorted.length} {(title || 'items').toLowerCase()}
         {sorted.length !== data.length && ` (${data.length} total)`}
       </Text>
     </Stack>

@@ -58,6 +58,7 @@ type AppState struct {
 	CollectionsFilter         string                `json:"collectionsFilter,omitempty"`
 	LastRoute                 string                `json:"lastRoute,omitempty"`
 	SidebarCollapsed          bool                  `json:"sidebarCollapsed"`
+	SidebarWidth              int                   `json:"sidebarWidth,omitempty"`
 	PreviewPanelWidth         int                   `json:"previewPanelWidth,omitempty"`
 	WindowX                   int                   `json:"windowX,omitempty"`
 	WindowY                   int                   `json:"windowY,omitempty"`
@@ -180,6 +181,13 @@ func (m *Manager) SetDashboardTimeframe(timeframe string) {
 func (m *Manager) SetSidebarCollapsed(collapsed bool) {
 	m.mu.Lock()
 	m.state.SidebarCollapsed = collapsed
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
+func (m *Manager) SetSidebarWidth(width int) {
+	m.mu.Lock()
+	m.state.SidebarWidth = width
 	m.mu.Unlock()
 	_ = m.Save()
 }

@@ -1,10 +1,11 @@
 package app
 
 import (
-	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 )
 
 type WorkUpdateResult struct {
@@ -34,8 +35,8 @@ func (a *App) UpdateWorkWithWorkflow(work *models.Work) (*WorkUpdateResult, erro
 		result.CollUpdated = true
 	}
 
-	oldGenPath := oldWork.GeneratedPath()
-	newGenPath := work.GeneratedPath()
+	oldGenPath := a.fileOps.GeneratePath(oldWork)
+	newGenPath := a.fileOps.GeneratePath(work)
 
 	if oldGenPath != "" && newGenPath != "" && oldGenPath != newGenPath {
 		basePath := a.settings.Get().BaseFolderPath

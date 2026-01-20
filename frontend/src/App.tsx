@@ -27,6 +27,7 @@ import {
   AutoImportFilesWithEdits,
   AddTypeAndContinue,
   CancelImport,
+  SetSidebarWidth,
 } from '@app';
 import { notifications } from '@mantine/notifications';
 import { Log, LogErr } from '@/utils';
@@ -56,6 +57,8 @@ function App() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importConfirmOpen, setImportConfirmOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(220);
+  const [isResizing, setIsResizing] = useState(false);
   const saveTimeoutRef = useRef<number | null>(null);
   const hasRestoredRoute = useRef(false);
   const location = useLocation();
@@ -103,6 +106,9 @@ function App() {
     GetAppState().then((state) => {
       if (state?.lastRoute && state.lastRoute !== '/' && state.lastRoute !== location.pathname) {
         navigate(state.lastRoute, { replace: true });
+      }
+      if (state?.sidebarWidth && state.sidebarWidth > 0) {
+        setSidebarWidth(state.sidebarWidth);
       }
     });
   }, [location.pathname, navigate]);
@@ -323,6 +329,47 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleExportAll, handleReimportAll, handleImportFiles]);
 
+  // Sidebar resize handlers
+  const ICON_ONLY_WIDTH = 56;
+  const MIN_WITH_TEXT = 120;
+  const MAX_WIDTH = 300;
+
+  const handleSidebarMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const rawWidth = e.clientX;
+      // Snap to icon-only if dragged below threshold
+      let newWidth: number;
+      if (rawWidth < 80) {
+        newWidth = ICON_ONLY_WIDTH;
+      } else {
+        newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WITH_TEXT, rawWidth));
+      }
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      SetSidebarWidth(sidebarWidth);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, sidebarWidth]);
+
+  const isCollapsed = sidebarWidth <= ICON_ONLY_WIDTH;
+
   if (!wizardChecked) {
     return null;
   }
@@ -349,13 +396,36 @@ function App() {
         onAddType={handleAddType}
         onCancelImport={handleCancelImport}
       />
-      <AppShell header={{ height: 60 }} navbar={{ width: 220, breakpoint: 'sm' }} padding="md">
+      <AppShell
+        header={{ height: 50 }}
+        navbar={{ width: sidebarWidth, breakpoint: 'sm' }}
+        padding="md"
+      >
         <AppShell.Header>
           <Navigation />
         </AppShell.Header>
-        <AppShell.Navbar p="md">
-          <Navigation.Links />
+        <AppShell.Navbar p={isCollapsed ? 'xs' : 'md'}>
+          <Navigation.Links collapsed={isCollapsed} />
         </AppShell.Navbar>
+        <div
+          onMouseDown={handleSidebarMouseDown}
+          style={{
+            position: 'fixed',
+            top: 50,
+            left: sidebarWidth - 2,
+            width: 4,
+            height: 'calc(100vh - 50px)',
+            cursor: 'col-resize',
+            backgroundColor: isResizing ? 'var(--mantine-color-blue-4)' : 'transparent',
+            zIndex: 1000,
+          }}
+          onMouseEnter={(e) => {
+            if (!isResizing) e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-5)';
+          }}
+          onMouseLeave={(e) => {
+            if (!isResizing) e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        />
         <AppShell.Main>
           <Routes>
             <Route path="/" element={<DashboardPage />} />

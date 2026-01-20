@@ -40,25 +40,6 @@ func (db *DB) validateWork(w *models.Work) validation.ValidationResult {
 		w.DocType = "docx"
 	}
 
-	// Check for duplicate generatedPath (only if required fields are present)
-	if result.IsValid() {
-		genPath := w.GeneratedPath()
-		if genPath != "" {
-			matches, err := db.FindWorksByGeneratedPath(genPath)
-			if err != nil {
-				result.AddError("generatedPath", "Error checking for duplicates: "+err.Error())
-			} else {
-				// Filter out the work being validated (if it has an ID)
-				for _, match := range matches {
-					if match.WorkID != w.WorkID {
-						result.AddError("generatedPath", "A work with this title, type, and year already exists")
-						break
-					}
-				}
-			}
-		}
-	}
-
 	return result
 }
 
@@ -281,48 +262,9 @@ func (db *DB) ListWorks(showDeleted bool) ([]models.WorkView, error) {
 			return nil, fmt.Errorf("scan work: %w", err)
 		}
 		w.IsDeleted = w.Work.IsDeleted()
-		w.GeneratedPath = w.Work.GeneratedPath()
 		works = append(works, w)
 	}
 	return works, rows.Err()
-}
-
-// FindWorksByGeneratedPath finds all non-deleted works that would have the given generated path
-func (db *DB) FindWorksByGeneratedPath(path string) ([]models.Work, error) {
-	query := `SELECT workID, title, type, year, status, quality, quality_at_publish, doc_type,
-		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime
-		FROM Works` + whereNotDeleted + ` ORDER BY workID`
-
-	rows, err := db.conn.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("query works: %w", err)
-	}
-	defer rows.Close()
-
-	var matches []models.Work
-	for rows.Next() {
-		var w models.Work
-		err := rows.Scan(
-			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.QualityAtPublish,
-			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
-			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("scan work: %w", err)
-		}
-
-		// Generate path and compare
-		genPath := w.GeneratedPath()
-		if genPath == path {
-			matches = append(matches, w)
-		}
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return matches, nil
 }
 
 // GetWorkDeleteConfirmation returns information about what will be deleted

@@ -35,7 +35,11 @@ export function Navigation() {
   );
 }
 
-function Links() {
+interface LinksProps {
+  collapsed?: boolean;
+}
+
+function Links({ collapsed = false }: LinksProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -108,21 +112,27 @@ function Links() {
         key={item.path}
         to={item.path}
         onClick={(e) => handleNavClick(e, item)}
+        title={collapsed ? item.label : undefined}
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          padding: '10px 12px',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          gap: collapsed ? 0 : '8px',
+          padding: collapsed ? '10px' : '10px 12px',
           borderRadius: '6px',
           textDecoration: 'none',
           color: isActive ? 'var(--mantine-color-blue-6)' : 'var(--mantine-color-text)',
           backgroundColor: isActive ? 'var(--mantine-color-blue-light)' : 'transparent',
           fontWeight: isActive ? 600 : 400,
           marginBottom: '4px',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
         }}
       >
-        <item.icon size={20} stroke={1.5} />
-        {item.label}
+        <item.icon size={20} stroke={1.5} style={{ flexShrink: 0 }} />
+        {!collapsed && (
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>
+        )}
       </NavLink>
     );
   };

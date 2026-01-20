@@ -65,3 +65,7 @@ func (a *App) ToggleShowDeleted() bool {
 func (a *App) SetShowDeleted(show bool) {
 	a.state.SetShowDeleted(show)
 }
+
+func (a *App) SetSidebarWidth(width int) {
+	a.state.SetSidebarWidth(width)
+}

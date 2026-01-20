@@ -88,48 +88,71 @@ export function CollectionPickerModal({
     return allCollections.filter((c) => c.collectionName.toLowerCase().includes(s));
   }, [allCollections, search]);
 
+  // Determine which collection would be selected on Enter
+  const enterTargetId = useMemo(() => {
+    if (filteredCollections.length === 1) {
+      return filteredCollections[0].collID;
+    }
+    if (search.trim()) {
+      const exactMatch = allCollections.find(
+        (c) => c.collectionName.toLowerCase() === search.trim().toLowerCase()
+      );
+      if (exactMatch) return exactMatch.collID;
+    }
+    return null;
+  }, [filteredCollections, allCollections, search]);
+
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && filteredCollections.length === 1) {
-      e.preventDefault();
-      const coll = filteredCollections[0];
-      const newSelected = new Set(selectedIds);
-      if (newSelected.has(coll.collID)) {
-        newSelected.delete(coll.collID);
-      } else {
-        newSelected.add(coll.collID);
-      }
-      setSelectedIds(newSelected);
+    if (e.key !== 'Enter') return;
 
-      const toAdd = [...newSelected].filter((id) => !originalIds.has(id));
-      const toRemove = [...originalIds].filter((id) => !newSelected.has(id));
+    // Find match: either single filtered result OR exact name match
+    let coll: models.CollectionView | undefined;
+    if (filteredCollections.length === 1) {
+      coll = filteredCollections[0];
+    } else if (search.trim()) {
+      const exactMatch = allCollections.find(
+        (c) => c.collectionName.toLowerCase() === search.trim().toLowerCase()
+      );
+      if (exactMatch) coll = exactMatch;
+    }
 
-      if (toAdd.length > 0 || toRemove.length > 0) {
-        setLoading(true);
-        Promise.all([
-          ...toAdd.map((collID) => AddWorkToCollection(collID, workID)),
-          ...toRemove.map((collID) => RemoveWorkFromCollection(collID, workID)),
-        ])
-          .then(() => {
-            if (toAdd.length === 1) {
-              const addedColl = allCollections.find((c) => c.collID === toAdd[0]);
-              if (addedColl) {
-                localStorage.setItem(
-                  'lastAssignedCollection',
-                  JSON.stringify({
-                    collID: addedColl.collID,
-                    collectionName: addedColl.collectionName,
-                  })
-                );
-              }
+    if (!coll) return;
+
+    e.preventDefault();
+    const newSelected = new Set(selectedIds);
+    // Always add (not toggle) when pressing Enter
+    newSelected.add(coll.collID);
+    setSelectedIds(newSelected);
+
+    const toAdd = [...newSelected].filter((id) => !originalIds.has(id));
+    const toRemove = [...originalIds].filter((id) => !newSelected.has(id));
+
+    if (toAdd.length > 0 || toRemove.length > 0) {
+      setLoading(true);
+      Promise.all([
+        ...toAdd.map((collID) => AddWorkToCollection(collID, workID)),
+        ...toRemove.map((collID) => RemoveWorkFromCollection(collID, workID)),
+      ])
+        .then(() => {
+          if (toAdd.length === 1) {
+            const addedColl = allCollections.find((c) => c.collID === toAdd[0]);
+            if (addedColl) {
+              localStorage.setItem(
+                'lastAssignedCollection',
+                JSON.stringify({
+                  collID: addedColl.collID,
+                  collectionName: addedColl.collectionName,
+                })
+              );
             }
-            onUpdate?.();
-            handleClose();
-          })
-          .catch((err) => LogErr('Failed to update collections:', err))
-          .finally(() => setLoading(false));
-      } else {
-        handleClose();
-      }
+          }
+          onUpdate?.();
+          handleClose();
+        })
+        .catch((err) => LogErr('Failed to update collections:', err))
+        .finally(() => setLoading(false));
+    } else {
+      handleClose();
     }
   };
 
@@ -249,7 +272,16 @@ export function CollectionPickerModal({
           ) : (
             <Stack gap="xs">
               {filteredCollections.map((coll) => (
-                <Group key={coll.collID} justify="space-between">
+                <Group
+                  key={coll.collID}
+                  justify="space-between"
+                  p="xs"
+                  style={{
+                    backgroundColor:
+                      enterTargetId === coll.collID ? 'var(--mantine-color-blue-light)' : undefined,
+                    borderRadius: 'var(--mantine-radius-sm)',
+                  }}
+                >
                   <Checkbox
                     label={coll.collectionName}
                     checked={selectedIds.has(coll.collID)}

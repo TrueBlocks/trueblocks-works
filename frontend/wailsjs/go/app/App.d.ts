@@ -250,6 +250,8 @@ export function SetLastWorkID(arg1:number):Promise<void>;
 
 export function SetShowDeleted(arg1:boolean):Promise<void>;
 
+export function SetSidebarWidth(arg1:number):Promise<void>;
+
 export function SetTab(arg1:string,arg2:string):Promise<void>;
 
 export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;

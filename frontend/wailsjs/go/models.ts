@@ -1806,6 +1806,7 @@ export namespace state {
 	    collectionsFilter?: string;
 	    lastRoute?: string;
 	    sidebarCollapsed: boolean;
+	    sidebarWidth?: number;
 	    previewPanelWidth?: number;
 	    windowX?: number;
 	    windowY?: number;
@@ -1849,6 +1850,7 @@ export namespace state {
 	        this.collectionsFilter = source["collectionsFilter"];
 	        this.lastRoute = source["lastRoute"];
 	        this.sidebarCollapsed = source["sidebarCollapsed"];
+	        this.sidebarWidth = source["sidebarWidth"];
 	        this.previewPanelWidth = source["previewPanelWidth"];
 	        this.windowX = source["windowX"];
 	        this.windowY = source["windowY"];

@@ -26,10 +26,29 @@ func (a *App) GetWork(id int64) (*models.Work, error) {
 }
 
 func (a *App) CreateWork(work *models.Work) (*validation.ValidationResult, error) {
+	// Check for duplicate path before creating
+	genPath := a.fileOps.GeneratePath(work)
+	if genPath != "" {
+		if duplicate := a.findWorkWithPath(genPath, 0); duplicate != nil {
+			result := &validation.ValidationResult{}
+			result.AddError("duplicate", "A work with this title, type, and year already exists")
+			return result, nil
+		}
+	}
 	return a.db.CreateWork(work)
 }
 
 func (a *App) UpdateWork(work *models.Work) (*validation.ValidationResult, error) {
+	// Check for duplicate path before updating
+	genPath := a.fileOps.GeneratePath(work)
+	if genPath != "" {
+		if duplicate := a.findWorkWithPath(genPath, work.WorkID); duplicate != nil {
+			result := &validation.ValidationResult{}
+			result.AddError("duplicate", "A work with this title, type, and year already exists")
+			return result, nil
+		}
+	}
+
 	// Get the existing work to detect status transitions
 	existing, err := a.db.GetWork(work.WorkID)
 	if err != nil {
@@ -98,4 +117,22 @@ func (a *App) DeleteWorkPermanent(id int64, archiveDocument bool) error {
 		}
 	}
 	return a.db.DeleteWorkPermanent(id)
+}
+
+// findWorkWithPath finds a non-deleted work that would have the given generated path,
+// excluding the work with excludeID (use 0 for new works)
+func (a *App) findWorkWithPath(path string, excludeID int64) *models.Work {
+	works, err := a.db.ListWorks(false) // non-deleted only
+	if err != nil {
+		return nil
+	}
+	for _, w := range works {
+		if w.WorkID == excludeID {
+			continue
+		}
+		if a.fileOps.GeneratePath(&w.Work) == path {
+			return &w.Work
+		}
+	}
+	return nil
 }

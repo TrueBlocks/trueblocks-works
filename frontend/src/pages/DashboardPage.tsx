@@ -23,7 +23,7 @@ import {
 } from '@tabler/icons-react';
 import { GetDashboardStats, SetTableState, GetAppState, SetDashboardTimeframe } from '@app';
 import { app, state } from '@models';
-import { Log, LogErr } from '@/utils';
+import { LogErr } from '@/utils';
 
 const CHART_COLORS = [
   'blue.6',
@@ -186,9 +186,9 @@ export function DashboardPage() {
   }
 
   // Prepare chart data
-  const yearData = Object.entries(stats.works.byYear || {})
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([year, count]) => ({ year, count }));
+  // const yearData = Object.entries(stats.works.byYear || {})
+  //   .sort(([a], [b]) => a.localeCompare(b))
+  //   .map(([year, count]) => ({ year, count }));
 
   // Works by year (not ideas)
   const worksYearData = Object.entries(stats.works.byYearWorks || {})
@@ -242,13 +242,13 @@ export function DashboardPage() {
   const ideasTypeTotal = ideasTypeData.reduce((sum, item) => sum + item.value, 0);
 
   // Debug logging
-  Log(
-    `yearData: ${yearData.length} items, worksTypeData: ${worksTypeData.length}, ideasTypeData: ${ideasTypeData.length}`
-  );
-  Log(`byType raw: ${JSON.stringify(stats.works.byType)}`);
-  if (yearData.length > 0) Log(`First year: ${JSON.stringify(yearData[0])}`);
-  if (worksTypeData.length > 0) Log(`First worksType: ${JSON.stringify(worksTypeData[0])}`);
-  if (ideasTypeData.length > 0) Log(`First ideasType: ${JSON.stringify(ideasTypeData[0])}`);
+  // Log(
+  //   `yearData: ${yearData.length} items, worksTypeData: ${worksTypeData.length}, ideasTypeData: ${ideasTypeData.length}`
+  // );
+  // Log(`byType raw: ${JSON.stringify(stats.works.byType)}`);
+  // if (yearData.length > 0) Log(`First year: ${JSON.stringify(yearData[0])}`);
+  // if (worksTypeData.length > 0) Log(`First worksType: ${JSON.stringify(worksTypeData[0])}`);
+  // if (ideasTypeData.length > 0) Log(`First ideasType: ${JSON.stringify(ideasTypeData[0])}`);
 
   // Prepare collections pie chart data with 3% threshold
   // Track collID for click navigation

@@ -34,14 +34,3 @@ type WorkView struct {
 func (w *Work) IsDeleted() bool {
 	return IsDeleted(w.Attributes)
 }
-
-func (w *Work) GeneratedPath() string {
-	if w.Year == nil || w.Title == "" || w.Type == "" {
-		return ""
-	}
-	qualityMark := ""
-	if w.Quality == "Best" || w.Quality == "Better" {
-		qualityMark = "@ "
-	}
-	return qualityMark + w.Type + " - " + *w.Year + " - " + w.Title + "." + w.DocType
-}

@@ -63,7 +63,7 @@ func main() {
 			fmt.Printf("       Error: %v\n", err)
 		}
 
-		fmt.Println("       Done.\n")
+		fmt.Println("       Done.")
 	}
 
 	fmt.Println("All files processed!")

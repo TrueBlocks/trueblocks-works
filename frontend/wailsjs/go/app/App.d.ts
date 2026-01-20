@@ -74,6 +74,8 @@ export function ExportAllCSV():Promise<Array<app.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<app.ExportResult>>;
 
+export function ExportCollectionFolder(arg1:number):Promise<number>;
+
 export function ExportToSubmissions(arg1:number):Promise<string>;
 
 export function FTSBatchContent(arg1:Array<number>):Promise<Array<fts.ExtractionResult>>;

@@ -130,6 +130,10 @@ export function ExportAllTables() {
   return window['go']['app']['App']['ExportAllTables']();
 }
 
+export function ExportCollectionFolder(arg1) {
+  return window['go']['app']['App']['ExportCollectionFolder'](arg1);
+}
+
 export function ExportToSubmissions(arg1) {
   return window['go']['app']['App']['ExportToSubmissions'](arg1);
 }

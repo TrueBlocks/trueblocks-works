@@ -18,6 +18,7 @@ export interface DataTableRowProps<T> {
   onPermanentDelete?: (item: T) => void;
   onReorder?: (itemKey: string | number, direction: 'up' | 'down') => void;
   onReorderPageChange?: (direction: 'up' | 'down', index: number) => void;
+  onMoveToPosition?: (itemKey: string | number, currentIndex: number) => void;
   renderExtraCells?: (item: T) => React.ReactNode;
   canDelete?: (item: T) => boolean;
   canReorder: boolean;
@@ -40,6 +41,7 @@ function DataTableRowInner<T>(
     onPermanentDelete,
     onReorder,
     onReorderPageChange,
+    onMoveToPosition,
     renderExtraCells,
     canDelete,
     canReorder,
@@ -84,8 +86,12 @@ function DataTableRowInner<T>(
               disabled={!canReorder || isFirstInList}
               onClick={(e) => {
                 e.stopPropagation();
-                onReorder(getRowKey(item), 'up');
-                onReorderPageChange?.('up', index);
+                if ((e.metaKey || e.ctrlKey) && onMoveToPosition) {
+                  onMoveToPosition(getRowKey(item), index);
+                } else {
+                  onReorder(getRowKey(item), 'up');
+                  onReorderPageChange?.('up', index);
+                }
               }}
             >
               <IconChevronUp size={14} />
@@ -96,8 +102,12 @@ function DataTableRowInner<T>(
               disabled={!canReorder || isLastInList}
               onClick={(e) => {
                 e.stopPropagation();
-                onReorder(getRowKey(item), 'down');
-                onReorderPageChange?.('down', index);
+                if ((e.metaKey || e.ctrlKey) && onMoveToPosition) {
+                  onMoveToPosition(getRowKey(item), index);
+                } else {
+                  onReorder(getRowKey(item), 'down');
+                  onReorderPageChange?.('down', index);
+                }
               }}
             >
               <IconChevronDown size={14} />

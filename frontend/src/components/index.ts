@@ -40,6 +40,7 @@ export { BackupRestoreModal } from './BackupRestoreModal';
 export { SetupWizard } from './SetupWizard';
 export { SortableHeader } from './SortableHeader';
 export { MoveFileModal } from './MoveFileModal';
+export { MoveToPositionModal } from './MoveToPositionModal';
 export { ColumnFilterPopover } from './ColumnFilterPopover';
 export { NumericFilterPopover } from './NumericFilterPopover';
 export { EditableField } from './EditableField';

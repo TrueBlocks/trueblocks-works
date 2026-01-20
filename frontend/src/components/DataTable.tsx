@@ -69,6 +69,7 @@ interface DataTableProps<T> {
   onPermanentDelete?: (item: T) => void | Promise<void>;
   canDelete?: (item: T) => boolean;
   onReorder?: (itemKey: string | number, direction: 'up' | 'down') => void;
+  onMoveToPosition?: (itemKey: string | number, currentIndex: number) => void;
 }
 
 const PAGE_SIZE_OPTIONS = [
@@ -108,6 +109,7 @@ export function DataTable<T>({
   onPermanentDelete,
   canDelete,
   onReorder,
+  onMoveToPosition,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 200);
@@ -840,6 +842,7 @@ export function DataTable<T>({
                 onPermanentDelete={onPermanentDelete}
                 onReorder={onReorder}
                 onReorderPageChange={handleReorderPageChange}
+                onMoveToPosition={onMoveToPosition}
                 renderExtraCells={renderExtraCells}
                 canDelete={canDelete}
                 canReorder={canReorder}

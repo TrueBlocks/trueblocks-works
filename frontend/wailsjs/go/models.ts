@@ -1647,6 +1647,7 @@ export namespace settings {
 	    templateFolderPath: string;
 	    libreOfficePath?: string;
 	    exportFolderPath?: string;
+	    collectionExportPath?: string;
 	    setupCompleted: boolean;
 	    theme: string;
 	    darkMode: boolean;
@@ -1665,6 +1666,7 @@ export namespace settings {
 	        this.templateFolderPath = source["templateFolderPath"];
 	        this.libreOfficePath = source["libreOfficePath"];
 	        this.exportFolderPath = source["exportFolderPath"];
+	        this.collectionExportPath = source["collectionExportPath"];
 	        this.setupCompleted = source["setupCompleted"];
 	        this.theme = source["theme"];
 	        this.darkMode = source["darkMode"];

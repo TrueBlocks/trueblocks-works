@@ -15,6 +15,7 @@ type Settings struct {
 	TemplateFolderPath   string   `json:"templateFolderPath"`
 	LibreOfficePath      string   `json:"libreOfficePath,omitempty"`
 	ExportFolderPath     string   `json:"exportFolderPath,omitempty"`
+	CollectionExportPath string   `json:"collectionExportPath,omitempty"`
 	SetupCompleted       bool     `json:"setupCompleted"`
 	Theme                string   `json:"theme"`
 	DarkMode             bool     `json:"darkMode"`

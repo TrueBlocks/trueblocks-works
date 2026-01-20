@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Stack, ActionIcon, Flex, Loader, Text, Grid, Table, Group } from '@mantine/core';
-import { IconPlus, IconX, IconFolder } from '@tabler/icons-react';
+import { Stack, ActionIcon, Flex, Loader, Text, Grid, Table, Group, Tooltip } from '@mantine/core';
+import { IconPlus, IconX, IconFolder, IconFolderShare } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
@@ -25,6 +25,7 @@ import {
   DeleteSubmissionPermanent,
   GetTableState,
   SetTableState,
+  ExportCollectionFolder,
 } from '@app';
 import { models, db } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
@@ -42,6 +43,7 @@ import {
   SubmissionsPortal,
   CollectionFieldSelect,
   ConfirmDeleteModal,
+  MoveToPositionModal,
 } from '@/components';
 import { useNotes } from '@/hooks';
 
@@ -65,6 +67,12 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [moveToPositionOpen, setMoveToPositionOpen] = useState(false);
+  const [moveToPositionWork, setMoveToPositionWork] = useState<{
+    workID: number;
+    currentIndex: number;
+    title: string;
+  } | null>(null);
   const [filterOptions, setFilterOptions] = useState({
     years: [] as string[],
     types: [] as string[],
@@ -272,6 +280,28 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     }
   }, [collection, navigate]);
 
+  const handleExportFolder = useCallback(async () => {
+    if (!collection) return;
+    try {
+      const copied = await ExportCollectionFolder(collection.collID);
+      if (copied === 0) {
+        return;
+      }
+      notifications.show({
+        message: `Exported ${copied} file${copied !== 1 ? 's' : ''} to folder`,
+        color: 'green',
+        autoClose: 3000,
+      });
+    } catch (err) {
+      LogErr('Failed to export collection folder:', err);
+      notifications.show({
+        message: 'Export failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [collection]);
+
   const handleDeleteSubmission = useCallback(
     async (subId: number) => {
       await DeleteSubmission(subId);
@@ -396,6 +426,42 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       });
     },
     [collectionId, works, loadData]
+  );
+
+  const handleOpenMoveToPosition = useCallback(
+    (workKey: string | number, currentIndex: number) => {
+      const workID = typeof workKey === 'string' ? parseInt(workKey, 10) : workKey;
+      const work = works.find((w) => w.workID === workID);
+      if (!work) return;
+      setMoveToPositionWork({
+        workID,
+        currentIndex,
+        title: work.title,
+      });
+      setMoveToPositionOpen(true);
+    },
+    [works]
+  );
+
+  const handleMoveToPosition = useCallback(
+    (newPosition: number) => {
+      if (!collectionId || !moveToPositionWork) return;
+      const { currentIndex } = moveToPositionWork;
+      if (newPosition === currentIndex) return;
+
+      const newWorks = [...works];
+      const [movedWork] = newWorks.splice(currentIndex, 1);
+      newWorks.splice(newPosition, 0, movedWork);
+
+      setWorks(newWorks);
+
+      const workIDs = newWorks.map((w) => w.workID);
+      ReorderCollectionWorks(collectionId, workIDs).catch((err) => {
+        LogErr('Failed to move work to position:', err);
+        loadData();
+      });
+    },
+    [collectionId, works, moveToPositionWork, loadData]
   );
 
   const handleSelectedChange = useCallback((work: models.CollectionWork) => {
@@ -538,6 +604,19 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             </Text>
           </Group>
         }
+        actionsRight={
+          <Tooltip label="Export folder">
+            <ActionIcon
+              size="lg"
+              variant="light"
+              color="blue"
+              onClick={handleExportFolder}
+              aria-label="Export folder"
+            >
+              <IconFolderShare size={18} />
+            </ActionIcon>
+          </Tooltip>
+        }
         isDeleted={collection.attributes?.includes('deleted')}
         isUneditable={isUneditable}
         onDelete={handleDelete}
@@ -570,6 +649,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             searchFn={searchFn}
             valueGetter={valueGetter}
             onReorder={handleReorderWork}
+            onMoveToPosition={handleOpenMoveToPosition}
             onFilteredSortedChange={setSortedFilteredWorks}
             extraColumns={<Table.Th style={{ width: '50px' }} />}
             renderExtraCells={(work) => (
@@ -645,6 +725,17 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         onConfirm={handlePermanentDelete}
         confirmation={deleteConfirmation}
         loading={deleteLoading}
+      />
+      <MoveToPositionModal
+        opened={moveToPositionOpen}
+        onClose={() => {
+          setMoveToPositionOpen(false);
+          setMoveToPositionWork(null);
+        }}
+        onConfirm={handleMoveToPosition}
+        currentPosition={moveToPositionWork?.currentIndex ?? 0}
+        totalItems={works.length}
+        itemName={moveToPositionWork?.title}
       />
     </Stack>
   );

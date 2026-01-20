@@ -243,8 +243,10 @@ func (a *App) PreviewImportFiles() (ImportPreview, error) {
 		ByExtension: make(map[string]int),
 	}
 
+	types, _ := a.GetDistinctValues("Works", "type")
+
 	for _, file := range files {
-		parsed := fileops.ParseImportFilename(file)
+		parsed := fileops.ParseImportFilename(file, types)
 		ext := strings.ToLower(filepath.Ext(file))
 		preview.ByExtension[ext]++
 
@@ -364,7 +366,7 @@ func (a *App) continueImport() (ImportResult, error) {
 	for i := session.CurrentIndex; i < len(session.Files); i++ {
 		file := session.Files[i]
 		filename := filepath.Base(file)
-		parsed := fileops.ParseImportFilename(file)
+		parsed := fileops.ParseImportFilename(file, types)
 
 		// Apply user edits if available
 		if edit, ok := session.EditMap[filename]; ok {

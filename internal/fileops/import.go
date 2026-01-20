@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 )
 
 type ParsedFilename struct {
@@ -21,7 +19,7 @@ type ParsedFilename struct {
 	Errors      []string
 }
 
-func ParseImportFilename(filename string) ParsedFilename {
+func ParseImportFilename(filename string, validTypes []string) ParsedFilename {
 	result := ParsedFilename{
 		Valid:  true,
 		Errors: []string{},
@@ -56,7 +54,7 @@ func ParseImportFilename(filename string) ParsedFilename {
 		potentialType := strings.TrimSpace(matches[2])
 
 		// Check if quality mark is valid AND the resulting type is known
-		if potentialQuality != "" && isValidWorkType(potentialType) {
+		if potentialQuality != "" && isValidWorkType(potentialType, validTypes) {
 			// Valid quality mark and known type
 			result.QualityMark = potentialMark
 			result.Type = potentialType
@@ -138,8 +136,8 @@ func GetQualityFromMark(mark string) string {
 	return ""
 }
 
-func isValidWorkType(workType string) bool {
-	for _, t := range models.WorkTypeList {
+func isValidWorkType(workType string, validTypes []string) bool {
+	for _, t := range validTypes {
 		if t == workType {
 			return true
 		}

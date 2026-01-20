@@ -30,38 +30,6 @@ var QualityList = []string{
 	"Unknown",
 }
 
-var WorkTypeList = []string{
-	"Article",
-	"Book",
-	"Chapter",
-	"Critique",
-	"Essay",
-	"Flash",
-	"Interview",
-	"Freewrite",
-	"Journal",
-	"Micro",
-	"Poem",
-	"Paper",
-	"Lesson",
-	"Character",
-	"Research",
-	"Review",
-	"Song",
-	"Story",
-	"Travel",
-	"Essay Idea",
-	"Poem Idea",
-	"Article Idea",
-	"Book Idea",
-	"Story Idea",
-	"Paper Idea",
-	"Interview Idea",
-	"Flash Idea",
-	"Micro Idea",
-	"Other",
-}
-
 var ResponseTypeList = []string{
 	"Accepted",
 	"Email",

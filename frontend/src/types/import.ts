@@ -3,7 +3,7 @@ export interface InvalidFile {
   errors: string[];
 }
 
-export type ImportStatus = 'complete' | 'needs_type' | 'cancelled';
+export type ImportStatus = 'complete' | 'needs_type' | 'needs_extension' | 'cancelled';
 
 export interface ImportResult {
   status: ImportStatus;
@@ -12,5 +12,6 @@ export interface ImportResult {
   invalid: InvalidFile[];
   collectionID: number;
   unknownType?: string;
+  unknownExtension?: string;
   currentFile?: string;
 }

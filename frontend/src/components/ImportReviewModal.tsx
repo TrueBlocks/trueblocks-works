@@ -9,6 +9,7 @@ interface ImportReviewModalProps {
   result: ImportResult | null;
   onNavigateToCollection: (collectionID: number) => void;
   onAddType: (type: string) => void;
+  onAddExtension: (extension: string) => void;
   onCancelImport: () => void;
 }
 
@@ -18,6 +19,7 @@ export function ImportReviewModal({
   result,
   onNavigateToCollection,
   onAddType,
+  onAddExtension,
   onCancelImport,
 }: ImportReviewModalProps) {
   if (!result) return null;
@@ -25,6 +27,7 @@ export function ImportReviewModal({
   const hasInvalid = result.invalid.length > 0;
   const hasImported = result.imported > 0 || result.updated > 0;
   const needsType = result.status === 'needs_type';
+  const needsExtension = result.status === 'needs_extension';
 
   if (needsType && result.unknownType) {
     return (
@@ -72,6 +75,52 @@ export function ImportReviewModal({
     );
   }
 
+  if (needsExtension && result.unknownExtension) {
+    return (
+      <Modal
+        opened={opened}
+        onClose={() => {
+          onCancelImport();
+          onClose();
+        }}
+        title="Unknown File Extension Found"
+        size="md"
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            Unknown file extension{' '}
+            <Text span fw={700} c="blue">
+              .{result.unknownExtension}
+            </Text>{' '}
+            found in file{' '}
+            <Text span fw={500}>
+              {result.currentFile}
+            </Text>
+            .
+          </Text>
+          <Text size="sm" c="dimmed">
+            Add this extension to the database to continue importing?
+          </Text>
+
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="subtle"
+              onClick={() => {
+                onCancelImport();
+                onClose();
+              }}
+            >
+              Cancel Import
+            </Button>
+            <Button variant="filled" onClick={() => onAddExtension(result.unknownExtension!)}>
+              Add Extension &amp; Continue
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    );
+  }
+
   return (
     <Modal opened={opened} onClose={onClose} title="Import Results" size="md">
       <Stack gap="md">
@@ -79,6 +128,15 @@ export function ImportReviewModal({
           <div>
             <Text size="sm">
               Imported: {result.imported} | Updated: {result.updated}
+              {result.collectionName && (
+                <>
+                  {' '}
+                  into{' '}
+                  <Text span fw={600}>
+                    {result.collectionName}
+                  </Text>
+                </>
+              )}
             </Text>
           </div>
         )}

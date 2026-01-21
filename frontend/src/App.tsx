@@ -26,6 +26,7 @@ import {
   ReimportFromCSV,
   AutoImportFilesWithEdits,
   AddTypeAndContinue,
+  AddExtensionAndContinue,
   CancelImport,
   SetSidebarWidth,
 } from '@app';
@@ -171,9 +172,25 @@ function App() {
         // Import finished
         setImportModalOpen(result.imported > 0 || result.updated > 0 || result.invalid.length > 0);
       }
-      // If status is still 'needs_type', modal will update to show next unknown type
+      // If status is still 'needs_type' or 'needs_extension', modal will update
     } catch (err) {
       LogErr('Add type failed:', err);
+      await CancelImport();
+      setImportModalOpen(false);
+    }
+  }, []);
+
+  const handleAddExtension = useCallback(async (newExtension: string) => {
+    try {
+      const result = await AddExtensionAndContinue(newExtension);
+      setImportResult(result);
+      if (result.status === 'complete') {
+        // Import finished
+        setImportModalOpen(result.imported > 0 || result.updated > 0 || result.invalid.length > 0);
+      }
+      // If status is still 'needs_type' or 'needs_extension', modal will update
+    } catch (err) {
+      LogErr('Add extension failed:', err);
       await CancelImport();
       setImportModalOpen(false);
     }
@@ -394,6 +411,7 @@ function App() {
         result={importResult}
         onNavigateToCollection={(id) => navigate(`/collections/${id}`)}
         onAddType={handleAddType}
+        onAddExtension={handleAddExtension}
         onCancelImport={handleCancelImport}
       />
       <AppShell

@@ -70,6 +70,8 @@ interface DataTableProps<T> {
   canDelete?: (item: T) => boolean;
   onReorder?: (itemKey: string | number, direction: 'up' | 'down') => void;
   onMoveToPosition?: (itemKey: string | number, currentIndex: number) => void;
+  onSortFilterStateChange?: (state: { hasActiveFilters: boolean; hasActiveSort: boolean }) => void;
+  getRowStyle?: (item: T) => React.CSSProperties | undefined;
 }
 
 const PAGE_SIZE_OPTIONS = [
@@ -110,6 +112,8 @@ export function DataTable<T>({
   canDelete,
   onReorder,
   onMoveToPosition,
+  onSortFilterStateChange,
+  getRowStyle,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [debouncedSearch] = useDebouncedValue(search, 200);
@@ -541,6 +545,22 @@ export function DataTable<T>({
   }, [sorted, onFilteredSortedChange]);
 
   useEffect(() => {
+    if (onSortFilterStateChange) {
+      const hasActiveFilters =
+        Object.entries(filters).some(([key, selected]) => {
+          const col = columns.find((c) => c.key === key);
+          return (
+            col?.filterOptions && selected.size > 0 && selected.size < col.filterOptions.length
+          );
+        }) ||
+        Object.values(rangeFilters).some((rf) => rf.min !== undefined || rf.max !== undefined) ||
+        debouncedSearch.length > 0;
+      const hasActiveSort = sort.primary.column !== '';
+      onSortFilterStateChange({ hasActiveFilters, hasActiveSort });
+    }
+  }, [filters, rangeFilters, sort, debouncedSearch, columns, onSortFilterStateChange]);
+
+  useEffect(() => {
     async function restoreSelection() {
       if (!getLastSelectedID || selectionRestored || sorted.length === 0 || !stateLoaded) {
         return;
@@ -848,6 +868,7 @@ export function DataTable<T>({
                 canReorder={canReorder}
                 isFirstInList={globalIdx === 0}
                 isLastInList={globalIdx >= sorted.length - 1}
+                getRowStyle={getRowStyle}
               />
             );
           })}

@@ -10,6 +10,8 @@ import {db} from '../models';
 import {fileops} from '../models';
 import {settings} from '../models';
 
+export function AddExtensionAndContinue(arg1:string):Promise<app.ImportResult>;
+
 export function AddSearchHistory(arg1:string):Promise<void>;
 
 export function AddTypeAndContinue(arg1:string):Promise<app.ImportResult>;

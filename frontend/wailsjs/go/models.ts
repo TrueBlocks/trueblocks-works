@@ -444,7 +444,9 @@ export namespace app {
 	    updated: number;
 	    invalid: InvalidFile[];
 	    collectionID: number;
+	    collectionName?: string;
 	    unknownType?: string;
+	    unknownExtension?: string;
 	    currentFile?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -458,7 +460,9 @@ export namespace app {
 	        this.updated = source["updated"];
 	        this.invalid = this.convertValues(source["invalid"], InvalidFile);
 	        this.collectionID = source["collectionID"];
+	        this.collectionName = source["collectionName"];
 	        this.unknownType = source["unknownType"];
+	        this.unknownExtension = source["unknownExtension"];
 	        this.currentFile = source["currentFile"];
 	    }
 	

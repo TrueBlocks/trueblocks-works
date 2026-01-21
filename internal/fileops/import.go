@@ -27,22 +27,11 @@ func ParseImportFilename(filename string, validTypes []string) ParsedFilename {
 
 	base := filepath.Base(filename)
 	ext := filepath.Ext(base)
-	result.Extension = strings.TrimPrefix(ext, ".")
+	result.Extension = strings.ToLower(strings.TrimPrefix(ext, "."))
 	nameWithoutExt := strings.TrimSuffix(base, ext)
 
-	// Check for supported extension first
-	supportedExts := map[string]bool{
-		"rtf":  true,
-		"docx": true,
-		"txt":  true,
-		"md":   true,
-		"doc":  true,
-	}
-	if !supportedExts[result.Extension] {
-		result.Valid = false
-		result.Errors = append(result.Errors, fmt.Sprintf("Unsupported file extension: %s", result.Extension))
-		return result
-	}
+	// Extension validation is done at the import layer against database values,
+	// not here. This function just extracts the extension.
 
 	// Try the full pattern: {mark}{type} - {year} - {title}
 	pattern := regexp.MustCompile(`^([a-z]{1,2})([^-]+)\s*-\s*(\d{4})\s*-\s*(.+)$`)

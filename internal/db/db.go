@@ -43,6 +43,13 @@ func New(dbPath string) (*DB, error) {
 		return nil, fmt.Errorf("enable foreign keys: %w", err)
 	}
 
+	// Enable trusted schema for FTS triggers
+	_, err = conn.Exec("PRAGMA trusted_schema = ON")
+	if err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("enable trusted schema: %w", err)
+	}
+
 	// Set WAL mode
 	_, err = conn.Exec("PRAGMA journal_mode = WAL")
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 )
 
 var allowedEnumFields = map[string][]string{
-	"Works":         {"status", "type", "quality"},
+	"Works":         {"status", "type", "quality", "doc_type"},
 	"Organizations": {"status", "type", "my_interest"},
 	"Collections":   {"type"},
 	"Notes":         {"type"},

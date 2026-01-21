@@ -24,6 +24,7 @@ export interface DataTableRowProps<T> {
   canReorder: boolean;
   isFirstInList: boolean;
   isLastInList: boolean;
+  getRowStyle?: (item: T) => React.CSSProperties | undefined;
 }
 
 function DataTableRowInner<T>(
@@ -47,11 +48,13 @@ function DataTableRowInner<T>(
     canReorder,
     isFirstInList,
     isLastInList,
+    getRowStyle,
   }: DataTableRowProps<T>,
   ref: React.ForwardedRef<HTMLTableRowElement>
 ) {
   const showActions = onDelete || onUndelete || onPermanentDelete;
   const canDeleteItem = canDelete?.(item) ?? true;
+  const customStyle = getRowStyle?.(item);
 
   return (
     <Table.Tr
@@ -61,6 +64,7 @@ function DataTableRowInner<T>(
         backgroundColor: isSelected ? 'var(--mantine-color-blue-light)' : undefined,
         opacity: isDeleted ? 0.6 : 1,
         textDecoration: isDeleted ? 'line-through' : 'none',
+        ...customStyle,
       }}
       onClick={() => onClick(item, index)}
     >

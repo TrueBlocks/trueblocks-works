@@ -1,7 +1,19 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Stack, ActionIcon, Flex, Loader, Text, Grid, Table, Group, Tooltip } from '@mantine/core';
-import { IconPlus, IconX, IconFolder, IconFolderShare } from '@tabler/icons-react';
+import {
+  Stack,
+  ActionIcon,
+  Flex,
+  Loader,
+  Text,
+  Grid,
+  Table,
+  Group,
+  Tooltip,
+  Modal,
+  Button,
+} from '@mantine/core';
+import { IconPlus, IconX, IconFolder, IconFolderShare, IconReorder } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
@@ -27,7 +39,7 @@ import {
   SetTableState,
   ExportCollectionFolder,
 } from '@app';
-import { models, db } from '@models';
+import { models, db, state } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
 import {
   DetailHeader,
@@ -79,6 +91,8 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     statuses: [] as string[],
     qualities: [] as string[],
   });
+  const [tableState, setTableState] = useState({ hasActiveFilters: false, hasActiveSort: false });
+  const [numberAsSortedModalOpen, setNumberAsSortedModalOpen] = useState(false);
   const hasInitialized = useRef(false);
   const prevCollectionIdRef = useRef<number | undefined>(undefined);
 
@@ -301,6 +315,42 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       });
     }
   }, [collection]);
+
+  const handleNumberAsSorted = useCallback(async () => {
+    if (!collectionId || sortedFilteredWorks.length === 0) return;
+    try {
+      const workIDs = sortedFilteredWorks.map((w) => w.workID);
+      await ReorderCollectionWorks(collectionId, workIDs);
+      // Clear sort to show position-based order (which now matches the sort)
+      const currentTableState = await GetTableState(`collection-${collectionId}`);
+      const emptySort = new state.ViewSort({
+        primary: new state.SortColumn({ column: '', direction: '' }),
+        secondary: new state.SortColumn({ column: '', direction: '' }),
+        tertiary: new state.SortColumn({ column: '', direction: '' }),
+        quaternary: new state.SortColumn({ column: '', direction: '' }),
+      });
+      const updatedTableState = new state.TableState({
+        ...currentTableState,
+        sort: emptySort,
+      });
+      await SetTableState(`collection-${collectionId}`, updatedTableState);
+      await loadData();
+      notifications.show({
+        message: `Numbered ${workIDs.length} work${workIDs.length !== 1 ? 's' : ''} to match current sort`,
+        color: 'green',
+        autoClose: 3000,
+      });
+    } catch (err) {
+      LogErr('Failed to number works as sorted:', err);
+      notifications.show({
+        message: 'Failed to number works',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setNumberAsSortedModalOpen(false);
+    }
+  }, [collectionId, sortedFilteredWorks, loadData]);
 
   const handleDeleteSubmission = useCallback(
     async (subId: number) => {
@@ -543,6 +593,15 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     }
   }, []);
 
+  const getRowStyle = useCallback((work: models.CollectionWork) => {
+    if (work.type === 'Section') {
+      return {
+        borderTop: '2px dashed color-mix(in srgb, var(--mantine-primary-color-5) 25%, transparent)',
+      };
+    }
+    return undefined;
+  }, []);
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -605,17 +664,39 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           </Group>
         }
         actionsRight={
-          <Tooltip label="Export folder">
-            <ActionIcon
-              size="lg"
-              variant="light"
-              color="blue"
-              onClick={handleExportFolder}
-              aria-label="Export folder"
+          <Group gap="xs">
+            <Tooltip
+              label={
+                tableState.hasActiveFilters
+                  ? 'Clear filters to number works'
+                  : !tableState.hasActiveSort
+                    ? 'Sort by a column first'
+                    : 'Set positions to match current sort'
+              }
             >
-              <IconFolderShare size={18} />
-            </ActionIcon>
-          </Tooltip>
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color="blue"
+                onClick={() => setNumberAsSortedModalOpen(true)}
+                disabled={tableState.hasActiveFilters || !tableState.hasActiveSort}
+                aria-label="Number as sorted"
+              >
+                <IconReorder size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Export folder">
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color="blue"
+                onClick={handleExportFolder}
+                aria-label="Export folder"
+              >
+                <IconFolderShare size={18} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
         }
         isDeleted={collection.attributes?.includes('deleted')}
         isUneditable={isUneditable}
@@ -648,9 +729,11 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             getLastSelectedID={getLastSelectedID}
             searchFn={searchFn}
             valueGetter={valueGetter}
+            getRowStyle={getRowStyle}
             onReorder={handleReorderWork}
             onMoveToPosition={handleOpenMoveToPosition}
             onFilteredSortedChange={setSortedFilteredWorks}
+            onSortFilterStateChange={setTableState}
             extraColumns={<Table.Th style={{ width: '50px' }} />}
             renderExtraCells={(work) => (
               <Table.Td>
@@ -737,6 +820,26 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         totalItems={works.length}
         itemName={moveToPositionWork?.title}
       />
+      <Modal
+        opened={numberAsSortedModalOpen}
+        onClose={() => setNumberAsSortedModalOpen(false)}
+        title="Number Works As Sorted"
+        centered
+      >
+        <Stack>
+          <Text size="sm">
+            This will permanently set the position of {sortedFilteredWorks.length}{' '}
+            {sortedFilteredWorks.length === 1 ? 'work' : 'works'} to match the current sort order.
+            The works will retain this order when sorting is cleared.
+          </Text>
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={() => setNumberAsSortedModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleNumberAsSorted}>Confirm</Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }

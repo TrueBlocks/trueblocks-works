@@ -32,19 +32,22 @@ type InvalidFile struct {
 type ImportStatus string
 
 const (
-	ImportComplete  ImportStatus = "complete"
-	ImportNeedsType ImportStatus = "needs_type"
-	ImportCancelled ImportStatus = "cancelled"
+	ImportComplete       ImportStatus = "complete"
+	ImportNeedsType      ImportStatus = "needs_type"
+	ImportNeedsExtension ImportStatus = "needs_extension"
+	ImportCancelled      ImportStatus = "cancelled"
 )
 
 type ImportResult struct {
-	Status       ImportStatus  `json:"status"`
-	Imported     int           `json:"imported"`
-	Updated      int           `json:"updated"`
-	Invalid      []InvalidFile `json:"invalid"`
-	CollectionID int64         `json:"collectionID"`
-	UnknownType  string        `json:"unknownType,omitempty"`
-	CurrentFile  string        `json:"currentFile,omitempty"`
+	Status           ImportStatus  `json:"status"`
+	Imported         int           `json:"imported"`
+	Updated          int           `json:"updated"`
+	Invalid          []InvalidFile `json:"invalid"`
+	CollectionID     int64         `json:"collectionID"`
+	CollectionName   string        `json:"collectionName,omitempty"`
+	UnknownType      string        `json:"unknownType,omitempty"`
+	UnknownExtension string        `json:"unknownExtension,omitempty"`
+	CurrentFile      string        `json:"currentFile,omitempty"`
 }
 
 type ImportSession struct {
@@ -109,15 +112,16 @@ func (a *App) CheckImportConflict(sourcePath string) (ImportConflict, error) {
 }
 
 func (a *App) ImportWork(filename string, parsed fileops.ParsedFilename) (*models.Work, error) {
-	conflict, err := a.CheckImportConflict(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to absolute path
+	// Convert to absolute path FIRST - this is what we store in the database
+	// and must be used for conflict checking
 	absPath, err := filepath.Abs(filename)
 	if err != nil {
 		return nil, fmt.Errorf("get absolute path: %w", err)
+	}
+
+	conflict, err := a.CheckImportConflict(absPath)
+	if err != nil {
+		return nil, err
 	}
 
 	// Convert markdown to docx if needed
@@ -274,12 +278,12 @@ func (a *App) AutoImportFiles(collectionID int64) (ImportResult, error) {
 }
 
 func (a *App) AutoImportFilesWithEdits(collectionID int64, edits []FileEdit) (ImportResult, error) {
-	files, err := a.ScanImportFolder()
+	allFiles, err := a.ScanImportFolder()
 	if err != nil {
 		return ImportResult{Status: ImportComplete}, fmt.Errorf("scan import folder: %w", err)
 	}
 
-	if len(files) == 0 {
+	if len(allFiles) == 0 {
 		return ImportResult{Status: ImportComplete}, nil
 	}
 
@@ -287,6 +291,21 @@ func (a *App) AutoImportFilesWithEdits(collectionID int64, edits []FileEdit) (Im
 	editMap := make(map[string]FileEdit)
 	for _, edit := range edits {
 		editMap[edit.Filename] = edit
+	}
+
+	// If edits were provided, only import files that are in the edit map
+	// This allows users to remove files from the import by unchecking them in the UI
+	var files []string
+	if len(edits) > 0 {
+		for _, file := range allFiles {
+			basename := filepath.Base(file)
+			if _, ok := editMap[basename]; ok {
+				files = append(files, file)
+			}
+		}
+	} else {
+		// No edits provided (legacy call from AutoImportFiles) - import all
+		files = allFiles
 	}
 
 	// If collectionID is 0, use the default "New Works" collection
@@ -343,6 +362,31 @@ func (a *App) AddTypeAndContinue(newType string) (ImportResult, error) {
 	return a.continueImport()
 }
 
+func (a *App) AddExtensionAndContinue(newExtension string) (ImportResult, error) {
+	if a.importSession == nil {
+		return ImportResult{Status: ImportCancelled}, fmt.Errorf("no active import session")
+	}
+
+	// Add a dummy work with the new extension to persist it
+	dummyWork := &models.Work{
+		Title:   fmt.Sprintf("_extension_placeholder_%s", newExtension),
+		Type:    "Other",
+		Status:  "Gestating",
+		Quality: "Unknown",
+		DocType: strings.ToLower(newExtension),
+	}
+	dummyWork.Attributes = models.MarkDeleted("")
+
+	if _, err := a.db.CreateWork(dummyWork); err != nil {
+		return ImportResult{Status: ImportCancelled}, fmt.Errorf("add extension: %w", err)
+	}
+
+	// Immediately delete the dummy work (but the extension is now in the database)
+	_ = a.db.DeleteWork(dummyWork.WorkID)
+
+	return a.continueImport()
+}
+
 func (a *App) CancelImport() error {
 	if a.importSession == nil {
 		return nil
@@ -358,9 +402,14 @@ func (a *App) continueImport() (ImportResult, error) {
 	}
 
 	types, _ := a.GetDistinctValues("Works", "type")
+	extensions, _ := a.GetDistinctValues("Works", "doc_type")
 	typeMap := make(map[string]bool)
 	for _, t := range types {
 		typeMap[t] = true
+	}
+	extMap := make(map[string]bool)
+	for _, e := range extensions {
+		extMap[strings.ToLower(e)] = true
 	}
 
 	for i := session.CurrentIndex; i < len(session.Files); i++ {
@@ -404,6 +453,15 @@ func (a *App) continueImport() (ImportResult, error) {
 			return session.Result, nil
 		}
 
+		// Check if extension exists in database
+		if !extMap[strings.ToLower(parsed.Extension)] {
+			session.CurrentIndex = i
+			session.Result.Status = ImportNeedsExtension
+			session.Result.UnknownExtension = parsed.Extension
+			session.Result.CurrentFile = filepath.Base(file)
+			return session.Result, nil
+		}
+
 		work, err := a.ImportWork(file, parsed)
 		if err != nil {
 			session.Result.Invalid = append(session.Result.Invalid, InvalidFile{
@@ -425,6 +483,11 @@ func (a *App) continueImport() (ImportResult, error) {
 	// Import complete - add all works to collection
 	for _, work := range session.ValidWorks {
 		_ = a.db.AddWorkToCollection(session.CollectionID, work.WorkID)
+	}
+
+	// Look up collection name for the result
+	if coll, err := a.db.GetCollection(session.CollectionID); err == nil && coll != nil {
+		session.Result.CollectionName = coll.CollectionName
 	}
 
 	session.Result.Status = ImportComplete

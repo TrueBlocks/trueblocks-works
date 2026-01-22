@@ -69,6 +69,11 @@ var migrations = []Migration{
 		Name:    "add_book_publishing_support",
 		Up:      migrateAddBookPublishingSupport,
 	},
+	{
+		Version: 21,
+		Name:    "add_book_typography_fields",
+		Up:      migrateAddBookTypographyFields,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -748,6 +753,30 @@ func migrateAddBookPublishingSupport(tx *sql.Tx) error {
 	_, err = tx.Exec(`CREATE INDEX idx_books_collid ON Books(collID)`)
 	if err != nil {
 		return fmt.Errorf("create index on Books.collID: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddBookTypographyFields(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN header_font TEXT`)
+	if err != nil {
+		return fmt.Errorf("add header_font column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN header_size INTEGER`)
+	if err != nil {
+		return fmt.Errorf("add header_size column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN page_num_font TEXT`)
+	if err != nil {
+		return fmt.Errorf("add page_num_font column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN page_num_size INTEGER`)
+	if err != nil {
+		return fmt.Errorf("add page_num_size column to Books: %w", err)
 	}
 
 	return nil

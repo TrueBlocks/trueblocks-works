@@ -1291,6 +1291,10 @@ export namespace models {
 	    templatePath?: string;
 	    exportPath?: string;
 	    status: string;
+	    headerFont?: string;
+	    headerSize?: number;
+	    pageNumFont?: string;
+	    pageNumSize?: number;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -1315,6 +1319,10 @@ export namespace models {
 	        this.templatePath = source["templatePath"];
 	        this.exportPath = source["exportPath"];
 	        this.status = source["status"];
+	        this.headerFont = source["headerFont"];
+	        this.headerSize = source["headerSize"];
+	        this.pageNumFont = source["pageNumFont"];
+	        this.pageNumSize = source["pageNumSize"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }

@@ -17,6 +17,10 @@ type Book struct {
 	TemplatePath     *string `json:"templatePath,omitempty" db:"template_path"`
 	ExportPath       *string `json:"exportPath,omitempty" db:"export_path"`
 	Status           string  `json:"status" db:"status"`
+	HeaderFont       *string `json:"headerFont,omitempty" db:"header_font"`
+	HeaderSize       *int    `json:"headerSize,omitempty" db:"header_size"`
+	PageNumFont      *string `json:"pageNumFont,omitempty" db:"page_num_font"`
+	PageNumSize      *int    `json:"pageNumSize,omitempty" db:"page_num_size"`
 	CreatedAt        string  `json:"createdAt" db:"created_at"`
 	ModifiedAt       string  `json:"modifiedAt" db:"updated_at"`
 }

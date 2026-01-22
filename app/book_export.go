@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/bookbuild"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -40,38 +41,26 @@ func (a *App) ExportBookEPUB(collID int64) (*BookExportResult, error) {
 	return a.exportBookFormat(collID, "epub")
 }
 
-// ExportBookPDF exports a collection as a PDF by concatenating preview PDFs
+// ExportBookPDF exports a collection as a PDF using the bookbuild pipeline
 func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
-	return a.exportBookPDFConcat(collID)
-}
-
-// exportBookPDFConcat concatenates existing preview PDFs using pdfunite
-func (a *App) exportBookPDFConcat(collID int64) (*BookExportResult, error) {
 	startTime := time.Now()
-	result := &BookExportResult{
-		Warnings: []string{},
-	}
 
-	// Get the book record
 	book, err := a.db.GetBookByCollection(collID)
 	if err != nil || book == nil {
 		return nil, fmt.Errorf("no book configuration found for collection")
 	}
 
-	// Get the collection
 	coll, err := a.db.GetCollection(collID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get collection: %w", err)
 	}
 
-	// Build default filename from book title
 	bookTitle := book.Title
 	if bookTitle == "" {
 		bookTitle = coll.CollectionName
 	}
 	defaultFilename := sanitizeFilename(bookTitle) + ".pdf"
 
-	// Determine default directory
 	defaultDir := ""
 	if book.ExportPath != nil && *book.ExportPath != "" {
 		defaultDir = *book.ExportPath
@@ -80,7 +69,6 @@ func (a *App) exportBookPDFConcat(collID int64) (*BookExportResult, error) {
 		defaultDir = filepath.Join(homeDir, "Desktop")
 	}
 
-	// Prompt user for save location
 	outputPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		Title:            "Export Book as PDF",
 		DefaultDirectory: defaultDir,
@@ -93,93 +81,117 @@ func (a *App) exportBookPDFConcat(collID int64) (*BookExportResult, error) {
 		return nil, fmt.Errorf("failed to open save dialog: %w", err)
 	}
 	if outputPath == "" {
-		return nil, nil // User cancelled
+		return nil, nil
 	}
 
-	// Save export directory for next time
 	newExportDir := filepath.Dir(outputPath)
 	if book.ExportPath == nil || *book.ExportPath != newExportDir {
 		book.ExportPath = &newExportDir
 		_ = a.db.UpdateBook(book)
 	}
 
-	// Create build directory for generated files
 	homeDir, _ := os.UserHomeDir()
 	buildDir := filepath.Join(homeDir, ".works", "book-builds", fmt.Sprintf("coll-%d", collID))
-	if err := os.MkdirAll(buildDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create build directory: %w", err)
+
+	a.emitExportProgress("Preparing", 1, 6, "Generating front/back matter...")
+
+	_, _ = a.generateFrontMatterPDF(book, buildDir)
+	_, _ = a.generateBackMatterPDF(book, buildDir)
+
+	manifest, err := a.buildManifestFromCollection(collID, book, coll, buildDir, outputPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build manifest: %w", err)
 	}
 
-	a.emitExportProgress("Preparing", 0, 5, "Gathering collection works...")
+	buildResult, err := bookbuild.Build(bookbuild.BuildOptions{
+		Manifest:   manifest,
+		BuildDir:   buildDir,
+		OutputPath: outputPath,
+		MaxEssays:  10, // Limit overlays to first 10 essays for testing
+		OnProgress: func(stage string, current, total int, message string) {
+			a.emitExportProgress(stage, current, total, message)
+		},
+	})
 
-	// Get collection works in order
+	if err != nil {
+		return nil, fmt.Errorf("build failed: %w", err)
+	}
+
+	_ = exec.Command("open", outputPath).Start()
+
+	return &BookExportResult{
+		Success:    buildResult.Success,
+		OutputPath: buildResult.OutputPath,
+		WorkCount:  buildResult.WorkCount,
+		Warnings:   buildResult.Warnings,
+		Duration:   time.Since(startTime).Round(time.Millisecond).String(),
+	}, nil
+}
+
+func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll *models.Collection, buildDir, outputPath string) (*bookbuild.Manifest, error) {
 	works, err := a.db.GetCollectionWorks(collID, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get collection works: %w", err)
 	}
-	result.WorkCount = len(works)
 
 	if len(works) == 0 {
-		return nil, fmt.Errorf("collection has no works to export")
+		return nil, fmt.Errorf("collection has no works")
 	}
 
-	// Build list of preview PDF files
 	pdfPreviewPath := a.fileOps.Config.PDFPreviewPath
-	pdfFiles := []string{}
 
-	a.emitExportProgress("Validating", 1, 5, "Checking preview PDFs...")
+	typography := bookbuild.DefaultTypography()
+	if book.HeaderFont != nil && *book.HeaderFont != "" {
+		typography.HeaderFont = *book.HeaderFont
+	}
+	if book.HeaderSize != nil && *book.HeaderSize > 0 {
+		typography.HeaderSize = *book.HeaderSize
+	}
+	if book.PageNumFont != nil && *book.PageNumFont != "" {
+		typography.PageNumberFont = *book.PageNumFont
+	}
+	if book.PageNumSize != nil && *book.PageNumSize > 0 {
+		typography.PageNumberSize = *book.PageNumSize
+	}
+
+	manifest := &bookbuild.Manifest{
+		Title:      book.Title,
+		Author:     book.Author,
+		OutputPath: outputPath,
+		Typography: typography,
+	}
+
+	if manifest.Title == "" {
+		manifest.Title = coll.CollectionName
+	}
+
+	frontMatterPDF := filepath.Join(buildDir, "front-matter.pdf")
+	if fileExists(frontMatterPDF) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "front-matter", PDF: frontMatterPDF})
+	}
+
+	manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "toc", Placeholder: true})
 
 	for _, w := range works {
 		pdfPath := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
-		if _, err := os.Stat(pdfPath); os.IsNotExist(err) {
-			result.Warnings = append(result.Warnings, fmt.Sprintf("No preview PDF for: %s", w.Title))
-			continue
-		}
-		pdfFiles = append(pdfFiles, pdfPath)
+		manifest.Works = append(manifest.Works, bookbuild.Work{
+			ID:    w.WorkID,
+			Title: w.Title,
+			PDF:   pdfPath,
+		})
 	}
 
-	if len(pdfFiles) == 0 {
-		return nil, fmt.Errorf("no preview PDFs found - generate previews first")
+	backMatterPDF := filepath.Join(buildDir, "back-matter.pdf")
+	if fileExists(backMatterPDF) {
+		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "back-matter", PDF: backMatterPDF})
 	}
 
-	// Generate front matter PDF
-	a.emitExportProgress("Building", 2, 5, "Generating front matter...")
-	frontMatterPDF, err := a.generateFrontMatterPDF(book, buildDir)
-	if err != nil {
-		result.Warnings = append(result.Warnings, fmt.Sprintf("Front matter generation failed: %v", err))
-	} else if frontMatterPDF != "" {
-		pdfFiles = append([]string{frontMatterPDF}, pdfFiles...)
-	}
+	return manifest, nil
+}
 
-	// Generate back matter PDF
-	a.emitExportProgress("Building", 3, 5, "Generating back matter...")
-	backMatterPDF, err := a.generateBackMatterPDF(book, buildDir)
-	if err != nil {
-		result.Warnings = append(result.Warnings, fmt.Sprintf("Back matter generation failed: %v", err))
-	} else if backMatterPDF != "" {
-		pdfFiles = append(pdfFiles, backMatterPDF)
-	}
-
-	a.emitExportProgress("Exporting", 4, 5, "Concatenating PDFs...")
-
-	// Use pdfunite to concatenate PDFs
-	args := append(pdfFiles, outputPath)
-	cmd := exec.Command("pdfunite", args...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("pdfunite failed: %v\n%s", err, string(output))
-	}
-
-	a.emitExportProgress("Complete", 5, 5, "Export finished!")
-
-	// Open the exported file
-	_ = exec.Command("open", outputPath).Start()
-
-	result.Success = true
-	result.OutputPath = outputPath
-	result.Duration = time.Since(startTime).Round(time.Millisecond).String()
-
-	return result, nil
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 // exportBookFormat is the internal export function supporting multiple formats

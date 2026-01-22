@@ -56,6 +56,10 @@ func (a *App) Startup(ctx context.Context) {
 
 	_ = os.MkdirAll(filepath.Dir(dbPath), 0755)
 
+	// Create templates directory
+	templatesDir := filepath.Join(homeDir, ".works", "templates")
+	_ = os.MkdirAll(templatesDir, 0755)
+
 	a.backup = backup.NewManager(dbPath)
 	_, _ = a.backup.AutoBackup()
 

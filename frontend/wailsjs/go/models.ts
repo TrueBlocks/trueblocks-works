@@ -1,5 +1,103 @@
 export namespace app {
 	
+	export class ApplyTemplateResult {
+	    success: number;
+	    failed: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ApplyTemplateResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.success = source["success"];
+	        this.failed = source["failed"];
+	    }
+	}
+	export class BookExportResult {
+	    success: boolean;
+	    outputPath?: string;
+	    error?: string;
+	    warnings?: string[];
+	    workCount: number;
+	    duration: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BookExportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.success = source["success"];
+	        this.outputPath = source["outputPath"];
+	        this.error = source["error"];
+	        this.warnings = source["warnings"];
+	        this.workCount = source["workCount"];
+	        this.duration = source["duration"];
+	    }
+	}
+	export class StyleAuditResult {
+	    workID: number;
+	    title: string;
+	    templateStylesUsed: string[];
+	    unknownStyles: string[];
+	    directFormattingCount: number;
+	    isClean: boolean;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new StyleAuditResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workID = source["workID"];
+	        this.title = source["title"];
+	        this.templateStylesUsed = source["templateStylesUsed"];
+	        this.unknownStyles = source["unknownStyles"];
+	        this.directFormattingCount = source["directFormattingCount"];
+	        this.isClean = source["isClean"];
+	        this.error = source["error"];
+	    }
+	}
+	export class CollectionAuditSummary {
+	    totalWorks: number;
+	    cleanWorks: number;
+	    dirtyWorks: number;
+	    missingFiles: number;
+	    results: StyleAuditResult[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionAuditSummary(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.totalWorks = source["totalWorks"];
+	        this.cleanWorks = source["cleanWorks"];
+	        this.dirtyWorks = source["dirtyWorks"];
+	        this.missingFiles = source["missingFiles"];
+	        this.results = this.convertValues(source["results"], StyleAuditResult);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class CollectionSize {
 	    collID: number;
 	    name: string;
@@ -582,6 +680,7 @@ export namespace app {
 		}
 	}
 	
+	
 	export class SubmissionsFilterOptions {
 	    types: string[];
 	    responses: string[];
@@ -611,6 +710,88 @@ export namespace app {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
 	        this.count = source["count"];
+	    }
+	}
+	export class TemplateStyle {
+	    styleId: string;
+	    name: string;
+	    type: string;
+	    isCustom: boolean;
+	    isBuiltIn: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new TemplateStyle(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.styleId = source["styleId"];
+	        this.name = source["name"];
+	        this.type = source["type"];
+	        this.isCustom = source["isCustom"];
+	        this.isBuiltIn = source["isBuiltIn"];
+	    }
+	}
+	export class TemplateValidation {
+	    isValid: boolean;
+	    path: string;
+	    styles: TemplateStyle[];
+	    requiredFound: string[];
+	    requiredMissing: string[];
+	    errors: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new TemplateValidation(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.isValid = source["isValid"];
+	        this.path = source["path"];
+	        this.styles = this.convertValues(source["styles"], TemplateStyle);
+	        this.requiredFound = source["requiredFound"];
+	        this.requiredMissing = source["requiredMissing"];
+	        this.errors = source["errors"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class WorkBookAuditStatus {
+	    isInBook: boolean;
+	    unknownStyles: number;
+	    unknownStyleNames: string[];
+	    directFormatting: number;
+	    isClean: boolean;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkBookAuditStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.isInBook = source["isInBook"];
+	        this.unknownStyles = source["unknownStyles"];
+	        this.unknownStyleNames = source["unknownStyleNames"];
+	        this.directFormatting = source["directFormatting"];
+	        this.isClean = source["isClean"];
+	        this.error = source["error"];
 	    }
 	}
 	export class WorkUpdateResult {
@@ -1094,6 +1275,50 @@ export namespace fts {
 
 export namespace models {
 	
+	export class Book {
+	    bookID: number;
+	    collID: number;
+	    title: string;
+	    subtitle?: string;
+	    author: string;
+	    copyright?: string;
+	    dedication?: string;
+	    acknowledgements?: string;
+	    aboutAuthor?: string;
+	    coverPath?: string;
+	    isbn?: string;
+	    publishedDate?: string;
+	    templatePath?: string;
+	    exportPath?: string;
+	    status: string;
+	    createdAt: string;
+	    modifiedAt: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Book(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bookID = source["bookID"];
+	        this.collID = source["collID"];
+	        this.title = source["title"];
+	        this.subtitle = source["subtitle"];
+	        this.author = source["author"];
+	        this.copyright = source["copyright"];
+	        this.dedication = source["dedication"];
+	        this.acknowledgements = source["acknowledgements"];
+	        this.aboutAuthor = source["aboutAuthor"];
+	        this.coverPath = source["coverPath"];
+	        this.isbn = source["isbn"];
+	        this.publishedDate = source["publishedDate"];
+	        this.templatePath = source["templatePath"];
+	        this.exportPath = source["exportPath"];
+	        this.status = source["status"];
+	        this.createdAt = source["createdAt"];
+	        this.modifiedAt = source["modifiedAt"];
+	    }
+	}
 	export class Collection {
 	    collID: number;
 	    collectionName: string;

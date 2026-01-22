@@ -18,6 +18,22 @@ export function AddWorkToCollection(arg1, arg2) {
   return window['go']['app']['App']['AddWorkToCollection'](arg1, arg2);
 }
 
+export function ApplyTemplateToCollection(arg1) {
+  return window['go']['app']['App']['ApplyTemplateToCollection'](arg1);
+}
+
+export function ApplyTemplateToWork(arg1, arg2) {
+  return window['go']['app']['App']['ApplyTemplateToWork'](arg1, arg2);
+}
+
+export function AuditCollectionStyles(arg1) {
+  return window['go']['app']['App']['AuditCollectionStyles'](arg1);
+}
+
+export function AuditWorkStyles(arg1, arg2) {
+  return window['go']['app']['App']['AuditWorkStyles'](arg1, arg2);
+}
+
 export function AutoImportFiles(arg1) {
   return window['go']['app']['App']['AutoImportFiles'](arg1);
 }
@@ -50,8 +66,16 @@ export function CompleteSetup() {
   return window['go']['app']['App']['CompleteSetup']();
 }
 
+export function CopyTemplateToLibrary(arg1, arg2) {
+  return window['go']['app']['App']['CopyTemplateToLibrary'](arg1, arg2);
+}
+
 export function CreateBackup(arg1) {
   return window['go']['app']['App']['CreateBackup'](arg1);
+}
+
+export function CreateBook(arg1) {
+  return window['go']['app']['App']['CreateBook'](arg1);
 }
 
 export function CreateCollection(arg1) {
@@ -80,6 +104,10 @@ export function CreateWork(arg1) {
 
 export function DeleteBackup(arg1) {
   return window['go']['app']['App']['DeleteBackup'](arg1);
+}
+
+export function DeleteBook(arg1) {
+  return window['go']['app']['App']['DeleteBook'](arg1);
 }
 
 export function DeleteCollection(arg1) {
@@ -126,12 +154,28 @@ export function DetectLibreOffice() {
   return window['go']['app']['App']['DetectLibreOffice']();
 }
 
+export function EnsureTemplatesDir() {
+  return window['go']['app']['App']['EnsureTemplatesDir']();
+}
+
 export function ExportAllCSV() {
   return window['go']['app']['App']['ExportAllCSV']();
 }
 
 export function ExportAllTables() {
   return window['go']['app']['App']['ExportAllTables']();
+}
+
+export function ExportBook(arg1) {
+  return window['go']['app']['App']['ExportBook'](arg1);
+}
+
+export function ExportBookEPUB(arg1) {
+  return window['go']['app']['App']['ExportBookEPUB'](arg1);
+}
+
+export function ExportBookPDF(arg1) {
+  return window['go']['app']['App']['ExportBookPDF'](arg1);
 }
 
 export function ExportCollectionFolder(arg1) {
@@ -186,12 +230,24 @@ export function GetAppState() {
   return window['go']['app']['App']['GetAppState']();
 }
 
+export function GetBook(arg1) {
+  return window['go']['app']['App']['GetBook'](arg1);
+}
+
+export function GetBookByCollection(arg1) {
+  return window['go']['app']['App']['GetBookByCollection'](arg1);
+}
+
 export function GetCollection(arg1) {
   return window['go']['app']['App']['GetCollection'](arg1);
 }
 
 export function GetCollectionDeleteConfirmation(arg1) {
   return window['go']['app']['App']['GetCollectionDeleteConfirmation'](arg1);
+}
+
+export function GetCollectionIsBook(arg1) {
+  return window['go']['app']['App']['GetCollectionIsBook'](arg1);
 }
 
 export function GetCollectionWorks(arg1) {
@@ -204,6 +260,10 @@ export function GetCollections() {
 
 export function GetDashboardStats(arg1) {
   return window['go']['app']['App']['GetDashboardStats'](arg1);
+}
+
+export function GetDefaultTemplatePath() {
+  return window['go']['app']['App']['GetDefaultTemplatePath']();
 }
 
 export function GetDistinctValues(arg1, arg2) {
@@ -322,12 +382,20 @@ export function GetTableState(arg1) {
   return window['go']['app']['App']['GetTableState'](arg1);
 }
 
+export function GetTemplatesDir() {
+  return window['go']['app']['App']['GetTemplatesDir']();
+}
+
 export function GetValidExtensions() {
   return window['go']['app']['App']['GetValidExtensions']();
 }
 
 export function GetWork(arg1) {
   return window['go']['app']['App']['GetWork'](arg1);
+}
+
+export function GetWorkBookAuditStatus(arg1) {
+  return window['go']['app']['App']['GetWorkBookAuditStatus'](arg1);
 }
 
 export function GetWorkCollections(arg1) {
@@ -340,6 +408,14 @@ export function GetWorkDeleteConfirmation(arg1) {
 
 export function GetWorkFullPath(arg1) {
   return window['go']['app']['App']['GetWorkFullPath'](arg1);
+}
+
+export function GetWorkTemplateClean(arg1) {
+  return window['go']['app']['App']['GetWorkTemplateClean'](arg1);
+}
+
+export function GetWorkTemplatePath(arg1) {
+  return window['go']['app']['App']['GetWorkTemplatePath'](arg1);
 }
 
 export function GetWorks() {
@@ -364,6 +440,10 @@ export function IsValidExtension(arg1) {
 
 export function ListBackups() {
   return window['go']['app']['App']['ListBackups']();
+}
+
+export function ListTemplates() {
+  return window['go']['app']['App']['ListTemplates']();
 }
 
 export function MoveWorkFile(arg1) {
@@ -392,6 +472,10 @@ export function OpenOrgURL(arg1) {
 
 export function OpenSupportingItem(arg1) {
   return window['go']['app']['App']['OpenSupportingItem'](arg1);
+}
+
+export function OpenTemplate(arg1) {
+  return window['go']['app']['App']['OpenTemplate'](arg1);
 }
 
 export function OpenURL(arg1) {
@@ -454,8 +538,16 @@ export function Search(arg1, arg2) {
   return window['go']['app']['App']['Search'](arg1, arg2);
 }
 
+export function SelectBookTemplate() {
+  return window['go']['app']['App']['SelectBookTemplate']();
+}
+
 export function SelectExportFolder() {
   return window['go']['app']['App']['SelectExportFolder']();
+}
+
+export function SetCollectionIsBook(arg1, arg2) {
+  return window['go']['app']['App']['SetCollectionIsBook'](arg1, arg2);
 }
 
 export function SetDashboardTimeframe(arg1) {
@@ -502,6 +594,10 @@ export function SetTableState(arg1, arg2) {
   return window['go']['app']['App']['SetTableState'](arg1, arg2);
 }
 
+export function SetWorkTemplateClean(arg1, arg2) {
+  return window['go']['app']['App']['SetWorkTemplateClean'](arg1, arg2);
+}
+
 export function StartReportGeneration() {
   return window['go']['app']['App']['StartReportGeneration']();
 }
@@ -534,6 +630,10 @@ export function UndeleteWork(arg1) {
   return window['go']['app']['App']['UndeleteWork'](arg1);
 }
 
+export function UpdateBook(arg1) {
+  return window['go']['app']['App']['UpdateBook'](arg1);
+}
+
 export function UpdateCollection(arg1) {
   return window['go']['app']['App']['UpdateCollection'](arg1);
 }
@@ -560,4 +660,8 @@ export function UpdateWork(arg1) {
 
 export function UpdateWorkWithWorkflow(arg1) {
   return window['go']['app']['App']['UpdateWorkWithWorkflow'](arg1);
+}
+
+export function ValidateTemplate(arg1) {
+  return window['go']['app']['App']['ValidateTemplate'](arg1);
 }

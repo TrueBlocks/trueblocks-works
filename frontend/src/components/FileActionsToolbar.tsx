@@ -1,8 +1,24 @@
-import { Button, Group, Tooltip } from '@mantine/core';
-import { IconFileText, IconPrinter, IconDownload, IconArrowsExchange } from '@tabler/icons-react';
-import { OpenDocument, MoveWorkFile, ExportToSubmissions, PrintWork, CheckWorkPath } from '@app';
+import { Button, Group, Text, Tooltip } from '@mantine/core';
+import {
+  IconArrowsExchange,
+  IconDownload,
+  IconFileText,
+  IconPrinter,
+  IconWand,
+} from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import {
+  ApplyTemplateToWork,
+  CheckWorkPath,
+  ExportToSubmissions,
+  GetWorkBookAuditStatus,
+  GetWorkTemplatePath,
+  MoveWorkFile,
+  OpenDocument,
+  PrintWork,
+} from '@app';
 import { Log, LogErr } from '@/utils';
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { MoveFileModal } from './MoveFileModal';
 
 interface FileActionsToolbarProps {
@@ -17,6 +33,15 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   const [currentPath, setCurrentPath] = useState('');
   const [generatedPath, setGeneratedPath] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [auditStatus, setAuditStatus] = useState<{
+    isInBook: boolean;
+    isClean: boolean;
+    unknownStyles: number;
+    unknownStyleNames: string[];
+    directFormatting: number;
+  } | null>(null);
+  const [templatePath, setTemplatePath] = useState<string>('');
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
     CheckWorkPath(workID).then((result) => {
@@ -24,6 +49,14 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
       setFileExists(result.fileExists);
       setCurrentPath(result.storedPath);
       setGeneratedPath(result.generatedPath);
+    });
+    // Check if this work is in a book collection and get audit status
+    GetWorkBookAuditStatus(workID).then((status) => {
+      setAuditStatus(status);
+    });
+    // Get template path for this work
+    GetWorkTemplatePath(workID).then((path) => {
+      setTemplatePath(path || '');
     });
   }, [workID, refreshKey]);
 
@@ -75,6 +108,40 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     }
   };
 
+  const handleApplyTemplate = async () => {
+    if (!templatePath) return;
+    setApplying(true);
+    try {
+      await ApplyTemplateToWork(workID, templatePath);
+      notifications.show({
+        title: 'Template Applied',
+        message: 'Document cleaned - unknown styles removed',
+        color: 'green',
+        autoClose: 5000,
+      });
+      // Refresh audit status
+      const status = await GetWorkBookAuditStatus(workID);
+      setAuditStatus(status);
+      onMoved?.();
+    } catch (err) {
+      LogErr('Failed to apply template:', err);
+      notifications.show({
+        title: 'Apply Template Failed',
+        message: String(err),
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  // Build audit status text if work is in a book and fails audit
+  const auditStatusText =
+    auditStatus?.isInBook && !auditStatus?.isClean
+      ? `${auditStatus.unknownStyles} unknown styles, ${auditStatus.directFormatting} direct`
+      : '';
+
   return (
     <>
       <Group gap="xs">
@@ -89,6 +156,39 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
           >
             Move File
           </Button>
+        )}
+
+        {templatePath && auditStatus?.isInBook && (
+          <Group gap={4}>
+            <Tooltip label="Apply template to clean up styles">
+              <Button
+                variant="light"
+                color="orange"
+                size="xs"
+                px={6}
+                onClick={handleApplyTemplate}
+                loading={applying}
+                disabled={!fileExists}
+              >
+                <IconWand size={14} />
+              </Button>
+            </Tooltip>
+            {auditStatusText && (
+              <Tooltip
+                label={
+                  auditStatus?.unknownStyleNames?.length
+                    ? `Unknown: ${auditStatus.unknownStyleNames.join(', ')}`
+                    : 'Style issues found - click wand to fix'
+                }
+                multiline
+                maw={400}
+              >
+                <Text size="xs" c="orange" fw={500}>
+                  {auditStatusText}
+                </Text>
+              </Tooltip>
+            )}
+          </Group>
         )}
 
         <Tooltip label="Open document">

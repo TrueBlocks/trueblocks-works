@@ -63,6 +63,13 @@ export function useKeyboardShortcuts() {
         return;
       }
 
+      // Cmd+Shift+2: Cycle collection sub-tabs (Contents/Book)
+      if (e.shiftKey && e.key === '2') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('cycleCollectionSubTab'));
+        return;
+      }
+
       // Cmd+D: Toggle debug mode
       if (!e.shiftKey && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();

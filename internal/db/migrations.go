@@ -64,6 +64,11 @@ var migrations = []Migration{
 		Name:    "add_quality_at_publish",
 		Up:      migrateAddQualityAtPublish,
 	},
+	{
+		Version: 20,
+		Name:    "add_book_publishing_support",
+		Up:      migrateAddBookPublishingSupport,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -698,6 +703,51 @@ func migrateAddQualityAtPublish(tx *sql.Tx) error {
 	_, err = tx.Exec(`UPDATE Works SET quality_at_publish = quality, quality = 'Published' WHERE status = 'Published'`)
 	if err != nil {
 		return fmt.Errorf("update existing published works: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddBookPublishingSupport(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Collections ADD COLUMN is_book INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add is_book column to Collections: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Works ADD COLUMN is_template_clean INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add is_template_clean column to Works: %w", err)
+	}
+
+	_, err = tx.Exec(`
+		CREATE TABLE Books (
+			bookID INTEGER PRIMARY KEY AUTOINCREMENT,
+			collID INTEGER NOT NULL UNIQUE,
+			title TEXT NOT NULL,
+			subtitle TEXT,
+			author TEXT DEFAULT 'Thomas Jay Rush',
+			copyright TEXT,
+			dedication TEXT,
+			acknowledgements TEXT,
+			about_author TEXT,
+			cover_path TEXT,
+			isbn TEXT,
+			published_date TEXT,
+			template_path TEXT,
+			export_path TEXT,
+			status TEXT DEFAULT 'draft',
+			created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+			updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (collID) REFERENCES Collections(collID)
+		)
+	`)
+	if err != nil {
+		return fmt.Errorf("create Books table: %w", err)
+	}
+
+	_, err = tx.Exec(`CREATE INDEX idx_books_collid ON Books(collID)`)
+	if err != nil {
+		return fmt.Errorf("create index on Books.collID: %w", err)
 	}
 
 	return nil

@@ -18,6 +18,14 @@ export function AddTypeAndContinue(arg1:string):Promise<app.ImportResult>;
 
 export function AddWorkToCollection(arg1:number,arg2:number):Promise<void>;
 
+export function ApplyTemplateToCollection(arg1:number):Promise<app.ApplyTemplateResult>;
+
+export function ApplyTemplateToWork(arg1:number,arg2:string):Promise<void>;
+
+export function AuditCollectionStyles(arg1:number):Promise<app.CollectionAuditSummary>;
+
+export function AuditWorkStyles(arg1:number,arg2:string):Promise<app.StyleAuditResult>;
+
 export function AutoImportFiles(arg1:number):Promise<app.ImportResult>;
 
 export function AutoImportFilesWithEdits(arg1:number,arg2:Array<app.FileEdit>):Promise<app.ImportResult>;
@@ -34,7 +42,11 @@ export function CheckWorkPath(arg1:number):Promise<app.PathCheckResult>;
 
 export function CompleteSetup():Promise<void>;
 
+export function CopyTemplateToLibrary(arg1:string,arg2:string):Promise<string>;
+
 export function CreateBackup(arg1:string):Promise<backup.BackupInfo>;
+
+export function CreateBook(arg1:models.Book):Promise<void>;
 
 export function CreateCollection(arg1:models.Collection):Promise<validation.ValidationResult>;
 
@@ -49,6 +61,8 @@ export function CreateSubmission(arg1:models.Submission):Promise<validation.Vali
 export function CreateWork(arg1:models.Work):Promise<validation.ValidationResult>;
 
 export function DeleteBackup(arg1:string):Promise<void>;
+
+export function DeleteBook(arg1:number):Promise<void>;
 
 export function DeleteCollection(arg1:number):Promise<void>;
 
@@ -72,9 +86,17 @@ export function DeleteWorkPermanent(arg1:number,arg2:boolean):Promise<void>;
 
 export function DetectLibreOffice():Promise<string>;
 
+export function EnsureTemplatesDir():Promise<void>;
+
 export function ExportAllCSV():Promise<Array<app.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<app.ExportResult>>;
+
+export function ExportBook(arg1:number):Promise<app.BookExportResult>;
+
+export function ExportBookEPUB(arg1:number):Promise<app.BookExportResult>;
+
+export function ExportBookPDF(arg1:number):Promise<app.BookExportResult>;
 
 export function ExportCollectionFolder(arg1:number):Promise<number>;
 
@@ -102,15 +124,23 @@ export function GetAllSubmissionViews():Promise<Array<models.SubmissionView>>;
 
 export function GetAppState():Promise<state.AppState>;
 
+export function GetBook(arg1:number):Promise<models.Book>;
+
+export function GetBookByCollection(arg1:number):Promise<models.Book>;
+
 export function GetCollection(arg1:number):Promise<models.Collection>;
 
 export function GetCollectionDeleteConfirmation(arg1:number):Promise<db.DeleteConfirmation>;
+
+export function GetCollectionIsBook(arg1:number):Promise<boolean>;
 
 export function GetCollectionWorks(arg1:number):Promise<Array<models.CollectionWork>>;
 
 export function GetCollections():Promise<Array<models.CollectionView>>;
 
 export function GetDashboardStats(arg1:string):Promise<app.DashboardStats>;
+
+export function GetDefaultTemplatePath():Promise<string>;
 
 export function GetDistinctValues(arg1:string,arg2:string):Promise<Array<string>>;
 
@@ -170,15 +200,23 @@ export function GetTab(arg1:string):Promise<string>;
 
 export function GetTableState(arg1:string):Promise<state.TableState>;
 
+export function GetTemplatesDir():Promise<string>;
+
 export function GetValidExtensions():Promise<Array<string>>;
 
 export function GetWork(arg1:number):Promise<models.Work>;
+
+export function GetWorkBookAuditStatus(arg1:number):Promise<app.WorkBookAuditStatus>;
 
 export function GetWorkCollections(arg1:number):Promise<Array<models.CollectionDetail>>;
 
 export function GetWorkDeleteConfirmation(arg1:number):Promise<db.DeleteConfirmation>;
 
 export function GetWorkFullPath(arg1:number):Promise<string>;
+
+export function GetWorkTemplateClean(arg1:number):Promise<boolean>;
+
+export function GetWorkTemplatePath(arg1:number):Promise<string>;
 
 export function GetWorks():Promise<Array<models.WorkView>>;
 
@@ -191,6 +229,8 @@ export function IsFirstRun():Promise<boolean>;
 export function IsValidExtension(arg1:string):Promise<boolean>;
 
 export function ListBackups():Promise<Array<backup.BackupInfo>>;
+
+export function ListTemplates():Promise<Array<string>>;
 
 export function MoveWorkFile(arg1:number):Promise<void>;
 
@@ -205,6 +245,8 @@ export function OpenOrgOtherURL(arg1:number):Promise<void>;
 export function OpenOrgURL(arg1:number):Promise<void>;
 
 export function OpenSupportingItem(arg1:number):Promise<void>;
+
+export function OpenTemplate(arg1:string):Promise<void>;
 
 export function OpenURL(arg1:string):Promise<void>;
 
@@ -236,7 +278,11 @@ export function ScanImportFolder():Promise<Array<string>>;
 
 export function Search(arg1:string,arg2:number):Promise<models.SearchResponse>;
 
+export function SelectBookTemplate():Promise<string>;
+
 export function SelectExportFolder():Promise<string>;
+
+export function SetCollectionIsBook(arg1:number,arg2:boolean):Promise<void>;
 
 export function SetDashboardTimeframe(arg1:string):Promise<void>;
 
@@ -260,6 +306,8 @@ export function SetTab(arg1:string,arg2:string):Promise<void>;
 
 export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;
 
+export function SetWorkTemplateClean(arg1:number,arg2:boolean):Promise<void>;
+
 export function StartReportGeneration():Promise<void>;
 
 export function ToggleShowDeleted():Promise<boolean>;
@@ -276,6 +324,8 @@ export function UndeleteSubmission(arg1:number):Promise<validation.ValidationRes
 
 export function UndeleteWork(arg1:number):Promise<validation.ValidationResult>;
 
+export function UpdateBook(arg1:models.Book):Promise<void>;
+
 export function UpdateCollection(arg1:models.Collection):Promise<validation.ValidationResult>;
 
 export function UpdateNote(arg1:models.Note):Promise<validation.ValidationResult>;
@@ -289,3 +339,5 @@ export function UpdateSubmission(arg1:models.Submission):Promise<validation.Vali
 export function UpdateWork(arg1:models.Work):Promise<validation.ValidationResult>;
 
 export function UpdateWorkWithWorkflow(arg1:models.Work):Promise<app.WorkUpdateResult>;
+
+export function ValidateTemplate(arg1:string):Promise<app.TemplateValidation>;

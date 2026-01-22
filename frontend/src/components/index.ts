@@ -56,3 +56,4 @@ export { DebugPopover } from './DebugPopover';
 export { SplashScreen } from './SplashScreen';
 export { ImportConfirmModal } from './ImportConfirmModal';
 export { FTSStatus } from './FTSStatus';
+export { BookSettingsTab } from './BookSettingsTab';

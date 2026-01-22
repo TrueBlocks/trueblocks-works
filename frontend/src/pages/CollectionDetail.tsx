@@ -12,8 +12,18 @@ import {
   Tooltip,
   Modal,
   Button,
+  Switch,
+  Tabs,
 } from '@mantine/core';
-import { IconPlus, IconX, IconFolder, IconFolderShare, IconReorder } from '@tabler/icons-react';
+import {
+  IconPlus,
+  IconX,
+  IconFolder,
+  IconFolderShare,
+  IconReorder,
+  IconLayoutList,
+  IconBook,
+} from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
@@ -38,6 +48,12 @@ import {
   GetTableState,
   SetTableState,
   ExportCollectionFolder,
+  GetCollectionIsBook,
+  SetCollectionIsBook,
+  CreateBook,
+  GetBookByCollection,
+  GetTab,
+  SetTab,
 } from '@app';
 import { models, db, state } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
@@ -56,6 +72,7 @@ import {
   CollectionFieldSelect,
   ConfirmDeleteModal,
   MoveToPositionModal,
+  BookSettingsTab,
 } from '@/components';
 import { useNotes } from '@/hooks';
 
@@ -93,6 +110,8 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   });
   const [tableState, setTableState] = useState({ hasActiveFilters: false, hasActiveSort: false });
   const [numberAsSortedModalOpen, setNumberAsSortedModalOpen] = useState(false);
+  const [isBook, setIsBook] = useState(false);
+  const [activeTab, setActiveTab] = useState<string | null>('contents');
   const hasInitialized = useRef(false);
   const prevCollectionIdRef = useRef<number | undefined>(undefined);
 
@@ -143,13 +162,21 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     if (!collectionId) return;
 
     try {
-      const [coll, worksData, subsData] = await Promise.all([
+      const [coll, worksData, subsData, isBookResult, savedSubTab] = await Promise.all([
         GetCollection(collectionId),
         GetCollectionWorks(collectionId),
         GetSubmissionViewsByCollection(collectionId),
+        GetCollectionIsBook(collectionId),
+        GetTab(`collection-${collectionId}-subtab`),
       ]);
 
       setCollection(coll as models.CollectionView);
+      setIsBook(isBookResult);
+      if (isBookResult && savedSubTab) {
+        setActiveTab(savedSubTab);
+      } else {
+        setActiveTab('contents');
+      }
       const data = worksData || [];
       setWorks(data);
       setSubmissions(subsData || []);
@@ -220,6 +247,18 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     window.addEventListener('showDeletedChanged', handleShowDeletedChanged);
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadData]);
+
+  // Cmd+Shift+2: Cycle sub-tabs (Contents/Book)
+  useEffect(() => {
+    function handleCycleSubTab() {
+      if (!isBook) return;
+      const newTab = activeTab === 'contents' ? 'book' : 'contents';
+      setActiveTab(newTab);
+      SetTab(`collection-${collectionId}-subtab`, newTab);
+    }
+    window.addEventListener('cycleCollectionSubTab', handleCycleSubTab);
+    return () => window.removeEventListener('cycleCollectionSubTab', handleCycleSubTab);
+  }, [isBook, activeTab, collectionId]);
 
   const handleDelete = useCallback(async () => {
     if (!collection) return;
@@ -393,6 +432,57 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           setCollection(updated);
         })
         .catch((err) => LogErr('Failed to update collection:', err));
+    },
+    [collection]
+  );
+
+  const handleIsBookChange = useCallback(
+    async (checked: boolean) => {
+      if (!collection) return;
+      try {
+        await SetCollectionIsBook(collection.collID, checked);
+        setIsBook(checked);
+
+        if (checked) {
+          const existingBook = await GetBookByCollection(collection.collID);
+          if (!existingBook) {
+            try {
+              const newBook = new models.Book({
+                bookID: 0,
+                collID: collection.collID,
+                title: collection.collectionName,
+                author: 'Thomas Jay Rush',
+                status: 'draft',
+                createdAt: '',
+                modifiedAt: '',
+              });
+              await CreateBook(newBook);
+            } catch (createErr) {
+              const errMsg = createErr instanceof Error ? createErr.message : String(createErr);
+              LogErr('Failed to create book record:', createErr);
+              notifications.show({
+                title: 'Failed to create book record',
+                message: errMsg,
+                color: 'red',
+                autoClose: 10000,
+              });
+              await SetCollectionIsBook(collection.collID, false);
+              setIsBook(false);
+              return;
+            }
+          }
+          setActiveTab('book');
+        }
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        LogErr('Failed to set collection as book:', err);
+        notifications.show({
+          title: 'Failed to update book setting',
+          message: errMsg,
+          color: 'red',
+          autoClose: 10000,
+        });
+      }
     },
     [collection]
   );
@@ -661,6 +751,14 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             <Text size="sm" c="dimmed">
               {works.length} work{works.length !== 1 ? 's' : ''}
             </Text>
+            {!isUneditable && (
+              <Switch
+                label="Book"
+                size="sm"
+                checked={isBook}
+                onChange={(e) => handleIsBookChange(e.currentTarget.checked)}
+              />
+            )}
           </Group>
         }
         actionsRight={
@@ -705,103 +803,266 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         onPermanentDelete={handlePermanentDeleteClick}
       />
 
-      <Grid>
-        <Grid.Col span={{ base: 12, md: 9 }}>
-          <DataTable<models.CollectionWork>
-            tableName={`collection-${collectionId}`}
-            data={works}
-            columns={columns}
-            getRowKey={(work) => work.workID}
-            onRowClick={(work) => {
-              window.history.replaceState(
-                { ...location.state, selectID: work.workID },
-                document.title
-              );
-              navigate(`/works/${work.workID}`, {
-                state: {
-                  selectID: work.workID,
-                  fromCollection: collectionId,
-                  collectionWorks: sortedFilteredWorks.map((w) => w.workID),
-                },
-              });
-            }}
-            onSelectedChange={handleSelectedChange}
-            getLastSelectedID={getLastSelectedID}
-            searchFn={searchFn}
-            valueGetter={valueGetter}
-            getRowStyle={getRowStyle}
-            onReorder={handleReorderWork}
-            onMoveToPosition={handleOpenMoveToPosition}
-            onFilteredSortedChange={setSortedFilteredWorks}
-            onSortFilterStateChange={setTableState}
-            extraColumns={<Table.Th style={{ width: '50px' }} />}
-            renderExtraCells={(work) => (
-              <Table.Td>
-                <ActionIcon
-                  variant="subtle"
-                  color="red"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveWork(work.workID);
-                  }}
-                >
-                  <IconX size={14} />
-                </ActionIcon>
-              </Table.Td>
-            )}
-            headerActions={
-              <ActionIcon variant="light" onClick={() => setWorkPickerOpen(true)}>
-                <IconPlus size={16} />
-              </ActionIcon>
+      {isBook ? (
+        <Tabs
+          orientation="vertical"
+          value={activeTab}
+          onChange={(value) => {
+            setActiveTab(value);
+            if (value) {
+              SetTab(`collection-${collectionId}-subtab`, value);
             }
-          />
-          <WorkPickerModal
-            opened={workPickerOpen}
-            onClose={() => setWorkPickerOpen(false)}
-            collectionID={collectionId}
-            onUpdate={loadData}
-            onNewWork={() => setNewWorkModalOpen(true)}
-            onWorksAdded={expandFiltersForWorks}
-          />
-          <NewWorkModal
-            opened={newWorkModalOpen}
-            onClose={() => setNewWorkModalOpen(false)}
-            onCreated={async (work) => {
-              await AddWorkToCollection(collectionId, work.workID);
-              await expandFiltersForWorks([work as unknown as models.WorkView]);
-              loadData();
-            }}
-          />
-        </Grid.Col>
-        <Grid.Col span={{ base: 12, md: 3 }}>
-          <Stack gap="md">
-            <SubmissionsPortal
-              submissions={submissions}
-              onRowClick={(sub) =>
-                navigate(`/submissions/${sub.submissionID}`, {
-                  state: { selectID: sub.submissionID },
-                })
-              }
-              onWorkClick={(workId) =>
-                navigate(`/works/${workId}`, { state: { selectID: workId } })
-              }
-              onDelete={handleDeleteSubmission}
-              onUndelete={handleUndeleteSubmission}
-              onPermanentDelete={handlePermanentDeleteSubmissionDirect}
-              displayField="work"
+          }}
+          style={{ minHeight: 400 }}
+          styles={{
+            tab: {
+              padding: '10px',
+              borderRadius: '6px',
+              marginBottom: '4px',
+              '&[dataActive]': {
+                backgroundColor: 'var(--mantine-color-blue-light)',
+                color: 'var(--mantine-color-blue-6)',
+              },
+            },
+          }}
+        >
+          <Tabs.List style={{ width: 50, border: 'none' }}>
+            <Tooltip label="Contents" position="right">
+              <Tabs.Tab
+                value="contents"
+                style={{
+                  backgroundColor:
+                    activeTab === 'contents' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'contents' ? 'var(--mantine-color-blue-6)' : undefined,
+                  borderRadius: '6px',
+                  padding: '10px',
+                }}
+              >
+                <IconLayoutList size={20} />
+              </Tabs.Tab>
+            </Tooltip>
+            <Tooltip label="Book Settings" position="right">
+              <Tabs.Tab
+                value="book"
+                style={{
+                  backgroundColor:
+                    activeTab === 'book' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'book' ? 'var(--mantine-color-blue-6)' : undefined,
+                  borderRadius: '6px',
+                  padding: '10px',
+                }}
+              >
+                <IconBook size={20} />
+              </Tabs.Tab>
+            </Tooltip>
+          </Tabs.List>
+
+          <Tabs.Panel value="contents" pl="md" style={{ flex: 1 }}>
+            <Grid>
+              <Grid.Col span={{ base: 12, md: 9 }}>
+                <DataTable<models.CollectionWork>
+                  tableName={`collection-${collectionId}`}
+                  data={works}
+                  columns={columns}
+                  getRowKey={(work) => work.workID}
+                  onRowClick={(work) => {
+                    window.history.replaceState(
+                      { ...location.state, selectID: work.workID },
+                      document.title
+                    );
+                    navigate(`/works/${work.workID}`, {
+                      state: {
+                        selectID: work.workID,
+                        fromCollection: collectionId,
+                        collectionWorks: sortedFilteredWorks.map((w) => w.workID),
+                      },
+                    });
+                  }}
+                  onSelectedChange={handleSelectedChange}
+                  getLastSelectedID={getLastSelectedID}
+                  searchFn={searchFn}
+                  valueGetter={valueGetter}
+                  getRowStyle={getRowStyle}
+                  onReorder={handleReorderWork}
+                  onMoveToPosition={handleOpenMoveToPosition}
+                  onFilteredSortedChange={setSortedFilteredWorks}
+                  onSortFilterStateChange={setTableState}
+                  extraColumns={<Table.Th style={{ width: '50px' }} />}
+                  renderExtraCells={(work) => (
+                    <Table.Td>
+                      <ActionIcon
+                        variant="subtle"
+                        color="red"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveWork(work.workID);
+                        }}
+                      >
+                        <IconX size={14} />
+                      </ActionIcon>
+                    </Table.Td>
+                  )}
+                  headerActions={
+                    <ActionIcon variant="light" onClick={() => setWorkPickerOpen(true)}>
+                      <IconPlus size={16} />
+                    </ActionIcon>
+                  }
+                />
+                <WorkPickerModal
+                  opened={workPickerOpen}
+                  onClose={() => setWorkPickerOpen(false)}
+                  collectionID={collectionId}
+                  onUpdate={loadData}
+                  onNewWork={() => setNewWorkModalOpen(true)}
+                  onWorksAdded={expandFiltersForWorks}
+                />
+                <NewWorkModal
+                  opened={newWorkModalOpen}
+                  onClose={() => setNewWorkModalOpen(false)}
+                  onCreated={async (work) => {
+                    await AddWorkToCollection(collectionId, work.workID);
+                    await expandFiltersForWorks([work as unknown as models.WorkView]);
+                    loadData();
+                  }}
+                />
+              </Grid.Col>
+              <Grid.Col span={{ base: 12, md: 3 }}>
+                <Stack gap="md">
+                  <SubmissionsPortal
+                    submissions={submissions}
+                    onRowClick={(sub) =>
+                      navigate(`/submissions/${sub.submissionID}`, {
+                        state: { selectID: sub.submissionID },
+                      })
+                    }
+                    onWorkClick={(workId) =>
+                      navigate(`/works/${workId}`, { state: { selectID: workId } })
+                    }
+                    onDelete={handleDeleteSubmission}
+                    onUndelete={handleUndeleteSubmission}
+                    onPermanentDelete={handlePermanentDeleteSubmissionDirect}
+                    displayField="work"
+                  />
+                  <NotesPortal
+                    notes={notes}
+                    onAdd={handleAddNote}
+                    onUpdate={handleUpdateNote}
+                    onDelete={handleDeleteNote}
+                    onUndelete={handleUndeleteNote}
+                    onPermanentDelete={handlePermanentDeleteNote}
+                  />
+                </Stack>
+              </Grid.Col>
+            </Grid>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="book" pl="md" style={{ flex: 1 }}>
+            <BookSettingsTab
+              collectionId={collectionId}
+              collectionName={collection.collectionName}
             />
-            <NotesPortal
-              notes={notes}
-              onAdd={handleAddNote}
-              onUpdate={handleUpdateNote}
-              onDelete={handleDeleteNote}
-              onUndelete={handleUndeleteNote}
-              onPermanentDelete={handlePermanentDeleteNote}
+          </Tabs.Panel>
+        </Tabs>
+      ) : (
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 9 }}>
+            <DataTable<models.CollectionWork>
+              tableName={`collection-${collectionId}`}
+              data={works}
+              columns={columns}
+              getRowKey={(work) => work.workID}
+              onRowClick={(work) => {
+                window.history.replaceState(
+                  { ...location.state, selectID: work.workID },
+                  document.title
+                );
+                navigate(`/works/${work.workID}`, {
+                  state: {
+                    selectID: work.workID,
+                    fromCollection: collectionId,
+                    collectionWorks: sortedFilteredWorks.map((w) => w.workID),
+                  },
+                });
+              }}
+              onSelectedChange={handleSelectedChange}
+              getLastSelectedID={getLastSelectedID}
+              searchFn={searchFn}
+              valueGetter={valueGetter}
+              getRowStyle={getRowStyle}
+              onReorder={handleReorderWork}
+              onMoveToPosition={handleOpenMoveToPosition}
+              onFilteredSortedChange={setSortedFilteredWorks}
+              onSortFilterStateChange={setTableState}
+              extraColumns={<Table.Th style={{ width: '50px' }} />}
+              renderExtraCells={(work) => (
+                <Table.Td>
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveWork(work.workID);
+                    }}
+                  >
+                    <IconX size={14} />
+                  </ActionIcon>
+                </Table.Td>
+              )}
+              headerActions={
+                <ActionIcon variant="light" onClick={() => setWorkPickerOpen(true)}>
+                  <IconPlus size={16} />
+                </ActionIcon>
+              }
             />
-          </Stack>
-        </Grid.Col>
-      </Grid>
+            <WorkPickerModal
+              opened={workPickerOpen}
+              onClose={() => setWorkPickerOpen(false)}
+              collectionID={collectionId}
+              onUpdate={loadData}
+              onNewWork={() => setNewWorkModalOpen(true)}
+              onWorksAdded={expandFiltersForWorks}
+            />
+            <NewWorkModal
+              opened={newWorkModalOpen}
+              onClose={() => setNewWorkModalOpen(false)}
+              onCreated={async (work) => {
+                await AddWorkToCollection(collectionId, work.workID);
+                await expandFiltersForWorks([work as unknown as models.WorkView]);
+                loadData();
+              }}
+            />
+          </Grid.Col>
+          <Grid.Col span={{ base: 12, md: 3 }}>
+            <Stack gap="md">
+              <SubmissionsPortal
+                submissions={submissions}
+                onRowClick={(sub) =>
+                  navigate(`/submissions/${sub.submissionID}`, {
+                    state: { selectID: sub.submissionID },
+                  })
+                }
+                onWorkClick={(workId) =>
+                  navigate(`/works/${workId}`, { state: { selectID: workId } })
+                }
+                onDelete={handleDeleteSubmission}
+                onUndelete={handleUndeleteSubmission}
+                onPermanentDelete={handlePermanentDeleteSubmissionDirect}
+                displayField="work"
+              />
+              <NotesPortal
+                notes={notes}
+                onAdd={handleAddNote}
+                onUpdate={handleUpdateNote}
+                onDelete={handleDeleteNote}
+                onUndelete={handleUndeleteNote}
+                onPermanentDelete={handlePermanentDeleteNote}
+              />
+            </Stack>
+          </Grid.Col>
+        </Grid>
+      )}
       <ConfirmDeleteModal
         opened={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}

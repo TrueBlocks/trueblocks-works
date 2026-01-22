@@ -6,9 +6,13 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const wordDocumentXML = "word/document.xml"
@@ -308,12 +312,10 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 	}
 	defer rc.Close()
 
-	// Simple counting - look for paragraph style references
 	styleCounts := make(map[string]int)
 	directFormatting := 0
-	directFormattingTypes := make(map[string]bool)
+	directFormattingExamples := make(map[string]string)
 
-	// Parse XML looking for w:pStyle and w:rPr (direct formatting)
 	decoder := xml.NewDecoder(rc)
 	inParagraph := false
 	inRun := false
@@ -352,16 +354,12 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 					inRunProps = true
 				}
 			case "rStyle":
-				// Character style reference - this is NOT direct formatting
-				// Do nothing - we only flag actual formatting elements
 			case "b", "i", "u", "sz", "color", "rFonts", "highlight", "strike", "dstrike", "vertAlign", "spacing":
-				// These are actual direct formatting elements
 				if inRun && inRunProps {
 					runHasDirectFormat = true
 					runDirectTypes[t.Name.Local] = true
 				}
 			case "t":
-				// Text element - will capture content in CharData
 			}
 		case xml.CharData:
 			if inRun {
@@ -372,11 +370,18 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 			case "rPr":
 				inRunProps = false
 			case "r":
-				// End of run - check if it's real direct formatting or just em-dash
 				if runHasDirectFormat && !isOnlyEmDash(runText) {
 					paragraphHasRealDirectFormat = true
 					for k := range runDirectTypes {
-						directFormattingTypes[k] = true
+						if _, exists := directFormattingExamples[k]; !exists {
+							sample := strings.TrimSpace(runText)
+							if len(sample) > 30 {
+								sample = sample[:30] + "..."
+							}
+							if sample != "" {
+								directFormattingExamples[k] = sample
+							}
+						}
 					}
 				}
 				inRun = false
@@ -391,13 +396,16 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 		}
 	}
 
-	// Convert map to sorted slice of human-readable labels
 	var types []string
-	for k := range directFormattingTypes {
-		if label, ok := directFormattingLabel[k]; ok {
-			types = append(types, label)
+	for k, sample := range directFormattingExamples {
+		label := k
+		if l, ok := directFormattingLabel[k]; ok {
+			label = l
+		}
+		if sample != "" {
+			types = append(types, fmt.Sprintf("%s: \"%s\"", label, sample))
 		} else {
-			types = append(types, k)
+			types = append(types, label)
 		}
 	}
 
@@ -427,8 +435,33 @@ func formatStyleCount(styleName string, counts map[string]int) string {
 	return styleName
 }
 
-// extractParagraphs extracts plain text paragraphs from a DOCX file
-func extractParagraphs(docxPath string) ([]string, error) {
+type ImageRef struct {
+	SourceRelID string
+	OutputRelID string
+	MediaPath   string
+	LocalPath   string
+	DrawingXML  string
+	IsLinked    bool
+}
+
+type ParagraphContent struct {
+	Text   string
+	Images []ImageRef
+}
+
+const wordRelsPath = "word/_rels/document.xml.rels"
+const imageRelType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+const hyperlinkRelType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+const contentTypesXML = "[Content_Types].xml"
+
+const (
+	extPNG  = ".png"
+	extJPG  = ".jpg"
+	extGIF  = ".gif"
+	extWebP = ".webp"
+)
+
+func parseRelationships(docxPath string) (map[string]string, error) {
 	reader, err := zip.OpenReader(docxPath)
 	if err != nil {
 		return nil, fmt.Errorf("open docx: %w", err)
@@ -436,73 +469,444 @@ func extractParagraphs(docxPath string) ([]string, error) {
 	defer reader.Close()
 
 	for _, file := range reader.File {
-		if file.Name == wordDocumentXML {
+		if file.Name == wordRelsPath {
 			rc, err := file.Open()
 			if err != nil {
-				return nil, fmt.Errorf("open document.xml: %w", err)
+				return nil, fmt.Errorf("open rels: %w", err)
 			}
 			defer rc.Close()
 
 			content, err := io.ReadAll(rc)
 			if err != nil {
-				return nil, fmt.Errorf("read document.xml: %w", err)
+				return nil, fmt.Errorf("read rels: %w", err)
 			}
 
-			return parseParagraphs(content)
+			return parseRelsXML(content)
 		}
 	}
 
-	return nil, fmt.Errorf("document.xml not found in docx")
+	return make(map[string]string), nil
 }
 
-// parseParagraphs parses document.xml and returns paragraphs as a slice
-func parseParagraphs(content []byte) ([]string, error) {
-	decoder := xml.NewDecoder(bytes.NewReader(content))
+func parseRelsXML(content []byte) (map[string]string, error) {
+	type Relationship struct {
+		ID     string `xml:"Id,attr"`
+		Type   string `xml:"Type,attr"`
+		Target string `xml:"Target,attr"`
+	}
+	type Relationships struct {
+		Rels []Relationship `xml:"Relationship"`
+	}
 
-	var paragraphs []string
-	var inParagraph bool
-	var paragraphContent strings.Builder
+	var rels Relationships
+	if err := xml.Unmarshal(content, &rels); err != nil {
+		return nil, fmt.Errorf("parse rels xml: %w", err)
+	}
 
-	for {
-		token, err := decoder.Token()
-		if err == io.EOF {
+	result := make(map[string]string)
+	for _, rel := range rels.Rels {
+		if rel.Type == imageRelType || rel.Type == hyperlinkRelType {
+			result[rel.ID] = rel.Target
+		}
+	}
+	return result, nil
+}
+
+func extractParagraphsWithImages(docxPath string) ([]ParagraphContent, error) {
+	reader, err := zip.OpenReader(docxPath)
+	if err != nil {
+		return nil, fmt.Errorf("open docx: %w", err)
+	}
+	defer reader.Close()
+
+	var docContent []byte
+	for _, file := range reader.File {
+		if file.Name == wordDocumentXML {
+			rc, err := file.Open()
+			if err != nil {
+				return nil, fmt.Errorf("open document.xml: %w", err)
+			}
+			docContent, err = io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				return nil, fmt.Errorf("read document.xml: %w", err)
+			}
 			break
 		}
-		if err != nil {
-			return nil, fmt.Errorf("parse xml: %w", err)
+	}
+
+	if docContent == nil {
+		return nil, fmt.Errorf("document.xml not found in docx")
+	}
+
+	rels, err := parseRelationships(docxPath)
+	if err != nil {
+		return nil, fmt.Errorf("parse relationships: %w", err)
+	}
+
+	return parseParagraphsWithImages(docContent, rels)
+}
+
+func parseParagraphsWithImages(content []byte, rels map[string]string) ([]ParagraphContent, error) {
+	contentStr := string(content)
+	var paragraphs []ParagraphContent
+
+	pStart := 0
+	for {
+		openTag := strings.Index(contentStr[pStart:], "<w:p>")
+		if openTag == -1 {
+			openTag = strings.Index(contentStr[pStart:], "<w:p ")
 		}
-
-		switch elem := token.(type) {
-		case xml.StartElement:
-			switch elem.Name.Local {
-			case "p":
-				inParagraph = true
-				paragraphContent.Reset()
-			case "br":
-				if inParagraph {
-					paragraphContent.WriteString("\n")
-				}
-			}
-
-		case xml.EndElement:
-			if elem.Name.Local == "p" && inParagraph {
-				text := strings.TrimSpace(paragraphContent.String())
-				paragraphs = append(paragraphs, text)
-				inParagraph = false
-			}
-
-		case xml.CharData:
-			if inParagraph {
-				paragraphContent.WriteString(string(elem))
-			}
+		if openTag == -1 {
+			break
 		}
+		openTag += pStart
+
+		closeTag := strings.Index(contentStr[openTag:], "</w:p>")
+		if closeTag == -1 {
+			break
+		}
+		closeTag += openTag + 6
+
+		paraXML := contentStr[openTag:closeTag]
+		para := parseSingleParagraph(paraXML, rels)
+		paragraphs = append(paragraphs, para)
+
+		pStart = closeTag
 	}
 
 	return paragraphs, nil
 }
 
-// buildDocumentXML reads template's document.xml and replaces body content with new paragraphs
-func buildDocumentXML(templatePath string, paragraphs []string) ([]byte, error) {
+func parseSingleParagraph(paraXML string, rels map[string]string) ParagraphContent {
+	var result ParagraphContent
+	var textBuilder strings.Builder
+
+	remaining := paraXML
+	for len(remaining) > 0 {
+		drawingStart := strings.Index(remaining, "<w:drawing>")
+		if drawingStart == -1 {
+			drawingStart = strings.Index(remaining, "<w:drawing ")
+		}
+
+		if drawingStart == -1 {
+			textBuilder.WriteString(extractTextFromXML(remaining))
+			break
+		}
+
+		textBuilder.WriteString(extractTextFromXML(remaining[:drawingStart]))
+
+		drawingEnd := strings.Index(remaining[drawingStart:], "</w:drawing>")
+		if drawingEnd == -1 {
+			break
+		}
+		drawingEnd += drawingStart + 12
+
+		drawingXML := remaining[drawingStart:drawingEnd]
+		img := extractImageRef(drawingXML, rels)
+		if img.DrawingXML != "" {
+			result.Images = append(result.Images, img)
+		}
+
+		remaining = remaining[drawingEnd:]
+	}
+
+	result.Text = strings.TrimSpace(textBuilder.String())
+	return result
+}
+
+func extractTextFromXML(xmlStr string) string {
+	var result strings.Builder
+	decoder := xml.NewDecoder(strings.NewReader(xmlStr))
+
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			break
+		}
+		if charData, ok := token.(xml.CharData); ok {
+			result.WriteString(string(charData))
+		}
+	}
+	return result.String()
+}
+
+func extractImageRef(drawingXML string, rels map[string]string) ImageRef {
+	var relID string
+	var isLinked bool
+
+	embedStart := strings.Index(drawingXML, "r:embed=\"")
+	if embedStart != -1 {
+		embedStart += 9
+		embedEnd := strings.Index(drawingXML[embedStart:], "\"")
+		if embedEnd != -1 {
+			relID = drawingXML[embedStart : embedStart+embedEnd]
+		}
+	}
+
+	if relID == "" {
+		linkStart := strings.Index(drawingXML, "r:link=\"")
+		if linkStart != -1 {
+			linkStart += 8
+			linkEnd := strings.Index(drawingXML[linkStart:], "\"")
+			if linkEnd != -1 {
+				relID = drawingXML[linkStart : linkStart+linkEnd]
+				isLinked = true
+			}
+		}
+	}
+
+	if relID == "" {
+		return ImageRef{}
+	}
+
+	mediaPath := rels[relID]
+
+	return ImageRef{
+		SourceRelID: relID,
+		MediaPath:   mediaPath,
+		DrawingXML:  drawingXML,
+		IsLinked:    isLinked,
+	}
+}
+
+func getMaxRelationshipID(templatePath string) (int, error) {
+	rels, err := parseRelationships(templatePath)
+	if err != nil {
+		return 0, err
+	}
+
+	maxID := 0
+	for relID := range rels {
+		if strings.HasPrefix(relID, "rId") {
+			numStr := strings.TrimPrefix(relID, "rId")
+			if num, err := strconv.Atoi(numStr); err == nil && num > maxID {
+				maxID = num
+			}
+		}
+	}
+
+	reader, err := zip.OpenReader(templatePath)
+	if err != nil {
+		return maxID, nil
+	}
+	defer reader.Close()
+
+	for _, file := range reader.File {
+		if file.Name == wordRelsPath {
+			rc, err := file.Open()
+			if err != nil {
+				continue
+			}
+			content, err := io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				continue
+			}
+
+			re := regexp.MustCompile(`Id="rId(\d+)"`)
+			matches := re.FindAllStringSubmatch(string(content), -1)
+			for _, m := range matches {
+				if num, err := strconv.Atoi(m[1]); err == nil && num > maxID {
+					maxID = num
+				}
+			}
+		}
+	}
+
+	return maxID, nil
+}
+
+func downloadLinkedImages(paragraphs []ParagraphContent, workPath string) []ParagraphContent {
+	dir := filepath.Dir(workPath)
+	base := filepath.Base(workPath)
+	ext := filepath.Ext(base)
+	name := strings.TrimSuffix(base, ext)
+	supportingDir := filepath.Join(dir, "Supporting", name)
+
+	existingImages := findExistingImages(supportingDir)
+	nextImageNum := len(existingImages) + 1
+
+	result := make([]ParagraphContent, len(paragraphs))
+	imageNum := 1
+	downloadedURLs := make(map[string]string)
+
+	for i, para := range paragraphs {
+		result[i].Text = para.Text
+		for _, img := range para.Images {
+			if !img.IsLinked || img.MediaPath == "" {
+				result[i].Images = append(result[i].Images, img)
+				continue
+			}
+
+			if localPath, exists := downloadedURLs[img.MediaPath]; exists {
+				newImg := img
+				newImg.LocalPath = localPath
+				newImg.IsLinked = false
+				newImg.DrawingXML = strings.Replace(img.DrawingXML, "r:link=", "r:embed=", 1)
+				result[i].Images = append(result[i].Images, newImg)
+				continue
+			}
+
+			if localPath, exists := existingImages[imageNum]; exists {
+				newImg := img
+				newImg.LocalPath = localPath
+				newImg.IsLinked = false
+				newImg.DrawingXML = strings.Replace(img.DrawingXML, "r:link=", "r:embed=", 1)
+				result[i].Images = append(result[i].Images, newImg)
+				downloadedURLs[img.MediaPath] = localPath
+				imageNum++
+				continue
+			}
+
+			localPath, err := downloadImage(img.MediaPath, supportingDir, nextImageNum)
+			if err != nil {
+				result[i].Images = append(result[i].Images, img)
+				imageNum++
+				continue
+			}
+
+			downloadedURLs[img.MediaPath] = localPath
+			nextImageNum++
+			imageNum++
+
+			newImg := img
+			newImg.LocalPath = localPath
+			newImg.IsLinked = false
+			newImg.DrawingXML = strings.Replace(img.DrawingXML, "r:link=", "r:embed=", 1)
+			result[i].Images = append(result[i].Images, newImg)
+		}
+	}
+
+	return result
+}
+
+func findExistingImages(supportingDir string) map[int]string {
+	result := make(map[int]string)
+	entries, err := os.ReadDir(supportingDir)
+	if err != nil {
+		return result
+	}
+
+	imagePattern := regexp.MustCompile(`^image(\d+)\.(png|jpg|jpeg|gif|webp)$`)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		matches := imagePattern.FindStringSubmatch(entry.Name())
+		if len(matches) == 3 {
+			num, _ := strconv.Atoi(matches[1])
+			result[num] = filepath.Join(supportingDir, entry.Name())
+		}
+	}
+	return result
+}
+
+func downloadImage(url, supportingDir string, imageNum int) (string, error) {
+	if err := os.MkdirAll(supportingDir, 0755); err != nil {
+		return "", fmt.Errorf("create supporting dir: %w", err)
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("download: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("http status: %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read body: %w", err)
+	}
+
+	ext := detectImageExtension(data, resp.Header.Get("Content-Type"))
+	filename := fmt.Sprintf("image%d%s", imageNum, ext)
+	localPath := filepath.Join(supportingDir, filename)
+
+	if err := os.WriteFile(localPath, data, 0644); err != nil {
+		return "", fmt.Errorf("write file: %w", err)
+	}
+
+	return localPath, nil
+}
+
+func detectImageExtension(data []byte, contentType string) string {
+	if len(data) >= 8 {
+		if data[0] == 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G' {
+			return extPNG
+		}
+		if data[0] == 0xFF && data[1] == 0xD8 {
+			return extJPG
+		}
+		if data[0] == 'G' && data[1] == 'I' && data[2] == 'F' {
+			return extGIF
+		}
+		if data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F' {
+			if len(data) >= 12 && data[8] == 'W' && data[9] == 'E' && data[10] == 'B' && data[11] == 'P' {
+				return extWebP
+			}
+		}
+	}
+
+	switch {
+	case strings.Contains(contentType, "png"):
+		return extPNG
+	case strings.Contains(contentType, "jpeg"), strings.Contains(contentType, "jpg"):
+		return extJPG
+	case strings.Contains(contentType, "gif"):
+		return extGIF
+	case strings.Contains(contentType, "webp"):
+		return extWebP
+	}
+
+	return extPNG
+}
+
+func remapImageRelationships(paragraphs []ParagraphContent, startID int) ([]ParagraphContent, map[string]string) {
+	idMap := make(map[string]string)
+	nextID := startID + 1
+
+	result := make([]ParagraphContent, len(paragraphs))
+	for i, para := range paragraphs {
+		result[i].Text = para.Text
+		for _, img := range para.Images {
+			if img.SourceRelID == "" {
+				continue
+			}
+			newRelID, exists := idMap[img.SourceRelID]
+			if !exists {
+				newRelID = fmt.Sprintf("rId%d", nextID)
+				idMap[img.SourceRelID] = newRelID
+				nextID++
+			}
+
+			oldEmbedAttr := fmt.Sprintf(`r:embed="%s"`, img.SourceRelID)
+			oldLinkAttr := fmt.Sprintf(`r:link="%s"`, img.SourceRelID)
+			newEmbedAttr := fmt.Sprintf(`r:embed="%s"`, newRelID)
+
+			newDrawingXML := strings.Replace(img.DrawingXML, oldEmbedAttr, newEmbedAttr, 1)
+			newDrawingXML = strings.Replace(newDrawingXML, oldLinkAttr, newEmbedAttr, 1)
+
+			newImg := ImageRef{
+				SourceRelID: img.SourceRelID,
+				OutputRelID: newRelID,
+				MediaPath:   img.MediaPath,
+				LocalPath:   img.LocalPath,
+				DrawingXML:  newDrawingXML,
+				IsLinked:    img.IsLinked,
+			}
+			result[i].Images = append(result[i].Images, newImg)
+		}
+	}
+
+	return result, idMap
+}
+
+func buildDocumentXMLWithImages(templatePath string, paragraphs []ParagraphContent) ([]byte, error) {
 	reader, err := zip.OpenReader(templatePath)
 	if err != nil {
 		return nil, fmt.Errorf("open template: %w", err)
@@ -560,10 +964,16 @@ func buildDocumentXML(templatePath string, paragraphs []string) ([]byte, error) 
 	buf.WriteString(content[:bodyTagEnd])
 
 	for _, para := range paragraphs {
-		escaped := escapeXML(para)
+		escaped := escapeXML(para.Text)
 		buf.WriteString(`<w:p><w:r><w:t xml:space="preserve">`)
 		buf.WriteString(escaped)
-		buf.WriteString(`</w:t></w:r></w:p>`)
+		buf.WriteString(`</w:t></w:r>`)
+		for _, img := range para.Images {
+			buf.WriteString(`<w:r>`)
+			buf.WriteString(img.DrawingXML)
+			buf.WriteString(`</w:r>`)
+		}
+		buf.WriteString(`</w:p>`)
 	}
 
 	if sectPr != "" {
@@ -585,17 +995,54 @@ func escapeXML(s string) string {
 	return s
 }
 
-const contentTypesXML = "[Content_Types].xml"
 const dotmContentType = "application/vnd.ms-word.template.macroEnabledTemplate.main+xml"
 const docxContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"
 
-// replaceDocumentXML copies a DOCX/DOTM and replaces its document.xml
-func replaceDocumentXML(templatePath, outputPath string, newDocXML []byte) error {
+func replaceDocumentXMLWithImages(templatePath, sourcePath, outputPath string, newDocXML []byte, paragraphs []ParagraphContent) error {
 	templateReader, err := zip.OpenReader(templatePath)
 	if err != nil {
 		return fmt.Errorf("open template: %w", err)
 	}
 	defer templateReader.Close()
+
+	sourceReader, err := zip.OpenReader(sourcePath)
+	if err != nil {
+		return fmt.Errorf("open source: %w", err)
+	}
+	defer sourceReader.Close()
+
+	sourceMedia := make(map[string]*zip.File)
+	for _, file := range sourceReader.File {
+		if strings.HasPrefix(file.Name, "word/media/") {
+			sourceMedia[file.Name] = file
+		}
+	}
+
+	type mediaEntry struct {
+		localPath string
+		zipFile   *zip.File
+	}
+	neededMedia := make(map[string]mediaEntry)
+	mediaCounter := 1
+
+	for _, para := range paragraphs {
+		for _, img := range para.Images {
+			if img.LocalPath != "" {
+				ext := filepath.Ext(img.LocalPath)
+				mediaName := fmt.Sprintf("word/media/image%d%s", mediaCounter, ext)
+				neededMedia[mediaName] = mediaEntry{localPath: img.LocalPath}
+				mediaCounter++
+			} else if img.MediaPath != "" {
+				mediaPath := img.MediaPath
+				if !strings.HasPrefix(mediaPath, "word/") {
+					mediaPath = "word/" + mediaPath
+				}
+				if srcFile, ok := sourceMedia[mediaPath]; ok {
+					neededMedia[mediaPath] = mediaEntry{zipFile: srcFile}
+				}
+			}
+		}
+	}
 
 	outputFile, err := os.Create(outputPath)
 	if err != nil {
@@ -623,6 +1070,29 @@ func replaceDocumentXML(templatePath, outputPath string, newDocXML []byte) error
 				outputFile.Close()
 				return fmt.Errorf("write document.xml: %w", err)
 			}
+		case wordRelsPath:
+			mergedRels, err := mergeRelationships(file, paragraphs)
+			if err != nil {
+				zipWriter.Close()
+				outputFile.Close()
+				return fmt.Errorf("merge relationships: %w", err)
+			}
+			header := &zip.FileHeader{
+				Name:     file.Name,
+				Method:   zip.Deflate,
+				Modified: file.Modified,
+			}
+			w, err := zipWriter.CreateHeader(header)
+			if err != nil {
+				zipWriter.Close()
+				outputFile.Close()
+				return fmt.Errorf("create rels: %w", err)
+			}
+			if _, err := w.Write(mergedRels); err != nil {
+				zipWriter.Close()
+				outputFile.Close()
+				return fmt.Errorf("write rels: %w", err)
+			}
 		case contentTypesXML:
 			if err := copyZipFileWithContentTypeFix(zipWriter, file); err != nil {
 				zipWriter.Close()
@@ -630,10 +1100,41 @@ func replaceDocumentXML(templatePath, outputPath string, newDocXML []byte) error
 				return fmt.Errorf("copy %s: %w", file.Name, err)
 			}
 		default:
+			if strings.HasPrefix(file.Name, "word/media/") {
+				continue
+			}
 			if err := copyZipFile(zipWriter, file); err != nil {
 				zipWriter.Close()
 				outputFile.Close()
 				return fmt.Errorf("copy %s: %w", file.Name, err)
+			}
+		}
+	}
+
+	for mediaPath, entry := range neededMedia {
+		if entry.localPath != "" {
+			data, err := os.ReadFile(entry.localPath)
+			if err != nil {
+				zipWriter.Close()
+				outputFile.Close()
+				return fmt.Errorf("read local media %s: %w", entry.localPath, err)
+			}
+			w, err := zipWriter.Create(mediaPath)
+			if err != nil {
+				zipWriter.Close()
+				outputFile.Close()
+				return fmt.Errorf("create media %s: %w", mediaPath, err)
+			}
+			if _, err := w.Write(data); err != nil {
+				zipWriter.Close()
+				outputFile.Close()
+				return fmt.Errorf("write media %s: %w", mediaPath, err)
+			}
+		} else if entry.zipFile != nil {
+			if err := copyZipFile(zipWriter, entry.zipFile); err != nil {
+				zipWriter.Close()
+				outputFile.Close()
+				return fmt.Errorf("copy media %s: %w", mediaPath, err)
 			}
 		}
 	}
@@ -647,6 +1148,64 @@ func replaceDocumentXML(templatePath, outputPath string, newDocXML []byte) error
 	}
 
 	return nil
+}
+
+func mergeRelationships(templateRelsFile *zip.File, paragraphs []ParagraphContent) ([]byte, error) {
+	rc, err := templateRelsFile.Open()
+	if err != nil {
+		return nil, fmt.Errorf("open template rels: %w", err)
+	}
+	defer rc.Close()
+
+	content, err := io.ReadAll(rc)
+	if err != nil {
+		return nil, fmt.Errorf("read template rels: %w", err)
+	}
+
+	relsStr := string(content)
+	closeTag := strings.LastIndex(relsStr, "</Relationships>")
+	if closeTag == -1 {
+		return content, nil
+	}
+
+	var newRels strings.Builder
+	newRels.WriteString(relsStr[:closeTag])
+
+	addedRels := make(map[string]bool)
+	mediaCounter := 1
+
+	for _, para := range paragraphs {
+		for _, img := range para.Images {
+			if img.OutputRelID == "" {
+				continue
+			}
+			if addedRels[img.OutputRelID] {
+				continue
+			}
+			addedRels[img.OutputRelID] = true
+
+			var mediaTarget string
+			if img.LocalPath != "" {
+				ext := filepath.Ext(img.LocalPath)
+				mediaTarget = fmt.Sprintf("media/image%d%s", mediaCounter, ext)
+				mediaCounter++
+			} else if img.MediaPath != "" {
+				mediaTarget = strings.TrimPrefix(img.MediaPath, "word/")
+			} else {
+				continue
+			}
+
+			newRels.WriteString(fmt.Sprintf(
+				`<Relationship Id="%s" Type="%s" Target="%s"/>`,
+				img.OutputRelID,
+				imageRelType,
+				mediaTarget,
+			))
+		}
+	}
+
+	newRels.WriteString("</Relationships>")
+	return []byte(newRels.String()), nil
 }
 
 // copyZipFile copies a file from one zip archive to another
@@ -721,32 +1280,36 @@ func (a *App) ApplyTemplateToWork(workID int64, templatePath string) error {
 		return fmt.Errorf("template not found: %s", templatePath)
 	}
 
-	// Step 1: Extract paragraphs from source
-	paragraphs, err := extractParagraphs(fullPath)
+	paragraphs, err := extractParagraphsWithImages(fullPath)
 	if err != nil {
 		return fmt.Errorf("extract paragraphs: %w", err)
 	}
 
-	// Step 2: Create backup in same folder (file.docx → file.bak.docx)
+	paragraphs = downloadLinkedImages(paragraphs, fullPath)
+
+	maxRelID, err := getMaxRelationshipID(templatePath)
+	if err != nil {
+		return fmt.Errorf("get max rel id: %w", err)
+	}
+
+	remappedParagraphs, _ := remapImageRelationships(paragraphs, maxRelID)
+
 	ext := filepath.Ext(fullPath)
 	backupPath := strings.TrimSuffix(fullPath, ext) + ".bak" + ext
 	if err := copyFile(fullPath, backupPath); err != nil {
 		return fmt.Errorf("create backup: %w", err)
 	}
 
-	// Step 3: Build new document.xml with plain paragraphs
-	newDocXML, err := buildDocumentXML(templatePath, paragraphs)
+	newDocXML, err := buildDocumentXMLWithImages(templatePath, remappedParagraphs)
 	if err != nil {
 		return fmt.Errorf("build document.xml: %w", err)
 	}
 
-	// Step 4: Create new file from template with new content
 	tempPath := fullPath + ".tmp"
-	if err := replaceDocumentXML(templatePath, tempPath, newDocXML); err != nil {
+	if err := replaceDocumentXMLWithImages(templatePath, fullPath, tempPath, newDocXML, remappedParagraphs); err != nil {
 		return fmt.Errorf("create new document: %w", err)
 	}
 
-	// Step 5: Replace original with new file
 	if err := os.Remove(fullPath); err != nil {
 		return fmt.Errorf("remove original: %w", err)
 	}
@@ -754,7 +1317,6 @@ func (a *App) ApplyTemplateToWork(workID int64, templatePath string) error {
 		return fmt.Errorf("rename temp to original: %w", err)
 	}
 
-	// Mark as template clean
 	_ = a.SetWorkTemplateClean(workID, true)
 
 	return nil

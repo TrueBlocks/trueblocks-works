@@ -622,7 +622,15 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
 
   const columns: Column<models.CollectionWork>[] = useMemo(
     () => [
-      { key: 'workID', label: 'ID', width: '8%', render: (work) => work.workID },
+      {
+        key: 'position',
+        label: '#',
+        width: '6%',
+        render: (work) => {
+          const pos = sortedFilteredWorks.findIndex((w) => w.workID === work.workID);
+          return pos >= 0 ? pos + 1 : '-';
+        },
+      },
       {
         key: 'title',
         label: 'Title',
@@ -667,7 +675,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           work.modifiedAt ? new Date(work.modifiedAt + 'Z').toLocaleDateString() : '-',
       },
     ],
-    [filterOptions]
+    [filterOptions, sortedFilteredWorks]
   );
 
   const searchFn = useCallback((work: models.CollectionWork, search: string) => {

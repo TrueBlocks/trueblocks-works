@@ -62,6 +62,10 @@ export function CheckWorkPath(arg1) {
   return window['go']['app']['App']['CheckWorkPath'](arg1);
 }
 
+export function ClearPartCache(arg1, arg2) {
+  return window['go']['app']['App']['ClearPartCache'](arg1, arg2);
+}
+
 export function CompleteSetup() {
   return window['go']['app']['App']['CompleteSetup']();
 }
@@ -178,6 +182,10 @@ export function ExportBookPDF(arg1) {
   return window['go']['app']['App']['ExportBookPDF'](arg1);
 }
 
+export function ExportBookPDFWithParts(arg1, arg2, arg3) {
+  return window['go']['app']['App']['ExportBookPDFWithParts'](arg1, arg2, arg3);
+}
+
 export function ExportCollectionFolder(arg1) {
   return window['go']['app']['App']['ExportCollectionFolder'](arg1);
 }
@@ -236,6 +244,10 @@ export function GetBook(arg1) {
 
 export function GetBookByCollection(arg1) {
   return window['go']['app']['App']['GetBookByCollection'](arg1);
+}
+
+export function GetBookParts(arg1) {
+  return window['go']['app']['App']['GetBookParts'](arg1);
 }
 
 export function GetCollection(arg1) {
@@ -322,12 +334,20 @@ export function GetOrgsFilterOptions() {
   return window['go']['app']['App']['GetOrgsFilterOptions']();
 }
 
+export function GetPartCacheStatus(arg1) {
+  return window['go']['app']['App']['GetPartCacheStatus'](arg1);
+}
+
 export function GetPreviewURL(arg1) {
   return window['go']['app']['App']['GetPreviewURL'](arg1);
 }
 
 export function GetReportNames() {
   return window['go']['app']['App']['GetReportNames']();
+}
+
+export function GetSavedPartSelection(arg1) {
+  return window['go']['app']['App']['GetSavedPartSelection'](arg1);
 }
 
 export function GetSearchHistory() {
@@ -424,6 +444,10 @@ export function GetWorks() {
 
 export function GetWorksFilterOptions() {
   return window['go']['app']['App']['GetWorksFilterOptions']();
+}
+
+export function HasCollectionParts(arg1) {
+  return window['go']['app']['App']['HasCollectionParts'](arg1);
 }
 
 export function ImportWork(arg1, arg2) {

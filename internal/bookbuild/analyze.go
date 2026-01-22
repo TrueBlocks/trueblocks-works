@@ -43,6 +43,13 @@ const (
 	ContentTypeBlank
 )
 
+const (
+	PlaceholderTOC       = "toc"
+	PositionTopLeft      = "top-left"
+	PositionTopRight     = "top-right"
+	PositionBottomCenter = "bottom-center"
+)
+
 type AnalysisResult struct {
 	Items            []ContentItem
 	FrontMatterPages int
@@ -51,6 +58,18 @@ type AnalysisResult struct {
 	TotalPages       int
 	TOCIndex         int
 	TOCPageEstimate  int
+	PartAnalyses     []PartAnalysis
+}
+
+type PartAnalysis struct {
+	PartIndex      int
+	PartTitle      string
+	StartPage      int
+	EndPage        int
+	PageCount      int
+	WorkCount      int
+	ItemStartIndex int
+	ItemEndIndex   int
 }
 
 func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
@@ -63,7 +82,7 @@ func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
 	currentPage := 1
 
 	for _, fm := range m.FrontMatter {
-		if fm.Placeholder && fm.Type == "toc" {
+		if fm.Placeholder && fm.Type == PlaceholderTOC {
 			result.TOCIndex = len(result.Items)
 			result.Items = append(result.Items, ContentItem{
 				Type:      ContentTypeTOC,
@@ -97,8 +116,22 @@ func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
 	bodyStartPage := currentPage
 
 	if m.HasParts() {
-		for _, part := range m.Parts {
+		for partIdx, part := range m.Parts {
+			partStartPage := currentPage
+			itemStartIdx := len(result.Items)
 			currentPage, result = addPartContent(currentPage, part, result)
+			itemEndIdx := len(result.Items) - 1
+
+			result.PartAnalyses = append(result.PartAnalyses, PartAnalysis{
+				PartIndex:      partIdx,
+				PartTitle:      part.Title,
+				StartPage:      partStartPage,
+				EndPage:        currentPage - 1,
+				PageCount:      currentPage - partStartPage,
+				WorkCount:      len(part.Works),
+				ItemStartIndex: itemStartIdx,
+				ItemEndIndex:   itemEndIdx,
+			})
 		}
 	} else {
 		for _, work := range m.Works {
@@ -141,6 +174,22 @@ func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
 	result.TotalPages = currentPage - 1
 
 	return result, nil
+}
+
+func AnalyzeByParts(m *Manifest) ([]PartAnalysis, error) {
+	result, err := AnalyzeManifest(m)
+	if err != nil {
+		return nil, err
+	}
+	return result.PartAnalyses, nil
+}
+
+func (r *AnalysisResult) GetPartItems(partIdx int) []ContentItem {
+	if partIdx < 0 || partIdx >= len(r.PartAnalyses) {
+		return nil
+	}
+	pa := r.PartAnalyses[partIdx]
+	return r.Items[pa.ItemStartIndex : pa.ItemEndIndex+1]
 }
 
 func addPartContent(currentPage int, part Part, result *AnalysisResult) (int, *AnalysisResult) {

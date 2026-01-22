@@ -13,13 +13,15 @@ func (db *DB) CreateBook(b *models.Book) error {
 	query := `INSERT INTO Books (
 		collID, title, subtitle, author, copyright, dedication,
 		acknowledgements, about_author, cover_path, isbn, published_date,
-		template_path, export_path, status, created_at, updated_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		template_path, export_path, status, header_font, header_size,
+		page_num_font, page_num_size, selected_parts, created_at, updated_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
 		b.CollID, b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
 		b.Acknowledgements, b.AboutAuthor, b.CoverPath, b.ISBN, b.PublishedDate,
-		b.TemplatePath, b.ExportPath, b.Status, now, now,
+		b.TemplatePath, b.ExportPath, b.Status, b.HeaderFont, b.HeaderSize,
+		b.PageNumFont, b.PageNumSize, b.SelectedParts, now, now,
 	)
 	if err != nil {
 		return fmt.Errorf("insert book: %w", err)
@@ -38,7 +40,8 @@ func (db *DB) CreateBook(b *models.Book) error {
 func (db *DB) GetBook(id int64) (*models.Book, error) {
 	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication,
 		acknowledgements, about_author, cover_path, isbn, published_date,
-		template_path, export_path, status, created_at, updated_at
+		template_path, export_path, status, header_font, header_size,
+		page_num_font, page_num_size, selected_parts, created_at, updated_at
 		FROM Books WHERE bookID = ?`
 
 	b := &models.Book{}
@@ -46,7 +49,8 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 		&b.BookID, &b.CollID, &b.Title, &b.Subtitle, &b.Author, &b.Copyright,
 		&b.Dedication, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
-		&b.Status, &b.CreatedAt, &b.ModifiedAt,
+		&b.Status, &b.HeaderFont, &b.HeaderSize, &b.PageNumFont, &b.PageNumSize,
+		&b.SelectedParts, &b.CreatedAt, &b.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -60,7 +64,8 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication,
 		acknowledgements, about_author, cover_path, isbn, published_date,
-		template_path, export_path, status, created_at, updated_at
+		template_path, export_path, status, header_font, header_size,
+		page_num_font, page_num_size, selected_parts, created_at, updated_at
 		FROM Books WHERE collID = ?`
 
 	b := &models.Book{}
@@ -68,7 +73,8 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 		&b.BookID, &b.CollID, &b.Title, &b.Subtitle, &b.Author, &b.Copyright,
 		&b.Dedication, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
-		&b.Status, &b.CreatedAt, &b.ModifiedAt,
+		&b.Status, &b.HeaderFont, &b.HeaderSize, &b.PageNumFont, &b.PageNumSize,
+		&b.SelectedParts, &b.CreatedAt, &b.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -84,14 +90,16 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		title = ?, subtitle = ?, author = ?, copyright = ?, dedication = ?,
 		acknowledgements = ?, about_author = ?, cover_path = ?, isbn = ?,
 		published_date = ?, template_path = ?, export_path = ?, status = ?,
-		updated_at = CURRENT_TIMESTAMP
+		header_font = ?, header_size = ?, page_num_font = ?, page_num_size = ?,
+		selected_parts = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE bookID = ?`
 
 	_, err := db.conn.Exec(query,
 		b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
 		b.Acknowledgements, b.AboutAuthor, b.CoverPath, b.ISBN,
 		b.PublishedDate, b.TemplatePath, b.ExportPath, b.Status,
-		b.BookID,
+		b.HeaderFont, b.HeaderSize, b.PageNumFont, b.PageNumSize,
+		b.SelectedParts, b.BookID,
 	)
 	if err != nil {
 		return fmt.Errorf("update book: %w", err)

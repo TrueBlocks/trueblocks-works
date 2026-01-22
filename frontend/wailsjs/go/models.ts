@@ -42,6 +42,7 @@ export namespace app {
 	    templateStylesUsed: string[];
 	    unknownStyles: string[];
 	    directFormattingCount: number;
+	    directFormattingTypes: string[];
 	    isClean: boolean;
 	    error?: string;
 	
@@ -56,6 +57,7 @@ export namespace app {
 	        this.templateStylesUsed = source["templateStylesUsed"];
 	        this.unknownStyles = source["unknownStyles"];
 	        this.directFormattingCount = source["directFormattingCount"];
+	        this.directFormattingTypes = source["directFormattingTypes"];
 	        this.isClean = source["isClean"];
 	        this.error = source["error"];
 	    }
@@ -601,6 +603,26 @@ export namespace app {
 	        this.timings = source["timings"];
 	    }
 	}
+	export class PartInfo {
+	    index: number;
+	    title: string;
+	    workCount: number;
+	    pageCount: number;
+	    isCached: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PartInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.index = source["index"];
+	        this.title = source["title"];
+	        this.workCount = source["workCount"];
+	        this.pageCount = source["pageCount"];
+	        this.isCached = source["isCached"];
+	    }
+	}
 	export class PathCheckResult {
 	    generatedPath: string;
 	    storedPath: string;
@@ -777,6 +799,7 @@ export namespace app {
 	    unknownStyles: number;
 	    unknownStyleNames: string[];
 	    directFormatting: number;
+	    directFormattingTypes: string[];
 	    isClean: boolean;
 	    error?: string;
 	
@@ -790,6 +813,7 @@ export namespace app {
 	        this.unknownStyles = source["unknownStyles"];
 	        this.unknownStyleNames = source["unknownStyleNames"];
 	        this.directFormatting = source["directFormatting"];
+	        this.directFormattingTypes = source["directFormattingTypes"];
 	        this.isClean = source["isClean"];
 	        this.error = source["error"];
 	    }
@@ -1295,6 +1319,7 @@ export namespace models {
 	    headerSize?: number;
 	    pageNumFont?: string;
 	    pageNumSize?: number;
+	    selectedParts?: string;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -1323,6 +1348,7 @@ export namespace models {
 	        this.headerSize = source["headerSize"];
 	        this.pageNumFont = source["pageNumFont"];
 	        this.pageNumSize = source["pageNumSize"];
+	        this.selectedParts = source["selectedParts"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }

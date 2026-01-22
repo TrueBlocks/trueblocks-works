@@ -13,6 +13,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+const workTypeSection = "Section"
+
 // BookExportResult contains the result of a book export operation
 type BookExportResult struct {
 	Success    bool     `json:"success"`
@@ -29,6 +31,85 @@ type BookExportProgress struct {
 	Current int    `json:"current"`
 	Total   int    `json:"total"`
 	Message string `json:"message"`
+}
+
+// PartInfo describes a part/section for the part selection modal
+type PartInfo struct {
+	Index     int    `json:"index"`
+	Title     string `json:"title"`
+	WorkCount int    `json:"workCount"`
+	PageCount int    `json:"pageCount"`
+	IsCached  bool   `json:"isCached"`
+}
+
+// GetBookParts returns the parts/sections in a collection for the modal
+func (a *App) GetBookParts(collID int64) ([]PartInfo, error) {
+	works, err := a.db.GetCollectionWorks(collID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	var parts []PartInfo
+	var currentPart *PartInfo
+	partIndex := 0
+
+	for _, w := range works {
+		if w.Type == workTypeSection {
+			if currentPart != nil {
+				parts = append(parts, *currentPart)
+			}
+			currentPart = &PartInfo{
+				Index:     partIndex,
+				Title:     w.Title,
+				WorkCount: 0,
+				PageCount: 1,
+			}
+			partIndex++
+		} else if currentPart != nil {
+			currentPart.WorkCount++
+			pc, _ := bookbuild.GetPageCount(
+				filepath.Join(a.fileOps.Config.PDFPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID)),
+			)
+			currentPart.PageCount += pc
+		}
+	}
+
+	if currentPart != nil {
+		parts = append(parts, *currentPart)
+	}
+
+	return parts, nil
+}
+
+// GetSavedPartSelection returns the previously saved part selection for a collection
+func (a *App) GetSavedPartSelection(collID int64) ([]int, error) {
+	book, err := a.db.GetBookByCollection(collID)
+	if err != nil || book == nil {
+		return nil, nil
+	}
+
+	if book.SelectedParts == nil || *book.SelectedParts == "" {
+		return nil, nil
+	}
+
+	return bookbuild.ParseSelectedParts(*book.SelectedParts), nil
+}
+
+// GetPartCacheStatus returns a map of part index -> cached status
+func (a *App) GetPartCacheStatus(collID int64) (map[int]bool, error) {
+	homeDir, _ := os.UserHomeDir()
+	buildDir := filepath.Join(homeDir, ".works", "book-builds", fmt.Sprintf("coll-%d", collID))
+
+	result := make(map[int]bool)
+
+	for i := 0; i < 20; i++ {
+		cachePath := filepath.Join(buildDir, fmt.Sprintf("part-%d-overlaid.pdf", i))
+		if _, err := os.Stat(cachePath); err == nil {
+			result[i] = true
+		}
+	}
+
+	return result, nil
 }
 
 // ExportBook exports a collection as a formatted book DOCX
@@ -192,6 +273,227 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *models.Collection, buildDir, outputPath string) (*bookbuild.Manifest, error) {
+	works, err := a.db.GetCollectionWorks(collID, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get collection works: %w", err)
+	}
+
+	if len(works) == 0 {
+		return nil, fmt.Errorf("collection has no works")
+	}
+
+	pdfPreviewPath := a.fileOps.Config.PDFPreviewPath
+
+	typography := bookbuild.DefaultTypography()
+	if book.HeaderFont != nil && *book.HeaderFont != "" {
+		typography.HeaderFont = *book.HeaderFont
+	}
+	if book.HeaderSize != nil && *book.HeaderSize > 0 {
+		typography.HeaderSize = *book.HeaderSize
+	}
+	if book.PageNumFont != nil && *book.PageNumFont != "" {
+		typography.PageNumberFont = *book.PageNumFont
+	}
+	if book.PageNumSize != nil && *book.PageNumSize > 0 {
+		typography.PageNumberSize = *book.PageNumSize
+	}
+
+	manifest := &bookbuild.Manifest{
+		Title:      book.Title,
+		Author:     book.Author,
+		OutputPath: outputPath,
+		Typography: typography,
+	}
+
+	if manifest.Title == "" {
+		manifest.Title = coll.CollectionName
+	}
+
+	frontMatterPDF := filepath.Join(buildDir, "front-matter.pdf")
+	if fileExists(frontMatterPDF) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "front-matter", PDF: frontMatterPDF})
+	}
+
+	manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "toc", Placeholder: true})
+
+	var currentPart *bookbuild.Part
+	hasParts := false
+
+	for _, w := range works {
+		if w.Type == workTypeSection {
+			hasParts = true
+			if currentPart != nil {
+				manifest.Parts = append(manifest.Parts, *currentPart)
+			}
+			partDividerPDF := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
+			currentPart = &bookbuild.Part{
+				Title: w.Title,
+				PDF:   partDividerPDF,
+				Works: []bookbuild.Work{},
+			}
+		} else if currentPart != nil {
+			pdfPath := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
+			currentPart.Works = append(currentPart.Works, bookbuild.Work{
+				ID:    w.WorkID,
+				Title: w.Title,
+				PDF:   pdfPath,
+			})
+		} else {
+			pdfPath := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
+			manifest.Works = append(manifest.Works, bookbuild.Work{
+				ID:    w.WorkID,
+				Title: w.Title,
+				PDF:   pdfPath,
+			})
+		}
+	}
+
+	if currentPart != nil {
+		manifest.Parts = append(manifest.Parts, *currentPart)
+	}
+
+	if !hasParts {
+		return nil, fmt.Errorf("collection has no parts (no Section type works)")
+	}
+
+	backMatterPDF := filepath.Join(buildDir, "back-matter.pdf")
+	if fileExists(backMatterPDF) {
+		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "back-matter", PDF: backMatterPDF})
+	}
+
+	return manifest, nil
+}
+
+// ExportBookPDFWithParts exports a collection using the part-based pipeline
+func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildAll bool) (*BookExportResult, error) {
+	startTime := time.Now()
+
+	book, err := a.db.GetBookByCollection(collID)
+	if err != nil || book == nil {
+		return nil, fmt.Errorf("no book configuration found for collection")
+	}
+
+	coll, err := a.db.GetCollection(collID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get collection: %w", err)
+	}
+
+	bookTitle := book.Title
+	if bookTitle == "" {
+		bookTitle = coll.CollectionName
+	}
+	defaultFilename := sanitizeFilename(bookTitle) + ".pdf"
+
+	defaultDir := ""
+	if book.ExportPath != nil && *book.ExportPath != "" {
+		defaultDir = *book.ExportPath
+	} else {
+		homeDir, _ := os.UserHomeDir()
+		defaultDir = filepath.Join(homeDir, "Desktop")
+	}
+
+	outputPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:            "Export Book as PDF",
+		DefaultDirectory: defaultDir,
+		DefaultFilename:  defaultFilename,
+		Filters: []runtime.FileFilter{
+			{DisplayName: "PDF Files", Pattern: "*.pdf"},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to open save dialog: %w", err)
+	}
+	if outputPath == "" {
+		return nil, nil
+	}
+
+	newExportDir := filepath.Dir(outputPath)
+	if book.ExportPath == nil || *book.ExportPath != newExportDir {
+		book.ExportPath = &newExportDir
+		_ = a.db.UpdateBook(book)
+	}
+
+	cacheDir := bookbuild.GetCacheDir(collID)
+
+	a.emitExportProgress("Preparing", 1, 5, "Generating front/back matter...")
+
+	_, _ = a.generateFrontMatterPDF(book, cacheDir)
+	_, _ = a.generateBackMatterPDF(book, cacheDir)
+
+	manifest, err := a.buildManifestWithParts(collID, book, coll, cacheDir, outputPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build manifest: %w", err)
+	}
+
+	if book.SelectedParts != nil && *book.SelectedParts != "" {
+		newSelection := bookbuild.FormatSelectedParts(selectedParts)
+		if newSelection != *book.SelectedParts {
+			book.SelectedParts = &newSelection
+			_ = a.db.UpdateBook(book)
+		}
+	} else if len(selectedParts) > 0 {
+		newSelection := bookbuild.FormatSelectedParts(selectedParts)
+		book.SelectedParts = &newSelection
+		_ = a.db.UpdateBook(book)
+	}
+
+	pipelineResult, err := bookbuild.BuildWithParts(bookbuild.PipelineOptions{
+		Manifest:      manifest,
+		CollectionID:  collID,
+		CacheDir:      cacheDir,
+		OutputPath:    outputPath,
+		SelectedParts: selectedParts,
+		RebuildAll:    rebuildAll,
+		OnProgress: func(stage string, current, total int, message string) {
+			a.emitExportProgress(stage, current, total, message)
+		},
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("build failed: %w", err)
+	}
+
+	_ = exec.Command("open", outputPath).Start()
+
+	return &BookExportResult{
+		Success:    pipelineResult.Success,
+		OutputPath: pipelineResult.OutputPath,
+		WorkCount:  pipelineResult.WorkCount,
+		Warnings:   pipelineResult.Warnings,
+		Duration:   time.Since(startTime).Round(time.Millisecond).String(),
+	}, nil
+}
+
+// ClearPartCache clears cached PDFs for specific parts or all parts
+func (a *App) ClearPartCache(collID int64, partIndices []int) error {
+	cacheDir := bookbuild.GetCacheDir(collID)
+
+	if len(partIndices) == 0 {
+		return bookbuild.ClearAllPartsCache(cacheDir)
+	}
+
+	for _, idx := range partIndices {
+		_ = bookbuild.ClearPartCache(cacheDir, idx)
+	}
+	return nil
+}
+
+// HasCollectionParts returns whether the collection has parts (Section works)
+func (a *App) HasCollectionParts(collID int64) (bool, error) {
+	works, err := a.db.GetCollectionWorks(collID, false)
+	if err != nil {
+		return false, err
+	}
+
+	for _, w := range works {
+		if w.Type == workTypeSection {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // exportBookFormat is the internal export function supporting multiple formats

@@ -40,6 +40,8 @@ export function CheckLibreOffice():Promise<boolean>;
 
 export function CheckWorkPath(arg1:number):Promise<app.PathCheckResult>;
 
+export function ClearPartCache(arg1:number,arg2:Array<number>):Promise<void>;
+
 export function CompleteSetup():Promise<void>;
 
 export function CopyTemplateToLibrary(arg1:string,arg2:string):Promise<string>;
@@ -98,6 +100,8 @@ export function ExportBookEPUB(arg1:number):Promise<app.BookExportResult>;
 
 export function ExportBookPDF(arg1:number):Promise<app.BookExportResult>;
 
+export function ExportBookPDFWithParts(arg1:number,arg2:Array<number>,arg3:boolean):Promise<app.BookExportResult>;
+
 export function ExportCollectionFolder(arg1:number):Promise<number>;
 
 export function ExportToSubmissions(arg1:number):Promise<string>;
@@ -127,6 +131,8 @@ export function GetAppState():Promise<state.AppState>;
 export function GetBook(arg1:number):Promise<models.Book>;
 
 export function GetBookByCollection(arg1:number):Promise<models.Book>;
+
+export function GetBookParts(arg1:number):Promise<Array<app.PartInfo>>;
 
 export function GetCollection(arg1:number):Promise<models.Collection>;
 
@@ -170,9 +176,13 @@ export function GetOrganizationsWithNotes():Promise<Array<models.OrganizationWit
 
 export function GetOrgsFilterOptions():Promise<app.OrgsFilterOptions>;
 
+export function GetPartCacheStatus(arg1:number):Promise<Record<number, boolean>>;
+
 export function GetPreviewURL(arg1:number):Promise<string>;
 
 export function GetReportNames():Promise<Array<string>>;
+
+export function GetSavedPartSelection(arg1:number):Promise<Array<number>>;
 
 export function GetSearchHistory():Promise<Array<string>>;
 
@@ -221,6 +231,8 @@ export function GetWorkTemplatePath(arg1:number):Promise<string>;
 export function GetWorks():Promise<Array<models.WorkView>>;
 
 export function GetWorksFilterOptions():Promise<app.WorksFilterOptions>;
+
+export function HasCollectionParts(arg1:number):Promise<boolean>;
 
 export function ImportWork(arg1:string,arg2:fileops.ParsedFilename):Promise<models.Work>;
 

@@ -15,13 +15,14 @@ const wordDocumentXML = "word/document.xml"
 
 // StyleAuditResult represents the style audit for a single work
 type StyleAuditResult struct {
-	WorkID             int64    `json:"workID"`
-	Title              string   `json:"title"`
-	TemplateStylesUsed []string `json:"templateStylesUsed"`
-	UnknownStyles      []string `json:"unknownStyles"`
-	DirectFormatting   int      `json:"directFormattingCount"`
-	IsClean            bool     `json:"isClean"`
-	Error              string   `json:"error,omitempty"`
+	WorkID                int64    `json:"workID"`
+	Title                 string   `json:"title"`
+	TemplateStylesUsed    []string `json:"templateStylesUsed"`
+	UnknownStyles         []string `json:"unknownStyles"`
+	DirectFormatting      int      `json:"directFormattingCount"`
+	DirectFormattingTypes []string `json:"directFormattingTypes"`
+	IsClean               bool     `json:"isClean"`
+	Error                 string   `json:"error,omitempty"`
 }
 
 // CollectionAuditSummary provides a summary of style audit for a collection
@@ -91,11 +92,13 @@ func (a *App) AuditWorkStyles(workID int64, templatePath string) (*StyleAuditRes
 	}
 
 	// Count paragraphs with each style
-	styleCounts, directFormatting, err := countStyleUsage(fullPath)
+	styleCounts, directFormatting, directFormattingTypes, err := countStyleUsage(fullPath)
 	if err != nil {
 		result.DirectFormatting = 0
+		result.DirectFormattingTypes = []string{}
 	} else {
 		result.DirectFormatting = directFormatting
+		result.DirectFormattingTypes = directFormattingTypes
 	}
 
 	// Categorize styles
@@ -199,12 +202,13 @@ func (a *App) GetWorkTemplateClean(workID int64) (bool, error) {
 
 // WorkBookAuditStatus contains audit info for a work if it's in a book
 type WorkBookAuditStatus struct {
-	IsInBook          bool     `json:"isInBook"`
-	UnknownStyles     int      `json:"unknownStyles"`
-	UnknownStyleNames []string `json:"unknownStyleNames"`
-	DirectFormatting  int      `json:"directFormatting"`
-	IsClean           bool     `json:"isClean"`
-	Error             string   `json:"error,omitempty"`
+	IsInBook              bool     `json:"isInBook"`
+	UnknownStyles         int      `json:"unknownStyles"`
+	UnknownStyleNames     []string `json:"unknownStyleNames"`
+	DirectFormatting      int      `json:"directFormatting"`
+	DirectFormattingTypes []string `json:"directFormattingTypes"`
+	IsClean               bool     `json:"isClean"`
+	Error                 string   `json:"error,omitempty"`
 }
 
 // GetWorkBookAuditStatus returns audit status for a work if it's in a book collection
@@ -257,16 +261,32 @@ func (a *App) GetWorkBookAuditStatus(workID int64) (*WorkBookAuditStatus, error)
 	result.UnknownStyles = len(auditResult.UnknownStyles)
 	result.UnknownStyleNames = auditResult.UnknownStyles
 	result.DirectFormatting = auditResult.DirectFormatting
+	result.DirectFormattingTypes = auditResult.DirectFormattingTypes
 	result.IsClean = auditResult.IsClean
 
 	return result, nil
 }
 
+// directFormattingLabel maps XML element names to human-readable labels
+var directFormattingLabel = map[string]string{
+	"b":         "bold",
+	"i":         "italic",
+	"u":         "underline",
+	"sz":        "font size",
+	"color":     "text color",
+	"rFonts":    "font family",
+	"highlight": "highlight",
+	"strike":    "strikethrough",
+	"dstrike":   "double-strike",
+	"vertAlign": "superscript/subscript",
+	"spacing":   "character spacing",
+}
+
 // countStyleUsage counts how many paragraphs use each style and detects direct formatting
-func countStyleUsage(docxPath string) (map[string]int, int, error) {
+func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 	r, err := zip.OpenReader(docxPath)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	defer r.Close()
 
@@ -279,18 +299,19 @@ func countStyleUsage(docxPath string) (map[string]int, int, error) {
 	}
 
 	if documentFile == nil {
-		return nil, 0, fmt.Errorf("no document.xml found")
+		return nil, 0, nil, fmt.Errorf("no document.xml found")
 	}
 
 	rc, err := documentFile.Open()
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	defer rc.Close()
 
 	// Simple counting - look for paragraph style references
 	styleCounts := make(map[string]int)
 	directFormatting := 0
+	directFormattingTypes := make(map[string]bool)
 
 	// Parse XML looking for w:pStyle and w:rPr (direct formatting)
 	decoder := xml.NewDecoder(rc)
@@ -298,6 +319,7 @@ func countStyleUsage(docxPath string) (map[string]int, int, error) {
 	inRun := false
 	inRunProps := false
 	runHasDirectFormat := false
+	runDirectTypes := make(map[string]bool)
 	runText := ""
 	paragraphHasRealDirectFormat := false
 
@@ -317,6 +339,7 @@ func countStyleUsage(docxPath string) (map[string]int, int, error) {
 				inRun = true
 				inRunProps = false
 				runHasDirectFormat = false
+				runDirectTypes = make(map[string]bool)
 				runText = ""
 			case "pStyle":
 				for _, attr := range t.Attr {
@@ -335,6 +358,7 @@ func countStyleUsage(docxPath string) (map[string]int, int, error) {
 				// These are actual direct formatting elements
 				if inRun && inRunProps {
 					runHasDirectFormat = true
+					runDirectTypes[t.Name.Local] = true
 				}
 			case "t":
 				// Text element - will capture content in CharData
@@ -351,6 +375,9 @@ func countStyleUsage(docxPath string) (map[string]int, int, error) {
 				// End of run - check if it's real direct formatting or just em-dash
 				if runHasDirectFormat && !isOnlyEmDash(runText) {
 					paragraphHasRealDirectFormat = true
+					for k := range runDirectTypes {
+						directFormattingTypes[k] = true
+					}
 				}
 				inRun = false
 				runText = ""
@@ -364,7 +391,17 @@ func countStyleUsage(docxPath string) (map[string]int, int, error) {
 		}
 	}
 
-	return styleCounts, directFormatting, nil
+	// Convert map to sorted slice of human-readable labels
+	var types []string
+	for k := range directFormattingTypes {
+		if label, ok := directFormattingLabel[k]; ok {
+			types = append(types, label)
+		} else {
+			types = append(types, k)
+		}
+	}
+
+	return styleCounts, directFormatting, types, nil
 }
 
 // isOnlyEmDash returns true if the text contains only em-dashes, en-dashes, or is empty

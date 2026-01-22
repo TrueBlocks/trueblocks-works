@@ -1,4 +1,4 @@
-import { Button, Group, Text, Tooltip } from '@mantine/core';
+import { Button, Group, Modal, Stack, Text, Tooltip } from '@mantine/core';
 import {
   IconArrowsExchange,
   IconDownload,
@@ -12,6 +12,7 @@ import {
   CheckWorkPath,
   ExportToSubmissions,
   GetWorkBookAuditStatus,
+  GetWorkTemplateClean,
   GetWorkTemplatePath,
   MoveWorkFile,
   OpenDocument,
@@ -39,9 +40,12 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     unknownStyles: number;
     unknownStyleNames: string[];
     directFormatting: number;
+    directFormattingTypes: string[];
   } | null>(null);
   const [templatePath, setTemplatePath] = useState<string>('');
   const [applying, setApplying] = useState(false);
+  const [templateAlreadyApplied, setTemplateAlreadyApplied] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
   useEffect(() => {
     CheckWorkPath(workID).then((result) => {
@@ -57,6 +61,10 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     // Get template path for this work
     GetWorkTemplatePath(workID).then((path) => {
       setTemplatePath(path || '');
+    });
+    // Check if template has already been applied to this work
+    GetWorkTemplateClean(workID).then((isClean) => {
+      setTemplateAlreadyApplied(isClean);
     });
   }, [workID, refreshKey]);
 
@@ -108,11 +116,21 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     }
   };
 
+  const handleApplyTemplateClick = () => {
+    if (templateAlreadyApplied) {
+      setConfirmModalOpen(true);
+    } else {
+      handleApplyTemplate();
+    }
+  };
+
   const handleApplyTemplate = async () => {
     if (!templatePath) return;
+    setConfirmModalOpen(false);
     setApplying(true);
     try {
       await ApplyTemplateToWork(workID, templatePath);
+      setTemplateAlreadyApplied(true);
       notifications.show({
         title: 'Template Applied',
         message: 'Document cleaned - unknown styles removed',
@@ -134,6 +152,23 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     } finally {
       setApplying(false);
     }
+  };
+
+  // Build tooltip text explaining what style issues were found
+  const buildAuditTooltip = (
+    status: {
+      unknownStyleNames?: string[];
+      directFormattingTypes?: string[];
+    } | null
+  ): string => {
+    const parts: string[] = [];
+    if (status?.unknownStyleNames?.length) {
+      parts.push(`Unknown styles: ${status.unknownStyleNames.join(', ')}`);
+    }
+    if (status?.directFormattingTypes?.length) {
+      parts.push(`Direct formatting: ${status.directFormattingTypes.join(', ')}`);
+    }
+    return parts.length > 0 ? parts.join('\n') : 'Style issues found - click wand to fix';
   };
 
   // Build audit status text if work is in a book and fails audit
@@ -158,15 +193,15 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
           </Button>
         )}
 
-        {templatePath && auditStatus?.isInBook && (
+        {templatePath && (
           <Group gap={4}>
             <Tooltip label="Apply template to clean up styles">
               <Button
                 variant="light"
-                color="orange"
+                color={templateAlreadyApplied ? 'orange' : 'green'}
                 size="xs"
                 px={6}
-                onClick={handleApplyTemplate}
+                onClick={handleApplyTemplateClick}
                 loading={applying}
                 disabled={!fileExists}
               >
@@ -174,15 +209,7 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
               </Button>
             </Tooltip>
             {auditStatusText && (
-              <Tooltip
-                label={
-                  auditStatus?.unknownStyleNames?.length
-                    ? `Unknown: ${auditStatus.unknownStyleNames.join(', ')}`
-                    : 'Style issues found - click wand to fix'
-                }
-                multiline
-                maw={400}
-              >
+              <Tooltip label={buildAuditTooltip(auditStatus)} multiline maw={400}>
                 <Text size="xs" c="orange" fw={500}>
                   {auditStatusText}
                 </Text>
@@ -238,6 +265,36 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
         newPath={generatedPath}
         onMove={handleMove}
       />
+
+      <Modal
+        opened={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        title="Re-apply Template?"
+        centered
+      >
+        <Stack>
+          <Text size="sm">
+            This document has already had the template applied. Re-applying will:
+          </Text>
+          <Text size="sm" c="red" fw={500}>
+            • Remove all images and pictures
+          </Text>
+          <Text size="sm" c="red" fw={500}>
+            • Reset all formatting to template styles
+          </Text>
+          <Text size="sm" c="dimmed">
+            This action cannot be undone.
+          </Text>
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={() => setConfirmModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button color="red" onClick={handleApplyTemplate}>
+              Re-apply Template
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </>
   );
 }

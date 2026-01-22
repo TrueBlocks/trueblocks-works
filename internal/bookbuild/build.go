@@ -162,7 +162,7 @@ func reanalyzeWithTOC(m *Manifest, tocPages int) (*AnalysisResult, error) {
 	currentPage := 1
 
 	for _, fm := range m.FrontMatter {
-		if fm.Placeholder && fm.Type == "toc" {
+		if fm.Placeholder && fm.Type == PlaceholderTOC {
 			result.TOCIndex = len(result.Items)
 			result.Items = append(result.Items, ContentItem{
 				Type:      ContentTypeTOC,
@@ -196,8 +196,22 @@ func reanalyzeWithTOC(m *Manifest, tocPages int) (*AnalysisResult, error) {
 	bodyStartPage := currentPage
 
 	if m.HasParts() {
-		for _, part := range m.Parts {
+		for partIdx, part := range m.Parts {
+			partStartPage := currentPage
+			itemStartIdx := len(result.Items)
 			currentPage, result = addPartContentReanalysis(currentPage, part, result)
+			itemEndIdx := len(result.Items) - 1
+
+			result.PartAnalyses = append(result.PartAnalyses, PartAnalysis{
+				PartIndex:      partIdx,
+				PartTitle:      part.Title,
+				StartPage:      partStartPage,
+				EndPage:        currentPage - 1,
+				PageCount:      currentPage - partStartPage,
+				WorkCount:      len(part.Works),
+				ItemStartIndex: itemStartIdx,
+				ItemEndIndex:   itemEndIdx,
+			})
 		}
 	} else {
 		for _, work := range m.Works {

@@ -21,6 +21,7 @@ type Book struct {
 	HeaderSize       *int    `json:"headerSize,omitempty" db:"header_size"`
 	PageNumFont      *string `json:"pageNumFont,omitempty" db:"page_num_font"`
 	PageNumSize      *int    `json:"pageNumSize,omitempty" db:"page_num_size"`
+	SelectedParts    *string `json:"selectedParts,omitempty" db:"selected_parts"`
 	CreatedAt        string  `json:"createdAt" db:"created_at"`
 	ModifiedAt       string  `json:"modifiedAt" db:"updated_at"`
 }

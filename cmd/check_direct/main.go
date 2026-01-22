@@ -41,6 +41,7 @@ func main() {
 	inRun := false
 	inRunProps := false
 	runHasDirectFormat := false
+	runDirectTypes := []string{}
 	runText := ""
 	count := 0
 
@@ -57,6 +58,7 @@ func main() {
 				inRun = true
 				inRunProps = false
 				runHasDirectFormat = false
+				runDirectTypes = []string{}
 				runText = ""
 			case "rPr":
 				if inRun {
@@ -67,6 +69,7 @@ func main() {
 			case "b", "i", "u", "sz", "color", "rFonts", "highlight", "strike", "dstrike", "vertAlign", "spacing":
 				if inRun && inRunProps {
 					runHasDirectFormat = true
+					runDirectTypes = append(runDirectTypes, t.Name.Local)
 				}
 			}
 		case xml.CharData:
@@ -91,9 +94,9 @@ func main() {
 					}
 					if !onlyDash {
 						count++
-						fmt.Printf("Direct #%d: [%s] (hex: %x)\n", count, runText, []byte(runText))
+						fmt.Printf("Direct #%d: [%s] types=%v\n", count, runText, runDirectTypes)
 					} else if trimmed != "" {
-						fmt.Printf("Skipped em-dash: [%s] (hex: %x)\n", runText, []byte(runText))
+						fmt.Printf("Skipped em-dash: [%s] types=%v\n", runText, runDirectTypes)
 					}
 				}
 				inRun = false

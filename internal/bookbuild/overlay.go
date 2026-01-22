@@ -89,12 +89,12 @@ func AddRunningHeaders(pdfPath string, mappings []PageMapping, config OverlayCon
 
 		if m.IsVerso() {
 			headerText = config.BookTitle
-			position = "top-left"
+			position = PositionTopLeft
 		} else {
 			if m.ContentItem != nil {
 				headerText = m.ContentItem.Title
 			}
-			position = "top-right"
+			position = PositionTopRight
 		}
 
 		if headerText == "" {

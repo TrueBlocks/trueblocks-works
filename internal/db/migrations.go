@@ -74,6 +74,11 @@ var migrations = []Migration{
 		Name:    "add_book_typography_fields",
 		Up:      migrateAddBookTypographyFields,
 	},
+	{
+		Version: 22,
+		Name:    "add_selected_parts_to_books",
+		Up:      migrateAddSelectedPartsToBooks,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -779,5 +784,13 @@ func migrateAddBookTypographyFields(tx *sql.Tx) error {
 		return fmt.Errorf("add page_num_size column to Books: %w", err)
 	}
 
+	return nil
+}
+
+func migrateAddSelectedPartsToBooks(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN selected_parts TEXT`)
+	if err != nil {
+		return fmt.Errorf("add selected_parts column to Books: %w", err)
+	}
 	return nil
 }

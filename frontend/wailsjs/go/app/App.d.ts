@@ -88,15 +88,13 @@ export function DeleteWorkPermanent(arg1:number,arg2:boolean):Promise<void>;
 
 export function DetectLibreOffice():Promise<string>;
 
+export function EmitStatus(arg1:string,arg2:string):Promise<void>;
+
 export function EnsureTemplatesDir():Promise<void>;
 
 export function ExportAllCSV():Promise<Array<app.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<app.ExportResult>>;
-
-export function ExportBook(arg1:number):Promise<app.BookExportResult>;
-
-export function ExportBookEPUB(arg1:number):Promise<app.BookExportResult>;
 
 export function ExportBookPDF(arg1:number):Promise<app.BookExportResult>;
 
@@ -245,6 +243,8 @@ export function ListBackups():Promise<Array<backup.BackupInfo>>;
 export function ListTemplates():Promise<Array<string>>;
 
 export function MoveWorkFile(arg1:number):Promise<void>;
+
+export function OpenBookPDF(arg1:number):Promise<app.OpenBookPDFResult>;
 
 export function OpenDocument(arg1:number):Promise<void>;
 

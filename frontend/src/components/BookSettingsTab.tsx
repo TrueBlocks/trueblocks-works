@@ -21,13 +21,12 @@ import {
   UpdateBook,
   SelectBookTemplate,
   ValidateTemplate,
-  ExportBook,
-  ExportBookEPUB,
   ExportBookPDF,
   ExportBookPDFWithParts,
   HasCollectionParts,
   AuditCollectionStyles,
   OpenTemplate,
+  OpenBookPDF,
 } from '@app';
 import { models, app } from '@models';
 import { LogErr, Log } from '@/utils';
@@ -35,11 +34,10 @@ import {
   IconFileText,
   IconCheck,
   IconAlertCircle,
-  IconDownload,
   IconReportAnalytics,
-  IconBook,
   IconFileTypePdf,
   IconEdit,
+  IconExternalLink,
 } from '@tabler/icons-react';
 import { PartSelectionModal } from './PartSelectionModal';
 
@@ -127,78 +125,25 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
     }
   }, [book, handleFieldChange]);
 
-  const handleExport = useCallback(async () => {
-    setExporting(true);
-    setLastExport(null);
+  const handleOpenPDF = useCallback(async () => {
     try {
-      const result = await ExportBook(collectionId);
-      if (!result) {
-        // User cancelled
-        return;
-      }
-      setLastExport(result);
-      if (result.success) {
-        Log(`Book exported to: ${result.outputPath}`);
+      const result = await OpenBookPDF(collectionId);
+      if (!result.success) {
         notifications.show({
-          title: 'Export Complete',
-          message: `Exported ${result.workCount} works in ${result.duration}`,
-          color: 'green',
-          autoClose: 8000,
-        });
-      } else {
-        notifications.show({
-          title: 'Export Failed',
-          message: result.error || 'Unknown error',
-          color: 'red',
-          autoClose: 8000,
+          title: 'Cannot Open PDF',
+          message: result.error || 'PDF not found',
+          color: 'yellow',
+          autoClose: 5000,
         });
       }
     } catch (err) {
-      LogErr('Export failed:', err);
+      LogErr('Open PDF failed:', err);
       notifications.show({
-        title: 'Export Failed',
+        title: 'Open PDF Failed',
         message: String(err),
         color: 'red',
-        autoClose: 8000,
+        autoClose: 5000,
       });
-    } finally {
-      setExporting(false);
-    }
-  }, [collectionId]);
-
-  const handleExportEPUB = useCallback(async () => {
-    setExporting(true);
-    setLastExport(null);
-    try {
-      const result = await ExportBookEPUB(collectionId);
-      if (!result) return;
-      setLastExport(result);
-      if (result.success) {
-        Log(`EPUB exported to: ${result.outputPath}`);
-        notifications.show({
-          title: 'EPUB Export Complete',
-          message: `Exported ${result.workCount} works in ${result.duration}`,
-          color: 'green',
-          autoClose: 8000,
-        });
-      } else {
-        notifications.show({
-          title: 'EPUB Export Failed',
-          message: result.error || 'Unknown error',
-          color: 'red',
-          autoClose: 8000,
-        });
-      }
-    } catch (err) {
-      LogErr('EPUB export failed:', err);
-      notifications.show({
-        title: 'EPUB Export Failed',
-        message: String(err),
-        color: 'red',
-        autoClose: 8000,
-      });
-    } finally {
-      setExporting(false);
     }
   }, [collectionId]);
 
@@ -498,31 +443,19 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
                 <Group gap="xs">
                   <Button
                     size="sm"
-                    variant="light"
-                    leftSection={<IconDownload size={16} />}
-                    onClick={handleExport}
-                    loading={exporting}
-                    disabled
-                  >
-                    DOCX
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="light"
-                    leftSection={<IconBook size={16} />}
-                    onClick={handleExportEPUB}
-                    loading={exporting}
-                    disabled
-                  >
-                    EPUB
-                  </Button>
-                  <Button
-                    size="sm"
                     leftSection={<IconFileTypePdf size={16} />}
                     onClick={handleExportPDF}
                     loading={exporting}
                   >
                     Publish PDF
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="light"
+                    leftSection={<IconExternalLink size={16} />}
+                    onClick={handleOpenPDF}
+                  >
+                    Open PDF
                   </Button>
                 </Group>
                 {lastExport?.success && (

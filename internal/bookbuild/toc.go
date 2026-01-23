@@ -135,7 +135,7 @@ func formatTOCLine(title string, pageNum int, indent bool) string {
 func createTextPDF(outputPath, content string, config OverlayConfig) error {
 	lines := strings.Split(content, "\n")
 	lineHeight := 14.0
-	fontSize := 11
+	fontSize := 10
 	marginTop := 72.0
 	marginLeftOdd := 54.0  // Odd pages (1,3): smaller left margin
 	marginLeftEven := 90.0 // Even pages (2,4): larger left margin (gutter)

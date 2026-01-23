@@ -585,6 +585,22 @@ export namespace app {
 		}
 	}
 	
+	export class OpenBookPDFResult {
+	    success: boolean;
+	    error?: string;
+	    path?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OpenBookPDFResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.success = source["success"];
+	        this.error = source["error"];
+	        this.path = source["path"];
+	    }
+	}
 	
 	
 	export class OrgsFilterOptions {

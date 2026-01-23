@@ -5,6 +5,7 @@ import { WindowGetPosition, WindowGetSize, EventsOn, EventsOff } from '@wailsjs/
 import { Navigation } from '@/components/Navigation';
 import { SearchModal } from '@/components/SearchModal';
 import { BackupRestoreModal } from '@/components/BackupRestoreModal';
+import { StatusBar } from '@/components';
 import { SetupWizard } from '@/components/SetupWizard';
 import { ImportReviewModal } from '@/components/ImportReviewModal';
 import { ImportConfirmModal } from '@/components/ImportConfirmModal';
@@ -459,6 +460,7 @@ function App() {
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
+          <StatusBar sidebarWidth={sidebarWidth} />
         </AppShell.Main>
       </AppShell>
     </>

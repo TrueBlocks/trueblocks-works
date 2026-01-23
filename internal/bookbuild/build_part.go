@@ -105,6 +105,7 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 	blankPagePath := filepath.Join(opts.CacheDir, fmt.Sprintf("blank-part%d.pdf", opts.PartIndex))
 	blankCreated := false
 
+	workIndex := 0
 	for i := range partItems {
 		item := &partItems[i]
 
@@ -137,6 +138,12 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 
 		if item.PDF == "" {
 			continue
+		}
+
+		if item.Type == ContentTypeWork {
+			workIndex++
+			progress("Work", workIndex, pa.WorkCount,
+				fmt.Sprintf("Processing: %s", item.Title))
 		}
 
 		expanded := ExpandPath(item.PDF)

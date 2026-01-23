@@ -158,6 +158,10 @@ export function DetectLibreOffice() {
   return window['go']['app']['App']['DetectLibreOffice']();
 }
 
+export function EmitStatus(arg1, arg2) {
+  return window['go']['app']['App']['EmitStatus'](arg1, arg2);
+}
+
 export function EnsureTemplatesDir() {
   return window['go']['app']['App']['EnsureTemplatesDir']();
 }
@@ -168,14 +172,6 @@ export function ExportAllCSV() {
 
 export function ExportAllTables() {
   return window['go']['app']['App']['ExportAllTables']();
-}
-
-export function ExportBook(arg1) {
-  return window['go']['app']['App']['ExportBook'](arg1);
-}
-
-export function ExportBookEPUB(arg1) {
-  return window['go']['app']['App']['ExportBookEPUB'](arg1);
 }
 
 export function ExportBookPDF(arg1) {
@@ -472,6 +468,10 @@ export function ListTemplates() {
 
 export function MoveWorkFile(arg1) {
   return window['go']['app']['App']['MoveWorkFile'](arg1);
+}
+
+export function OpenBookPDF(arg1) {
+  return window['go']['app']['App']['OpenBookPDF'](arg1);
 }
 
 export function OpenDocument(arg1) {

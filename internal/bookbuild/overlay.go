@@ -37,7 +37,7 @@ func AddPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig
 	bodyNum := 1
 	backMatterNum := 1
 
-	for i, m := range mappings {
+	for _, m := range mappings {
 		if !m.ShouldShowPageNumber() {
 			if m.ContentItem != nil {
 				switch m.ContentItem.Type {
@@ -69,7 +69,7 @@ func AddPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig
 			continue
 		}
 
-		fmt.Printf("  [%d/%d] Adding page number '%s' to page %d\n", i+1, len(mappings), pageNumStr, m.PhysicalPage)
+		// fmt.Printf("  [%d/%d] Adding page number '%s' to page %d\n", i+1, len(mappings), pageNumStr, m.PhysicalPage)
 		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, "bottom-center"); err != nil {
 			return fmt.Errorf("failed to add page number to page %d: %w", m.PhysicalPage, err)
 		}
@@ -79,7 +79,7 @@ func AddPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig
 }
 
 func AddRunningHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig) error {
-	for i, m := range mappings {
+	for _, m := range mappings {
 		if !m.ShouldShowHeader() {
 			continue
 		}
@@ -103,7 +103,7 @@ func AddRunningHeaders(pdfPath string, mappings []PageMapping, config OverlayCon
 			continue
 		}
 
-		fmt.Printf("  [%d/%d] Adding header '%s' to page %d (%s)\n", i+1, len(mappings), headerText, m.PhysicalPage, position)
+		// fmt.Printf("  [%d/%d] Adding header '%s' to page %d (%s)\n", i+1, len(mappings), headerText, m.PhysicalPage, position)
 		if err := addTextToPage(pdfPath, m.PhysicalPage, headerText, config, position); err != nil {
 			return fmt.Errorf("failed to add header to page %d: %w", m.PhysicalPage, err)
 		}

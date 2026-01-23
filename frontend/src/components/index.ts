@@ -58,3 +58,4 @@ export { ImportConfirmModal } from './ImportConfirmModal';
 export { FTSStatus } from './FTSStatus';
 export { BookSettingsTab } from './BookSettingsTab';
 export { PartSelectionModal } from './PartSelectionModal';
+export { StatusBar } from './StatusBar/StatusBar';

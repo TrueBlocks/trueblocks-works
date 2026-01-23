@@ -1163,6 +1163,10 @@ func mergeRelationships(templateRelsFile *zip.File, paragraphs []ParagraphConten
 	}
 
 	relsStr := string(content)
+
+	imageRelPattern := regexp.MustCompile(`<Relationship[^>]*Type="` + regexp.QuoteMeta(imageRelType) + `"[^>]*/?>`)
+	relsStr = imageRelPattern.ReplaceAllString(relsStr, "")
+
 	closeTag := strings.LastIndex(relsStr, "</Relationships>")
 	if closeTag == -1 {
 		return content, nil
@@ -1307,13 +1311,23 @@ func (a *App) ApplyTemplateToWork(workID int64, templatePath string) error {
 
 	tempPath := fullPath + ".tmp"
 	if err := replaceDocumentXMLWithImages(templatePath, fullPath, tempPath, newDocXML, remappedParagraphs); err != nil {
+		os.Remove(tempPath)
 		return fmt.Errorf("create new document: %w", err)
 	}
 
+	if err := validateDocxFile(tempPath); err != nil {
+		os.Remove(tempPath)
+		return fmt.Errorf("validation failed - original preserved: %w", err)
+	}
+
 	if err := os.Remove(fullPath); err != nil {
+		os.Remove(tempPath)
 		return fmt.Errorf("remove original: %w", err)
 	}
 	if err := os.Rename(tempPath, fullPath); err != nil {
+		if copyErr := copyFile(backupPath, fullPath); copyErr != nil {
+			return fmt.Errorf("rename failed AND restore failed: %w (restore: %v)", err, copyErr)
+		}
 		return fmt.Errorf("rename temp to original: %w", err)
 	}
 
@@ -1361,4 +1375,83 @@ func (a *App) ApplyTemplateToCollection(collID int64) (*ApplyTemplateResult, err
 	}
 
 	return result, nil
+}
+
+// validateDocxFile checks that a DOCX file is structurally valid
+func validateDocxFile(path string) error {
+	r, err := zip.OpenReader(path)
+	if err != nil {
+		return fmt.Errorf("invalid zip structure: %w", err)
+	}
+	defer r.Close()
+
+	requiredFiles := map[string]bool{
+		"[Content_Types].xml":          false,
+		"word/document.xml":            false,
+		"word/_rels/document.xml.rels": false,
+	}
+
+	for _, f := range r.File {
+		if _, required := requiredFiles[f.Name]; required {
+			requiredFiles[f.Name] = true
+		}
+
+		if f.Name == "word/document.xml" {
+			rc, err := f.Open()
+			if err != nil {
+				return fmt.Errorf("cannot open document.xml: %w", err)
+			}
+			content, err := io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				return fmt.Errorf("cannot read document.xml: %w", err)
+			}
+			if !bytes.Contains(content, []byte("<w:document")) {
+				return fmt.Errorf("document.xml missing <w:document> element")
+			}
+			if !bytes.Contains(content, []byte("</w:document>")) {
+				return fmt.Errorf("document.xml missing closing </w:document> tag")
+			}
+			decoder := xml.NewDecoder(bytes.NewReader(content))
+			for {
+				_, err := decoder.Token()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					return fmt.Errorf("document.xml has invalid XML: %w", err)
+				}
+			}
+		}
+
+		if f.Name == "word/_rels/document.xml.rels" {
+			rc, err := f.Open()
+			if err != nil {
+				return fmt.Errorf("cannot open document.xml.rels: %w", err)
+			}
+			content, err := io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				return fmt.Errorf("cannot read document.xml.rels: %w", err)
+			}
+			decoder := xml.NewDecoder(bytes.NewReader(content))
+			for {
+				_, err := decoder.Token()
+				if err == io.EOF {
+					break
+				}
+				if err != nil {
+					return fmt.Errorf("document.xml.rels has invalid XML: %w", err)
+				}
+			}
+		}
+	}
+
+	for name, found := range requiredFiles {
+		if !found {
+			return fmt.Errorf("missing required file: %s", name)
+		}
+	}
+
+	return nil
 }

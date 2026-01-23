@@ -100,7 +100,7 @@ export function PartSelectionModal({
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Select Parts to Build" size="md">
+    <Modal opened={opened} onClose={onClose} title="Select Parts to Build" size="lg">
       <Stack gap="md">
         {loading ? (
           <Group justify="center" py="xl">

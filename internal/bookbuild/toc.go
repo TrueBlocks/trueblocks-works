@@ -115,18 +115,21 @@ func formatTOCLine(title string, pageNum int, indent bool) string {
 		displayTitle = displayTitle[:maxTitleLen-3] + "..."
 	}
 
-	dotsNeeded := maxTitleLen - len(displayTitle) + 5
-	if dotsNeeded < 3 {
-		dotsNeeded = 3
-	}
-	dots := strings.Repeat(".", dotsNeeded)
-
 	prefix := ""
 	if indent {
 		prefix = "    "
 	}
 
-	return fmt.Sprintf("%s%s %s %d", prefix, displayTitle, dots, pageNum)
+	pageStr := fmt.Sprintf("%d", pageNum)
+	lineWidth := 60
+	usedWidth := len(prefix) + len(displayTitle) + 1 + len(pageStr)
+	dotsNeeded := lineWidth - usedWidth
+	if dotsNeeded < 3 {
+		dotsNeeded = 3
+	}
+	dots := strings.Repeat(".", dotsNeeded)
+
+	return fmt.Sprintf("%s%s %s %s", prefix, displayTitle, dots, pageStr)
 }
 
 func createTextPDF(outputPath, content string, config OverlayConfig) error {
@@ -134,7 +137,8 @@ func createTextPDF(outputPath, content string, config OverlayConfig) error {
 	lineHeight := 14.0
 	fontSize := 11
 	marginTop := 72.0
-	marginLeft := 72.0
+	marginLeftOdd := 54.0  // Odd pages (1,3): smaller left margin
+	marginLeftEven := 90.0 // Even pages (2,4): larger left margin (gutter)
 	marginBottom := 72.0
 
 	linesPerPage := int((config.PageHeight - marginTop - marginBottom) / lineHeight)
@@ -165,10 +169,10 @@ func createTextPDF(outputPath, content string, config OverlayConfig) error {
 		objectNum, strings.Join(kids, " "), pageCount))
 	objectNum++
 
-	// Object 3: Font
+	// Object 3: Font - use Courier (monospace) for proper alignment
 	fontObjNum := objectNum
 	objectOffsets = append(objectOffsets, pdfContent.Len())
-	pdfContent.WriteString(fmt.Sprintf("%d 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>\nendobj\n", objectNum))
+	pdfContent.WriteString(fmt.Sprintf("%d 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>\nendobj\n", objectNum))
 	objectNum++
 
 	// Objects 4+: Pages and their content streams
@@ -180,22 +184,36 @@ func createTextPDF(outputPath, content string, config OverlayConfig) error {
 		}
 		pageLines := lines[startLine:endLine]
 
+		// Alternate margins: odd pages (0,2,4...) have smaller left margin
+		marginLeft := marginLeftOdd
+		if page%2 == 1 {
+			marginLeft = marginLeftEven
+		}
+
 		var streamContent strings.Builder
 		streamContent.WriteString("BT\n")
 		streamContent.WriteString(fmt.Sprintf("/F1 %d Tf\n", fontSize))
 
 		y := config.PageHeight - marginTop
-		for _, line := range pageLines {
+		prevX := 0.0
+		for i, line := range pageLines {
 			escapedLine := escapeForPDF(line)
+			var x float64
 			if line == "CONTENTS" {
-				x := (config.PageWidth - float64(len(line)*6)) / 2
+				x = (config.PageWidth - float64(len(line)*6)) / 2
+			} else {
+				x = marginLeft
+			}
+			if i == 0 {
+				// First line: absolute position
 				streamContent.WriteString(fmt.Sprintf("%.2f %.2f Td\n", x, y))
 			} else {
-				streamContent.WriteString(fmt.Sprintf("%.2f %.2f Td\n", marginLeft, y))
+				// Subsequent lines: move in both x and y to handle CONTENTS centering
+				deltaX := x - prevX
+				streamContent.WriteString(fmt.Sprintf("%.2f %.2f Td\n", deltaX, -lineHeight))
 			}
+			prevX = x
 			streamContent.WriteString(fmt.Sprintf("(%s) Tj\n", escapedLine))
-			y -= lineHeight
-			streamContent.WriteString(fmt.Sprintf("%.2f %.2f Td\n", -marginLeft, -lineHeight))
 		}
 		streamContent.WriteString("ET\n")
 

@@ -142,28 +142,34 @@ func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
 	}
 	defaultFilename := sanitizeFilename(bookTitle) + ".pdf"
 
-	defaultDir := ""
-	if book.ExportPath != nil && *book.ExportPath != "" {
-		defaultDir = *book.ExportPath
-	} else {
-		homeDir, _ := os.UserHomeDir()
-		defaultDir = filepath.Join(homeDir, "Desktop")
-	}
+	// TEMPORARY: Skip save dialog, use Desktop directly
+	homeDir, _ := os.UserHomeDir()
+	outputPath := filepath.Join(homeDir, "Desktop", defaultFilename)
 
-	outputPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:            "Export Book as PDF",
-		DefaultDirectory: defaultDir,
-		DefaultFilename:  defaultFilename,
-		Filters: []runtime.FileFilter{
-			{DisplayName: "PDF Files", Pattern: "*.pdf"},
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to open save dialog: %w", err)
-	}
-	if outputPath == "" {
-		return nil, nil
-	}
+	/*
+		defaultDir := ""
+		if book.ExportPath != nil && *book.ExportPath != "" {
+			defaultDir = *book.ExportPath
+		} else {
+			homeDir, _ := os.UserHomeDir()
+			defaultDir = filepath.Join(homeDir, "Desktop")
+		}
+
+		outputPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+			Title:            "Export Book as PDF",
+			DefaultDirectory: defaultDir,
+			DefaultFilename:  defaultFilename,
+			Filters: []runtime.FileFilter{
+				{DisplayName: "PDF Files", Pattern: "*.pdf"},
+			},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to open save dialog: %w", err)
+		}
+		if outputPath == "" {
+			return nil, nil
+		}
+	*/
 
 	newExportDir := filepath.Dir(outputPath)
 	if book.ExportPath == nil || *book.ExportPath != newExportDir {
@@ -171,7 +177,6 @@ func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
 		_ = a.db.UpdateBook(book)
 	}
 
-	homeDir, _ := os.UserHomeDir()
 	buildDir := filepath.Join(homeDir, ".works", "book-builds", fmt.Sprintf("coll-%d", collID))
 
 	a.emitExportProgress("Preparing", 1, 6, "Generating front/back matter...")

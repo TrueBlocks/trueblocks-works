@@ -627,8 +627,24 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         label: '#',
         width: '6%',
         render: (work) => {
-          const pos = sortedFilteredWorks.findIndex((w) => w.workID === work.workID);
-          return pos >= 0 ? pos + 1 : '-';
+          const posStr = String(work.position);
+          return work.isTemplateClean ? (
+            <span>
+              <span
+                style={{
+                  color: 'var(--mantine-color-green-6)',
+                  marginRight: 3,
+                  fontSize: '0.5em',
+                  verticalAlign: 'middle',
+                }}
+              >
+                ●
+              </span>
+              {posStr}
+            </span>
+          ) : (
+            posStr
+          );
         },
       },
       {
@@ -675,7 +691,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           work.modifiedAt ? new Date(work.modifiedAt + 'Z').toLocaleDateString() : '-',
       },
     ],
-    [filterOptions, sortedFilteredWorks]
+    [filterOptions]
   );
 
   const searchFn = useCallback((work: models.CollectionWork, search: string) => {
@@ -815,6 +831,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         <Tabs
           orientation="vertical"
           value={activeTab}
+          activateTabWithKeyboard={false}
           onChange={(value) => {
             setActiveTab(value);
             if (value) {

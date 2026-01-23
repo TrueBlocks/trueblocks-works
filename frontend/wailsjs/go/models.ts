@@ -1440,6 +1440,7 @@ export namespace models {
 	    createdAt: string;
 	    modifiedAt: string;
 	    position: number;
+	    isTemplateClean: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new CollectionWork(source);
@@ -1465,6 +1466,7 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.position = source["position"];
+	        this.isTemplateClean = source["isTemplateClean"];
 	    }
 	}
 	export class Note {

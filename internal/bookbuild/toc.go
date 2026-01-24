@@ -11,6 +11,7 @@ type TOCEntry struct {
 	PageNumber   int
 	IsPart       bool
 	IsBackMatter bool
+	IsPrologue   bool // Works appearing before the first Section/Part
 }
 
 func GenerateTOC(analysis *AnalysisResult, _ OverlayConfig) ([]TOCEntry, error) {
@@ -19,6 +20,7 @@ func GenerateTOC(analysis *AnalysisResult, _ OverlayConfig) ([]TOCEntry, error) 
 	bodyPageNum := 1
 	backMatterPageNum := 1
 	inBackMatter := false
+	seenPartDivider := false
 
 	for _, item := range analysis.Items {
 		switch item.Type {
@@ -33,6 +35,7 @@ func GenerateTOC(analysis *AnalysisResult, _ OverlayConfig) ([]TOCEntry, error) 
 			}
 
 		case ContentTypePartDivider:
+			seenPartDivider = true
 			entries = append(entries, TOCEntry{
 				Title:      item.Title,
 				PageNumber: bodyPageNum,
@@ -45,6 +48,7 @@ func GenerateTOC(analysis *AnalysisResult, _ OverlayConfig) ([]TOCEntry, error) 
 				Title:      item.Title,
 				PageNumber: bodyPageNum,
 				IsPart:     false,
+				IsPrologue: !seenPartDivider,
 			})
 			bodyPageNum += item.PageCount
 

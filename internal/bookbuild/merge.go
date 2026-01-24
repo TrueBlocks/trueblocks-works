@@ -234,7 +234,7 @@ func (m *PageMapping) ShouldShowPageNumber() bool {
 	if m.ContentItem.Type == ContentTypeBlank {
 		return false
 	}
-	if m.ContentItem.Type == ContentTypeFrontMatter && m.PageInItem == 1 {
+	if m.ContentItem.Type == ContentTypeFrontMatter {
 		return false
 	}
 	if m.ContentItem.Type == ContentTypePartDivider {

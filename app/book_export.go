@@ -295,11 +295,19 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 		typography.PageNumberSize = *book.PageNumSize
 	}
 
+	templatePath := ""
+	if book.TemplatePath != nil && *book.TemplatePath != "" {
+		templatePath = *book.TemplatePath
+	} else {
+		templatePath = a.fileOps.GetBookTemplatePath()
+	}
+
 	manifest := &bookbuild.Manifest{
-		Title:      book.Title,
-		Author:     book.Author,
-		OutputPath: outputPath,
-		Typography: typography,
+		Title:        book.Title,
+		Author:       book.Author,
+		OutputPath:   outputPath,
+		TemplatePath: templatePath,
+		Typography:   typography,
 	}
 
 	if manifest.Title == "" {
@@ -361,11 +369,19 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 		typography.PageNumberSize = *book.PageNumSize
 	}
 
+	templatePath := ""
+	if book.TemplatePath != nil && *book.TemplatePath != "" {
+		templatePath = *book.TemplatePath
+	} else {
+		templatePath = a.fileOps.GetBookTemplatePath()
+	}
+
 	manifest := &bookbuild.Manifest{
-		Title:      book.Title,
-		Author:     book.Author,
-		OutputPath: outputPath,
-		Typography: typography,
+		Title:        book.Title,
+		Author:       book.Author,
+		OutputPath:   outputPath,
+		TemplatePath: templatePath,
+		Typography:   typography,
 	}
 
 	if manifest.Title == "" {
@@ -546,15 +562,15 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 }
 
 // ClearPartCache clears cached PDFs for specific parts or all parts
-func (a *App) ClearPartCache(collID int64, partIndices []int) error {
+func (a *App) ClearPartCache(collID int64, partTitles []string) error {
 	cacheDir := bookbuild.GetCacheDir(collID)
 
-	if len(partIndices) == 0 {
+	if len(partTitles) == 0 {
 		return bookbuild.ClearAllPartsCache(cacheDir)
 	}
 
-	for _, idx := range partIndices {
-		_ = bookbuild.ClearPartCache(cacheDir, idx)
+	for _, title := range partTitles {
+		_ = bookbuild.ClearPartCache(cacheDir, title)
 	}
 	return nil
 }

@@ -82,8 +82,9 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 	var tocPDFPath string
 	if analysis.TOCIndex >= 0 && len(tocEntries) > 0 {
 		tocPDFPath = filepath.Join(opts.BuildDir, "toc.pdf")
-		if err := CreateTOCPDF(tocEntries, tocPDFPath, config); err != nil {
-			result.Warnings = append(result.Warnings, fmt.Sprintf("TOC PDF creation failed: %v", err))
+		tocErr := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
+		if tocErr != nil {
+			result.Warnings = append(result.Warnings, fmt.Sprintf("TOC PDF creation failed: %v", tocErr))
 		} else {
 			actualTOCPages, _ := GetPageCount(tocPDFPath)
 			if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
@@ -92,7 +93,7 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 					result.Warnings = append(result.Warnings, fmt.Sprintf("Re-analysis failed: %v", err))
 				}
 				tocEntries, _ = GenerateTOC(analysis, config)
-				_ = CreateTOCPDF(tocEntries, tocPDFPath, config)
+				_ = createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
 			}
 
 			if analysis.TOCIndex >= 0 && analysis.TOCIndex < len(analysis.Items) {

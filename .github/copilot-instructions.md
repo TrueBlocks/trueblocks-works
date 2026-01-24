@@ -7,19 +7,20 @@
 ## 1. Project Overview
 
 **trueblocks-works** is a Wails desktop application for managing creative writing submissions:
+
 - **Go backend** with SQLite database
 - **React/TypeScript frontend** with Mantine UI
 - Migrating from FileMaker Pro — see `design/` folder for specs
 
-| Layer | Technology |
-|-------|------------|
-| Framework | Wails v2 |
-| Backend | Go 1.21+ |
-| Database | SQLite 3 (via `modernc.org/sqlite` — pure Go, no CGO) |
-| Frontend | React 18 + TypeScript 5 |
-| UI Library | Mantine 7 |
-| Icons | Tabler Icons |
-| Package Manager | Yarn |
+| Layer           | Technology                                            |
+| --------------- | ----------------------------------------------------- |
+| Framework       | Wails v2                                              |
+| Backend         | Go 1.21+                                              |
+| Database        | SQLite 3 (via `modernc.org/sqlite` — pure Go, no CGO) |
+| Frontend        | React 18 + TypeScript 5                               |
+| UI Library      | Mantine 7                                             |
+| Icons           | Tabler Icons                                          |
+| Package Manager | Yarn                                                  |
 
 ---
 
@@ -68,11 +69,12 @@ set -x GOPATH $HOME/go
 
 When the user types ONLY these words (no other text), execute the corresponding command:
 
-| User types | Execute | Notes |
-|------------|---------|-------|
-| `lint` | `cd <repo-root>; and yarn lint --fix; and yarn type-check` | Run from repo root |
-| `run` | `cd <repo-root>; and yarn start &` | Background process, then wait for user |
-| `push` | `git add -A; and git commit -m "<message>"; and git push` | Short, meaningful commit message based on recent changes |
+| User types | Execute                                                                               | Notes                                                    |
+| ---------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `lint`     | `cd <repo-root>; and yarn lint --fix; and yarn type-check`                            | Run from repo root                                       |
+| `run`      | `cd <repo-root>; and yarn start &`                                                    | Background process, then wait for user                   |
+| `push`     | `git add -A; and git commit -m "<message>"; and git push`                             | Short, meaningful commit message based on recent changes |
+| `plan`     | Exit design mode, read `ai/Invoker.md` and `ai/Rules.md`, follow instructions therein | Obey checkpoints                                         |
 
 **CRITICAL**: The `push` command is the ONLY exception to the "never git commit" rule. Only execute git commands when user types `push` alone on a line. Never run git add/commit/push otherwise.
 
@@ -108,21 +110,25 @@ cd frontend; npm install; cd ..
 When user says "go into step-by-step mode":
 
 🚫 **Never Run:**
+
 - `yarn lint`
 - `yarn test`
 - `yarn start`
 
 🛑 **Stop Between Steps:**
+
 - Never run amok or jump ahead
 - Stop after each step for review and approval
 - Wait for "go ahead" before proceeding
 
 📋 **Planning Process:**
+
 - Show what you want to do WITHOUT modifying code first
 - Explain WHY you want to make each change
 - Wait for approval before making any code changes
 
 🔒 **PERSISTENCE RULE:**
+
 - **ONCE IN STEP-BY-STEP MODE, STAY THERE INDEFINITELY**
 - Do NOT exit unless explicitly told "exit step-by-step mode"
 - Every action must be approved individually
@@ -135,22 +141,26 @@ When user says "go into design mode":
 
 🎨 **MODE IDENTIFIER (REQUIRED):**
 Every response MUST start with:
+
 ```
 🎨 DESIGN MODE | [Can: discuss/analyze] [Cannot: implement/modify code]
 ```
 
 📋 **Rules:**
+
 - NO full codebase scans upfront
 - Discussion-focused for architectural analysis
 - Read files just-in-time before discussing specifics
 - NO code modifications, builds, tests, or implementations
 
 🚫 **FORBIDDEN PHRASES:**
+
 - "I'll implement...", "Let me create...", "I'll modify...", "I'll add..."
 
 If caught: "I cannot implement code changes while in design mode."
 
 🔒 **NO MODIFICATION RULE:**
+
 - Stay in design mode indefinitely until explicit exit
 - Even if user asks to implement: respond "I cannot implement while in design mode"
 
@@ -174,7 +184,7 @@ If caught: "I cannot implement code changes while in design mode."
 - **No `any` in TypeScript** — always use specific types
 - **No comments in production code** — only for TODO items
 - **No commented-out code** — delete it
-- Only comment *why*, never *what*
+- Only comment _why_, never _what_
 
 ---
 
@@ -189,11 +199,13 @@ If caught: "I cannot implement code changes while in design mode."
 ## 11. Language Constraints
 
 ### Go Backend
+
 - **Never use Python** — not for scripts, not for one-liners, not for "quick" tools
 - All backend code, CLI tools, and utilities must be Go
 - Use `go run` for quick scripts if needed
 
 ### TypeScript/React Frontend
+
 - React 18 + TypeScript 5 + Mantine 7
 - No JavaScript files — always `.ts` or `.tsx`
 - No class components — functional components only
@@ -205,6 +217,7 @@ If caught: "I cannot implement code changes while in design mode."
   - `LogWarn()` for warnings
 
 ### Go Backend
+
 - Use Wails `runtime.Log*` functions, never `fmt.Println` for user-facing logs
 
 ---
@@ -220,6 +233,7 @@ If caught: "I cannot implement code changes while in design mode."
 ## 13. VS Code Problems Reset
 
 When VS Code shows stale errors:
+
 ```
 Cmd+Shift+P → "TypeScript: Restart TS Server"
 Cmd+Shift+P → "Developer: Reload Window"
@@ -230,12 +244,14 @@ Cmd+Shift+P → "Developer: Reload Window"
 ## 14. Git & GitHub
 
 ### Git Operations
+
 - **NEVER run `git add`, `git commit`, or `git push`** unless explicitly told to do so
 - **NO exceptions** — even if changes are complete, wait for explicit instruction
 - When explicitly told to commit, use clear messages: `feat:`, `fix:`, `refactor:`, `docs:`
 - Never commit `node_modules/`, `build/`, or `.db` files
 
 ### GitHub Operations
+
 - **ALWAYS use `gh` CLI** for GitHub operations (issues, PRs, releases, etc.)
 - Issue management: `gh issue create`, `gh issue close`, `gh issue edit`, `gh issue list`
 - Pull requests: `gh pr create`, `gh pr merge`, `gh pr view`, `gh pr list`
@@ -307,11 +323,13 @@ row := db.QueryRow(query, id)
 ### What Went Wrong (January 2026 Incident)
 
 A migration to drop columns from the Works table caused data loss:
+
 1. Migration dropped the Works table
 2. Migration failed BEFORE renaming Works_new → Works
 3. Result: 1749 records lost, recovered from backup
 
 **Root causes:**
+
 - Migration was NOT wrapped in a transaction
 - Views (WorksView, SubmissionsView) depended on Works table
 - SQLite's integrity check failed after DROP TABLE but before RENAME
@@ -319,6 +337,7 @@ A migration to drop columns from the Works table caused data loss:
 ### SQLite Column Drop Pattern
 
 SQLite doesn't support `ALTER TABLE DROP COLUMN` (well). The safe pattern is:
+
 1. Drop ALL views that reference the table
 2. Create new table with desired schema
 3. Copy data from old table to new table
@@ -329,6 +348,7 @@ SQLite doesn't support `ALTER TABLE DROP COLUMN` (well). The safe pattern is:
 ### Mandatory Migration Rules
 
 1. **ALWAYS wrap migrations in transactions**
+
    ```go
    func migrateXxx(tx *sql.Tx) error {
        // All operations use tx.Exec(), not db.conn.Exec()
@@ -336,6 +356,7 @@ SQLite doesn't support `ALTER TABLE DROP COLUMN` (well). The safe pattern is:
    ```
 
 2. **ALWAYS disable foreign keys inside transactions**
+
    ```go
    tx.Exec(`PRAGMA foreign_keys = OFF`)
    // ... migration work ...
@@ -343,22 +364,26 @@ SQLite doesn't support `ALTER TABLE DROP COLUMN` (well). The safe pattern is:
    ```
 
 3. **ALWAYS use idempotent statements**
+
    ```go
    tx.Exec(`DROP VIEW IF EXISTS ViewName`)
    tx.Exec(`DROP TABLE IF EXISTS TableName_new`)
    ```
 
 4. **ALWAYS find ALL dependent views BEFORE writing migration**
+
    ```fish
    sqlite3 ~/.works/works.db "SELECT name, sql FROM sqlite_master WHERE type='view'"
    ```
+
    Then grep for the table name in each view's SQL.
 
 5. **ALWAYS verify data counts before and after**
+
    ```fish
    # Before migration
    sqlite3 ~/.works/works.db "SELECT COUNT(*) FROM TableName"
-   
+
    # After migration
    sqlite3 ~/.works/works.db "SELECT COUNT(*) FROM TableName"
    ```
@@ -375,40 +400,40 @@ func migrateDropColumns(tx *sql.Tx) error {
     // 1. Drop ALL dependent views (find these FIRST!)
     _, _ = tx.Exec(`DROP VIEW IF EXISTS TableView`)
     _, _ = tx.Exec(`DROP VIEW IF EXISTS OtherDependentView`)
-    
+
     // 2. Clean up any failed previous attempt
     _, _ = tx.Exec(`DROP TABLE IF EXISTS Table_new`)
-    
+
     // 3. Create new table with desired schema
     _, err := tx.Exec(`CREATE TABLE Table_new (...)`)
     if err != nil {
         return fmt.Errorf("create Table_new: %w", err)
     }
-    
+
     // 4. Copy data
     _, err = tx.Exec(`INSERT INTO Table_new (...) SELECT ... FROM Table`)
     if err != nil {
         return fmt.Errorf("copy data: %w", err)
     }
-    
+
     // 5. Drop old table
     _, err = tx.Exec(`DROP TABLE Table`)
     if err != nil {
         return fmt.Errorf("drop old table: %w", err)
     }
-    
+
     // 6. Rename new table
     _, err = tx.Exec(`ALTER TABLE Table_new RENAME TO Table`)
     if err != nil {
         return fmt.Errorf("rename table: %w", err)
     }
-    
+
     // 7. Recreate ALL views
     _, err = tx.Exec(`CREATE VIEW TableView AS ...`)
     if err != nil {
         return fmt.Errorf("recreate view: %w", err)
     }
-    
+
     return nil
 }
 ```
@@ -416,6 +441,7 @@ func migrateDropColumns(tx *sql.Tx) error {
 ### Recovery
 
 If data is lost, restore from backup:
+
 ```fish
 cp ~/.works/backups/works_YYYY-MM-DD_HH-MM-SS_pre-reimport.db ~/.works/works.db
 ```
@@ -449,6 +475,7 @@ func getAppDataDir() string {
 ## 20. Performance Mindset
 
 This is a **single-user desktop app**, not a web service:
+
 - SQLite returns in microseconds — no debouncing needed
 - No pagination for lists under 10,000 records
 - No caching layers — SQLite is the cache
@@ -460,14 +487,15 @@ This is a **single-user desktop app**, not a web service:
 
 The specification is the source of truth. Key documents:
 
-| Document | Purpose |
-|----------|---------|
-| `design/specification.md` | Master overview |
-| `design/01-data-model.md` | Database schema |
-| `design/03-business-logic.md` | Wails bindings |
+| Document                       | Purpose              |
+| ------------------------------ | -------------------- |
+| `design/specification.md`      | Master overview      |
+| `design/01-data-model.md`      | Database schema      |
+| `design/03-business-logic.md`  | Wails bindings       |
 | `design/08-migration-guide.md` | Implementation steps |
 
 When in doubt:
+
 1. Check the design docs in `design/`
 2. The spec is the source of truth
 3. Ask before deviating from the spec
@@ -477,10 +505,12 @@ When in doubt:
 ## 22. ToDoList Workflow
 
 For structured implementation tasks, see:
+
 - `ai/Invoker.md` — Mode switching (Design → Planning → Execution → Meta)
 - `ai/Rules.md` — ToDoList.md table format and checkpoint rules
 
 Modes:
+
 - **Design Mode**: Clarify and document; no code changes
 - **Planning Mode**: Create/update `ai/ToDoList.md`
 - **Execution Mode**: Implement steps in order with checkpoints
@@ -488,4 +518,4 @@ Modes:
 
 ---
 
-*Last updated: January 5, 2026*
+_Last updated: January 5, 2026_

@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+// createTOCPDFWithTemplate uses the template-based DOCX approach if a template
+// exists, otherwise falls back to the raw PDF generator.
+func createTOCPDFWithTemplate(entries []TOCEntry, outputPath, templatePath string, config OverlayConfig) error {
+	if templatePath != "" {
+		if _, err := os.Stat(templatePath); err == nil {
+			return CreateTOCPDFViaDocx(entries, templatePath, outputPath)
+		}
+	}
+	return CreateTOCPDF(entries, outputPath, config)
+}
+
 type PipelineOptions struct {
 	Manifest      *Manifest
 	CollectionID  int64
@@ -124,8 +135,9 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		if fm.Placeholder && fm.Type == "toc" {
 			if len(tocEntries) > 0 {
 				tocPDFPath = filepath.Join(opts.CacheDir, "toc.pdf")
-				if err := CreateTOCPDF(tocEntries, tocPDFPath, config); err != nil {
-					result.Warnings = append(result.Warnings, fmt.Sprintf("TOC PDF creation failed: %v", err))
+				tocErr := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
+				if tocErr != nil {
+					result.Warnings = append(result.Warnings, fmt.Sprintf("TOC PDF creation failed: %v", tocErr))
 				} else {
 					actualTOCPages, _ := GetPageCount(tocPDFPath)
 					if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
@@ -134,7 +146,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 							result.Warnings = append(result.Warnings, fmt.Sprintf("Re-analysis failed: %v", err))
 						}
 						tocEntries, _ = GenerateTOC(analysis, config)
-						_ = CreateTOCPDF(tocEntries, tocPDFPath, config)
+						_ = createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
 					}
 					frontMatterPDFs = append(frontMatterPDFs, tocPDFPath)
 				}
@@ -155,7 +167,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 	for partIdx := range analysis.PartAnalyses {
 		pa := analysis.PartAnalyses[partIdx]
 		isSelected := opts.RebuildAll || isPartSelected(partIdx, opts.SelectedParts)
-		isCached := IsPartCached(opts.CacheDir, partIdx)
+		isCached := IsPartCached(opts.CacheDir, pa.PartTitle)
 
 		progress("Parts", 3, 5, fmt.Sprintf("Part %d (%s): selected=%v, cached=%v", partIdx, pa.PartTitle, isSelected, isCached))
 
@@ -179,7 +191,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 			result.Warnings = append(result.Warnings, partResult.Warnings...)
 		} else if isCached {
 			// Not selected but cached: use cached version (already has overlays)
-			cached, err := LoadCachedPart(opts.CacheDir, partIdx)
+			cached, err := LoadCachedPart(opts.CacheDir, pa.PartTitle, partIdx)
 			if err != nil {
 				// Cache load failed, build without overlays
 				partResult, err := BuildPart(PartBuildOptions{

@@ -83,6 +83,17 @@ func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
 
 	for _, fm := range m.FrontMatter {
 		if fm.Placeholder && fm.Type == PlaceholderTOC {
+			if needsBlankForRecto(currentPage) {
+				result.Items = append(result.Items, ContentItem{
+					Type:       ContentTypeBlank,
+					PageCount:  1,
+					StartPage:  currentPage,
+					EndPage:    currentPage,
+					NeedsBlank: true,
+				})
+				currentPage++
+				result.FrontMatterPages++
+			}
 			result.TOCIndex = len(result.Items)
 			result.Items = append(result.Items, ContentItem{
 				Type:      ContentTypeTOC,

@@ -39,14 +39,15 @@ type Part struct {
 }
 
 type Manifest struct {
-	Title       string            `json:"title"`
-	Author      string            `json:"author"`
-	OutputPath  string            `json:"outputPath"`
-	Typography  Typography        `json:"typography"`
-	FrontMatter []FrontMatterItem `json:"frontMatter"`
-	Parts       []Part            `json:"parts,omitempty"`
-	Works       []Work            `json:"works,omitempty"`
-	BackMatter  []BackMatterItem  `json:"backMatter"`
+	Title        string            `json:"title"`
+	Author       string            `json:"author"`
+	OutputPath   string            `json:"outputPath"`
+	TemplatePath string            `json:"templatePath,omitempty"`
+	Typography   Typography        `json:"typography"`
+	FrontMatter  []FrontMatterItem `json:"frontMatter"`
+	Parts        []Part            `json:"parts,omitempty"`
+	Works        []Work            `json:"works,omitempty"`
+	BackMatter   []BackMatterItem  `json:"backMatter"`
 }
 
 func DefaultTypography() Typography {

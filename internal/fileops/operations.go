@@ -320,6 +320,10 @@ func (f *FileOps) GetTemplatePath(workType string) string {
 	return filepath.Join(f.Config.TemplateFolderPath, "Template.docx")
 }
 
+func (f *FileOps) GetBookTemplatePath() string {
+	return filepath.Join(f.Config.TemplateFolderPath, "book-template.dotm")
+}
+
 func (f *FileOps) CreateWorkFile(w *models.Work) error {
 	fullPath := f.GetFullPath(w)
 	// Only add .docx if the path doesn't already have an extension

@@ -320,6 +320,8 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 	inParagraph := false
 	inRun := false
 	inRunProps := false
+	inMath := false // Track if we're inside a math element
+	mathDepth := 0  // Handle nested math elements
 	runHasDirectFormat := false
 	runDirectTypes := make(map[string]bool)
 	runText := ""
@@ -333,6 +335,12 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 
 		switch t := tok.(type) {
 		case xml.StartElement:
+			// Track math elements (namespace m: for Office Math)
+			if t.Name.Local == "oMath" || t.Name.Local == "oMathPara" {
+				inMath = true
+				mathDepth++
+			}
+
 			switch t.Name.Local {
 			case "p":
 				inParagraph = true
@@ -354,10 +362,32 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 					inRunProps = true
 				}
 			case "rStyle":
-			case "b", "i", "u", "sz", "color", "rFonts", "highlight", "strike", "dstrike", "vertAlign", "spacing":
-				if inRun && inRunProps {
+			case "b", "i", "u", "sz", "color", "highlight", "strike", "dstrike", "vertAlign", "spacing":
+				// Only count as direct formatting if NOT inside a math element
+				if inRun && inRunProps && !inMath {
 					runHasDirectFormat = true
 					runDirectTypes[t.Name.Local] = true
+				}
+			case "rFonts":
+				// Only count rFonts as direct formatting if it has non-theme font attributes
+				if inRun && inRunProps && !inMath {
+					hasRealFont := false
+					for _, attr := range t.Attr {
+						// Theme references are automatic, not manual formatting
+						if strings.HasSuffix(attr.Name.Local, "Theme") {
+							continue
+						}
+						// ascii, hAnsi, eastAsia, cs with actual font names = real formatting
+						if attr.Name.Local == "ascii" || attr.Name.Local == "hAnsi" ||
+							attr.Name.Local == "eastAsia" || attr.Name.Local == "cs" {
+							hasRealFont = true
+							break
+						}
+					}
+					if hasRealFont {
+						runHasDirectFormat = true
+						runDirectTypes[t.Name.Local] = true
+					}
 				}
 			case "t":
 			}
@@ -366,6 +396,15 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 				runText += string(t)
 			}
 		case xml.EndElement:
+			// Track exiting math elements
+			if t.Name.Local == "oMath" || t.Name.Local == "oMathPara" {
+				mathDepth--
+				if mathDepth <= 0 {
+					inMath = false
+					mathDepth = 0
+				}
+			}
+
 			switch t.Name.Local {
 			case "rPr":
 				inRunProps = false
@@ -435,6 +474,13 @@ func formatStyleCount(styleName string, counts map[string]int) string {
 	return styleName
 }
 
+// HyperlinkRef represents a hyperlink reference within a drawing
+type HyperlinkRef struct {
+	SourceRelID string
+	OutputRelID string
+	Target      string
+}
+
 type ImageRef struct {
 	SourceRelID string
 	OutputRelID string
@@ -442,6 +488,7 @@ type ImageRef struct {
 	LocalPath   string
 	DrawingXML  string
 	IsLinked    bool
+	Hyperlinks  []HyperlinkRef // Hyperlinks within this drawing
 }
 
 type ParagraphContent struct {
@@ -662,14 +709,49 @@ func extractImageRef(drawingXML string, rels map[string]string) ImageRef {
 
 	mediaPath := rels[relID]
 
+	// Extract hyperlink references from drawing (r:id attributes in hlinkClick elements)
+	var hyperlinks []HyperlinkRef
+	remaining := drawingXML
+	for {
+		// Look for r:id=" pattern (used by hyperlinks in drawings)
+		ridStart := strings.Index(remaining, "r:id=\"")
+		if ridStart == -1 {
+			break
+		}
+		ridStart += 6
+		ridEnd := strings.Index(remaining[ridStart:], "\"")
+		if ridEnd == -1 {
+			break
+		}
+		hrefRelID := remaining[ridStart : ridStart+ridEnd]
+		// Only add if it's a hyperlink (has a URL target) and not already tracked
+		if target, ok := rels[hrefRelID]; ok && strings.HasPrefix(target, "http") {
+			// Check if we already have this hyperlink
+			found := false
+			for _, h := range hyperlinks {
+				if h.SourceRelID == hrefRelID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				hyperlinks = append(hyperlinks, HyperlinkRef{
+					SourceRelID: hrefRelID,
+					Target:      target,
+				})
+			}
+		}
+		remaining = remaining[ridStart+ridEnd:]
+	}
+
 	return ImageRef{
 		SourceRelID: relID,
 		MediaPath:   mediaPath,
 		DrawingXML:  drawingXML,
 		IsLinked:    isLinked,
+		Hyperlinks:  hyperlinks,
 	}
 }
-
 func getMaxRelationshipID(templatePath string) (int, error) {
 	rels, err := parseRelationships(templatePath)
 	if err != nil {
@@ -891,6 +973,27 @@ func remapImageRelationships(paragraphs []ParagraphContent, startID int) ([]Para
 			newDrawingXML := strings.Replace(img.DrawingXML, oldEmbedAttr, newEmbedAttr, 1)
 			newDrawingXML = strings.Replace(newDrawingXML, oldLinkAttr, newEmbedAttr, 1)
 
+			// Also remap any hyperlinks within the drawing
+			var remappedHyperlinks []HyperlinkRef
+			for _, hl := range img.Hyperlinks {
+				newHLRelID, hlExists := idMap[hl.SourceRelID]
+				if !hlExists {
+					newHLRelID = fmt.Sprintf("rId%d", nextID)
+					idMap[hl.SourceRelID] = newHLRelID
+					nextID++
+				}
+				// Replace the r:id reference in the drawing XML
+				oldHLAttr := fmt.Sprintf(`r:id="%s"`, hl.SourceRelID)
+				newHLAttr := fmt.Sprintf(`r:id="%s"`, newHLRelID)
+				newDrawingXML = strings.ReplaceAll(newDrawingXML, oldHLAttr, newHLAttr)
+
+				remappedHyperlinks = append(remappedHyperlinks, HyperlinkRef{
+					SourceRelID: hl.SourceRelID,
+					OutputRelID: newHLRelID,
+					Target:      hl.Target,
+				})
+			}
+
 			newImg := ImageRef{
 				SourceRelID: img.SourceRelID,
 				OutputRelID: newRelID,
@@ -898,6 +1001,7 @@ func remapImageRelationships(paragraphs []ParagraphContent, startID int) ([]Para
 				LocalPath:   img.LocalPath,
 				DrawingXML:  newDrawingXML,
 				IsLinked:    img.IsLinked,
+				Hyperlinks:  remappedHyperlinks,
 			}
 			result[i].Images = append(result[i].Images, newImg)
 		}
@@ -1023,6 +1127,7 @@ func replaceDocumentXMLWithImages(templatePath, sourcePath, outputPath string, n
 		zipFile   *zip.File
 	}
 	neededMedia := make(map[string]mediaEntry)
+	neededExtensions := make(map[string]bool)
 	mediaCounter := 1
 
 	for _, para := range paragraphs {
@@ -1031,6 +1136,7 @@ func replaceDocumentXMLWithImages(templatePath, sourcePath, outputPath string, n
 				ext := filepath.Ext(img.LocalPath)
 				mediaName := fmt.Sprintf("word/media/image%d%s", mediaCounter, ext)
 				neededMedia[mediaName] = mediaEntry{localPath: img.LocalPath}
+				neededExtensions[strings.ToLower(strings.TrimPrefix(ext, "."))] = true
 				mediaCounter++
 			} else if img.MediaPath != "" {
 				mediaPath := img.MediaPath
@@ -1039,6 +1145,8 @@ func replaceDocumentXMLWithImages(templatePath, sourcePath, outputPath string, n
 				}
 				if srcFile, ok := sourceMedia[mediaPath]; ok {
 					neededMedia[mediaPath] = mediaEntry{zipFile: srcFile}
+					ext := filepath.Ext(mediaPath)
+					neededExtensions[strings.ToLower(strings.TrimPrefix(ext, "."))] = true
 				}
 			}
 		}
@@ -1094,7 +1202,7 @@ func replaceDocumentXMLWithImages(templatePath, sourcePath, outputPath string, n
 				return fmt.Errorf("write rels: %w", err)
 			}
 		case contentTypesXML:
-			if err := copyZipFileWithContentTypeFix(zipWriter, file); err != nil {
+			if err := copyZipFileWithContentTypeFix(zipWriter, file, neededExtensions); err != nil {
 				zipWriter.Close()
 				outputFile.Close()
 				return fmt.Errorf("copy %s: %w", file.Name, err)
@@ -1180,31 +1288,41 @@ func mergeRelationships(templateRelsFile *zip.File, paragraphs []ParagraphConten
 
 	for _, para := range paragraphs {
 		for _, img := range para.Images {
-			if img.OutputRelID == "" {
-				continue
-			}
-			if addedRels[img.OutputRelID] {
-				continue
-			}
-			addedRels[img.OutputRelID] = true
+			// Add image relationship
+			if img.OutputRelID != "" && !addedRels[img.OutputRelID] {
+				addedRels[img.OutputRelID] = true
 
-			var mediaTarget string
-			if img.LocalPath != "" {
-				ext := filepath.Ext(img.LocalPath)
-				mediaTarget = fmt.Sprintf("media/image%d%s", mediaCounter, ext)
-				mediaCounter++
-			} else if img.MediaPath != "" {
-				mediaTarget = strings.TrimPrefix(img.MediaPath, "word/")
-			} else {
-				continue
+				var mediaTarget string
+				if img.LocalPath != "" {
+					ext := filepath.Ext(img.LocalPath)
+					mediaTarget = fmt.Sprintf("media/image%d%s", mediaCounter, ext)
+					mediaCounter++
+				} else if img.MediaPath != "" {
+					mediaTarget = strings.TrimPrefix(img.MediaPath, "word/")
+				} else {
+					continue
+				}
+
+				newRels.WriteString(fmt.Sprintf(
+					`<Relationship Id="%s" Type="%s" Target="%s"/>`,
+					img.OutputRelID,
+					imageRelType,
+					mediaTarget,
+				))
 			}
 
-			newRels.WriteString(fmt.Sprintf(
-				`<Relationship Id="%s" Type="%s" Target="%s"/>`,
-				img.OutputRelID,
-				imageRelType,
-				mediaTarget,
-			))
+			// Add hyperlink relationships from this image's drawings
+			for _, hl := range img.Hyperlinks {
+				if hl.OutputRelID != "" && !addedRels[hl.OutputRelID] {
+					addedRels[hl.OutputRelID] = true
+					newRels.WriteString(fmt.Sprintf(
+						`<Relationship Id="%s" Type="%s" Target="%s" TargetMode="External"/>`,
+						hl.OutputRelID,
+						hyperlinkRelType,
+						hl.Target,
+					))
+				}
+			}
 		}
 	}
 
@@ -1230,7 +1348,7 @@ func copyZipFile(zw *zip.Writer, file *zip.File) error {
 	return err
 }
 
-func copyZipFileWithContentTypeFix(zw *zip.Writer, file *zip.File) error {
+func copyZipFileWithContentTypeFix(zw *zip.Writer, file *zip.File, neededExtensions map[string]bool) error {
 	reader, err := file.Open()
 	if err != nil {
 		return err
@@ -1243,6 +1361,33 @@ func copyZipFileWithContentTypeFix(zw *zip.Writer, file *zip.File) error {
 	}
 
 	fixed := strings.ReplaceAll(string(content), dotmContentType, docxContentType)
+
+	closeTag := "</Types>"
+	if idx := strings.LastIndex(fixed, closeTag); idx != -1 {
+		var additions strings.Builder
+		extensionContentTypes := map[string]string{
+			"png":  "image/png",
+			"jpeg": "image/jpeg",
+			"jpg":  "image/jpeg",
+			"gif":  "image/gif",
+			"bmp":  "image/bmp",
+			"tiff": "image/tiff",
+			"emf":  "image/x-emf",
+			"wmf":  "image/x-wmf",
+		}
+		for ext := range neededExtensions {
+			ext = strings.TrimPrefix(ext, ".")
+			ext = strings.ToLower(ext)
+			if contentType, ok := extensionContentTypes[ext]; ok {
+				if !strings.Contains(fixed, fmt.Sprintf(`Extension="%s"`, ext)) {
+					additions.WriteString(fmt.Sprintf(`<Default Extension="%s" ContentType="%s"/>`, ext, contentType))
+				}
+			}
+		}
+		if additions.Len() > 0 {
+			fixed = fixed[:idx] + additions.String() + closeTag
+		}
+	}
 
 	header := file.FileHeader
 	writer, err := zw.CreateHeader(&header)
@@ -1309,26 +1454,39 @@ func (a *App) ApplyTemplateToWork(workID int64, templatePath string) error {
 		return fmt.Errorf("build document.xml: %w", err)
 	}
 
-	tempPath := fullPath + ".tmp"
+	// Build the new file in a temp directory (outside the watched folder)
+	// to avoid triggering file watcher on incomplete files
+	tempDir, err := os.MkdirTemp("", "works-template-*")
+	if err != nil {
+		return fmt.Errorf("create temp dir: %w", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	tempPath := filepath.Join(tempDir, filepath.Base(fullPath))
 	if err := replaceDocumentXMLWithImages(templatePath, fullPath, tempPath, newDocXML, remappedParagraphs); err != nil {
-		os.Remove(tempPath)
 		return fmt.Errorf("create new document: %w", err)
 	}
 
 	if err := validateDocxFile(tempPath); err != nil {
-		os.Remove(tempPath)
 		return fmt.Errorf("validation failed - original preserved: %w", err)
 	}
 
+	// Atomic replacement: remove original then rename in quick succession
+	// Use a staging path in the same directory for atomic rename on same filesystem
+	stagingPath := fullPath + ".new"
+	if err := copyFile(tempPath, stagingPath); err != nil {
+		return fmt.Errorf("copy to staging: %w", err)
+	}
+
 	if err := os.Remove(fullPath); err != nil {
-		os.Remove(tempPath)
+		os.Remove(stagingPath)
 		return fmt.Errorf("remove original: %w", err)
 	}
-	if err := os.Rename(tempPath, fullPath); err != nil {
+	if err := os.Rename(stagingPath, fullPath); err != nil {
 		if copyErr := copyFile(backupPath, fullPath); copyErr != nil {
 			return fmt.Errorf("rename failed AND restore failed: %w (restore: %v)", err, copyErr)
 		}
-		return fmt.Errorf("rename temp to original: %w", err)
+		return fmt.Errorf("rename staging to original: %w", err)
 	}
 
 	_ = a.SetWorkTemplateClean(workID, true)

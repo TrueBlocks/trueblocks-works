@@ -1,0 +1,297 @@
+yarn run v1.22.22
+$ yarn dev
+$ wails dev -debounce 1000 2>&1 | grep -v -E 'KnownStructs:|Not found:'
+[0;92mWails CLI[0m [0;31mv2.10.2[0m
+
+[0;92mExecuting: go mod tidy[0m
+[0m
+Done.
+  [90m[90m•[0m[0m [39m[39mInstalling frontend dependencies: [0m[0mDone.
+  [90m[90m•[0m[0m [39m[39mCompiling frontend: [0m[0mDone.
+$ vite
+
+  VITE v3.2.11  ready in 206 ms
+
+[0;92mVite Server URL: http://localhost:5173/[0m
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+[0;92mRunning frontend DevWatcher command: 'yarn dev'[0m
+Building application for development...
+[0m
+Done.
+  [90m[90m•[0m[0m [39m[39mCompiling application: [0m[0mDone.
+  [90m[90m•[0m[0m [39m[39mPackaging application: [0m[0mDone.
+[30;43m[30;43m WARNING [0m[0m [33m[33mThis darwin build contains the use of private APIs. This will not pass Apple's AppStore approval process. Please use it only as a test build for testing and debug purposes.[0m[0m
+
+[0;92mUsing DevServer URL: http://localhost:34115[0m
+[0;92mUsing Frontend DevServer URL: http://localhost:5173/[0m
+[0;92mUsing reload debounce setting of 1000 milliseconds[0m
+INF | Serving assets from frontend DevServer URL: http://localhost:5173/
+>>> Starting file watcher setup
+>>> BaseFolderPath: /Users/jrush/Documents/Home
+[watcher] Starting file watcher...
+INF | [watcher] Starting file watcher...
+2026-01-25 00:56:27.934 works[70378:101560236] WARNING: Secure coding is automatically enabled for restorable state! However, not on all supported macOS versions of this application. Opt-in to secure coding explicitly by implementing NSApplicationDelegate.applicationSupportsSecureRestorableState:.
+[watcher] Watching 29 directories
+INF | [watcher] Watching 29 directories
+>>> Watcher started successfully
+[0;92mWatching (sub)/directory: /Users/jrush/Development/trueblocks-art/works[0m
+INF | Loaded theme from settings: default dark mode: true
+[0;92m
+
+To develop in the browser and call your bound Go methods from Javascript, navigate to: http://localhost:34115[0m
+INF | Starting PDF export...
+INF | StatusBar received: progress Starting PDF export...
+INF | Analyzing manifest...
+INF | StatusBar received: progress Analyzing manifest...
+INF | Generating table of contents...
+INF | StatusBar received: progress Generating table of contents...
+INF | Building 9 parts...
+INF | Part 0 (Prologue): selected=true, cached=true
+INF | Building part 1: Prologue
+INF | Processing: Introduction
+INF | StatusBar received: progress Building 9 parts...
+INF | StatusBar received: progress Building part 1: Prologue
+INF | StatusBar received: progress Part 0 (Prologue): selected=true, cached=true
+INF | StatusBar received: progress Processing: Introduction
+INF | Adding page numbers to part 1...
+INF | StatusBar received: progress Adding page numbers to part 1...
+INF | Adding headers to part 1...
+INF | StatusBar received: progress Adding headers to part 1...
+INF | Part 1 (Part I - The DAO Awakening): selected=true, cached=true
+INF | Building part 2: Part I - The DAO Awakening
+INF | Processing: The DAO's First Big Decision
+INF | Processing: Smart Contracts are Immutable That's Amazing and It Sucks
+INF | Processing: What the F is a Finney
+INF | Processing: Downloading the DAO
+INF | Processing: A Clue About the DAO Attacker's Location
+INF | Processing: Knowing the Future and Proving You Know It
+INF | Processing: A Too Often Neglected Aspect of Smart Contract Security Auditability
+INF | Processing: A Eulogy for The DAO
+INF | Processing: A Eulogy for The DAO Part II
+INF | Processing: DAO Token Holder's Response in Charts
+INF | StatusBar received: progress Part 1 (Part I - The DAO Awakening): selected=true, cached=true
+INF | StatusBar received: progress Building part 2: Part I - The DAO Awakening
+INF | StatusBar received: progress Processing: The DAO's First Big Decision
+INF | StatusBar received: progress Processing: Smart Contracts are Immutable That's Amazing and It Sucks
+INF | StatusBar received: progress Processing: Downloading the DAO
+INF | StatusBar received: progress Processing: What the F is a Finney
+INF | StatusBar received: progress Processing: A Clue About the DAO Attacker's Location
+INF | StatusBar received: progress Processing: Knowing the Future and Proving You Know It
+INF | StatusBar received: progress Processing: A Eulogy for The DAO
+INF | StatusBar received: progress Processing: A Too Often Neglected Aspect of Smart Contract Security Auditability
+INF | StatusBar received: progress Processing: A Eulogy for The DAO Part II
+INF | StatusBar received: progress Processing: DAO Token Holder's Response in Charts
+INF | Adding page numbers to part 2...
+INF | StatusBar received: progress Adding page numbers to part 2...
+INF | Adding headers to part 2...
+INF | StatusBar received: progress Adding headers to part 2...
+INF | Part 2 (Part II - Building QuickBlocks): selected=true, cached=true
+INF | Building part 3: Part II - Building QuickBlocks
+INF | StatusBar received: progress Part 2 (Part II - Building QuickBlocks): selected=true, cached=true
+INF | StatusBar received: progress Building part 3: Part II - Building QuickBlocks
+INF | Processing: Accounting for the Revolution
+INF | Processing: The Real Flippening
+INF | Processing: It's Growing It's Growing
+INF | Processing: Be Careful Little Brain What You Code
+INF | Processing: Is the Ice Age Affecting Block Production
+INF | Processing: Ethereum Block Production Continues to Slide
+INF | Processing: Short Thoughts on Difficulty Calc
+INF | Processing: Reading Byzantium's Tea Leaves
+INF | Processing: Announcing QuickBlocks
+INF | Processing: Playing with Blocks
+INF | StatusBar received: progress Processing: Accounting for the Revolution
+INF | StatusBar received: progress Processing: The Real Flippening
+INF | StatusBar received: progress Processing: It's Growing It's Growing
+INF | StatusBar received: progress Processing: Be Careful Little Brain What You Code
+INF | StatusBar received: progress Processing: Is the Ice Age Affecting Block Production
+INF | StatusBar received: progress Processing: Ethereum Block Production Continues to Slide
+INF | StatusBar received: progress Processing: Short Thoughts on Difficulty Calc
+INF | StatusBar received: progress Processing: Reading Byzantium's Tea Leaves
+INF | StatusBar received: progress Processing: Announcing QuickBlocks
+INF | StatusBar received: progress Processing: Playing with Blocks
+INF | Adding page numbers to part 3...
+INF | StatusBar received: progress Adding page numbers to part 3...
+INF | Adding headers to part 3...
+INF | StatusBar received: progress Adding headers to part 3...
+INF | Part 3 (Part III - The Decentralization Manifesto): selected=true, cached=true
+INF | Building part 4: Part III - The Decentralization Manifesto
+INF | StatusBar received: progress Part 3 (Part III - The Decentralization Manifesto): selected=true, cached=true
+INF | StatusBar received: progress Building part 4: Part III - The Decentralization Manifesto
+INF | Processing: Defeating the Ethereum DDos Attacks
+INF | Processing: The Trace Data Problem
+INF | Processing: How Many ERC20 Tokens Do You Have
+INF | Processing: Mantras for Decentralized Open Data
+INF | Processing: Building an Ethereum Account Scraper with QuickBlocks
+INF | Processing: A Short Take on Decentralization
+INF | StatusBar received: progress Processing: Defeating the Ethereum DDos Attacks
+INF | StatusBar received: progress Processing: The Trace Data Problem
+INF | StatusBar received: progress Processing: How Many ERC20 Tokens Do You Have
+INF | StatusBar received: progress Processing: Mantras for Decentralized Open Data
+INF | StatusBar received: progress Processing: Building an Ethereum Account Scraper with QuickBlocks
+INF | StatusBar received: progress Processing: A Short Take on Decentralization
+INF | Adding page numbers to part 4...
+INF | StatusBar received: progress Adding page numbers to part 4...
+INF | Adding headers to part 4...
+INF | StatusBar received: progress Adding headers to part 4...
+INF | Part 4 (Part IV - The Unchained Index): selected=true, cached=true
+INF | Building part 5: Part IV - The Unchained Index
+INF | StatusBar received: progress Part 4 (Part IV - The Unchained Index): selected=true, cached=true
+INF | StatusBar received: progress Building part 5: Part IV - The Unchained Index
+INF | Processing: Is the Difficulty Bomb Exploding?
+INF | Processing: Counting Shit on Ethereum
+INF | Processing: Mother May I
+INF | Processing: Indexing Addresses on the Ethereum Blockchain
+INF | Processing: A Time Ordered Index of Time Ordered Immutable Data
+INF | Processing: It's Not That Difficult
+INF | Processing: A Method to Diffuse the Ethereum Difficulty Bomb
+INF | StatusBar received: progress Processing: Mother May I
+INF | StatusBar received: progress Processing: Is the Difficulty Bomb Exploding?
+INF | StatusBar received: progress Processing: A Method to Diffuse the Ethereum Difficulty Bomb
+INF | StatusBar received: progress Processing: Indexing Addresses on the Ethereum Blockchain
+INF | StatusBar received: progress Processing: A Time Ordered Index of Time Ordered Immutable Data
+INF | StatusBar received: progress Processing: It's Not That Difficult
+INF | StatusBar received: progress Processing: Counting Shit on Ethereum
+INF | Adding page numbers to part 5...
+INF | StatusBar received: progress Adding page numbers to part 5...
+INF | Adding headers to part 5...
+INF | StatusBar received: progress Adding headers to part 5...
+INF | Part 5 (Part V - The Long Grind): selected=true, cached=true
+INF | Building part 6: Part V - The Long Grind
+INF | StatusBar received: progress Part 5 (Part V - The Long Grind): selected=true, cached=true
+INF | StatusBar received: progress Building part 6: Part V - The Long Grind
+INF | Processing: Simple Undeniable Facts
+INF | Processing: How Accurate is Etherscan
+INF | Processing: Ethereum's Issuance minerReward
+INF | Processing: Ethereum's Issuance uncleReward
+INF | Processing: Every 15 Seconds
+INF | Processing: Dynamic Traversers in TrueBlocks
+INF | Processing: The Rent is Too Damn High
+INF | Processing: The Rent is Too Damn High Part II
+INF | Processing: Adventures in Difficulty Bombing
+INF | Processing: Calling Smart Contracts with chifra state call
+INF | Processing: Commanding the Line
+INF | StatusBar received: progress Processing: Simple Undeniable Facts
+INF | StatusBar received: progress Processing: How Accurate is Etherscan
+INF | StatusBar received: progress Processing: Ethereum's Issuance minerReward
+INF | StatusBar received: progress Processing: Ethereum's Issuance uncleReward
+INF | StatusBar received: progress Processing: Every 15 Seconds
+INF | StatusBar received: progress Processing: Dynamic Traversers in TrueBlocks
+INF | StatusBar received: progress Processing: The Rent is Too Damn High
+INF | StatusBar received: progress Processing: The Rent is Too Damn High Part II
+INF | StatusBar received: progress Processing: Adventures in Difficulty Bombing
+INF | StatusBar received: progress Processing: Calling Smart Contracts with chifra state call
+INF | StatusBar received: progress Processing: Commanding the Line
+INF | Adding page numbers to part 6...
+INF | StatusBar received: progress Adding page numbers to part 6...
+INF | Adding headers to part 6...
+INF | StatusBar received: progress Adding headers to part 6...
+INF | Part 6 (Part VI - The Specification): selected=true, cached=true
+INF | Building part 7: Part VI - The Specification
+INF | StatusBar received: progress Part 6 (Part VI - The Specification): selected=true, cached=true
+INF | StatusBar received: progress Building part 7: Part VI - The Specification
+INF | Processing: forEveryChain
+INF | Processing: Technical Specification for the Unchained Index
+INF | Processing: TrueBlocks Covalent Comparison
+INF | Processing: Better Accounting for Blockchains
+INF | Processing: Why We're Building TrueBlocks
+INF | Processing: Recipe Monthly Token Balances
+INF | Processing: Recipe Factories
+INF | Processing: Recipe Simple Speedup
+INF | Processing: Tweets About TrueBlocks
+INF | StatusBar received: progress Processing: forEveryChain
+INF | StatusBar received: progress Processing: Technical Specification for the Unchained Index
+INF | StatusBar received: progress Processing: TrueBlocks Covalent Comparison
+INF | StatusBar received: progress Processing: Better Accounting for Blockchains
+INF | StatusBar received: progress Processing: Why We're Building TrueBlocks
+INF | StatusBar received: progress Processing: Recipe Monthly Token Balances
+INF | StatusBar received: progress Processing: Recipe Factories
+INF | StatusBar received: progress Processing: Recipe Simple Speedup
+INF | StatusBar received: progress Processing: Tweets About TrueBlocks
+INF | Adding page numbers to part 7...
+INF | StatusBar received: progress Adding page numbers to part 7...
+INF | Adding headers to part 7...
+INF | StatusBar received: progress Adding headers to part 7...
+INF | Part 7 (Part VII - The Prisoners Dilemma): selected=true, cached=true
+INF | Building part 8: Part VII - The Prisoners Dilemma
+INF | StatusBar received: progress Part 7 (Part VII - The Prisoners Dilemma): selected=true, cached=true
+INF | Processing: The Prisoner's Dilemma On Crack
+INF | Processing: ChatGPT Responds to Thomas Rush's Recent Article
+INF | Processing: Why We Built TrueBlocks
+INF | Processing: Impact Diary for TrueBlocks
+INF | Processing: Exploring Optimism
+INF | Processing: TrueBlocks Comparison with Alchemy Covalent and Etherscan
+INF | StatusBar received: progress Building part 8: Part VII - The Prisoners Dilemma
+INF | StatusBar received: progress Processing: The Prisoner's Dilemma On Crack
+INF | StatusBar received: progress Processing: ChatGPT Responds to Thomas Rush's Recent Article
+INF | StatusBar received: progress Processing: Why We Built TrueBlocks
+INF | StatusBar received: progress Processing: Impact Diary for TrueBlocks
+INF | StatusBar received: progress Processing: TrueBlocks Comparison with Alchemy Covalent and Etherscan
+INF | StatusBar received: progress Processing: Exploring Optimism
+INF | Adding page numbers to part 8...
+INF | StatusBar received: progress Adding page numbers to part 8...
+INF | Adding headers to part 8...
+INF | StatusBar received: progress Adding headers to part 8...
+INF | Part 8 (Part VIII - The Island): selected=true, cached=true
+INF | Building part 9: Part VIII - The Island
+INF | Processing: Mist II Revenge of the Nerds
+INF | Processing: TrueBlocks Browse
+INF | Processing: Common Sense
+INF | Processing: Towards an Architecture For Super Fast Local First Apps
+INF | Processing: Dalledresses
+INF | Processing: Stop I Will Tell You What To Do
+INF | Processing: A Proposal to Solve the Blind Signing Problem
+INF | Processing: The 10 Most Interesting Innovations of TrueBlocks
+INF | Processing: The 10 Stupidest Things about TrueBlocks
+INF | Processing: Waiting for Decentralization
+INF | StatusBar received: progress Part 8 (Part VIII - The Island): selected=true, cached=true
+INF | StatusBar received: progress Building part 9: Part VIII - The Island
+INF | StatusBar received: progress Processing: Mist II Revenge of the Nerds
+INF | StatusBar received: progress Processing: TrueBlocks Browse
+INF | StatusBar received: progress Processing: Common Sense
+INF | StatusBar received: progress Processing: Towards an Architecture For Super Fast Local First Apps
+INF | StatusBar received: progress Processing: Dalledresses
+INF | StatusBar received: progress Processing: Stop I Will Tell You What To Do
+INF | StatusBar received: progress Processing: The 10 Stupidest Things about TrueBlocks
+INF | StatusBar received: progress Processing: The 10 Most Interesting Innovations of TrueBlocks
+INF | StatusBar received: progress Processing: A Proposal to Solve the Blind Signing Problem
+INF | StatusBar received: progress Processing: Waiting for Decentralization
+INF | Adding page numbers to part 9...
+INF | StatusBar received: progress Adding page numbers to part 9...
+INF | Adding headers to part 9...
+INF | StatusBar received: progress Adding headers to part 9...
+INF | Stitching final book...
+INF | PDF 0: /Users/jrush/.works/book-builds/coll-50073/front-matter.pdf
+INF | PDF 1: /Users/jrush/.works/book-builds/coll-50073/toc.pdf
+INF | PDF 2: /Users/jrush/.works/book-builds/coll-50073/part-prologue-overlaid.pdf
+INF | PDF 3: /Users/jrush/.works/book-builds/coll-50073/part-part-i-the-dao-awakening-overlaid.pdf
+INF | PDF 4: /Users/jrush/.works/book-builds/coll-50073/part-part-ii-building-quickblocks-overlaid.pdf
+INF | PDF 5: /Users/jrush/.works/book-builds/coll-50073/part-part-iii-the-decentralization-manifesto-overlaid.pdf
+INF | PDF 6: /Users/jrush/.works/book-builds/coll-50073/part-part-iv-the-unchained-index-overlaid.pdf
+INF | PDF 7: /Users/jrush/.works/book-builds/coll-50073/part-part-v-the-long-grind-overlaid.pdf
+INF | PDF 8: /Users/jrush/.works/book-builds/coll-50073/part-part-vi-the-specification-overlaid.pdf
+INF | PDF 9: /Users/jrush/.works/book-builds/coll-50073/part-part-vii-the-prisoners-dilemma-overlaid.pdf
+INF | PDF 10: /Users/jrush/.works/book-builds/coll-50073/part-part-viii-the-island-overlaid.pdf
+INF | PDF 11: /Users/jrush/.works/book-builds/coll-50073/back-matter.pdf
+INF | StatusBar received: progress Stitching final book...
+INF | StatusBar received: progress PDF 0: /Users/jrush/.works/book-builds/coll-50073/front-matter.pdf
+INF | StatusBar received: progress PDF 1: /Users/jrush/.works/book-builds/coll-50073/toc.pdf
+INF | StatusBar received: progress PDF 2: /Users/jrush/.works/book-builds/coll-50073/part-prologue-overlaid.pdf
+INF | StatusBar received: progress PDF 4: /Users/jrush/.works/book-builds/coll-50073/part-part-ii-building-quickblocks-overlaid.pdf
+INF | StatusBar received: progress PDF 3: /Users/jrush/.works/book-builds/coll-50073/part-part-i-the-dao-awakening-overlaid.pdf
+INF | StatusBar received: progress PDF 5: /Users/jrush/.works/book-builds/coll-50073/part-part-iii-the-decentralization-manifesto-overlaid.pdf
+INF | StatusBar received: progress PDF 6: /Users/jrush/.works/book-builds/coll-50073/part-part-iv-the-unchained-index-overlaid.pdf
+INF | StatusBar received: progress PDF 7: /Users/jrush/.works/book-builds/coll-50073/part-part-v-the-long-grind-overlaid.pdf
+INF | StatusBar received: progress PDF 8: /Users/jrush/.works/book-builds/coll-50073/part-part-vi-the-specification-overlaid.pdf
+INF | StatusBar received: progress PDF 9: /Users/jrush/.works/book-builds/coll-50073/part-part-vii-the-prisoners-dilemma-overlaid.pdf
+INF | StatusBar received: progress PDF 10: /Users/jrush/.works/book-builds/coll-50073/part-part-viii-the-island-overlaid.pdf
+INF | StatusBar received: progress PDF 11: /Users/jrush/.works/book-builds/coll-50073/back-matter.pdf
+INF | Writing final PDF...
+INF | StatusBar received: progress Writing final PDF...
+INF | ✓ PDF exported: You Say You Want A Revolution.pdf
+INF | StatusBar received: success PDF exported: You Say You Want A Revolution.pdf
+INF | PDF exported to: /Users/jrush/Desktop/You Say You Want A Revolution.pdf
+[0;92mDevelopment mode exited[0m
+[31;107m[31;107m ♥  [0m[0m [92m[92mIf Wails is useful to you or your company, please consider sponsoring the project:[0m[0m
+https://github.com/sponsors/leaanthony
+Done in 314.55s.

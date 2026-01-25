@@ -188,11 +188,24 @@ func (w *Watcher) handleEvent(path string) {
 }
 
 func (w *Watcher) processFileChange(path string) {
+	// Skip temp files and staging files used during atomic replacement
+	filename := filepath.Base(path)
+	if strings.HasSuffix(filename, ".tmp") || strings.HasSuffix(filename, ".new") || strings.HasSuffix(filename, ".bak.docx") {
+		return
+	}
+
 	workID, err := w.lookupWorkByPath(path)
 	if err != nil {
 		return
 	}
 	if workID == 0 {
+		return
+	}
+
+	// Verify file is accessible and complete before processing
+	// This helps avoid race conditions during atomic file replacement
+	if !w.isFileAccessible(path) {
+		w.log("[watcher] File not accessible yet, skipping: %s", path)
 		return
 	}
 
@@ -208,6 +221,21 @@ func (w *Watcher) processFileChange(path string) {
 	if w.onFTSNeeded != nil {
 		go w.onFTSNeeded(workID, path)
 	}
+}
+
+// isFileAccessible checks if a file can be opened and read
+// This helps detect if a file is still being written or replaced
+func (w *Watcher) isFileAccessible(path string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	// Try to read a small amount to verify file is complete
+	buf := make([]byte, 4)
+	_, err = f.Read(buf)
+	return err == nil
 }
 
 func (w *Watcher) lookupWorkByPath(absPath string) (int64, error) {

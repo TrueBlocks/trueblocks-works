@@ -280,13 +280,16 @@ func addPartHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig
 		var headerText string
 		var position string
 
-		origPhysical := m.PhysicalPage + m.ContentItem.StartPage - 1
+		// Calculate the original book page number from ContentItem.StartPage + page within item
+		origPhysical := m.ContentItem.StartPage + m.PageInItem - 1
 		isVerso := origPhysical%2 == 0
 
 		if isVerso {
+			// Left pages (verso): book title
 			headerText = config.BookTitle
 			position = PositionTopLeft
 		} else {
+			// Right pages (recto): essay/chapter title
 			if m.ContentItem != nil {
 				headerText = m.ContentItem.Title
 			}

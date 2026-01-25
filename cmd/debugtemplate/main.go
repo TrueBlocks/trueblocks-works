@@ -1423,6 +1423,15 @@ func mergeRelationshipsDebug(templateRelsFile *zip.File, paragraphs []ParagraphC
 				continue
 			}
 
+			// Handle linked (external) images - they need TargetMode="External"
+			if img.IsLinked && img.MediaPath != "" {
+				rel := fmt.Sprintf(`<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="%s" TargetMode="External"/>`,
+					img.OutputRelID, img.MediaPath)
+				buf.WriteString(rel)
+				fmt.Printf("  Added rel: %s -> %s (External)\n", img.OutputRelID, img.MediaPath)
+				continue
+			}
+
 			var target string
 			if img.LocalPath != "" {
 				extVal := filepath.Ext(img.LocalPath)

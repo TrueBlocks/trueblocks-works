@@ -1132,6 +1132,10 @@ func replaceDocumentXMLWithImages(templatePath, sourcePath, outputPath string, n
 
 	for _, para := range paragraphs {
 		for _, img := range para.Images {
+			// Skip linked (external) images - they don't need media files embedded
+			if img.IsLinked {
+				continue
+			}
 			if img.LocalPath != "" {
 				ext := filepath.Ext(img.LocalPath)
 				mediaName := fmt.Sprintf("word/media/image%d%s", mediaCounter, ext)
@@ -1291,6 +1295,17 @@ func mergeRelationships(templateRelsFile *zip.File, paragraphs []ParagraphConten
 			// Add image relationship
 			if img.OutputRelID != "" && !addedRels[img.OutputRelID] {
 				addedRels[img.OutputRelID] = true
+
+				// Handle linked (external) images - they need TargetMode="External"
+				if img.IsLinked && img.MediaPath != "" {
+					newRels.WriteString(fmt.Sprintf(
+						`<Relationship Id="%s" Type="%s" Target="%s" TargetMode="External"/>`,
+						img.OutputRelID,
+						imageRelType,
+						img.MediaPath,
+					))
+					continue
+				}
 
 				var mediaTarget string
 				if img.LocalPath != "" {

@@ -237,7 +237,7 @@ func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayCo
 				switch m.ContentItem.Type {
 				case ContentTypeFrontMatter, ContentTypeTOC:
 					tracker.FrontMatterNum++
-				case ContentTypePartDivider, ContentTypeWork:
+				case ContentTypeBlank, ContentTypePartDivider, ContentTypeWork:
 					tracker.BodyNum++
 				case ContentTypeBackMatter:
 					tracker.BackMatterNum++

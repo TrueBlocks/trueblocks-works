@@ -43,7 +43,7 @@ func AddPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig
 				switch m.ContentItem.Type {
 				case ContentTypeFrontMatter, ContentTypeTOC:
 					frontMatterNum++
-				case ContentTypePartDivider, ContentTypeWork:
+				case ContentTypeBlank, ContentTypePartDivider, ContentTypeWork:
 					bodyNum++
 				case ContentTypeBackMatter:
 					backMatterNum++

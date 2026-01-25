@@ -841,6 +841,9 @@ func downloadLinkedImages(paragraphs []ParagraphContent, workPath string) []Para
 				continue
 			}
 
+			// Add delay between downloads to avoid rate limiting
+			time.Sleep(500 * time.Millisecond)
+
 			localPath, err := downloadImage(img.MediaPath, supportingDir, nextImageNum)
 			if err != nil {
 				result[i].Images = append(result[i].Images, img)

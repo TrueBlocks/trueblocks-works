@@ -24,6 +24,7 @@ import {
   IconLayoutList,
   IconBook,
   IconEyeOff,
+  IconTypography,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -75,6 +76,7 @@ import {
   ConfirmDeleteModal,
   MoveToPositionModal,
   BookSettingsTab,
+  BookTypographyTab,
 } from '@/components';
 import { useNotes } from '@/hooks';
 
@@ -922,6 +924,20 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 <IconLayoutList size={20} />
               </Tabs.Tab>
             </Tooltip>
+            <Tooltip label="Typography" position="right">
+              <Tabs.Tab
+                value="typography"
+                style={{
+                  backgroundColor:
+                    activeTab === 'typography' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'typography' ? 'var(--mantine-color-blue-6)' : undefined,
+                  borderRadius: '6px',
+                  padding: '10px',
+                }}
+              >
+                <IconTypography size={20} />
+              </Tabs.Tab>
+            </Tooltip>
             <Tooltip label="Book Settings" position="right">
               <Tabs.Tab
                 value="book"
@@ -1036,6 +1052,10 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 </Stack>
               </Grid.Col>
             </Grid>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="typography" pl="md" style={{ flex: 1 }}>
+            <BookTypographyTab collectionId={collectionId} />
           </Tabs.Panel>
 
           <Tabs.Panel value="book" pl="md" style={{ flex: 1 }}>

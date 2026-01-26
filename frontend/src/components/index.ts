@@ -57,5 +57,6 @@ export { SplashScreen } from './SplashScreen';
 export { ImportConfirmModal } from './ImportConfirmModal';
 export { FTSStatus } from './FTSStatus';
 export { BookSettingsTab } from './BookSettingsTab';
+export { BookTypographyTab } from './BookTypographyTab';
 export { PartSelectionModal } from './PartSelectionModal';
 export { StatusBar } from './StatusBar/StatusBar';

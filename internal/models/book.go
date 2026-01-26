@@ -21,6 +21,14 @@ type Book struct {
 	HeaderSize       *int    `json:"headerSize,omitempty" db:"header_size"`
 	PageNumFont      *string `json:"pageNumFont,omitempty" db:"page_num_font"`
 	PageNumSize      *int    `json:"pageNumSize,omitempty" db:"page_num_size"`
+	TitleFont        *string `json:"titleFont,omitempty" db:"title_font"`
+	TitleSize        *int    `json:"titleSize,omitempty" db:"title_size"`
+	SubtitleFont     *string `json:"subtitleFont,omitempty" db:"subtitle_font"`
+	SubtitleSize     *int    `json:"subtitleSize,omitempty" db:"subtitle_size"`
+	AuthorFont       *string `json:"authorFont,omitempty" db:"author_font"`
+	AuthorSize       *int    `json:"authorSize,omitempty" db:"author_size"`
+	WorksStartRecto  *bool   `json:"worksStartRecto,omitempty" db:"works_start_recto"`
+	ShowPageNumbers  *bool   `json:"showPageNumbers,omitempty" db:"show_page_numbers"`
 	SelectedParts    *string `json:"selectedParts,omitempty" db:"selected_parts"`
 	CreatedAt        string  `json:"createdAt" db:"created_at"`
 	ModifiedAt       string  `json:"modifiedAt" db:"updated_at"`

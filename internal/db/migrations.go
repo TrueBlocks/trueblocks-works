@@ -89,6 +89,11 @@ var migrations = []Migration{
 		Name:    "add_is_suppressed_to_collection_details",
 		Up:      migrateAddIsSuppressedToCollectionDetails,
 	},
+	{
+		Version: 25,
+		Name:    "add_title_page_typography",
+		Up:      migrateAddTitlePageTypography,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -822,5 +827,51 @@ func migrateAddIsSuppressedToCollectionDetails(tx *sql.Tx) error {
 	if err != nil {
 		return fmt.Errorf("add is_suppressed column to CollectionDetails: %w", err)
 	}
+	return nil
+}
+
+func migrateAddTitlePageTypography(tx *sql.Tx) error {
+	// Title page typography
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN title_font TEXT`)
+	if err != nil {
+		return fmt.Errorf("add title_font column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN title_size INTEGER`)
+	if err != nil {
+		return fmt.Errorf("add title_size column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN subtitle_font TEXT`)
+	if err != nil {
+		return fmt.Errorf("add subtitle_font column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN subtitle_size INTEGER`)
+	if err != nil {
+		return fmt.Errorf("add subtitle_size column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN author_font TEXT`)
+	if err != nil {
+		return fmt.Errorf("add author_font column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN author_size INTEGER`)
+	if err != nil {
+		return fmt.Errorf("add author_size column to Books: %w", err)
+	}
+
+	// Layout options
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN works_start_recto INTEGER DEFAULT 1`)
+	if err != nil {
+		return fmt.Errorf("add works_start_recto column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN show_page_numbers INTEGER DEFAULT 1`)
+	if err != nil {
+		return fmt.Errorf("add show_page_numbers column to Books: %w", err)
+	}
+
 	return nil
 }

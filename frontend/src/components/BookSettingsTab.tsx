@@ -478,7 +478,7 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
                     onClick={handleExportPDF}
                     loading={exporting}
                   >
-                    Publish PDF
+                    Make Galley
                   </Button>
                   <Button
                     size="sm"
@@ -486,7 +486,7 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
                     leftSection={<IconExternalLink size={16} />}
                     onClick={handleOpenPDF}
                   >
-                    Open PDF
+                    Open Galley
                   </Button>
                 </Group>
                 {lastExport?.success && (

@@ -1,5 +1,12 @@
 import { Button, Checkbox, Group, Text, Tooltip } from '@mantine/core';
-import { IconArrowsExchange, IconDownload, IconFileText, IconPrinter } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import {
+  IconArrowsExchange,
+  IconDownload,
+  IconFileText,
+  IconPrinter,
+  IconRefresh,
+} from '@tabler/icons-react';
 import {
   CheckWorkPath,
   ExportToSubmissions,
@@ -10,6 +17,7 @@ import {
   OpenDocument,
   PrintWork,
   SetWorkMarked,
+  SyncWorkTemplate,
 } from '@app';
 import { Log, LogErr } from '@/utils';
 import { useCallback, useEffect, useState } from 'react';
@@ -37,6 +45,7 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   } | null>(null);
   const [templatePath, setTemplatePath] = useState<string>('');
   const [isMarked, setIsMarked] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     CheckWorkPath(workID).then((result) => {
@@ -116,6 +125,28 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     }
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      await SyncWorkTemplate(workID);
+      setIsMarked(true);
+      notifications.show({
+        title: 'Template Synced',
+        message: 'Styles, page setup, and images updated from template',
+        color: 'green',
+      });
+    } catch (err) {
+      LogErr('Failed to sync template:', err);
+      notifications.show({
+        title: 'Sync Failed',
+        message: String(err),
+        color: 'red',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   // Build tooltip text explaining what style issues were found
   const buildAuditTooltip = (
     status: {
@@ -169,6 +200,21 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
             <Text size="xs" c="orange" fw={500}>
               {auditStatusText}
             </Text>
+          </Tooltip>
+        )}
+
+        {fileExists && templatePath && auditStatus?.isInBook && (
+          <Tooltip label="Apply template styles, page setup, and scale images">
+            <Button
+              variant="light"
+              color="teal"
+              size="xs"
+              px="xs"
+              onClick={handleSync}
+              loading={syncing}
+            >
+              <IconRefresh size={14} />
+            </Button>
           </Tooltip>
         )}
 

@@ -626,6 +626,10 @@ export function StartReportGeneration() {
   return window['go']['app']['App']['StartReportGeneration']();
 }
 
+export function SyncWorkTemplate(arg1) {
+  return window['go']['app']['App']['SyncWorkTemplate'](arg1);
+}
+
 export function ToggleShowDeleted() {
   return window['go']['app']['App']['ToggleShowDeleted']();
 }

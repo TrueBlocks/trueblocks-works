@@ -322,6 +322,8 @@ export function SetWorkSuppressed(arg1:number,arg2:number,arg3:boolean):Promise<
 
 export function StartReportGeneration():Promise<void>;
 
+export function SyncWorkTemplate(arg1:number):Promise<void>;
+
 export function ToggleShowDeleted():Promise<boolean>;
 
 export function TouchWorkAccessDate(arg1:number):Promise<void>;

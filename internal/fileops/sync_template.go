@@ -1,0 +1,133 @@
+package fileops
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+)
+
+func SyncTemplateToDocument(templatePath, docxPath string) error {
+	absTemplate, err := filepath.Abs(templatePath)
+	if err != nil {
+		return fmt.Errorf("abs template path: %w", err)
+	}
+
+	absDocx, err := filepath.Abs(docxPath)
+	if err != nil {
+		return fmt.Errorf("abs docx path: %w", err)
+	}
+
+	script := buildSyncTemplateScript(absTemplate, absDocx)
+
+	// Write script to temp file for reliable execution
+	tmpFile, err := os.CreateTemp("", "sync_template_*.scpt")
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	scriptPath := tmpFile.Name()
+
+	if _, err := tmpFile.WriteString(script); err != nil {
+		tmpFile.Close()
+		os.Remove(scriptPath)
+		return fmt.Errorf("write script: %w", err)
+	}
+	tmpFile.Close()
+
+	cmd := exec.Command("osascript", scriptPath)
+	output, err := cmd.CombinedOutput()
+	os.Remove(scriptPath)
+	if err != nil {
+		return fmt.Errorf("applescript failed: %w: %s", err, string(output))
+	}
+
+	return nil
+}
+
+func buildSyncTemplateScript(templatePath, docxPath string) string {
+	// Escape paths for AppleScript
+	escapedTemplate := escapeAppleScriptString(templatePath)
+	escapedDocx := escapeAppleScriptString(docxPath)
+
+	return `
+tell application "Microsoft Word"
+	launch
+	
+	-- Open template to read page setup
+	set templatePath to (POSIX file "` + escapedTemplate + `" as text)
+	open templatePath
+	set templateDoc to active document
+	set templatePageSetup to page setup of section 1 of templateDoc
+	set templatePageWidth to page width of templatePageSetup
+	set templatePageHeight to page height of templatePageSetup
+	set templateTopMargin to top margin of templatePageSetup
+	set templateBottomMargin to bottom margin of templatePageSetup
+	set templateLeftMargin to left margin of templatePageSetup
+	set templateRightMargin to right margin of templatePageSetup
+	close templateDoc saving no
+	
+	-- Open the document
+	open (POSIX file "` + escapedDocx + `" as text)
+	set theDoc to active document
+	set docPageSetup to page setup of section 1 of theDoc
+	set docPageWidth to page width of docPageSetup
+	set docPageHeight to page height of docPageSetup
+	
+	-- Calculate scale factor (minimum of width and height ratios)
+	set widthRatio to templatePageWidth / docPageWidth
+	set heightRatio to templatePageHeight / docPageHeight
+	if widthRatio < heightRatio then
+		set scaleFactor to widthRatio
+	else
+		set scaleFactor to heightRatio
+	end if
+	
+	-- Scale inline shapes
+	repeat with inlineShape in inline shapes of theDoc
+		try
+			set width of inlineShape to (width of inlineShape) * scaleFactor
+			set height of inlineShape to (height of inlineShape) * scaleFactor
+		end try
+	end repeat
+	
+	-- Scale floating shapes
+	repeat with floatShape in shapes of theDoc
+		try
+			set width of floatShape to (width of floatShape) * scaleFactor
+			set height of floatShape to (height of floatShape) * scaleFactor
+		end try
+	end repeat
+	
+	-- Copy styles from template
+	tell theDoc to copy styles from template template templatePath
+	
+	-- Apply page setup from template
+	set page width of docPageSetup to templatePageWidth
+	set page height of docPageSetup to templatePageHeight
+	set top margin of docPageSetup to templateTopMargin
+	set bottom margin of docPageSetup to templateBottomMargin
+	set left margin of docPageSetup to templateLeftMargin
+	set right margin of docPageSetup to templateRightMargin
+	
+	-- Save and close document, then quit Word
+	save theDoc
+	close theDoc
+	quit
+end tell
+`
+}
+
+func escapeAppleScriptString(s string) string {
+	result := ""
+	for _, c := range s {
+		switch c {
+		case '"', '\u201C', '\u201D': // straight quote, left curly, right curly
+			result += `\"`
+		case '\\':
+			result += `\\`
+		default:
+			result += string(c)
+		}
+	}
+	return result
+}

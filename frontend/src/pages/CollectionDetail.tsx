@@ -252,11 +252,14 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadData]);
 
-  // Cmd+Shift+2: Cycle sub-tabs (Contents/Book)
+  // Cmd+Shift+2: Cycle sub-tabs (Contents/Typography/Book)
   useEffect(() => {
     function handleCycleSubTab() {
       if (!isBook) return;
-      const newTab = activeTab === 'contents' ? 'book' : 'contents';
+      const tabs = ['contents', 'typography', 'book'];
+      const currentIndex = tabs.indexOf(activeTab || 'contents');
+      const nextIndex = (currentIndex + 1) % tabs.length;
+      const newTab = tabs[nextIndex];
       setActiveTab(newTab);
       SetTab(`collection-${collectionId}-subtab`, newTab);
     }

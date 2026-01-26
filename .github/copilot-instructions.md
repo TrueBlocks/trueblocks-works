@@ -448,6 +448,14 @@ cp ~/.works/backups/works_YYYY-MM-DD_HH-MM-SS_pre-reimport.db ~/.works/works.db
 
 ---
 
+## 17b. Direct Database Modifications
+
+- **NEVER run `sqlite3` UPDATE or DELETE** commands without explicit "go ahead"
+- SELECT queries are fine for investigation
+- Same approval requirement as git commits
+
+---
+
 ## 18. File Paths
 
 - All paths are **macOS paths** — no Windows consideration

@@ -322,8 +322,7 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 	manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "toc", Placeholder: true})
 
 	for _, w := range works {
-		// Skip suppressed works and works of type "Book" (legacy artifacts)
-		if w.IsSuppressed || w.Type == "Book" {
+		if w.IsSuppressed {
 			continue
 		}
 		pdfPath := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
@@ -404,9 +403,7 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 	hasParts := false
 
 	for _, w := range works {
-		// Skip suppressed works and works of type "Book" (legacy artifacts)
-		// But allow Section type through (it's used for part dividers)
-		if w.IsSuppressed || w.Type == "Book" {
+		if w.IsSuppressed {
 			continue
 		}
 		if w.Type == workTypeSection {

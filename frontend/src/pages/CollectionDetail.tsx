@@ -23,6 +23,7 @@ import {
   IconReorder,
   IconLayoutList,
   IconBook,
+  IconEyeOff,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -54,6 +55,7 @@ import {
   GetBookByCollection,
   GetTab,
   SetTab,
+  SetWorkSuppressed,
 } from '@app';
 import { models, db, state } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
@@ -604,6 +606,22 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     [collectionId, works, moveToPositionWork, loadData]
   );
 
+  const handleToggleSuppressed = useCallback(
+    async (workID: number, currentSuppressed: boolean) => {
+      if (!collectionId) return;
+      try {
+        await SetWorkSuppressed(collectionId, workID, !currentSuppressed);
+        // Update local state optimistically
+        setWorks((prev) =>
+          prev.map((w) => (w.workID === workID ? { ...w, isSuppressed: !currentSuppressed } : w))
+        );
+      } catch (err) {
+        LogErr('Failed to toggle suppressed:', err);
+      }
+    },
+    [collectionId]
+  );
+
   const handleSelectedChange = useCallback((work: models.CollectionWork) => {
     SetLastWorkID(work.workID).catch((err) => {
       LogErr('Failed to set lastWorkID:', err);
@@ -625,7 +643,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       {
         key: 'position',
         label: '#',
-        width: '6%',
+        width: isBook ? '5%' : '6%',
         render: (work) => {
           const posStr = String(work.position);
           return work.isMarked ? (
@@ -647,11 +665,49 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           );
         },
       },
+      // Suppress column only shown for book collections
+      ...(isBook
+        ? [
+            {
+              key: 'suppress' as const,
+              label: '',
+              width: '3%',
+              render: (work: models.CollectionWork) => (
+                <Tooltip
+                  label={work.isSuppressed ? 'Include in PDF' : 'Exclude from PDF'}
+                  position="right"
+                >
+                  <ActionIcon
+                    size="xs"
+                    variant={work.isSuppressed ? 'filled' : 'subtle'}
+                    color={work.isSuppressed ? 'orange' : 'gray'}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      handleToggleSuppressed(work.workID, work.isSuppressed);
+                    }}
+                  >
+                    <IconEyeOff size={12} />
+                  </ActionIcon>
+                </Tooltip>
+              ),
+            },
+          ]
+        : []),
       {
         key: 'title',
         label: 'Title',
-        width: '30%',
-        render: (work) => work.title,
+        width: isBook ? '29%' : '30%',
+        render: (work) => (
+          <Text
+            size="sm"
+            style={{
+              opacity: work.isSuppressed ? 0.5 : 1,
+              textDecoration: work.isSuppressed ? 'line-through' : 'none',
+            }}
+          >
+            {work.title}
+          </Text>
+        ),
         scrollOnSelect: true,
       },
       {
@@ -691,7 +747,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           work.modifiedAt ? new Date(work.modifiedAt + 'Z').toLocaleDateString() : '-',
       },
     ],
-    [filterOptions]
+    [filterOptions, isBook, handleToggleSuppressed]
   );
 
   const searchFn = useCallback((work: models.CollectionWork, search: string) => {

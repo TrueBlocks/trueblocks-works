@@ -30,8 +30,9 @@ type CollectionDetail struct {
 // CollectionWork represents a Work with its position in a collection
 type CollectionWork struct {
 	Work
-	Position int64 `json:"position" db:"position"`
-	IsMarked bool  `json:"isMarked" db:"is_marked"`
+	Position     int64 `json:"position" db:"position"`
+	IsMarked     bool  `json:"isMarked" db:"is_marked"`
+	IsSuppressed bool  `json:"isSuppressed" db:"is_suppressed"`
 }
 
 func (c *Collection) IsDeleted() bool {

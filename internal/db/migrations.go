@@ -84,6 +84,11 @@ var migrations = []Migration{
 		Name:    "add_is_marked_to_works",
 		Up:      migrateAddIsMarkedToWorks,
 	},
+	{
+		Version: 24,
+		Name:    "add_is_suppressed_to_collection_details",
+		Up:      migrateAddIsSuppressedToCollectionDetails,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -808,5 +813,14 @@ func migrateAddIsMarkedToWorks(tx *sql.Tx) error {
 	}
 	// Clear all marks (both old and new fields)
 	_, _ = tx.Exec(`UPDATE Works SET is_marked = 0, is_template_clean = 0`)
+	return nil
+}
+
+func migrateAddIsSuppressedToCollectionDetails(tx *sql.Tx) error {
+	// Add is_suppressed column to CollectionDetails for per-collection suppression
+	_, err := tx.Exec(`ALTER TABLE CollectionDetails ADD COLUMN is_suppressed INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add is_suppressed column to CollectionDetails: %w", err)
+	}
 	return nil
 }

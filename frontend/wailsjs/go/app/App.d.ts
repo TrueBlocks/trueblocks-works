@@ -318,6 +318,8 @@ export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;
 
 export function SetWorkMarked(arg1:number,arg2:boolean):Promise<void>;
 
+export function SetWorkSuppressed(arg1:number,arg2:number,arg3:boolean):Promise<void>;
+
 export function StartReportGeneration():Promise<void>;
 
 export function ToggleShowDeleted():Promise<boolean>;

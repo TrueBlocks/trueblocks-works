@@ -192,6 +192,11 @@ func (a *App) GetWorkMarked(workID int64) (bool, error) {
 	return isMarked == 1, nil
 }
 
+// SetWorkSuppressed sets or clears the suppressed flag for a work in a collection
+func (a *App) SetWorkSuppressed(collID, workID int64, suppressed bool) error {
+	return a.db.SetWorkSuppressed(collID, workID, suppressed)
+}
+
 // WorkBookAuditStatus contains audit info for a work if it's in a book
 type WorkBookAuditStatus struct {
 	IsInBook              bool     `json:"isInBook"`

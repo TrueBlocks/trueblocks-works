@@ -1554,6 +1554,7 @@ export namespace models {
 	    modifiedAt: string;
 	    position: number;
 	    isMarked: boolean;
+	    isSuppressed: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new CollectionWork(source);
@@ -1580,6 +1581,7 @@ export namespace models {
 	        this.modifiedAt = source["modifiedAt"];
 	        this.position = source["position"];
 	        this.isMarked = source["isMarked"];
+	        this.isSuppressed = source["isSuppressed"];
 	    }
 	}
 	export class Note {

@@ -618,6 +618,10 @@ export function SetWorkMarked(arg1, arg2) {
   return window['go']['app']['App']['SetWorkMarked'](arg1, arg2);
 }
 
+export function SetWorkSuppressed(arg1, arg2, arg3) {
+  return window['go']['app']['App']['SetWorkSuppressed'](arg1, arg2, arg3);
+}
+
 export function StartReportGeneration() {
   return window['go']['app']['App']['StartReportGeneration']();
 }

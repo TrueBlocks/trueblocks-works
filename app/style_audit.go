@@ -6,13 +6,11 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const wordDocumentXML = "word/document.xml"
@@ -501,13 +499,6 @@ const imageRelType = "http://schemas.openxmlformats.org/officeDocument/2006/rela
 const hyperlinkRelType = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
 const contentTypesXML = "[Content_Types].xml"
 
-const (
-	extPNG  = ".png"
-	extJPG  = ".jpg"
-	extGIF  = ".gif"
-	extWebP = ".webp"
-)
-
 func parseRelationships(docxPath string) (map[string]string, error) {
 	reader, err := zip.OpenReader(docxPath)
 	if err != nil {
@@ -799,7 +790,10 @@ func getMaxRelationshipID(templatePath string) (int, error) {
 	return maxID, nil
 }
 
-func downloadLinkedImages(paragraphs []ParagraphContent, workPath string) []ParagraphContent {
+// ProgressFunc is called with current image number, total images, and status message
+type ProgressFunc func(current, total int, message string)
+
+func downloadLinkedImages(paragraphs []ParagraphContent, workPath string, _ ProgressFunc) []ParagraphContent {
 	dir := filepath.Dir(workPath)
 	base := filepath.Base(workPath)
 	ext := filepath.Ext(base)
@@ -807,7 +801,6 @@ func downloadLinkedImages(paragraphs []ParagraphContent, workPath string) []Para
 	supportingDir := filepath.Join(dir, "Supporting", name)
 
 	existingImages := findExistingImages(supportingDir)
-	nextImageNum := len(existingImages) + 1
 
 	result := make([]ParagraphContent, len(paragraphs))
 	imageNum := 1
@@ -816,11 +809,13 @@ func downloadLinkedImages(paragraphs []ParagraphContent, workPath string) []Para
 	for i, para := range paragraphs {
 		result[i].Text = para.Text
 		for _, img := range para.Images {
+			// Embedded images: keep as-is
 			if !img.IsLinked || img.MediaPath == "" {
 				result[i].Images = append(result[i].Images, img)
 				continue
 			}
 
+			// Check if we already resolved this URL
 			if localPath, exists := downloadedURLs[img.MediaPath]; exists {
 				newImg := img
 				newImg.LocalPath = localPath
@@ -830,6 +825,7 @@ func downloadLinkedImages(paragraphs []ParagraphContent, workPath string) []Para
 				continue
 			}
 
+			// Check if image was previously downloaded to Supporting folder
 			if localPath, exists := existingImages[imageNum]; exists {
 				newImg := img
 				newImg.LocalPath = localPath
@@ -841,25 +837,12 @@ func downloadLinkedImages(paragraphs []ParagraphContent, workPath string) []Para
 				continue
 			}
 
-			// Add delay between downloads to avoid rate limiting
-			time.Sleep(500 * time.Millisecond)
-
-			localPath, err := downloadImage(img.MediaPath, supportingDir, nextImageNum)
-			if err != nil {
-				result[i].Images = append(result[i].Images, img)
-				imageNum++
-				continue
-			}
-
-			downloadedURLs[img.MediaPath] = localPath
-			nextImageNum++
+			// Linked image not available locally: replace with text placeholder
+			// Don't try to download - just insert a code-style placeholder
+			placeholder := fmt.Sprintf("\n[Image %d: %s]\n", imageNum, img.MediaPath)
+			result[i].Text += placeholder
 			imageNum++
-
-			newImg := img
-			newImg.LocalPath = localPath
-			newImg.IsLinked = false
-			newImg.DrawingXML = strings.Replace(img.DrawingXML, "r:link=", "r:embed=", 1)
-			result[i].Images = append(result[i].Images, newImg)
+			// Don't add to Images - it's now text
 		}
 	}
 
@@ -885,70 +868,6 @@ func findExistingImages(supportingDir string) map[int]string {
 		}
 	}
 	return result
-}
-
-func downloadImage(url, supportingDir string, imageNum int) (string, error) {
-	if err := os.MkdirAll(supportingDir, 0755); err != nil {
-		return "", fmt.Errorf("create supporting dir: %w", err)
-	}
-
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Get(url)
-	if err != nil {
-		return "", fmt.Errorf("download: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("http status: %d", resp.StatusCode)
-	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read body: %w", err)
-	}
-
-	ext := detectImageExtension(data, resp.Header.Get("Content-Type"))
-	filename := fmt.Sprintf("image%d%s", imageNum, ext)
-	localPath := filepath.Join(supportingDir, filename)
-
-	if err := os.WriteFile(localPath, data, 0644); err != nil {
-		return "", fmt.Errorf("write file: %w", err)
-	}
-
-	return localPath, nil
-}
-
-func detectImageExtension(data []byte, contentType string) string {
-	if len(data) >= 8 {
-		if data[0] == 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G' {
-			return extPNG
-		}
-		if data[0] == 0xFF && data[1] == 0xD8 {
-			return extJPG
-		}
-		if data[0] == 'G' && data[1] == 'I' && data[2] == 'F' {
-			return extGIF
-		}
-		if data[0] == 'R' && data[1] == 'I' && data[2] == 'F' && data[3] == 'F' {
-			if len(data) >= 12 && data[8] == 'W' && data[9] == 'E' && data[10] == 'B' && data[11] == 'P' {
-				return extWebP
-			}
-		}
-	}
-
-	switch {
-	case strings.Contains(contentType, "png"):
-		return extPNG
-	case strings.Contains(contentType, "jpeg"), strings.Contains(contentType, "jpg"):
-		return extJPG
-	case strings.Contains(contentType, "gif"):
-		return extGIF
-	case strings.Contains(contentType, "webp"):
-		return extWebP
-	}
-
-	return extPNG
 }
 
 func remapImageRelationships(paragraphs []ParagraphContent, startID int) ([]ParagraphContent, map[string]string) {
@@ -1452,7 +1371,7 @@ func (a *App) ApplyTemplateToWork(workID int64, templatePath string) error {
 		return fmt.Errorf("extract paragraphs: %w", err)
 	}
 
-	paragraphs = downloadLinkedImages(paragraphs, fullPath)
+	paragraphs = downloadLinkedImages(paragraphs, fullPath, nil)
 
 	maxRelID, err := getMaxRelationshipID(templatePath)
 	if err != nil {

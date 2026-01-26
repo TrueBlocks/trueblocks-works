@@ -14,6 +14,7 @@ import {
   Button,
   Group,
   Badge,
+  NumberInput,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -88,6 +89,27 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
     async (field: keyof models.Book, value: string) => {
       if (!book) return;
       const updated = { ...book, [field]: value };
+      setBook(updated);
+      try {
+        await UpdateBook(updated);
+      } catch (err) {
+        LogErr('Failed to update book:', err);
+        notifications.show({
+          message: 'Failed to save changes',
+          color: 'red',
+          autoClose: 5000,
+        });
+      }
+    },
+    [book]
+  );
+
+  const handleNumberFieldChange = useCallback(
+    async (field: keyof models.Book, value: number | string) => {
+      if (!book) return;
+      const numValue = typeof value === 'string' ? parseInt(value, 10) : value;
+      if (isNaN(numValue)) return;
+      const updated = { ...book, [field]: numValue };
       setBook(updated);
       try {
         await UpdateBook(updated);
@@ -500,6 +522,63 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
                   </Text>
                 )}
               </Stack>
+            </Grid.Col>
+          </Grid>
+        </Paper>
+
+        {/* TYPOGRAPHY */}
+        <Paper p="sm" withBorder>
+          <Text fw={600} size="xs" c="dimmed" mb="xs">
+            TYPOGRAPHY
+          </Text>
+          <Grid gutter="xs">
+            <Grid.Col span={3}>
+              <Select
+                size="sm"
+                label="Header Font"
+                value={book.headerFont || 'Times New Roman'}
+                onChange={(value) => handleFieldChange('headerFont', value || 'Times New Roman')}
+                data={[
+                  { value: 'Times New Roman', label: 'Times New Roman' },
+                  { value: 'Helvetica', label: 'Helvetica' },
+                  { value: 'Courier', label: 'Courier' },
+                ]}
+              />
+            </Grid.Col>
+            <Grid.Col span={3}>
+              <NumberInput
+                size="sm"
+                label="Header Size"
+                value={book.headerSize ?? 10}
+                onChange={(value) => handleNumberFieldChange('headerSize', value)}
+                min={8}
+                max={14}
+                suffix=" pt"
+              />
+            </Grid.Col>
+            <Grid.Col span={3}>
+              <Select
+                size="sm"
+                label="Page Number Font"
+                value={book.pageNumFont || 'Times New Roman'}
+                onChange={(value) => handleFieldChange('pageNumFont', value || 'Times New Roman')}
+                data={[
+                  { value: 'Times New Roman', label: 'Times New Roman' },
+                  { value: 'Helvetica', label: 'Helvetica' },
+                  { value: 'Courier', label: 'Courier' },
+                ]}
+              />
+            </Grid.Col>
+            <Grid.Col span={3}>
+              <NumberInput
+                size="sm"
+                label="Page Number Size"
+                value={book.pageNumSize ?? 10}
+                onChange={(value) => handleNumberFieldChange('pageNumSize', value)}
+                min={8}
+                max={14}
+                suffix=" pt"
+              />
             </Grid.Col>
           </Grid>
         </Paper>

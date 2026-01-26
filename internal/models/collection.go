@@ -8,6 +8,7 @@ type Collection struct {
 	Attributes     string  `json:"attributes" db:"attributes"`
 	CreatedAt      string  `json:"createdAt" db:"created_at"`
 	ModifiedAt     string  `json:"modifiedAt" db:"modified_at"`
+	IsBook         bool    `json:"isBook" db:"is_book"`
 }
 
 // CollectionView extends Collection with computed fields
@@ -29,8 +30,8 @@ type CollectionDetail struct {
 // CollectionWork represents a Work with its position in a collection
 type CollectionWork struct {
 	Work
-	Position        int64 `json:"position" db:"position"`
-	IsTemplateClean bool  `json:"isTemplateClean" db:"is_template_clean"`
+	Position int64 `json:"position" db:"position"`
+	IsMarked bool  `json:"isMarked" db:"is_marked"`
 }
 
 func (c *Collection) IsDeleted() bool {

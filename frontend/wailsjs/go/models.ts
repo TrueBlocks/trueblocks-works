@@ -1,19 +1,5 @@
 export namespace app {
 	
-	export class ApplyTemplateResult {
-	    success: number;
-	    failed: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new ApplyTemplateResult(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.success = source["success"];
-	        this.failed = source["failed"];
-	    }
-	}
 	export class BookExportResult {
 	    success: boolean;
 	    outputPath?: string;
@@ -80,6 +66,92 @@ export namespace app {
 	        this.dirtyWorks = source["dirtyWorks"];
 	        this.missingFiles = source["missingFiles"];
 	        this.results = this.convertValues(source["results"], StyleAuditResult);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class HeadingAnalysisResult {
+	    workId: number;
+	    title: string;
+	    success: boolean;
+	    headings?: fts.HeadingInfo[];
+	    dateline?: string;
+	    unknownStyles?: string[];
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new HeadingAnalysisResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workId = source["workId"];
+	        this.title = source["title"];
+	        this.success = source["success"];
+	        this.headings = this.convertValues(source["headings"], fts.HeadingInfo);
+	        this.dateline = source["dateline"];
+	        this.unknownStyles = source["unknownStyles"];
+	        this.error = source["error"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class CollectionHeadingAnalysisResult {
+	    totalWorks: number;
+	    successful: number;
+	    failed: number;
+	    totalHeadings: number;
+	    worksWithHeadings: number;
+	    worksWithDateline: number;
+	    firstError?: HeadingAnalysisResult;
+	    results: HeadingAnalysisResult[];
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionHeadingAnalysisResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.totalWorks = source["totalWorks"];
+	        this.successful = source["successful"];
+	        this.failed = source["failed"];
+	        this.totalHeadings = source["totalHeadings"];
+	        this.worksWithHeadings = source["worksWithHeadings"];
+	        this.worksWithDateline = source["worksWithDateline"];
+	        this.firstError = this.convertValues(source["firstError"], HeadingAnalysisResult);
+	        this.results = this.convertValues(source["results"], HeadingAnalysisResult);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -456,6 +528,7 @@ export namespace app {
 	        this.errors = source["errors"];
 	    }
 	}
+	
 	export class ImportConflict {
 	    type: string;
 	    existingWork?: models.Work;
@@ -684,6 +757,7 @@ export namespace app {
 	    icon: string;
 	    issues: ReportIssue[];
 	    count: number;
+	    checks?: string[];
 	    error?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -696,6 +770,7 @@ export namespace app {
 	        this.icon = source["icon"];
 	        this.issues = this.convertValues(source["issues"], ReportIssue);
 	        this.count = source["count"];
+	        this.checks = source["checks"];
 	        this.error = source["error"];
 	    }
 	
@@ -1141,6 +1216,24 @@ export namespace fts {
 	        this.workIds = source["workIds"];
 	    }
 	}
+	export class HeadingInfo {
+	    pos: number;
+	    level: number;
+	    style: string;
+	    text: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new HeadingInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.pos = source["pos"];
+	        this.level = source["level"];
+	        this.style = source["style"];
+	        this.text = source["text"];
+	    }
+	}
 	export class Query {
 	    text: string;
 	    filters: Filters;
@@ -1376,6 +1469,7 @@ export namespace models {
 	    attributes: string;
 	    createdAt: string;
 	    modifiedAt: string;
+	    isBook: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Collection(source);
@@ -1389,6 +1483,7 @@ export namespace models {
 	        this.attributes = source["attributes"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
+	        this.isBook = source["isBook"];
 	    }
 	}
 	export class CollectionDetail {
@@ -1418,6 +1513,7 @@ export namespace models {
 	    attributes: string;
 	    createdAt: string;
 	    modifiedAt: string;
+	    isBook: boolean;
 	    isDeleted: boolean;
 	    nItems: number;
 	
@@ -1433,6 +1529,7 @@ export namespace models {
 	        this.attributes = source["attributes"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
+	        this.isBook = source["isBook"];
 	        this.isDeleted = source["isDeleted"];
 	        this.nItems = source["nItems"];
 	    }
@@ -1456,7 +1553,7 @@ export namespace models {
 	    createdAt: string;
 	    modifiedAt: string;
 	    position: number;
-	    isTemplateClean: boolean;
+	    isMarked: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new CollectionWork(source);
@@ -1482,7 +1579,7 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.position = source["position"];
-	        this.isTemplateClean = source["isTemplateClean"];
+	        this.isMarked = source["isMarked"];
 	    }
 	}
 	export class Note {

@@ -127,11 +127,17 @@ func (db *Database) createSchema(conn *sql.DB) error {
 			word_count INTEGER,
 			extracted_at TEXT NOT NULL,
 			source_mtime INTEGER NOT NULL,
-			source_size INTEGER
+			source_size INTEGER,
+			headings TEXT,
+			dateline TEXT
 		);
 	`
 
 	if _, err := conn.Exec(schema); err != nil {
+		return err
+	}
+
+	if err := db.migrateSchema(conn); err != nil {
 		return err
 	}
 
@@ -176,6 +182,26 @@ func (db *Database) createSchema(conn *sql.DB) error {
 	}
 
 	return db.initMeta(conn)
+}
+
+func (db *Database) migrateSchema(conn *sql.DB) error {
+	columns := []string{"headings", "dateline"}
+	for _, col := range columns {
+		var count int
+		err := conn.QueryRow(`
+			SELECT COUNT(*) FROM pragma_table_info('content') WHERE name = ?
+		`, col).Scan(&count)
+		if err != nil {
+			return fmt.Errorf("check column %s: %w", col, err)
+		}
+		if count == 0 {
+			_, err = conn.Exec(fmt.Sprintf("ALTER TABLE content ADD COLUMN %s TEXT", col))
+			if err != nil {
+				return fmt.Errorf("add column %s: %w", col, err)
+			}
+		}
+	}
+	return nil
 }
 
 func (db *Database) initMeta(conn *sql.DB) error {
@@ -246,4 +272,18 @@ func (db *Database) Size() (int64, error) {
 		return 0, err
 	}
 	return info.Size(), nil
+}
+
+func (db *Database) UpdateWorkHeadings(workID int64, headingsJSON string, dateline string) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.conn == nil {
+		return fmt.Errorf("database not open")
+	}
+
+	_, err := db.conn.Exec(`
+		UPDATE content SET headings = ?, dateline = ? WHERE work_id = ?
+	`, headingsJSON, dateline, workID)
+	return err
 }

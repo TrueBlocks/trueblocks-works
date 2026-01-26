@@ -1,22 +1,15 @@
-import { Button, Group, Modal, Stack, Text, Tooltip } from '@mantine/core';
+import { Button, Checkbox, Group, Text, Tooltip } from '@mantine/core';
+import { IconArrowsExchange, IconDownload, IconFileText, IconPrinter } from '@tabler/icons-react';
 import {
-  IconArrowsExchange,
-  IconDownload,
-  IconFileText,
-  IconPrinter,
-  IconWand,
-} from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
-import {
-  ApplyTemplateToWork,
   CheckWorkPath,
   ExportToSubmissions,
   GetWorkBookAuditStatus,
-  GetWorkTemplateClean,
+  GetWorkMarked,
   GetWorkTemplatePath,
   MoveWorkFile,
   OpenDocument,
   PrintWork,
+  SetWorkMarked,
 } from '@app';
 import { Log, LogErr } from '@/utils';
 import { useCallback, useEffect, useState } from 'react';
@@ -43,9 +36,7 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     directFormattingTypes: string[];
   } | null>(null);
   const [templatePath, setTemplatePath] = useState<string>('');
-  const [applying, setApplying] = useState(false);
-  const [templateAlreadyApplied, setTemplateAlreadyApplied] = useState(false);
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [isMarked, setIsMarked] = useState(false);
 
   useEffect(() => {
     CheckWorkPath(workID).then((result) => {
@@ -62,9 +53,9 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     GetWorkTemplatePath(workID).then((path) => {
       setTemplatePath(path || '');
     });
-    // Check if template has already been applied to this work
-    GetWorkTemplateClean(workID).then((isClean) => {
-      setTemplateAlreadyApplied(isClean);
+    // Get marked status
+    GetWorkMarked(workID).then((marked) => {
+      setIsMarked(marked);
     });
   }, [workID, refreshKey]);
 
@@ -116,41 +107,12 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     }
   };
 
-  const handleApplyTemplateClick = () => {
-    if (templateAlreadyApplied) {
-      setConfirmModalOpen(true);
-    } else {
-      handleApplyTemplate();
-    }
-  };
-
-  const handleApplyTemplate = async () => {
-    if (!templatePath) return;
-    setConfirmModalOpen(false);
-    setApplying(true);
+  const handleMarkChange = async (checked: boolean) => {
     try {
-      await ApplyTemplateToWork(workID, templatePath);
-      setTemplateAlreadyApplied(true);
-      notifications.show({
-        title: 'Template Applied',
-        message: 'Document cleaned - unknown styles removed',
-        color: 'green',
-        autoClose: 5000,
-      });
-      // Refresh audit status
-      const status = await GetWorkBookAuditStatus(workID);
-      setAuditStatus(status);
-      onMoved?.();
+      await SetWorkMarked(workID, checked);
+      setIsMarked(checked);
     } catch (err) {
-      LogErr('Failed to apply template:', err);
-      notifications.show({
-        title: 'Apply Template Failed',
-        message: String(err),
-        color: 'red',
-        autoClose: 5000,
-      });
-    } finally {
-      setApplying(false);
+      LogErr('Failed to update mark:', err);
     }
   };
 
@@ -180,6 +142,15 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   return (
     <>
       <Group gap="xs">
+        <Tooltip label="Mark this work for batch operations">
+          <Checkbox
+            checked={isMarked}
+            onChange={(e) => handleMarkChange(e.currentTarget.checked)}
+            size="sm"
+            color="green"
+          />
+        </Tooltip>
+
         {pathStatus === 'name changed' && (
           <Button
             variant="filled"
@@ -193,29 +164,12 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
           </Button>
         )}
 
-        {templatePath && (
-          <Group gap={4}>
-            <Tooltip label="Apply template to clean up styles">
-              <Button
-                variant="light"
-                color={templateAlreadyApplied ? 'orange' : 'green'}
-                size="xs"
-                px={6}
-                onClick={handleApplyTemplateClick}
-                loading={applying}
-                disabled={!fileExists}
-              >
-                <IconWand size={14} />
-              </Button>
-            </Tooltip>
-            {auditStatusText && (
-              <Tooltip label={buildAuditTooltip(auditStatus)} multiline maw={400}>
-                <Text size="xs" c="orange" fw={500}>
-                  {auditStatusText}
-                </Text>
-              </Tooltip>
-            )}
-          </Group>
+        {templatePath && auditStatusText && (
+          <Tooltip label={buildAuditTooltip(auditStatus)} multiline maw={400}>
+            <Text size="xs" c="orange" fw={500}>
+              {auditStatusText}
+            </Text>
+          </Tooltip>
         )}
 
         <Tooltip label="Open document">
@@ -265,36 +219,6 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
         newPath={generatedPath}
         onMove={handleMove}
       />
-
-      <Modal
-        opened={confirmModalOpen}
-        onClose={() => setConfirmModalOpen(false)}
-        title="Re-apply Template?"
-        centered
-      >
-        <Stack>
-          <Text size="sm">
-            This document has already had the template applied. Re-applying will:
-          </Text>
-          <Text size="sm" c="red" fw={500}>
-            • Remove all images and pictures
-          </Text>
-          <Text size="sm" c="red" fw={500}>
-            • Reset all formatting to template styles
-          </Text>
-          <Text size="sm" c="dimmed">
-            This action cannot be undone.
-          </Text>
-          <Group justify="flex-end" mt="md">
-            <Button variant="default" onClick={() => setConfirmModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button color="red" onClick={handleApplyTemplate}>
-              Re-apply Template
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
     </>
   );
 }

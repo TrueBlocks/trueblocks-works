@@ -79,6 +79,11 @@ var migrations = []Migration{
 		Name:    "add_selected_parts_to_books",
 		Up:      migrateAddSelectedPartsToBooks,
 	},
+	{
+		Version: 23,
+		Name:    "add_is_marked_to_works",
+		Up:      migrateAddIsMarkedToWorks,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -792,5 +797,16 @@ func migrateAddSelectedPartsToBooks(tx *sql.Tx) error {
 	if err != nil {
 		return fmt.Errorf("add selected_parts column to Books: %w", err)
 	}
+	return nil
+}
+
+func migrateAddIsMarkedToWorks(tx *sql.Tx) error {
+	// Add new is_marked column
+	_, err := tx.Exec(`ALTER TABLE Works ADD COLUMN is_marked INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add is_marked column to Works: %w", err)
+	}
+	// Clear all marks (both old and new fields)
+	_, _ = tx.Exec(`UPDATE Works SET is_marked = 0, is_template_clean = 0`)
 	return nil
 }

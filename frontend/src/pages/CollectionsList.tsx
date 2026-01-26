@@ -168,7 +168,13 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
 
   const columns: Column<models.CollectionView>[] = useMemo(
     () => [
-      { key: 'collID', label: 'ID', width: '8%', render: (c) => c.collID },
+      { key: 'collID', label: 'ID', width: '4%', render: (c) => c.collID },
+      {
+        key: 'isBook',
+        label: 'Book',
+        width: '4%',
+        render: (c) => (c.isBook ? '📖' : ''),
+      },
       {
         key: 'collectionName',
         label: 'Name',
@@ -179,20 +185,20 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
       {
         key: 'type',
         label: 'Type',
-        width: '15%',
+        width: '12%',
         render: (c) => <TypeBadge value={c.type} />,
         filterOptions: availableTypes,
       },
       {
         key: 'nItems',
         label: 'Works',
-        width: '12%',
+        width: '10%',
         render: (c) => c.nItems,
       },
       {
         key: 'modifiedAt',
         label: 'Last Modified',
-        width: '20%',
+        width: '18%',
         render: (c) => (c.modifiedAt ? new Date(c.modifiedAt + 'Z').toLocaleDateString() : '-'),
       },
     ],

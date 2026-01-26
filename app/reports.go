@@ -1,6 +1,7 @@
 package app
 
 import (
+	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,6 +27,7 @@ type ReportCategory struct {
 	Icon   string        `json:"icon"`
 	Issues []ReportIssue `json:"issues"`
 	Count  int           `json:"count"`
+	Checks []string      `json:"checks,omitempty"`
 	Error  string        `json:"error,omitempty"`
 }
 
@@ -45,11 +47,11 @@ var reportDefinitions = []struct {
 	icon string
 }{
 	{"Recent Changes", "IconHistory"},
-	{"Submissions", "IconSend"},
-	{"Works", "IconBook"},
+	{"Books", "IconBookmark"},
 	{"Collections", "IconFolder"},
+	{"Works", "IconBook"},
 	{"Organizations", "IconBuilding"},
-	{"Notes", "IconNote"},
+	{"Submissions", "IconSend"},
 	{"Data Quality", "IconAlertTriangle"},
 }
 
@@ -116,6 +118,8 @@ func (a *App) generateReport(name, icon string) {
 	switch name {
 	case "Recent Changes":
 		category = a.reportRecentChanges()
+	case "Books":
+		category = a.reportBooksIntegrity()
 	case "Submissions":
 		category = a.reportSubmissionsIntegrity()
 	case "Works":
@@ -124,8 +128,6 @@ func (a *App) generateReport(name, icon string) {
 		category = a.reportCollectionsIntegrity()
 	case "Organizations":
 		category = a.reportOrganizationsIntegrity()
-	case "Notes":
-		category = a.reportNotesIntegrity()
 	case "Data Quality":
 		category = a.reportDataQuality()
 	default:
@@ -173,8 +175,128 @@ func (a *App) reportRecentChanges() ReportCategory {
 	}
 }
 
+func (a *App) reportBooksIntegrity() ReportCategory {
+	issues := make([]ReportIssue, 0)
+	checks := []string{
+		"Empty books (no works assigned)",
+		"Books without a template assigned",
+		"Books with style audit issues (unknown styles or direct formatting)",
+		"Books with heading analysis failures",
+	}
+
+	// Get all book collections
+	rows, err := a.db.Conn().Query(`
+		SELECT c.collID, c.collection_name, b.template_path,
+			(SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID) as workCount
+		FROM Collections c 
+		LEFT JOIN Books b ON b.collID = c.collID
+		WHERE c.is_book = 1
+		ORDER BY c.collection_name
+	`)
+	if err != nil {
+		return ReportCategory{
+			Name:   "Books",
+			Icon:   "IconBookmark",
+			Issues: issues,
+			Checks: checks,
+			Error:  err.Error(),
+		}
+	}
+	defer rows.Close()
+
+	type bookInfo struct {
+		id           int64
+		name         string
+		templatePath sql.NullString
+		workCount    int
+	}
+	var books []bookInfo
+
+	for rows.Next() {
+		var b bookInfo
+		if err := rows.Scan(&b.id, &b.name, &b.templatePath, &b.workCount); err == nil {
+			books = append(books, b)
+		}
+	}
+
+	for _, book := range books {
+		// Check: Empty book
+		if book.workCount == 0 {
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: "Empty book (no works)",
+				EntityType:  "Collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+			continue
+		}
+
+		// Check: No template assigned
+		if !book.templatePath.Valid || book.templatePath.String == "" {
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: "No template assigned",
+				EntityType:  "Collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+		}
+
+		// Check: Style audit issues
+		auditSummary, err := a.AuditCollectionStyles(book.id)
+		if err == nil && auditSummary != nil {
+			if auditSummary.DirtyWorks > 0 {
+				issues = append(issues, ReportIssue{
+					ID:          book.id,
+					Description: fmt.Sprintf("%d of %d works have style issues", auditSummary.DirtyWorks, auditSummary.TotalWorks),
+					EntityType:  "Collection",
+					EntityID:    book.id,
+					EntityName:  book.name,
+				})
+			}
+			if auditSummary.MissingFiles > 0 {
+				issues = append(issues, ReportIssue{
+					ID:          book.id,
+					Description: fmt.Sprintf("%d works have missing files", auditSummary.MissingFiles),
+					EntityType:  "Collection",
+					EntityID:    book.id,
+					EntityName:  book.name,
+				})
+			}
+		}
+
+		// Check: Heading analysis issues
+		headingResult, err := a.AnalyzeCollectionHeadings(book.id)
+		if err == nil && headingResult != nil {
+			if headingResult.Failed > 0 {
+				issues = append(issues, ReportIssue{
+					ID:          book.id,
+					Description: fmt.Sprintf("%d of %d works failed heading analysis", headingResult.Failed, headingResult.TotalWorks),
+					EntityType:  "Collection",
+					EntityID:    book.id,
+					EntityName:  book.name,
+				})
+			}
+		}
+	}
+
+	return ReportCategory{
+		Name:   "Books",
+		Icon:   "IconBookmark",
+		Issues: issues,
+		Checks: checks,
+	}
+}
+
 func (a *App) reportSubmissionsIntegrity() ReportCategory {
 	issues := make([]ReportIssue, 0)
+	checks := []string{
+		"Submissions with missing work reference",
+		"Submissions with missing organization reference",
+		"Submissions with no submission date",
+		"Submissions marked as Waiting for more than 6 months",
+	}
 
 	// Submissions with missing work reference
 	rows, err := a.db.Conn().Query(`
@@ -291,11 +413,17 @@ func (a *App) reportSubmissionsIntegrity() ReportCategory {
 		}
 	}
 
-	return ReportCategory{Name: "Submissions", Icon: "IconSend", Issues: issues}
+	return ReportCategory{Name: "Submissions", Icon: "IconSend", Issues: issues, Checks: checks}
 }
 
 func (a *App) reportWorksIntegrity() ReportCategory {
 	issues := make([]ReportIssue, 0)
+	checks := []string{
+		"Works with missing year",
+		"Works with missing type",
+		"Works with missing status",
+		"Works with duplicate titles (same title, year, and type)",
+	}
 
 	// Works with missing Year value
 	rows, err := a.db.Conn().Query(`
@@ -409,11 +537,16 @@ func (a *App) reportWorksIntegrity() ReportCategory {
 		}
 	}
 
-	return ReportCategory{Name: "Works", Icon: "IconBook", Issues: issues}
+	return ReportCategory{Name: "Works", Icon: "IconBook", Issues: issues, Checks: checks}
 }
 
 func (a *App) reportCollectionsIntegrity() ReportCategory {
 	issues := make([]ReportIssue, 0)
+	checks := []string{
+		"Empty collections (no works assigned)",
+		"CollectionDetails referencing non-existent works",
+		"CollectionDetails referencing non-existent collections",
+	}
 
 	// Empty collections (no works assigned)
 	rows, err := a.db.Conn().Query(`
@@ -494,11 +627,15 @@ func (a *App) reportCollectionsIntegrity() ReportCategory {
 		}
 	}
 
-	return ReportCategory{Name: "Collections", Icon: "IconFolder", Issues: issues}
+	return ReportCategory{Name: "Collections", Icon: "IconFolder", Issues: issues, Checks: checks}
 }
 
 func (a *App) reportOrganizationsIntegrity() ReportCategory {
 	issues := make([]ReportIssue, 0)
+	checks := []string{
+		"Organizations with no URL, other URL, or Duotrope number",
+		"Duplicate organization names",
+	}
 
 	// Organizations with no URL, other_url, or duotrope_num
 	rows2, err := a.db.Conn().Query(`
@@ -549,70 +686,24 @@ func (a *App) reportOrganizationsIntegrity() ReportCategory {
 		}
 	}
 
-	return ReportCategory{Name: "Organizations", Icon: "IconBuilding", Issues: issues}
-}
-
-func (a *App) reportNotesIntegrity() ReportCategory {
-	issues := make([]ReportIssue, 0)
-
-	// Notes referencing non-existent entities
-	rows, err := a.db.Conn().Query(`
-		SELECT n.id, n.entity_type, n.entity_id
-		FROM Notes n
-		WHERE (n.entity_type = 'work' AND NOT EXISTS (SELECT 1 FROM Works w WHERE w.workID = n.entity_id))
-		   OR (n.entity_type = 'journal' AND NOT EXISTS (SELECT 1 FROM Organizations o WHERE o.orgID = n.entity_id))
-		   OR (n.entity_type = 'submission' AND NOT EXISTS (SELECT 1 FROM Submissions s WHERE s.submissionID = n.entity_id))
-		   OR (n.entity_type = 'collection' AND NOT EXISTS (SELECT 1 FROM Collections c WHERE c.collID = n.entity_id))
-	`)
-	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var id, entityID int64
-			var entityType string
-			_ = rows.Scan(&id, &entityType, &entityID)
-			issues = append(issues, ReportIssue{
-				ID:          id,
-				Description: fmt.Sprintf("References non-existent %s ID %d", entityType, entityID),
-				EntityType:  "note",
-				EntityID:    id,
-				EntityName:  fmt.Sprintf("Note #%d", id),
-			})
-		}
-	}
-
-	// Empty notes
-	rows2, err := a.db.Conn().Query(`
-		SELECT id, entity_type, entity_id FROM Notes 
-		WHERE note IS NULL OR TRIM(note) = ''
-	`)
-	if err == nil {
-		defer rows2.Close()
-		for rows2.Next() {
-			var id, entityID int64
-			var entityType string
-			_ = rows2.Scan(&id, &entityType, &entityID)
-			issues = append(issues, ReportIssue{
-				ID:          id,
-				Description: "Empty note text",
-				EntityType:  "note",
-				EntityID:    id,
-				EntityName:  fmt.Sprintf("%s #%d Note", entityType, entityID),
-			})
-		}
-	}
-
-	return ReportCategory{Name: "Notes", Icon: "IconNote", Issues: issues}
+	return ReportCategory{Name: "Organizations", Icon: "IconBuilding", Issues: issues, Checks: checks}
 }
 
 func (a *App) reportDataQuality() ReportCategory {
 	issues := make([]ReportIssue, 0)
+	checks := []string{
+		"Works with very low word count (< 10 words, excludes Cartoons)",
+		"Works with very high word count (> 50,000 words, excludes Books)",
+		"Submissions with future dates",
+	}
 
-	// Works with very low word count (< 10 words)
+	// Works with very low word count (< 10 words) - exclude Cartoons
 	rows, err := a.db.Conn().Query(`
 		SELECT workID, title, n_words FROM Works 
 		WHERE n_words IS NOT NULL AND n_words < 10 AND n_words > 0
 		AND title NOT LIKE '%Needed'
 		AND type NOT LIKE '%Chapter%'
+		AND type != 'Cartoon'
 	`)
 	if err == nil {
 		defer rows.Close()
@@ -703,7 +794,7 @@ func (a *App) reportDataQuality() ReportCategory {
 		}
 	}
 
-	return ReportCategory{Name: "Data Quality", Icon: "IconAlertTriangle", Issues: issues}
+	return ReportCategory{Name: "Data Quality", Icon: "IconAlertTriangle", Issues: issues, Checks: checks}
 }
 
 func (a *App) ReportFileSystemChecks() ReportCategory {

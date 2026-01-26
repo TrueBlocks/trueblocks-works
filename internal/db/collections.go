@@ -87,7 +87,7 @@ func (db *DB) UpdateCollection(c *models.Collection) (*validation.ValidationResu
 
 func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error) {
 	query := `SELECT c.collID, c.collection_name, c.type, c.attributes,
-		c.created_at, c.modified_at,
+		c.created_at, c.modified_at, c.is_book,
 		COALESCE((SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID), 0) as n_items
 		FROM Collections c`
 
@@ -108,7 +108,7 @@ func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error)
 		var c models.CollectionView
 		err := rows.Scan(
 			&c.CollID, &c.CollectionName, &c.Type, &c.Attributes,
-			&c.CreatedAt, &c.ModifiedAt, &c.NItems,
+			&c.CreatedAt, &c.ModifiedAt, &c.IsBook, &c.NItems,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan collection: %w", err)
@@ -201,7 +201,7 @@ func (db *DB) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.CollectionWork, error) {
 	query := `SELECT w.workID, w.title, w.type, w.year, w.status, w.quality, w.doc_type,
 		w.path, w.draft, w.n_words, w.course_name, w.attributes, w.access_date, w.created_at, w.modified_at,
-		cd.position, COALESCE(w.is_template_clean, 0)
+		cd.position, COALESCE(w.is_marked, 0)
 		FROM Works w
 		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
 		WHERE cd.collID = ?`
@@ -225,7 +225,7 @@ func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.Colle
 			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
 			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
-			&w.Position, &w.IsTemplateClean,
+			&w.Position, &w.IsMarked,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan work: %w", err)

@@ -18,9 +18,7 @@ export function AddTypeAndContinue(arg1:string):Promise<app.ImportResult>;
 
 export function AddWorkToCollection(arg1:number,arg2:number):Promise<void>;
 
-export function ApplyTemplateToCollection(arg1:number):Promise<app.ApplyTemplateResult>;
-
-export function ApplyTemplateToWork(arg1:number,arg2:string):Promise<void>;
+export function AnalyzeCollectionHeadings(arg1:number):Promise<app.CollectionHeadingAnalysisResult>;
 
 export function AuditCollectionStyles(arg1:number):Promise<app.CollectionAuditSummary>;
 
@@ -222,7 +220,7 @@ export function GetWorkDeleteConfirmation(arg1:number):Promise<db.DeleteConfirma
 
 export function GetWorkFullPath(arg1:number):Promise<string>;
 
-export function GetWorkTemplateClean(arg1:number):Promise<boolean>;
+export function GetWorkMarked(arg1:number):Promise<boolean>;
 
 export function GetWorkTemplatePath(arg1:number):Promise<string>;
 
@@ -318,7 +316,7 @@ export function SetTab(arg1:string,arg2:string):Promise<void>;
 
 export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;
 
-export function SetWorkTemplateClean(arg1:number,arg2:boolean):Promise<void>;
+export function SetWorkMarked(arg1:number,arg2:boolean):Promise<void>;
 
 export function StartReportGeneration():Promise<void>;
 

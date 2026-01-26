@@ -18,12 +18,8 @@ export function AddWorkToCollection(arg1, arg2) {
   return window['go']['app']['App']['AddWorkToCollection'](arg1, arg2);
 }
 
-export function ApplyTemplateToCollection(arg1) {
-  return window['go']['app']['App']['ApplyTemplateToCollection'](arg1);
-}
-
-export function ApplyTemplateToWork(arg1, arg2) {
-  return window['go']['app']['App']['ApplyTemplateToWork'](arg1, arg2);
+export function AnalyzeCollectionHeadings(arg1) {
+  return window['go']['app']['App']['AnalyzeCollectionHeadings'](arg1);
 }
 
 export function AuditCollectionStyles(arg1) {
@@ -426,8 +422,8 @@ export function GetWorkFullPath(arg1) {
   return window['go']['app']['App']['GetWorkFullPath'](arg1);
 }
 
-export function GetWorkTemplateClean(arg1) {
-  return window['go']['app']['App']['GetWorkTemplateClean'](arg1);
+export function GetWorkMarked(arg1) {
+  return window['go']['app']['App']['GetWorkMarked'](arg1);
 }
 
 export function GetWorkTemplatePath(arg1) {
@@ -618,8 +614,8 @@ export function SetTableState(arg1, arg2) {
   return window['go']['app']['App']['SetTableState'](arg1, arg2);
 }
 
-export function SetWorkTemplateClean(arg1, arg2) {
-  return window['go']['app']['App']['SetWorkTemplateClean'](arg1, arg2);
+export function SetWorkMarked(arg1, arg2) {
+  return window['go']['app']['App']['SetWorkMarked'](arg1, arg2);
 }
 
 export function StartReportGeneration() {

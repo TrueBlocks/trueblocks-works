@@ -628,7 +628,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         width: '6%',
         render: (work) => {
           const posStr = String(work.position);
-          return work.isTemplateClean ? (
+          return work.isMarked ? (
             <span>
               <span
                 style={{

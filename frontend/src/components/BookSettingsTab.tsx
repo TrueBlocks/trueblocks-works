@@ -27,6 +27,7 @@ import {
   AuditCollectionStyles,
   OpenTemplate,
   OpenBookPDF,
+  AnalyzeCollectionHeadings,
 } from '@app';
 import { models, app } from '@models';
 import { LogErr, Log } from '@/utils';
@@ -57,6 +58,9 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
   const [auditSummary, setAuditSummary] = useState<app.CollectionAuditSummary | null>(null);
   const [auditing, setAuditing] = useState(false);
   const [partModalOpen, setPartModalOpen] = useState(false);
+  const [analyzingHeadings, setAnalyzingHeadings] = useState(false);
+  const [headingAnalysisResult, setHeadingAnalysisResult] =
+    useState<app.CollectionHeadingAnalysisResult | null>(null);
 
   const loadBook = useCallback(async () => {
     try {
@@ -231,6 +235,33 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
       });
     } finally {
       setAuditing(false);
+    }
+  }, [collectionId]);
+
+  const handleAnalyzeHeadings = useCallback(async () => {
+    setAnalyzingHeadings(true);
+    setHeadingAnalysisResult(null);
+    try {
+      const result = await AnalyzeCollectionHeadings(collectionId);
+      setHeadingAnalysisResult(result);
+      if (result.failed === 0) {
+        notifications.show({
+          title: 'Heading Analysis Complete',
+          message: `Successfully analyzed ${result.successful} works`,
+          color: 'green',
+          autoClose: 5000,
+        });
+      }
+    } catch (err) {
+      LogErr('Heading analysis failed:', err);
+      notifications.show({
+        title: 'Heading Analysis Failed',
+        message: String(err),
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setAnalyzingHeadings(false);
     }
   }, [collectionId]);
 
@@ -546,6 +577,81 @@ export function BookSettingsTab({ collectionId, collectionName }: BookSettingsTa
                       ...and {auditSummary.dirtyWorks - 10} more
                     </Text>
                   )}
+                </Stack>
+              )}
+            </Stack>
+          )}
+        </Paper>
+
+        {/* HEADING ANALYSIS */}
+        <Paper p="md" withBorder>
+          <Group justify="space-between" mb="sm">
+            <Group gap="xs">
+              <IconReportAnalytics size={20} />
+              <Text fw={600}>Heading Analysis</Text>
+            </Group>
+            <Group gap="xs">
+              <Button
+                size="xs"
+                variant="light"
+                leftSection={<IconReportAnalytics size={14} />}
+                onClick={handleAnalyzeHeadings}
+                loading={analyzingHeadings}
+              >
+                Analyze Headings
+              </Button>
+            </Group>
+          </Group>
+          <Text size="sm" c="dimmed" mb="md">
+            Extract heading structure from essays and validate styles against template.
+          </Text>
+          {headingAnalysisResult && (
+            <Stack gap="xs">
+              <Group gap="md">
+                <Badge size="lg" color={headingAnalysisResult.failed === 0 ? 'green' : 'yellow'}>
+                  {headingAnalysisResult.successful}/{headingAnalysisResult.totalWorks} works
+                  analyzed
+                </Badge>
+                {headingAnalysisResult.failed > 0 && (
+                  <Badge size="lg" color="red">
+                    {headingAnalysisResult.failed} failed
+                  </Badge>
+                )}
+              </Group>
+              {headingAnalysisResult.successful > 0 && (
+                <Text size="sm" c="dimmed">
+                  Found {headingAnalysisResult.totalHeadings} headings in{' '}
+                  {headingAnalysisResult.worksWithHeadings} works
+                  {headingAnalysisResult.worksWithDateline > 0 &&
+                    ` • ${headingAnalysisResult.worksWithDateline} works have datelines`}
+                </Text>
+              )}
+              {headingAnalysisResult.firstError && (
+                <Stack gap={4} mt="xs">
+                  <Text size="xs" fw={500} c="red">
+                    Stopped at: {headingAnalysisResult.firstError.title}
+                  </Text>
+                  {headingAnalysisResult.firstError.unknownStyles &&
+                    headingAnalysisResult.firstError.unknownStyles.length > 0 && (
+                      <Text size="xs" c="dimmed">
+                        Unknown styles: {headingAnalysisResult.firstError.unknownStyles.join(', ')}
+                      </Text>
+                    )}
+                  {headingAnalysisResult.firstError.error && (
+                    <Text size="xs" c="dimmed">
+                      Error: {headingAnalysisResult.firstError.error}
+                    </Text>
+                  )}
+                  <Anchor
+                    size="xs"
+                    onClick={() =>
+                      navigate(`/works/${headingAnalysisResult.firstError?.workId}`, {
+                        state: { fromCollection: collectionId },
+                      })
+                    }
+                  >
+                    Open work →
+                  </Anchor>
                 </Stack>
               )}
             </Stack>

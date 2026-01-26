@@ -2,7 +2,9 @@ package app
 
 import (
 	"database/sql"
+	"encoding/json"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -168,6 +170,129 @@ func (a *App) FTSCheckStaleness() (*fts.StalenessReport, error) {
 	db := a.getFTSDB()
 	builder := fts.NewIndexBuilder(db, a.db.Conn(), a.settings.Get().BaseFolderPath)
 	return builder.CheckStaleness()
+}
+
+type HeadingAnalysisResult struct {
+	WorkID        int64             `json:"workId"`
+	Title         string            `json:"title"`
+	Success       bool              `json:"success"`
+	Headings      []fts.HeadingInfo `json:"headings,omitempty"`
+	Dateline      string            `json:"dateline,omitempty"`
+	UnknownStyles []string          `json:"unknownStyles,omitempty"`
+	Error         string            `json:"error,omitempty"`
+}
+
+type CollectionHeadingAnalysisResult struct {
+	TotalWorks        int                     `json:"totalWorks"`
+	Successful        int                     `json:"successful"`
+	Failed            int                     `json:"failed"`
+	TotalHeadings     int                     `json:"totalHeadings"`
+	WorksWithHeadings int                     `json:"worksWithHeadings"`
+	WorksWithDateline int                     `json:"worksWithDateline"`
+	FirstError        *HeadingAnalysisResult  `json:"firstError,omitempty"`
+	Results           []HeadingAnalysisResult `json:"results"`
+}
+
+func (a *App) AnalyzeCollectionHeadings(collID int64) (*CollectionHeadingAnalysisResult, error) {
+	homeDir, _ := os.UserHomeDir()
+	templatePath := filepath.Join(homeDir, ".works", "templates", "book-template.dotm")
+
+	validStyles, err := fts.LoadTemplateStyles(templatePath)
+	if err != nil {
+		return nil, err
+	}
+
+	works, err := a.db.GetCollectionWorks(collID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := a.settings.Get().BaseFolderPath
+	ftsDB := a.getFTSDB()
+	if err := ftsDB.Open(); err != nil {
+		return nil, err
+	}
+
+	result := &CollectionHeadingAnalysisResult{
+		TotalWorks: len(works),
+		Results:    make([]HeadingAnalysisResult, 0, len(works)),
+	}
+
+	for _, w := range works {
+		workResult := HeadingAnalysisResult{
+			WorkID: w.WorkID,
+			Title:  w.Title,
+		}
+
+		if w.Path == nil || *w.Path == "" {
+			workResult.Error = "No file path"
+			result.Failed++
+			result.Results = append(result.Results, workResult)
+			if result.FirstError == nil {
+				result.FirstError = &workResult
+			}
+			continue
+		}
+
+		fullPath := filepath.Join(basePath, *w.Path)
+		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+			workResult.Error = "File not found"
+			result.Failed++
+			result.Results = append(result.Results, workResult)
+			if result.FirstError == nil {
+				result.FirstError = &workResult
+			}
+			continue
+		}
+
+		headings, err := fts.ExtractHeadings(fullPath, validStyles)
+		if err != nil {
+			workResult.Error = err.Error()
+			result.Failed++
+			result.Results = append(result.Results, workResult)
+			if result.FirstError == nil {
+				result.FirstError = &workResult
+			}
+			continue
+		}
+
+		if len(headings.UnknownStyles) > 0 {
+			workResult.UnknownStyles = headings.UnknownStyles
+			workResult.Error = "Unknown styles found"
+			result.Failed++
+			result.Results = append(result.Results, workResult)
+			if result.FirstError == nil {
+				result.FirstError = &workResult
+			}
+			return result, nil
+		}
+
+		workResult.Success = true
+		workResult.Headings = headings.Headings
+		workResult.Dateline = headings.Dateline
+
+		// Update statistics
+		if len(headings.Headings) > 0 {
+			result.WorksWithHeadings++
+			result.TotalHeadings += len(headings.Headings)
+		}
+		if headings.Dateline != "" {
+			result.WorksWithDateline++
+		}
+
+		headingsJSON, _ := json.Marshal(headings.Headings)
+		if err := ftsDB.UpdateWorkHeadings(w.WorkID, string(headingsJSON), headings.Dateline); err != nil {
+			workResult.Error = err.Error()
+			workResult.Success = false
+			result.Failed++
+		} else {
+			result.Successful++
+		}
+
+		result.Results = append(result.Results, workResult)
+	}
+
+	return result, nil
 }
 
 func init() {

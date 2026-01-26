@@ -23,6 +23,9 @@ import {
   IconExternalLink,
   IconCheck,
   IconHistory,
+  IconChevronDown,
+  IconChevronRight,
+  IconCircleCheck,
 } from '@tabler/icons-react';
 import { EventsOn } from '@wailsjs/runtime/runtime';
 import { StartReportGeneration, RefreshReport, GetReportNames } from '@app';
@@ -43,6 +46,7 @@ interface ReportCategory {
   icon: string;
   issues: ReportIssue[];
   count: number;
+  checks?: string[];
   error?: string;
 }
 
@@ -278,8 +282,42 @@ export function ReportsPage() {
     </Stack>
   );
 
+  const [checksCollapsed, setChecksCollapsed] = useState<Record<string, boolean>>({});
+
+  const renderChecks = (report: ReportCategory) => {
+    if (!report.checks || report.checks.length === 0) return null;
+    const isCollapsed = checksCollapsed[report.name] ?? false;
+    return (
+      <Stack gap="xs" mb="md">
+        <Group
+          gap="xs"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setChecksCollapsed((prev) => ({ ...prev, [report.name]: !isCollapsed }))}
+        >
+          {isCollapsed ? <IconChevronRight size={16} /> : <IconChevronDown size={16} />}
+          <Text size="sm" fw={500}>
+            Checks Performed ({report.checks.length})
+          </Text>
+        </Group>
+        {!isCollapsed && (
+          <Stack gap={4} ml="md">
+            {report.checks.map((check, idx) => (
+              <Group key={idx} gap="xs">
+                <IconCircleCheck size={14} color="var(--mantine-color-green-6)" />
+                <Text size="sm" c="dimmed">
+                  {check}
+                </Text>
+              </Group>
+            ))}
+          </Stack>
+        )}
+      </Stack>
+    );
+  };
+
   const renderCategoryIssues = (report: ReportCategory) => (
     <>
+      {renderChecks(report)}
       {report.issues.length === 0 ? (
         <Alert color="green" icon={<IconCheck size={16} />}>
           No issues found in {report.name}

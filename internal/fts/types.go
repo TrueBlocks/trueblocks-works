@@ -99,3 +99,16 @@ type WorkInfo struct {
 	DocType string
 	Path    string
 }
+
+type HeadingInfo struct {
+	Pos   int    `json:"pos"`
+	Level int    `json:"level"`
+	Style string `json:"style"`
+	Text  string `json:"text"`
+}
+
+type HeadingsResult struct {
+	Headings      []HeadingInfo `json:"headings"`
+	Dateline      string        `json:"dateline"`
+	UnknownStyles []string      `json:"unknownStyles"`
+}

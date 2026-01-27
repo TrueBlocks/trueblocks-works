@@ -1,7 +1,6 @@
 export {
   useClickOutside,
   useColorScheme,
-  useDebounce,
   useDebouncedState,
   useDebouncedValue,
   useDisclosure,

@@ -270,7 +270,10 @@ export function useTableState<T>(config: TableStateConfig<T>): TableStateReturn<
   }, []);
 
   const handleRangeFilterChange = useCallback((columnKey: string, min?: number, max?: number) => {
-    setRangeFilters((prev) => ({ ...prev, [columnKey]: { min, max } }));
+    const rangeFilter: RangeFilter = {};
+    if (min !== undefined) rangeFilter.min = min;
+    if (max !== undefined) rangeFilter.max = max;
+    setRangeFilters((prev) => ({ ...prev, [columnKey]: rangeFilter }));
   }, []);
 
   const filteredData = useMemo(() => {

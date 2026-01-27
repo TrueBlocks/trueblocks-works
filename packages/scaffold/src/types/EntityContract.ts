@@ -20,6 +20,42 @@ export interface EntityActions<TId = number> {
   getDeleteConfirmation?: (id: TId) => Promise<DeleteConfirmation>;
 }
 
+/**
+ * A tab rendered in the detail view.
+ * For "flat" entities, pass a single tab.
+ * For hierarchical entities (like Collections), pass multiple tabs.
+ */
+export interface DetailTab<TEntity> {
+  key: string;
+  label: string;
+  icon?: ReactNode;
+  /**
+   * Render function for the tab content.
+   * Receives the entity and a reload function.
+   */
+  render: (entity: TEntity, reload: () => Promise<void>) => ReactNode;
+}
+
+/**
+ * Configuration for child entities within a parent.
+ * Used for hierarchical navigation (e.g., Works within a Collection).
+ */
+export interface ChildEntityConfig<TId = number> {
+  /**
+   * Fetch child entities for a given parent ID.
+   * Returns array of child items (must have `id` field).
+   */
+  fetchForParent: (parentId: TId) => Promise<Array<{ id: number }>>;
+  /**
+   * Entity type of the child (e.g., 'work').
+   */
+  childEntityType: string;
+  /**
+   * Generate the route path for a child detail.
+   */
+  getChildRoute: (parentId: TId, childId: number) => string;
+}
+
 export interface EntityContract<TEntity, TId = number> {
   entityType: string;
   entityName: string;
@@ -31,10 +67,17 @@ export interface EntityContract<TEntity, TId = number> {
 
   actions: EntityActions<TId>;
 
-  children?: {
-    fetchForParent: (parentId: TId) => Promise<unknown[]>;
-    parentKey: string;
-  };
+  /**
+   * Optional tabs for the detail view.
+   * If omitted or single tab, renders as flat detail.
+   * If multiple tabs, renders with tab navigation.
+   */
+  detailTabs?: DetailTab<TEntity>[];
+
+  /**
+   * Optional child entity configuration for hierarchical navigation.
+   */
+  children?: ChildEntityConfig<TId>;
 }
 
 export interface PortalDef {

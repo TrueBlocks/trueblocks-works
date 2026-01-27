@@ -14,10 +14,11 @@
     "lint:go": "golangci-lint run ./...",
     "lint:tsx": "yarn --cwd frontend lint",
     "start": "yarn dev",
-    "test": "yarn test:go && yarn test:tsx",
+    "test": "yarn test:go && yarn test:tsx && yarn test:packages",
     "test:go": "go test ./...",
     "test:tsx": "yarn --cwd frontend test",
-    "type-check": "yarn --cwd frontend type-check"
+    "test:packages": "yarn --cwd packages/ui test",
+    "type-check": "yarn --cwd frontend type-check && yarn --cwd packages/ui type-check && yarn --cwd packages/scaffold type-check"
   },
   "dependencies": {}
 }

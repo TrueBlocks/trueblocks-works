@@ -1,9 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTableState, type ColumnConfig } from '../useTableState';
 import { testItems, emptyItems, type TestItem } from '../../test/fixtures';
 
 describe('useTableState', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   const columns: ColumnConfig<TestItem>[] = [
     { key: 'name' },
     { key: 'status', filterOptions: ['active', 'pending', 'inactive'] },
@@ -30,58 +37,67 @@ describe('useTableState', () => {
   });
 
   describe('search', () => {
-    it('filters items by search query', async () => {
+    it('filters items by search query', () => {
       const { result } = renderHook(() => useTableState({ data: testItems, columns, searchFn }));
 
       act(() => {
         result.current.setSearch('alpha');
       });
 
-      // Wait for debounce
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
 
       expect(result.current.filteredData).toHaveLength(1);
       expect(result.current.filteredData[0]?.name).toBe('Alpha');
     });
 
-    it('search is case-insensitive', async () => {
+    it('search is case-insensitive', () => {
       const { result } = renderHook(() => useTableState({ data: testItems, columns, searchFn }));
 
       act(() => {
         result.current.setSearch('BETA');
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
 
       expect(result.current.filteredData).toHaveLength(1);
       expect(result.current.filteredData[0]?.name).toBe('Beta');
     });
 
-    it('returns empty when no matches', async () => {
+    it('returns empty when no matches', () => {
       const { result } = renderHook(() => useTableState({ data: testItems, columns, searchFn }));
 
       act(() => {
         result.current.setSearch('zzzzz');
       });
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
 
       expect(result.current.filteredData).toHaveLength(0);
     });
 
-    it('clears search', async () => {
+    it('clears search', () => {
       const { result } = renderHook(() => useTableState({ data: testItems, columns, searchFn }));
 
       act(() => {
         result.current.setSearch('alpha');
       });
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
       expect(result.current.filteredData).toHaveLength(1);
 
       act(() => {
         result.current.setSearch('');
       });
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      act(() => {
+        vi.advanceTimersByTime(250);
+      });
       expect(result.current.filteredData).toHaveLength(testItems.length);
     });
   });

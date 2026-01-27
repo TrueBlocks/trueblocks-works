@@ -16,6 +16,7 @@ import {
 import { models, db } from '@models';
 import { ResponseBadge, DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
 import { notifications } from '@mantine/notifications';
+import { useNavigation } from '@trueblocks/scaffold';
 import dayjs from 'dayjs';
 
 function getStatus(sub: models.SubmissionView): string {
@@ -31,11 +32,11 @@ const getSubmissionValue = (sub: models.SubmissionView, column: string): unknown
 
 interface SubmissionsListProps {
   onSubmissionClick: (sub: models.SubmissionView) => void;
-  onFilteredDataChange: (subs: models.SubmissionView[]) => void;
 }
 
-export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: SubmissionsListProps) {
+export function SubmissionsList({ onSubmissionClick }: SubmissionsListProps) {
   const location = useLocation();
+  const { currentId, setCurrentId, setItems } = useNavigation();
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<{
@@ -106,11 +107,15 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     );
   }, []);
 
-  const handleSelectedChange = useCallback((sub: models.SubmissionView) => {
-    SetLastSubmissionID(sub.submissionID).catch((err) => {
-      LogErr('Failed to set lastSubmissionID:', err);
-    });
-  }, []);
+  const handleSelectedChange = useCallback(
+    (sub: models.SubmissionView) => {
+      setCurrentId(sub.submissionID);
+      SetLastSubmissionID(sub.submissionID).catch((err) => {
+        LogErr('Failed to set lastSubmissionID:', err);
+      });
+    },
+    [setCurrentId]
+  );
 
   const handleDelete = useCallback(async (sub: models.SubmissionView) => {
     try {
@@ -256,7 +261,11 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
         onRowClick={onSubmissionClick}
         onSelectedChange={handleSelectedChange}
         getLastSelectedID={getLastSelectedID}
-        onFilteredSortedChange={onFilteredDataChange}
+        onFilteredSortedChange={(subs) => {
+          const items = subs.map((s) => ({ id: s.submissionID }));
+          const navCurrentId = currentId ?? subs[0]?.submissionID ?? 0;
+          setItems('submission', items, navCurrentId);
+        }}
         searchFn={searchFn}
         valueGetter={getSubmissionValue}
         onDelete={handleDelete}

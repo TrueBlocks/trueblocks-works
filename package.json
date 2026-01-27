@@ -17,7 +17,7 @@
     "test": "yarn test:go && yarn test:tsx && yarn test:packages",
     "test:go": "go test ./...",
     "test:tsx": "yarn --cwd frontend test",
-    "test:packages": "yarn --cwd packages/ui test",
+    "test:packages": "yarn --cwd packages/ui test && yarn --cwd packages/scaffold test",
     "type-check": "yarn --cwd frontend type-check && yarn --cwd packages/ui type-check && yarn --cwd packages/scaffold type-check"
   },
   "dependencies": {}

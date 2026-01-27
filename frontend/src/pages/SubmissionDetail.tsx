@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Stack,
   Grid,
@@ -37,6 +37,7 @@ import {
   EditableField,
 } from '@/components';
 import { useNotes } from '@/hooks';
+import { useNavigation } from '@trueblocks/scaffold';
 import dayjs from 'dayjs';
 
 function Field({ label, value }: { label: string; value?: string | number }) {
@@ -53,11 +54,17 @@ function Field({ label, value }: { label: string; value?: string | number }) {
 
 interface SubmissionDetailProps {
   submissionId: number;
-  filteredSubmissions: models.SubmissionView[];
+  filteredSubmissions?: models.SubmissionView[];
 }
 
-export function SubmissionDetail({ submissionId, filteredSubmissions }: SubmissionDetailProps) {
+export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnToRef = useRef<string | undefined>(
+    (location.state as { returnTo?: string } | null)?.returnTo
+  );
+  const navigation = useNavigation();
+  const { hasPrev, hasNext, currentIndex, currentLevel } = navigation;
   const [submission, setSubmission] = useState<models.Submission | null>(null);
   const [work, setWork] = useState<models.Work | null>(null);
   const [org, setOrg] = useState<models.Organization | null>(null);
@@ -110,39 +117,64 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
     return () => window.removeEventListener('reloadCurrentView', handleReload);
   }, [loadData]);
 
-  const currentIndex = filteredSubmissions.findIndex((s) => s.submissionID === submissionId);
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < filteredSubmissions.length - 1;
+  const navigateToSubmission = useCallback(
+    (id: number) => {
+      navigate(`/submissions/${id}`);
+    },
+    [navigate]
+  );
 
   const handlePrev = useCallback(() => {
-    if (hasPrev) {
-      const prevSub = filteredSubmissions[currentIndex - 1];
-      navigate(`/submissions/${prevSub.submissionID}`);
+    if (hasPrev && currentLevel) {
+      const idx = navigation.currentIndex;
+      const prevItem = currentLevel.items[idx - 1] as { id: number } | undefined;
+      if (prevItem) {
+        navigation.setCurrentId(prevItem.id);
+        navigateToSubmission(prevItem.id);
+      }
     }
-  }, [hasPrev, filteredSubmissions, currentIndex, navigate]);
+  }, [hasPrev, currentLevel, navigation, navigateToSubmission]);
 
   const handleNext = useCallback(() => {
-    if (hasNext) {
-      const nextSub = filteredSubmissions[currentIndex + 1];
-      navigate(`/submissions/${nextSub.submissionID}`);
+    if (hasNext && currentLevel) {
+      const idx = navigation.currentIndex;
+      const nextItem = currentLevel.items[idx + 1] as { id: number } | undefined;
+      if (nextItem) {
+        navigation.setCurrentId(nextItem.id);
+        navigateToSubmission(nextItem.id);
+      }
     }
-  }, [hasNext, filteredSubmissions, currentIndex, navigate]);
+  }, [hasNext, currentLevel, navigation, navigateToSubmission]);
 
   const handleHome = useCallback(() => {
-    if (filteredSubmissions.length > 0 && currentIndex !== 0) {
-      navigate(`/submissions/${filteredSubmissions[0].submissionID}`);
+    if (currentLevel && currentLevel.items.length > 0) {
+      const firstItem = currentLevel.items[0] as { id: number } | undefined;
+      if (firstItem) {
+        navigation.setCurrentId(firstItem.id);
+        navigateToSubmission(firstItem.id);
+      }
     }
-  }, [filteredSubmissions, currentIndex, navigate]);
+  }, [currentLevel, navigation, navigateToSubmission]);
 
   const handleEnd = useCallback(() => {
-    if (filteredSubmissions.length > 0 && currentIndex !== filteredSubmissions.length - 1) {
-      navigate(`/submissions/${filteredSubmissions[filteredSubmissions.length - 1].submissionID}`);
+    if (currentLevel && currentLevel.items.length > 0) {
+      const lastItem = currentLevel.items[currentLevel.items.length - 1] as
+        | { id: number }
+        | undefined;
+      if (lastItem) {
+        navigation.setCurrentId(lastItem.id);
+        navigateToSubmission(lastItem.id);
+      }
     }
-  }, [filteredSubmissions, currentIndex, navigate]);
+  }, [currentLevel, navigation, navigateToSubmission]);
 
   const handleReturnToList = useCallback(() => {
-    navigate('/submissions', { replace: true });
-  }, [navigate]);
+    if (returnToRef.current) {
+      navigate(returnToRef.current);
+    } else {
+      navigate('/submissions', { state: { selectID: submissionId } });
+    }
+  }, [navigate, submissionId]);
 
   useHotkeys([
     [
@@ -289,7 +321,7 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
         onNext={handleNext}
         onBack={handleReturnToList}
         currentIndex={currentIndex}
-        totalCount={filteredSubmissions.length}
+        totalCount={currentLevel?.items.length ?? 0}
         icon={<IconSend size={24} />}
         title={
           <Group gap="xs" align="baseline">

@@ -1,11 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Stack, Grid, Loader, Flex, Text, Group, Badge, Button, Tooltip } from '@mantine/core';
 import { IconExternalLink, IconBuilding } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { LogErr, showValidationResult } from '@/utils';
 import { useNotes } from '@/hooks';
+import { useNavigation } from '@trueblocks/scaffold';
 import {
   GetOrganization,
   SetLastOrgID,
@@ -36,14 +37,17 @@ import { orgStatusColors } from '@/types';
 
 interface OrganizationDetailProps {
   organizationId: number;
-  filteredOrganizations: models.OrganizationWithNotes[];
+  filteredOrganizations?: models.OrganizationWithNotes[];
 }
 
-export function OrganizationDetail({
-  organizationId,
-  filteredOrganizations,
-}: OrganizationDetailProps) {
+export function OrganizationDetail({ organizationId }: OrganizationDetailProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigation = useNavigation();
+  const { hasPrev, hasNext, currentIndex, currentLevel } = navigation;
+  const returnToRef = useRef<string | undefined>(
+    (location.state as { returnTo?: string } | null)?.returnTo
+  );
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,39 +63,65 @@ export function OrganizationDetail({
     handleUndelete: handleUndeleteNote,
     handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('journal', organizationId);
-  const currentIndex = filteredOrganizations.findIndex((o) => o.orgID === organizationId);
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < filteredOrganizations.length - 1;
+
+  const navigateToOrg = useCallback(
+    (id: number) => {
+      navigate(`/organizations/${id}`);
+    },
+    [navigate]
+  );
 
   const handlePrev = useCallback(() => {
-    if (hasPrev) {
-      const prevOrg = filteredOrganizations[currentIndex - 1];
-      navigate(`/organizations/${prevOrg.orgID}`);
+    if (hasPrev && currentLevel) {
+      const idx = navigation.currentIndex;
+      const prevItem = currentLevel.items[idx - 1] as { id: number } | undefined;
+      if (prevItem) {
+        navigation.setCurrentId(prevItem.id);
+        navigateToOrg(prevItem.id);
+      }
     }
-  }, [hasPrev, filteredOrganizations, currentIndex, navigate]);
+  }, [hasPrev, currentLevel, navigation, navigateToOrg]);
 
   const handleNext = useCallback(() => {
-    if (hasNext) {
-      const nextOrg = filteredOrganizations[currentIndex + 1];
-      navigate(`/organizations/${nextOrg.orgID}`);
+    if (hasNext && currentLevel) {
+      const idx = navigation.currentIndex;
+      const nextItem = currentLevel.items[idx + 1] as { id: number } | undefined;
+      if (nextItem) {
+        navigation.setCurrentId(nextItem.id);
+        navigateToOrg(nextItem.id);
+      }
     }
-  }, [hasNext, filteredOrganizations, currentIndex, navigate]);
+  }, [hasNext, currentLevel, navigation, navigateToOrg]);
 
   const handleHome = useCallback(() => {
-    if (filteredOrganizations.length > 0 && currentIndex !== 0) {
-      navigate(`/organizations/${filteredOrganizations[0].orgID}`);
+    if (currentLevel && currentLevel.items.length > 0) {
+      const firstItem = currentLevel.items[0] as { id: number } | undefined;
+      if (firstItem) {
+        navigation.setCurrentId(firstItem.id);
+        navigateToOrg(firstItem.id);
+      }
     }
-  }, [filteredOrganizations, currentIndex, navigate]);
+  }, [currentLevel, navigation, navigateToOrg]);
 
   const handleEnd = useCallback(() => {
-    if (filteredOrganizations.length > 0 && currentIndex !== filteredOrganizations.length - 1) {
-      navigate(`/organizations/${filteredOrganizations[filteredOrganizations.length - 1].orgID}`);
+    if (currentLevel && currentLevel.items.length > 0) {
+      const lastItem = currentLevel.items[currentLevel.items.length - 1] as
+        | { id: number }
+        | undefined;
+      if (lastItem) {
+        navigation.setCurrentId(lastItem.id);
+        navigateToOrg(lastItem.id);
+      }
     }
-  }, [filteredOrganizations, currentIndex, navigate]);
+  }, [currentLevel, navigation, navigateToOrg]);
 
   const handleReturnToList = useCallback(() => {
-    navigate('/organizations', { replace: true });
-  }, [navigate]);
+    if (returnToRef.current) {
+      navigate(returnToRef.current);
+    } else {
+      navigate('/organizations', { state: { selectID: organizationId } });
+    }
+  }, [navigate, organizationId]);
 
   useHotkeys([
     [
@@ -311,7 +341,7 @@ export function OrganizationDetail({
         onNext={handleNext}
         onBack={handleReturnToList}
         currentIndex={currentIndex}
-        totalCount={filteredOrganizations.length}
+        totalCount={currentLevel?.items.length ?? 0}
         icon={<IconBuilding size={24} />}
         title={
           <Group gap="xs" align="baseline">
@@ -406,11 +436,13 @@ export function OrganizationDetail({
               submissions={submissions}
               onRowClick={(sub) =>
                 navigate(`/submissions/${sub.submissionID}`, {
-                  state: { selectID: sub.submissionID },
+                  state: { returnTo: `/organizations/${organizationId}` },
                 })
               }
               onWorkClick={(workId) =>
-                navigate(`/works/${workId}`, { state: { selectID: workId } })
+                navigate(`/works/${workId}`, {
+                  state: { returnTo: `/organizations/${organizationId}` },
+                })
               }
               onDelete={handleDeleteSubmission}
               onUndelete={handleUndeleteSubmission}

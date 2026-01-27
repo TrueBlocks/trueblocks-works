@@ -1135,11 +1135,13 @@ export function CollectionDetail({
                     submissions={submissions}
                     onRowClick={(sub) =>
                       navigate(`/submissions/${sub.submissionID}`, {
-                        state: { selectID: sub.submissionID },
+                        state: { returnTo: `/collections/${collectionId}` },
                       })
                     }
                     onWorkClick={(workId) =>
-                      navigate(`/works/${workId}`, { state: { selectID: workId } })
+                      navigate(`/works/${workId}`, {
+                        state: { returnTo: `/collections/${collectionId}` },
+                      })
                     }
                     onDelete={handleDeleteSubmission}
                     onUndelete={handleUndeleteSubmission}
@@ -1260,11 +1262,13 @@ export function CollectionDetail({
                 submissions={submissions}
                 onRowClick={(sub) =>
                   navigate(`/submissions/${sub.submissionID}`, {
-                    state: { selectID: sub.submissionID },
+                    state: { returnTo: `/collections/${collectionId}` },
                   })
                 }
                 onWorkClick={(workId) =>
-                  navigate(`/works/${workId}`, { state: { selectID: workId } })
+                  navigate(`/works/${workId}`, {
+                    state: { returnTo: `/collections/${collectionId}` },
+                  })
                 }
                 onDelete={handleDeleteSubmission}
                 onUndelete={handleUndeleteSubmission}

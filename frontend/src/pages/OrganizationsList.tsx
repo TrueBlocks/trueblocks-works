@@ -17,6 +17,7 @@ import { models, db } from '@models';
 import { OrgStatusBadge, DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
 import { Log, LogErr } from '@/utils';
 import { notifications } from '@mantine/notifications';
+import { useNavigation } from '@trueblocks/scaffold';
 
 const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown => {
   if (column === 'nPushcarts') {
@@ -27,11 +28,11 @@ const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown
 
 interface OrganizationsListProps {
   onOrgClick: (org: models.OrganizationWithNotes) => void;
-  onFilteredDataChange: (orgs: models.OrganizationWithNotes[]) => void;
 }
 
-export function OrganizationsList({ onOrgClick, onFilteredDataChange }: OrganizationsListProps) {
+export function OrganizationsList({ onOrgClick }: OrganizationsListProps) {
   const location = useLocation();
+  const { currentId, setCurrentId, setItems } = useNavigation();
   const [orgs, setOrgs] = useState<models.OrganizationWithNotes[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<{
@@ -101,11 +102,15 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     return org.name.toLowerCase().includes(search.toLowerCase());
   }, []);
 
-  const handleSelectedChange = useCallback((org: models.OrganizationWithNotes) => {
-    SetLastOrgID(org.orgID).catch((err) => {
-      LogErr('Failed to set lastOrgID:', err);
-    });
-  }, []);
+  const handleSelectedChange = useCallback(
+    (org: models.OrganizationWithNotes) => {
+      setCurrentId(org.orgID);
+      SetLastOrgID(org.orgID).catch((err) => {
+        LogErr('Failed to set lastOrgID:', err);
+      });
+    },
+    [setCurrentId]
+  );
 
   const handleDelete = useCallback(async (org: models.OrganizationWithNotes) => {
     try {
@@ -297,7 +302,11 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
         onRowClick={onOrgClick}
         onSelectedChange={handleSelectedChange}
         getLastSelectedID={getLastSelectedID}
-        onFilteredSortedChange={onFilteredDataChange}
+        onFilteredSortedChange={(filteredOrgs) => {
+          const items = filteredOrgs.map((o) => ({ id: o.orgID }));
+          const navCurrentId = currentId ?? filteredOrgs[0]?.orgID ?? 0;
+          setItems('organization', items, navCurrentId);
+        }}
         searchFn={searchFn}
         valueGetter={getOrgValue}
         onDelete={handleDelete}

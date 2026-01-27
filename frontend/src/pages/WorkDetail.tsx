@@ -82,11 +82,15 @@ export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetail
     handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('work', workId);
 
-  // Check if we came from a collection (only on initial mount or new state)
+  // Check if we came from a collection or another page (only on initial mount or new state)
   const locationState = location.state as {
     fromCollection?: number;
     collectionWorks?: number[];
+    returnTo?: string;
   } | null;
+
+  // Store returnTo in ref so it persists across prev/next navigation
+  const returnToRef = useRef<string | undefined>(locationState?.returnTo);
 
   // Update ref when we get new collection context from location.state
   useEffect(() => {
@@ -180,8 +184,11 @@ export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetail
   }, [navigation, navigateToWork]);
 
   const handleReturnToList = useCallback(() => {
-    // If we came from a collection, go back to that collection
-    if (collectionContext?.fromCollection) {
+    // If we have a returnTo, use it (from portal navigation)
+    if (returnToRef.current) {
+      navigate(returnToRef.current);
+    } else if (collectionContext?.fromCollection) {
+      // If we came from a collection, go back to that collection
       navigate(`/collections/${collectionContext.fromCollection}`, {
         state: { selectID: workId },
       });
@@ -619,11 +626,13 @@ export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetail
               submissions={submissions}
               onRowClick={(sub) =>
                 navigate(`/submissions/${sub.submissionID}`, {
-                  state: { selectID: sub.submissionID },
+                  state: { returnTo: `/works/${workId}` },
                 })
               }
               onOrgClick={(orgId) =>
-                navigate(`/organizations/${orgId}`, { state: { selectID: orgId } })
+                navigate(`/organizations/${orgId}`, {
+                  state: { returnTo: `/works/${workId}` },
+                })
               }
               onDelete={handleDeleteSubmission}
               onUndelete={handleUndeleteSubmission}

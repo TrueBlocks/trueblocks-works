@@ -506,6 +506,10 @@ export function OpenExportFolder() {
   return window['go']['app']['App']['OpenExportFolder']();
 }
 
+export function OpenKDPManuscriptSpecs() {
+  return window['go']['app']['App']['OpenKDPManuscriptSpecs']();
+}
+
 export function OpenOrgOtherURL(arg1) {
   return window['go']['app']['App']['OpenOrgOtherURL'](arg1);
 }

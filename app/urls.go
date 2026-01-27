@@ -2,6 +2,9 @@ package app
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -56,4 +59,19 @@ func (a *App) GetDuotropeURL(orgID int64) (string, error) {
 		return fmt.Sprintf("https://duotrope.com/listing/%d", *org.DuotropeNum), nil
 	}
 	return "", nil
+}
+
+// OpenKDPManuscriptSpecs opens the KDP manuscript specifications document
+func (a *App) OpenKDPManuscriptSpecs() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	docPath := filepath.Join(home, ".works", "docs", "kdp-manuscript-specs.md")
+	if _, err := os.Stat(docPath); os.IsNotExist(err) {
+		return fmt.Errorf("KDP specs document not found at %s", docPath)
+	}
+
+	return exec.Command("open", docPath).Start()
 }

@@ -262,6 +262,8 @@ export function OpenDuotrope(arg1:number):Promise<void>;
 
 export function OpenExportFolder():Promise<void>;
 
+export function OpenKDPManuscriptSpecs():Promise<void>;
+
 export function OpenOrgOtherURL(arg1:number):Promise<void>;
 
 export function OpenOrgURL(arg1:number):Promise<void>;

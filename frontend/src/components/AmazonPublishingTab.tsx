@@ -25,9 +25,10 @@ import {
   IconPhoto,
   IconWorld,
   IconClipboardList,
+  IconFileText,
 } from '@tabler/icons-react';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
-import { GetBookByCollection } from '@app';
+import { GetBookByCollection, OpenKDPManuscriptSpecs } from '@app';
 import { models } from '@models';
 import { LogErr } from '@/utils';
 
@@ -228,6 +229,19 @@ export function AmazonPublishingTab({
                           Check page breaks and section starts
                         </List.Item>
                       </List>
+                      <UnstyledButton
+                        onClick={() => {
+                          OpenKDPManuscriptSpecs().catch((err) =>
+                            LogErr('Failed to open KDP specs:', err)
+                          );
+                        }}
+                        style={{ color: 'var(--mantine-color-blue-6)', marginTop: 8 }}
+                      >
+                        <Group gap={4}>
+                          <IconFileText size={14} />
+                          KDP Manuscript Specifications
+                        </Group>
+                      </UnstyledButton>
                       {book?.exportPath && (
                         <Alert color="green" mt="sm" icon={<IconCheck size={16} />}>
                           <Text size="sm">Manuscript exported to: {book.exportPath}</Text>

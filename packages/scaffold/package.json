@@ -1,0 +1,20 @@
+{
+  "name": "@trueblocks/scaffold",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@mantine/core": "^7.0.0",
+    "@mantine/hooks": "^7.0.0",
+    "@mantine/notifications": "^7.0.0",
+    "@trueblocks/ui": "workspace:*",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^6.0.0"
+  }
+}

@@ -2,6 +2,10 @@
   "name": "works",
   "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "frontend"
+  ],
   "scripts": {
     "build": "yarn --cwd frontend build && wails build",
     "dev": "wails dev -debounce 1000 2>&1 | grep -v -E 'KnownStructs:|Not found:'",

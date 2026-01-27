@@ -27,7 +27,9 @@
       "@stores/*": ["./src/stores/*"],
       "@wailsjs/*": ["./wailsjs/*"],
       "@models": ["./wailsjs/go/models"],
-      "@runtime/*": ["./wailsjs/runtime/*"]
+      "@runtime/*": ["./wailsjs/runtime/*"],
+      "@trueblocks/ui": ["../packages/ui/src"],
+      "@trueblocks/scaffold": ["../packages/scaffold/src"]
     }
   },
   "include": ["src"],

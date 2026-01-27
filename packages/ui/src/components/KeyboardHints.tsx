@@ -1,15 +1,15 @@
 import { Group, Kbd, Text } from '@mantine/core';
 
-const hints = [
-  { keys: ['⌘', 'K'], label: 'Search' },
-  { keys: ['⌘', '⇧', 'B'], label: 'Backup' },
-  { keys: ['⌘', '1'], label: 'Works' },
-  { keys: ['⌘', '2'], label: 'Organizations' },
-  { keys: ['⌘', '3'], label: 'Submissions' },
-  { keys: ['⌘', '4'], label: 'Collections' },
-];
+export interface KeyboardHint {
+  keys: string[];
+  label: string;
+}
 
-export function KeyboardHints() {
+export interface KeyboardHintsProps {
+  hints: KeyboardHint[];
+}
+
+export function KeyboardHints({ hints }: KeyboardHintsProps) {
   return (
     <Group gap="lg" mt="auto" pt="md">
       {hints.map((hint) => (

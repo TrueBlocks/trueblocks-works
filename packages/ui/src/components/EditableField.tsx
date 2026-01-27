@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { TextInput, Text, Box, MantineSize } from '@mantine/core';
 
-interface EditableFieldProps {
+export interface EditableFieldProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -104,9 +104,13 @@ export function EditableField({
           {label}
         </Text>
       )}
-      <Text size={size} c={value ? undefined : 'dimmed'}>
-        {value || placeholder || 'Click to edit'}
-      </Text>
+      {value ? (
+        <Text size={size}>{value}</Text>
+      ) : (
+        <Text size={size} c="dimmed">
+          {placeholder || 'Click to edit'}
+        </Text>
+      )}
     </Box>
   );
 }

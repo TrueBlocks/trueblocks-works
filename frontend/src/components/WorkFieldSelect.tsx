@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { GetEnumLists, UpdateWork } from '@app';
 import { models } from '@models';
 import { LogErr, hashColor, showValidationResult } from '@/utils';
-import { CreatableSelect } from './CreatableSelect';
+import { CreatableSelect } from '@trueblocks/ui';
 
 type WorkField = 'status' | 'type' | 'quality' | 'year';
 

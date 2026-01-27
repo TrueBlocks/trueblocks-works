@@ -9,7 +9,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 
-interface DetailHeaderProps {
+export interface DetailHeaderProps {
   hasPrev: boolean;
   hasNext: boolean;
   onPrev: () => void;

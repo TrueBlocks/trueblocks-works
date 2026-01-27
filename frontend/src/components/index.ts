@@ -1,5 +1,13 @@
+// Re-export reusable components from @trueblocks/ui
+export {
+  CreatableSelect,
+  DetailHeader,
+  EditableField,
+  KeyboardHints,
+  SortableHeader,
+} from '@trueblocks/ui';
+
 export { Navigation } from './Navigation';
-export { DetailHeader } from './DetailHeader';
 export { StatusBadge } from './StatusBadge';
 export { StatusSelect } from './StatusSelect';
 export { TypeSelect } from './TypeSelect';
@@ -10,12 +18,10 @@ export { OrgFieldSelect } from './OrgFieldSelect';
 export { CollectionFieldSelect } from './CollectionFieldSelect';
 export { NoteFieldSelect } from './NoteFieldSelect';
 export { SubmissionFieldSelect } from './SubmissionFieldSelect';
-export { CreatableSelect } from './CreatableSelect';
 export { OrgStatusBadge } from './OrgStatusBadge';
 export { QualityBadge } from './QualityBadge';
 export { ResponseBadge } from './ResponseBadge';
 export { TypeBadge } from './TypeBadge';
-export { KeyboardHints } from './KeyboardHints';
 export { CollectionSidebar } from './CollectionSidebar';
 export { WorksTable } from './WorksTable';
 export { PathDisplay } from './PathDisplay';
@@ -38,12 +44,10 @@ export { WorkPickerModal } from './WorkPickerModal';
 export { SearchModal } from './SearchModal';
 export { BackupRestoreModal } from './BackupRestoreModal';
 export { SetupWizard } from './SetupWizard';
-export { SortableHeader } from './SortableHeader';
 export { MoveFileModal } from './MoveFileModal';
 export { MoveToPositionModal } from './MoveToPositionModal';
 export { ColumnFilterPopover } from './ColumnFilterPopover';
 export { NumericFilterPopover } from './NumericFilterPopover';
-export { EditableField } from './EditableField';
 export { SelectablePopover } from './SelectablePopover';
 export { DataTable } from './DataTable';
 export { EnumManagement } from './EnumManagement';

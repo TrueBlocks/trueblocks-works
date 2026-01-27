@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { GetDistinctValues, UpdateOrganization } from '@app';
 import { models } from '@models';
 import { LogErr, hashColor } from '@/utils';
-import { CreatableSelect } from './CreatableSelect';
+import { CreatableSelect } from '@trueblocks/ui';
 
 type OrgField = 'status' | 'type' | 'myInterest';
 

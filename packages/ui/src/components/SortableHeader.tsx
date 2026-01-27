@@ -1,8 +1,8 @@
 import { Group, Text, Stack } from '@mantine/core';
 import { IconChevronUp, IconChevronDown } from '@tabler/icons-react';
-import type { SortDirection } from './DataTable';
+import type { SortDirection } from '../hooks';
 
-interface SortableHeaderProps {
+export interface SortableHeaderProps {
   label: string;
   column: string;
   level: 1 | 2 | 3 | 4 | null;

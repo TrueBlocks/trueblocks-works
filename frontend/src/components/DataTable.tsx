@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { useDebouncedValue, useHotkeys } from '@mantine/hooks';
 import { IconSearch } from '@tabler/icons-react';
-import { SortableHeader } from './SortableHeader';
+import { SortableHeader } from '@trueblocks/ui';
 import { ColumnFilterPopover } from './ColumnFilterPopover';
 import { NumericFilterPopover } from './NumericFilterPopover';
 import { DataTableRow } from './DataTableRow';

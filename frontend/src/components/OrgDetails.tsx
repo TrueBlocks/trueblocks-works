@@ -1,6 +1,6 @@
 import { Paper, SimpleGrid, Text, Stack, Box } from '@mantine/core';
 import { models } from '@models';
-import { EditableField } from './EditableField';
+import { EditableField } from '@trueblocks/ui';
 import { OrgFieldSelect } from './OrgFieldSelect';
 
 interface OrgDetailsProps {

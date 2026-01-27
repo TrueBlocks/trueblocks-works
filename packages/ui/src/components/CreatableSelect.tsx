@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Combobox, InputBase, useCombobox } from '@mantine/core';
 
-interface CreatableSelectProps {
+export interface CreatableSelectProps {
   data: string[];
   value: string | null;
   onChange: (value: string) => void;
@@ -51,8 +51,9 @@ export function CreatableSelect({
     if (event.key === 'Enter') {
       event.preventDefault();
       if (filteredOptions.length === 1) {
-        onChange(filteredOptions[0]);
-        setSearch(filteredOptions[0]);
+        const option = filteredOptions[0] as string;
+        onChange(option);
+        setSearch(option);
         combobox.closeDropdown();
       } else if (filteredOptions.length > 1) {
         combobox.selectFirstOption();
@@ -98,7 +99,7 @@ export function CreatableSelect({
           disabled={disabled}
           size={size}
           w={w}
-          styles={styles}
+          {...(styles && { styles })}
         />
       </Combobox.Target>
 

@@ -250,6 +250,14 @@ export function GetCollectionDeleteConfirmation(arg1) {
   return window['go']['app']['App']['GetCollectionDeleteConfirmation'](arg1);
 }
 
+export function GetCollectionHasMarkedWorks(arg1) {
+  return window['go']['app']['App']['GetCollectionHasMarkedWorks'](arg1);
+}
+
+export function GetCollectionHasSuppressedWorks(arg1) {
+  return window['go']['app']['App']['GetCollectionHasSuppressedWorks'](arg1);
+}
+
 export function GetCollectionIsBook(arg1) {
   return window['go']['app']['App']['GetCollectionIsBook'](arg1);
 }
@@ -628,6 +636,14 @@ export function StartReportGeneration() {
 
 export function SyncWorkTemplate(arg1) {
   return window['go']['app']['App']['SyncWorkTemplate'](arg1);
+}
+
+export function ToggleCollectionMarks(arg1) {
+  return window['go']['app']['App']['ToggleCollectionMarks'](arg1);
+}
+
+export function ToggleCollectionSuppressed(arg1) {
+  return window['go']['app']['App']['ToggleCollectionSuppressed'](arg1);
 }
 
 export function ToggleShowDeleted() {

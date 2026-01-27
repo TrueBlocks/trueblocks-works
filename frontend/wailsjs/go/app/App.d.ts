@@ -134,6 +134,10 @@ export function GetCollection(arg1:number):Promise<models.Collection>;
 
 export function GetCollectionDeleteConfirmation(arg1:number):Promise<db.DeleteConfirmation>;
 
+export function GetCollectionHasMarkedWorks(arg1:number):Promise<boolean>;
+
+export function GetCollectionHasSuppressedWorks(arg1:number):Promise<boolean>;
+
 export function GetCollectionIsBook(arg1:number):Promise<boolean>;
 
 export function GetCollectionWorks(arg1:number):Promise<Array<models.CollectionWork>>;
@@ -323,6 +327,10 @@ export function SetWorkSuppressed(arg1:number,arg2:number,arg3:boolean):Promise<
 export function StartReportGeneration():Promise<void>;
 
 export function SyncWorkTemplate(arg1:number):Promise<void>;
+
+export function ToggleCollectionMarks(arg1:number):Promise<boolean>;
+
+export function ToggleCollectionSuppressed(arg1:number):Promise<boolean>;
 
 export function ToggleShowDeleted():Promise<boolean>;
 

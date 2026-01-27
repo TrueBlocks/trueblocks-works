@@ -1,5 +1,5 @@
 {
-  "count": 25,
+  "count": 29,
   "records": [
     {
       "attributes": "",
@@ -22,7 +22,7 @@
     {
       "attributes": "",
       "collID": 30050,
-      "collectionName": "Freewrite",
+      "collectionName": "Freewrites",
       "type": "Other"
     },
     {
@@ -149,6 +149,30 @@
       "attributes": "",
       "collID": 50071,
       "collectionName": "Cartoons",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50072,
+      "collectionName": "Vignettes of Meriam",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50073,
+      "collectionName": "You Say You Want A Revolution",
+      "type": "Book"
+    },
+    {
+      "attributes": "",
+      "collID": 50074,
+      "collectionName": "Specifications",
+      "type": "Other"
+    },
+    {
+      "attributes": "",
+      "collID": 50075,
+      "collectionName": "Reports",
       "type": "Other"
     }
   ],

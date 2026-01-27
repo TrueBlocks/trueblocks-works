@@ -1,5 +1,5 @@
 {
-  "count": 72,
+  "count": 70,
   "records": [
     {
       "attributes": "",
@@ -30,16 +30,6 @@
       "modifiedAt": "2026-01-10T23:28:50-05:00",
       "note": "%% This BibTeX bibliography file was created using BibDesk.\n%% http://bibdesk.sourceforge.net/\n\n\n%% Created for Thomas Rush at 2012-12-11 13:36:22 -0500 \n\n\n%% Saved with string encoding Unicode (UTF-8) \n\n\n\n@article{booth1961distance,\n\tAuthor = {Booth, W.C.},\n\tDate-Added = {2012-12-11 18:28:21 +0000},\n\tDate-Modified = {2012-12-11 18:28:21 +0000},\n\tJournal = {Essays in Criticism},\n\tNumber = {1},\n\tPages = {60--79},\n\tPublisher = {Oxford University Press},\n\tTitle = {Distance and Point-of-View: An Essay in Classification},\n\tVolume = {11},\n\tYear = {1961}}\n\n@article{hemingway1927hills,\n\tAuthor = {Hemingway, E.},\n\tDate-Added = {2012-12-11 18:27:40 +0000},\n\tDate-Modified = {2012-12-11 18:29:05 +0000},\n\tJournal = {The Complete Short Stories of Ernest Hemingway},\n\tPages = {211--14},\n\tTitle = {Hills Like White Elephants},\n\tYear = {1927}}\n\n@book{Eugenides:1993zr,\n\tAddress = {New York},\n\tAnnote = {LDR    01114cam  2200313 a 4500\n001    3450973\n005    20050105155535.0\n008    920929s1993    nyu           000 1 eng  \n035    $9(DLC)   92033466\n906    $a7$bcbc$corignew$d1$eocip$f19$gy-gencatlg\n955    $apc16 to la00 09-29-92; lk17 09-30-92; lj02 09-30-92; lh09 10-01-92; aa13 10-01-92; CIP ver. lk17 05-13-93\n010    $a   92033466 \n020    $a0374284385 :$c$18.00\n040    $aDLC$cDLC$dOCoLC$dDLC\n043    $an-us---\n050 00 $aPS3555.U4$bV57 1993\n082 00 $a813/.54$220\n100 1  $aEugenides, Jeffrey.\n245 14 $aThe virgin suicides /$cJeffrey Eugenides.\n250    $a1st ed.\n260    $aNew York :$bFarrar Straus Giroux,$c1993.\n300    $a249 p. ;$c21 cm.\n650  0 $aTeenagers$xSuicidal behavior$xFiction.\n650  0 $aSuburban life$zFiction.\n650  0 $aTeenage girls$xFiction.\n650  0 $aSisters$xFiction.\n650  0 $aMemory$xFiction.\n856 42 $3Publisher description$uhttp://www.loc.gov/catdir/description/hol054/92033466.html\n991    $bc-GenColl$hPS3555.U4$iV57 1993$p00001962516$tCopy 1$wBOOKS\n},\n\tAuthor = {Eugenides, Jeffrey},\n\tCall-Number = {PS3555.U4},\n\tDate-Added = {2012-12-11 17:42:58 +0000},\n\tDate-Modified = {2012-12-11 18:28:55 +0000},\n\tDewey-Call-Number = {813/.54},\n\tEdition = {1st ed},\n\tGenre = {Teenagers},\n\tIsbn = {0374284385},\n\tLibrary-Id = {92033466},\n\tPublisher = {Farrar Straus Giroux},\n\tTitle = {The Virgin Suicides},\n\tUrl = {http://www.loc.gov/catdir/description/hol054/92033466.html},\n\tYear = {1993},\n\tBdsk-Url-1 = {http://www.loc.gov/catdir/description/hol054/92033466.html}}\n\n@book{Rand:1957ys,\n\tAddress = {New York},\n\tAnnote = {LDR    00566cam  22001931  4500\n001    4056496\n005    20050304122526.0\n008    730911s1957    nyu           000 1 eng  \n035    $9(DLC)   57010033\n906    $a7$bcbc$corignew$du$eocip$f19$gy-gencatlg\n010    $a   57010033 \n040    $aDLC$cDLC$dDLC\n050 00 $aPZ3.R152$bAt$aPS3535.A547\n100 1  $aRand, Ayn.\n245 10 $aAtlas shrugged.\n260    $aNew York,$bRandom House$c[1957]\n300    $a1168 p.$c23 cm.\n655  7 $aScience fiction.$2gsafd\n991    $bc-GenColl$hPZ3.R152$iAt$p00010154479$tCopy 1$wBOOKS\n},\n\tAuthor = {Rand, Ayn},\n\tCall-Number = {PZ3.R152},\n\tDate-Added = {2012-12-11 17:42:40 +0000},\n\tDate-Modified = {2012-12-11 18:29:12 +0000},\n\tLibrary-Id = {57010033},\n\tPublisher = {Random House},\n\tTitle = {Atlas Shrugged},\n\tYear = {1957}}\n\n@book{Eugenides:2002vn,\n\tAddress = {New York},\n\tAnnote = {LDR    01494cam  2200361 a 4500\n001    12653751\n005    20070711121621.0\n008    020123s2002    nyu           000 1 eng  \n906    $a7$bcbc$corignew$d1$eocip$f20$gy-gencatlg\n925 0  $aacquire$b2 shelf copies$xpolicy default\n955    $apv14 2002-01-23 to HLCD$clk09 2002-01-30; forwarded for subject Jan 30, 2002$dlh06 2002-01-31;$elj17 2002-02-01 to Dewey$aaa05 2002-02-05$apv24 2002-12-10 bk rec'd, to CIP ver.$flh39 2002-12-13$glh39 2002-12-13 to BCCD\n010    $a  2002019921\n020    $a0374199698 (alk. paper)\n040    $aDLC$cDLC$dDLC\n043    $an-us-mi\n050 00 $aPS3555.U4$bM53 2002\n082 00 $a813/.54$221\n100 1  $aEugenides, Jeffrey.\n245 10 $aMiddlesex /$cJeffrey Eugenides.\n250    $a1st ed.\n260    $aNew York :$bFarrar, Straus, Giroux,$c2002.\n300    $aviii, 529 p. ;$c24 cm.\n650  0 $aGreek Americans$vFiction.\n651  0 $aGrosse Pointe (Mich.)$vFiction.\n651  0 $aDetroit (Mich.)$vFiction.\n650  0 $aGender identity$vFiction.\n650  0 $aIntersexuality$vFiction.\n650  0 $aTeenagers$vFiction.\n655  7 $aDomestic fiction.$2lcsh\n655  7 $aBildungsromans.$2gsafd\n856 42 $3Contributor biographical information$uhttp://www.loc.gov/catdir/bios/hol051/2002019921.html\n856 41 $3Sample text$uhttp://www.loc.gov/catdir/samples/hol051/2002019921.html\n856 42 $3Publisher description$uhttp://www.loc.gov/catdir/description/hol031/2002019921.html\n},\n\tAuthor = {Eugenides, Jeffrey},\n\tCall-Number = {PS3555.U4},\n\tDate-Added = {2012-12-11 17:42:12 +0000},\n\tDate-Modified = {2012-12-11 17:42:12 +0000},\n\tDewey-Call-Number = {813/.54},\n\tEdition = {1st ed},\n\tGenre = {Greek Americans},\n\tIsbn = {0374199698 (alk. paper)},\n\tLibrary-Id = {2002019921},\n\tPublisher = {Farrar, Straus, Giroux},\n\tTitle = {Middlesex},\n\tUrl = {http://www.loc.gov/catdir/bios/hol051/2002019921.html},\n\tYear = {2002},\n\tBdsk-Url-1 = {http://www.loc.gov/catdir/bios/hol051/2002019921.html}}\n\n@book{Egan:2010uq,\n\tAddress = {New York},\n\tAnnote = {LDR    01111cam  2200301 a 4500\n001    15982003\n005    20110412092502.0\n008    091112s2010    nyua          000 1 eng  \n906    $a7$bcbc$corignew$d1$eecip$f20$gy-gencatlg\n925 0  $aacquire$b2 shelf copies$xpolicy default\n955    $brg03 2009-11-12$irg03 2009-11-12, to CIP (Dewey completed)$frg04 2010-07-28 to CALM$aBarcode 00284199376 returned from bindery 2010-07-30; ;$trg05 2011-04-07 Copy 2 added\n955    $arg05 2011-4-8 Copy 3\n010    $a  2009046496\n020    $a9780307592835\n040    $aDLC$cDLC$dDLC\n050 00 $aPS3555.G292$bV57 2010\n082 00 $a813/.54$222\n100 1  $aEgan, Jennifer.\n245 12 $aA visit from the Goon Squad /$cJennifer Egan.\n250    $a1st ed.\n260    $aNew York :$bAlfred A. Knopf,$c2010.\n300    $a273 p. :$bill. ;$c25 cm.\n500    $a\"This is a Borzoi book\"--T.p. verso.\n650  0 $aPunk rock musicians$vFiction.\n650  0 $aSound recording executives and producers$vFiction.\n650  0 $aOlder men$vFiction.\n650  0 $aYoung women$vFiction.\n655  0 $aPsychological fiction.\n},\n\tAuthor = {Egan, Jennifer},\n\tCall-Number = {PS3555.G292},\n\tDate-Added = {2012-12-11 17:38:40 +0000},\n\tDate-Modified = {2012-12-11 18:28:46 +0000},\n\tDewey-Call-Number = {813/.54},\n\tEdition = {1st ed},\n\tGenre = {Punk rock musicians},\n\tIsbn = {9780307592835},\n\tLibrary-Id = {2009046496},\n\tPublisher = {Alfred A. Knopf},\n\tTitle = {A Visit from the Goon Squad},\n\tYear = {2010}}\n\n@book{Booth:1961fk,\n\tAnnote = {LDR    00646cam  22002171  4500\n001    2639435\n005    19830506000000.0\n008    720420s1961    ilu      b    000 0 eng  \n035    $9(DLC)   61014947\n906    $a7$bcbc$corignew$du$eocip$f19$gy-gencatlg\n010    $a   61014947 \n040    $aDLC$cDLC$dDLC\n050 00 $aPN3451$b.B6 1961\n082 00 $a808.3\n100 1  $aBooth, Wayne C.\n245 14 $aThe rhetoric of fiction.\n260    $a[Chicago]$bUniversity of Chicago Press$c[1961]\n300    $a455 p.$c24 cm.\n504    $aIncludes bibliography.\n650  0 $aFiction$xTechnique.\n991    $bc-GenColl$hPN3451$i.B6 1961$p00010408052$tCopy 1$wBOOKS\n},\n\tAuthor = {Booth, Wayne C},\n\tCall-Number = {PN3451},\n\tDate-Added = {2012-12-11 17:35:06 +0000},\n\tDate-Modified = {2012-12-11 18:28:35 +0000},\n\tDewey-Call-Number = {808.3},\n\tGenre = {Fiction},\n\tLibrary-Id = {61014947},\n\tPublisher = {University of Chicago Press},\n\tTitle = {The Rhetoric of Fiction},\n\tYear = {1961}}",
       "type": null
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-18 10:21:31",
-      "entityID": 3601,
-      "entityType": "work",
-      "id": 75,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "Work was accepted by 'Gladwyne Living Magazine' on 8/15/2013.",
-      "type": "Acceptance"
     },
     {
       "attributes": "",
@@ -484,16 +474,6 @@
     {
       "attributes": "",
       "createdAt": "2026-01-18 10:21:31",
-      "entityID": 21474,
-      "entityType": "work",
-      "id": 50,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "7/15/2012: Submitted this piece to the Non Fiction Magazine online writers group",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-18 10:21:31",
       "entityID": 21080,
       "entityType": "work",
       "id": 44,
@@ -559,16 +539,6 @@
       "id": 56,
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "This has a very personal idea in it. And I like it. I think I should remove a lot of it but there is the nub of an idea here.",
-      "type": "Note"
-    },
-    {
-      "attributes": "",
-      "createdAt": "2026-01-18 10:21:31",
-      "entityID": 21301,
-      "entityType": "work",
-      "id": 48,
-      "modifiedAt": "2026-01-06 00:07:00",
-      "note": "This is fricken great",
       "type": "Note"
     },
     {
@@ -690,6 +660,16 @@
       "modifiedAt": "2026-01-06 00:07:00",
       "note": "We think the three poets we've had the pleasure of featuring all know how to make a damn good sandwich, different in their own way, but with a common attraction to every day life and its whimsy, sometimes tragedy, despair, hope. They've set out on the journey to, in the words of Raymond Carver, \"endow those things--a chair, a window curtain, a fork, a stone, a woman's earring--with immense, even startling power.\"\n\nWe came upon one of Thomas Jay Rush's short stories in which the unlikely word \"peas\" (empowered by just the right punctuation) gave this startling effect. His poems deal similarly with everyday things and feelings in a language that is non-ornamental but that still (maybe because of this) direct our attention elsewhere, outside the poem, toward some mystery or other. \n\nhttp://kitchenpoet.blogspot.com/2010/12/11-thomas-jay-rush-2-poems.html",
       "type": "Review"
+    },
+    {
+      "attributes": "",
+      "createdAt": "2026-01-18T21:57:21-05:00",
+      "entityID": 23897,
+      "entityType": "work",
+      "id": 81,
+      "modifiedAt": "2026-01-18T21:57:39-05:00",
+      "note": "Tweeted",
+      "type": "Status"
     },
     {
       "attributes": "",

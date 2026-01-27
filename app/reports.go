@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/fileops"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -182,11 +183,18 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 		"Books without a template assigned",
 		"Books with style audit issues (unknown styles or direct formatting)",
 		"Books with heading analysis failures",
+		"Works with missing document files",
+		"Total word count per book",
+		"Works appearing in multiple books",
+		"Books without a cover image",
+		"Works not accessed in 6+ months (stale)",
+		"Works still in draft status (Working, Focus, Gestating)",
+		"Works with low quality rating (Okay, Bad, Worst)",
 	}
 
-	// Get all book collections
+	// Get all book collections with book metadata
 	rows, err := a.db.Conn().Query(`
-		SELECT c.collID, c.collection_name, b.template_path,
+		SELECT c.collID, c.collection_name, b.template_path, b.cover_path,
 			(SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID) as workCount
 		FROM Collections c 
 		LEFT JOIN Books b ON b.collID = c.collID
@@ -208,16 +216,20 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 		id           int64
 		name         string
 		templatePath sql.NullString
+		coverPath    sql.NullString
 		workCount    int
 	}
 	var books []bookInfo
 
 	for rows.Next() {
 		var b bookInfo
-		if err := rows.Scan(&b.id, &b.name, &b.templatePath, &b.workCount); err == nil {
+		if err := rows.Scan(&b.id, &b.name, &b.templatePath, &b.coverPath, &b.workCount); err == nil {
 			books = append(books, b)
 		}
 	}
+
+	// Check for works appearing in multiple books
+	duplicateWorks := a.findWorksInMultipleBooks()
 
 	for _, book := range books {
 		// Check: Empty book
@@ -225,7 +237,7 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 			issues = append(issues, ReportIssue{
 				ID:          book.id,
 				Description: "Empty book (no works)",
-				EntityType:  "Collection",
+				EntityType:  "collection",
 				EntityID:    book.id,
 				EntityName:  book.name,
 			})
@@ -237,7 +249,18 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 			issues = append(issues, ReportIssue{
 				ID:          book.id,
 				Description: "No template assigned",
-				EntityType:  "Collection",
+				EntityType:  "collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+		}
+
+		// Check: No cover image
+		if !book.coverPath.Valid || book.coverPath.String == "" {
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: "No cover image assigned",
+				EntityType:  "collection",
 				EntityID:    book.id,
 				EntityName:  book.name,
 			})
@@ -250,7 +273,7 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 				issues = append(issues, ReportIssue{
 					ID:          book.id,
 					Description: fmt.Sprintf("%d of %d works have style issues", auditSummary.DirtyWorks, auditSummary.TotalWorks),
-					EntityType:  "Collection",
+					EntityType:  "collection",
 					EntityID:    book.id,
 					EntityName:  book.name,
 				})
@@ -259,7 +282,7 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 				issues = append(issues, ReportIssue{
 					ID:          book.id,
 					Description: fmt.Sprintf("%d works have missing files", auditSummary.MissingFiles),
-					EntityType:  "Collection",
+					EntityType:  "collection",
 					EntityID:    book.id,
 					EntityName:  book.name,
 				})
@@ -273,10 +296,128 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 				issues = append(issues, ReportIssue{
 					ID:          book.id,
 					Description: fmt.Sprintf("%d of %d works failed heading analysis", headingResult.Failed, headingResult.TotalWorks),
-					EntityType:  "Collection",
+					EntityType:  "collection",
 					EntityID:    book.id,
 					EntityName:  book.name,
 				})
+			}
+		}
+
+		// Get works for additional checks
+		works, err := a.db.GetCollectionWorks(book.id, false)
+		if err != nil {
+			continue
+		}
+
+		// Check: Missing document files, word count, stale works, draft status, low quality
+		var totalWords int64
+		var missingDocs, staleWorks, draftWorks, lowQualityWorks int
+		sixMonthsAgo := time.Now().AddDate(0, -6, 0)
+
+		for _, w := range works {
+			// Missing documents
+			fullPath := a.fileOps.GetFullPath(&w.Work)
+			if _, err := fileops.FindFileWithExtension(fullPath); err != nil {
+				missingDocs++
+			}
+
+			// Word count
+			if w.NWords != nil {
+				totalWords += int64(*w.NWords)
+			}
+
+			// Stale works (not accessed in 6+ months)
+			if w.AccessDate != nil && *w.AccessDate != "" {
+				if accessTime, err := time.Parse("2006-01-02", *w.AccessDate); err == nil {
+					if accessTime.Before(sixMonthsAgo) {
+						staleWorks++
+					}
+				}
+			}
+
+			// Draft status (not finished)
+			if w.Status == "Working" || w.Status == "Focus" || w.Status == "Gestating" {
+				draftWorks++
+			}
+
+			// Low quality
+			if w.Quality == "Okay" || w.Quality == "Bad" || w.Quality == "Worst" {
+				lowQualityWorks++
+			}
+		}
+
+		// Report missing documents
+		if missingDocs > 0 {
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: fmt.Sprintf("%d of %d works have missing document files", missingDocs, len(works)),
+				EntityType:  "collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+		}
+
+		// Report word count (informational - not an "issue" but useful)
+		if totalWords > 0 {
+			wordCountDesc := fmt.Sprintf("Total word count: %d", totalWords)
+			if totalWords < 20000 {
+				wordCountDesc += " (may be too short for a book)"
+			}
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: wordCountDesc,
+				EntityType:  "collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+		}
+
+		// Report stale works
+		if staleWorks > 0 {
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: fmt.Sprintf("%d of %d works not accessed in 6+ months", staleWorks, len(works)),
+				EntityType:  "collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+		}
+
+		// Report draft status works
+		if draftWorks > 0 {
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: fmt.Sprintf("%d of %d works still in draft status", draftWorks, len(works)),
+				EntityType:  "collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+		}
+
+		// Report low quality works
+		if lowQualityWorks > 0 {
+			issues = append(issues, ReportIssue{
+				ID:          book.id,
+				Description: fmt.Sprintf("%d of %d works have low quality rating", lowQualityWorks, len(works)),
+				EntityType:  "collection",
+				EntityID:    book.id,
+				EntityName:  book.name,
+			})
+		}
+
+		// Report duplicate works in this book
+		for _, dup := range duplicateWorks {
+			for _, collID := range dup.collIDs {
+				if collID == book.id {
+					issues = append(issues, ReportIssue{
+						ID:          dup.workID,
+						Description: fmt.Sprintf("Work '%s' appears in %d books", dup.title, len(dup.collIDs)),
+						EntityType:  "work",
+						EntityID:    dup.workID,
+						EntityName:  dup.title,
+					})
+					break
+				}
 			}
 		}
 	}
@@ -287,6 +428,58 @@ func (a *App) reportBooksIntegrity() ReportCategory {
 		Issues: issues,
 		Checks: checks,
 	}
+}
+
+type duplicateWorkInfo struct {
+	workID  int64
+	title   string
+	collIDs []int64
+}
+
+func (a *App) findWorksInMultipleBooks() []duplicateWorkInfo {
+	// Find works that appear in multiple book collections
+	rows, err := a.db.Conn().Query(`
+		SELECT w.workID, w.title, GROUP_CONCAT(cd.collID) as collIDs
+		FROM Works w
+		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
+		INNER JOIN Collections c ON cd.collID = c.collID
+		WHERE c.is_book = 1
+		GROUP BY w.workID
+		HAVING COUNT(DISTINCT cd.collID) > 1
+	`)
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	var duplicates []duplicateWorkInfo
+	for rows.Next() {
+		var workID int64
+		var title string
+		var collIDsStr string
+		if err := rows.Scan(&workID, &title, &collIDsStr); err == nil {
+			// Parse comma-separated collIDs
+			var collIDs []int64
+			for _, idStr := range strings.Split(collIDsStr, ",") {
+				if id, err := parseInt64(idStr); err == nil {
+					collIDs = append(collIDs, id)
+				}
+			}
+			duplicates = append(duplicates, duplicateWorkInfo{
+				workID:  workID,
+				title:   title,
+				collIDs: collIDs,
+			})
+		}
+	}
+	return duplicates
+}
+
+func parseInt64(s string) (int64, error) {
+	s = strings.TrimSpace(s)
+	var result int64
+	_, err := fmt.Sscanf(s, "%d", &result)
+	return result, err
 }
 
 func (a *App) reportSubmissionsIntegrity() ReportCategory {

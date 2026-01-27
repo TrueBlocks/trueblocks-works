@@ -161,3 +161,97 @@ func copyFile(src, dst string) error {
 	_, err = io.Copy(destFile, sourceFile)
 	return err
 }
+
+// ToggleCollectionMarks toggles the marked state of all works in a collection.
+// If any works are marked, all works are unmarked.
+// If no works are marked, all works are marked.
+// Returns true if works are now marked, false if unmarked.
+func (a *App) ToggleCollectionMarks(collID int64) (bool, error) {
+	// Check if any works in the collection are marked
+	var markedCount int
+	err := a.db.Conn().QueryRow(`
+		SELECT COUNT(*) FROM Works w
+		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
+		WHERE cd.collID = ? AND COALESCE(w.is_marked, 0) = 1
+	`, collID).Scan(&markedCount)
+	if err != nil {
+		return false, fmt.Errorf("count marked works: %w", err)
+	}
+
+	// Toggle: if any marked, unmark all; if none marked, mark all
+	newMarkedValue := 1
+	if markedCount > 0 {
+		newMarkedValue = 0
+	}
+
+	_, err = a.db.Conn().Exec(`
+		UPDATE Works SET is_marked = ?
+		WHERE workID IN (
+			SELECT workID FROM CollectionDetails WHERE collID = ?
+		)
+	`, newMarkedValue, collID)
+	if err != nil {
+		return false, fmt.Errorf("update marks: %w", err)
+	}
+
+	return newMarkedValue == 1, nil
+}
+
+// GetCollectionHasMarkedWorks checks if any works in the collection are marked.
+func (a *App) GetCollectionHasMarkedWorks(collID int64) (bool, error) {
+	var markedCount int
+	err := a.db.Conn().QueryRow(`
+		SELECT COUNT(*) FROM Works w
+		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
+		WHERE cd.collID = ? AND COALESCE(w.is_marked, 0) = 1
+	`, collID).Scan(&markedCount)
+	if err != nil {
+		return false, fmt.Errorf("count marked works: %w", err)
+	}
+	return markedCount > 0, nil
+}
+
+// ToggleCollectionSuppressed toggles the suppressed state of all works in a collection.
+// If any works are suppressed, all works are unsuppressed.
+// If no works are suppressed, all works are suppressed.
+// Returns true if works are now suppressed, false if unsuppressed.
+func (a *App) ToggleCollectionSuppressed(collID int64) (bool, error) {
+	// Check if any works in the collection are suppressed
+	var suppressedCount int
+	err := a.db.Conn().QueryRow(`
+		SELECT COUNT(*) FROM CollectionDetails
+		WHERE collID = ? AND COALESCE(is_suppressed, 0) = 1
+	`, collID).Scan(&suppressedCount)
+	if err != nil {
+		return false, fmt.Errorf("count suppressed works: %w", err)
+	}
+
+	// Toggle: if any suppressed, unsuppress all; if none suppressed, suppress all
+	newSuppressedValue := 1
+	if suppressedCount > 0 {
+		newSuppressedValue = 0
+	}
+
+	_, err = a.db.Conn().Exec(`
+		UPDATE CollectionDetails SET is_suppressed = ?
+		WHERE collID = ?
+	`, newSuppressedValue, collID)
+	if err != nil {
+		return false, fmt.Errorf("update suppressed: %w", err)
+	}
+
+	return newSuppressedValue == 1, nil
+}
+
+// GetCollectionHasSuppressedWorks checks if any works in the collection are suppressed.
+func (a *App) GetCollectionHasSuppressedWorks(collID int64) (bool, error) {
+	var suppressedCount int
+	err := a.db.Conn().QueryRow(`
+		SELECT COUNT(*) FROM CollectionDetails
+		WHERE collID = ? AND COALESCE(is_suppressed, 0) = 1
+	`, collID).Scan(&suppressedCount)
+	if err != nil {
+		return false, fmt.Errorf("count suppressed works: %w", err)
+	}
+	return suppressedCount > 0, nil
+}

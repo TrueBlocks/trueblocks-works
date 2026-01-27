@@ -25,6 +25,7 @@ import {
   IconBook,
   IconEyeOff,
   IconTypography,
+  IconChecks,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -57,6 +58,10 @@ import {
   GetTab,
   SetTab,
   SetWorkSuppressed,
+  ToggleCollectionMarks,
+  GetCollectionHasMarkedWorks,
+  ToggleCollectionSuppressed,
+  GetCollectionHasSuppressedWorks,
 } from '@app';
 import { models, db, state } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
@@ -116,6 +121,8 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [numberAsSortedModalOpen, setNumberAsSortedModalOpen] = useState(false);
   const [isBook, setIsBook] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>('contents');
+  const [hasMarkedWorks, setHasMarkedWorks] = useState(false);
+  const [hasSuppressedWorks, setHasSuppressedWorks] = useState(false);
   const hasInitialized = useRef(false);
   const prevCollectionIdRef = useRef<number | undefined>(undefined);
 
@@ -166,16 +173,21 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     if (!collectionId) return;
 
     try {
-      const [coll, worksData, subsData, isBookResult, savedSubTab] = await Promise.all([
-        GetCollection(collectionId),
-        GetCollectionWorks(collectionId),
-        GetSubmissionViewsByCollection(collectionId),
-        GetCollectionIsBook(collectionId),
-        GetTab(`collection-${collectionId}-subtab`),
-      ]);
+      const [coll, worksData, subsData, isBookResult, savedSubTab, hasMarked, hasSuppressed] =
+        await Promise.all([
+          GetCollection(collectionId),
+          GetCollectionWorks(collectionId),
+          GetSubmissionViewsByCollection(collectionId),
+          GetCollectionIsBook(collectionId),
+          GetTab(`collection-${collectionId}-subtab`),
+          GetCollectionHasMarkedWorks(collectionId),
+          GetCollectionHasSuppressedWorks(collectionId),
+        ]);
 
       setCollection(coll as models.CollectionView);
       setIsBook(isBookResult);
+      setHasMarkedWorks(hasMarked);
+      setHasSuppressedWorks(hasSuppressed);
       if (isBookResult && savedSubTab) {
         setActiveTab(savedSubTab);
       } else {
@@ -505,6 +517,38 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     },
     [collectionId, loadData]
   );
+
+  const handleToggleAllMarks = useCallback(async () => {
+    if (!collectionId) return;
+    try {
+      const nowMarked = await ToggleCollectionMarks(collectionId);
+      setHasMarkedWorks(nowMarked);
+      loadData();
+    } catch (err) {
+      LogErr('Failed to toggle marks:', err);
+      notifications.show({
+        message: 'Failed to toggle marks',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [collectionId, loadData]);
+
+  const handleToggleAllSuppressed = useCallback(async () => {
+    if (!collectionId) return;
+    try {
+      const nowSuppressed = await ToggleCollectionSuppressed(collectionId);
+      setHasSuppressedWorks(nowSuppressed);
+      loadData();
+    } catch (err) {
+      LogErr('Failed to toggle suppressed:', err);
+      notifications.show({
+        message: 'Failed to toggle suppressed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [collectionId, loadData]);
 
   const expandFiltersForWorks = useCallback(
     async (addedWorks: models.WorkView[]) => {
@@ -848,6 +892,30 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         }
         actionsRight={
           <Group gap="xs">
+            <Tooltip label={hasMarkedWorks ? 'Unmark All' : 'Mark All'}>
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color={hasMarkedWorks ? 'green' : 'gray'}
+                onClick={handleToggleAllMarks}
+                aria-label={hasMarkedWorks ? 'Unmark all works' : 'Mark all works'}
+              >
+                <IconChecks size={18} />
+              </ActionIcon>
+            </Tooltip>
+            {isBook && (
+              <Tooltip label={hasSuppressedWorks ? 'Include All in PDF' : 'Exclude All from PDF'}>
+                <ActionIcon
+                  size="lg"
+                  variant="light"
+                  color={hasSuppressedWorks ? 'orange' : 'gray'}
+                  onClick={handleToggleAllSuppressed}
+                  aria-label={hasSuppressedWorks ? 'Include all works' : 'Exclude all works'}
+                >
+                  <IconEyeOff size={18} />
+                </ActionIcon>
+              </Tooltip>
+            )}
             <Tooltip
               label={
                 tableState.hasActiveFilters

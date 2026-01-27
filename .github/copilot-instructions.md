@@ -69,12 +69,13 @@ set -x GOPATH $HOME/go
 
 When the user types ONLY these words (no other text), execute the corresponding command:
 
-| User types | Execute                                                                               | Notes                                                    |
-| ---------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `lint`     | `cd <repo-root>; and yarn lint --fix; and yarn type-check`                            | Run from repo root                                       |
-| `run`      | `cd <repo-root>; and yarn start &`                                                    | Background process, then wait for user                   |
-| `push`     | `git add -A; and git commit -m "<message>"; and git push`                             | Short, meaningful commit message based on recent changes |
-| `plan`     | Exit design mode, read `ai/Invoker.md` and `ai/Rules.md`, follow instructions therein | Obey checkpoints                                         |
+| User types         | Execute                                                                               | Notes                                                    |
+| ------------------ | ------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `lint`             | `cd <repo-root>; and yarn lint --fix; and yarn type-check`                            | Run from repo root                                       |
+| `run`              | `cd <repo-root>; and yarn start &`                                                    | Background process, then wait for user                   |
+| `push`             | `git add -A; and git commit -m "<message>"; and git push`                             | Short, meaningful commit message based on recent changes |
+| `plan`             | Exit design mode, read `ai/Invoker.md` and `ai/Rules.md`, follow instructions therein | Obey checkpoints                                         |
+| `discuss <topics>` | Enter design mode focused on discussing `<topics>`                                    | Topics are the text after "discuss"                      |
 
 **CRITICAL**: The `push` command is the ONLY exception to the "never git commit" rule. Only execute git commands when user types `push` alone on a line. Never run git add/commit/push otherwise.
 

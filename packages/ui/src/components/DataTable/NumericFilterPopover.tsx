@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { IconFilter, IconFilterFilled } from '@tabler/icons-react';
 
-interface NumericFilterPopoverProps {
+export interface NumericFilterPopoverProps {
   min: number | undefined;
   max: number | undefined;
   onChange: (min: number | undefined, max: number | undefined) => void;

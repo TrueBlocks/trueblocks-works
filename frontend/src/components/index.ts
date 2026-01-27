@@ -46,8 +46,6 @@ export { BackupRestoreModal } from './BackupRestoreModal';
 export { SetupWizard } from './SetupWizard';
 export { MoveFileModal } from './MoveFileModal';
 export { MoveToPositionModal } from './MoveToPositionModal';
-export { ColumnFilterPopover } from './ColumnFilterPopover';
-export { NumericFilterPopover } from './NumericFilterPopover';
 export { SelectablePopover } from './SelectablePopover';
 export { DataTable } from './DataTable';
 export { EnumManagement } from './EnumManagement';

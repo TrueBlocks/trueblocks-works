@@ -12,7 +12,7 @@ import {
 } from '@mantine/core';
 import { IconFilter, IconFilterFilled } from '@tabler/icons-react';
 
-interface ColumnFilterPopoverProps {
+export interface ColumnFilterPopoverProps {
   options: readonly string[];
   selected: Set<string>;
   onChange: (value: string) => void;
@@ -135,11 +135,13 @@ export function ColumnFilterPopover({
                 onChange={() => {}}
                 onClick={(e) => handleCheckboxClick(option, e)}
                 size="sm"
-                styles={
-                  option === ''
-                    ? { label: { fontStyle: 'italic', color: 'var(--mantine-color-dimmed)' } }
-                    : undefined
-                }
+                {...(option === ''
+                  ? {
+                      styles: {
+                        label: { fontStyle: 'italic', color: 'var(--mantine-color-dimmed)' },
+                      },
+                    }
+                  : {})}
               />
             ))}
           </SimpleGrid>

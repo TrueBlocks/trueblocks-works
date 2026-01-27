@@ -1,7 +1,7 @@
 import { forwardRef, memo } from 'react';
 import { Table, ActionIcon, Group, Tooltip } from '@mantine/core';
 import { IconTrash, IconRestore, IconX, IconChevronUp, IconChevronDown } from '@tabler/icons-react';
-import { Column } from './DataTable';
+import type { Column } from './types';
 import { DataTableCell } from './DataTableCell';
 
 export interface DataTableRowProps<T> {
@@ -73,7 +73,7 @@ function DataTableRowInner<T>(
           key={col.key}
           cellKey={col.key}
           isSelected={isSelected}
-          scrollOnSelect={col.scrollOnSelect}
+          {...(col.scrollOnSelect !== undefined ? { scrollOnSelect: col.scrollOnSelect } : {})}
           content={
             col.render
               ? col.render(item)

@@ -26,6 +26,8 @@ import {
   IconEyeOff,
   IconTypography,
   IconChecks,
+  IconRocket,
+  IconPhoto,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -82,6 +84,8 @@ import {
   MoveToPositionModal,
   BookSettingsTab,
   BookTypographyTab,
+  AmazonPublishingTab,
+  CoverImagesTab,
 } from '@/components';
 import { useNotes } from '@/hooks';
 
@@ -264,11 +268,11 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadData]);
 
-  // Cmd+Shift+2: Cycle sub-tabs (Contents/Typography/Book)
+  // Cmd+Shift+2: Cycle sub-tabs (Contents/Typography/Book/Covers/Amazon)
   useEffect(() => {
     function handleCycleSubTab() {
       if (!isBook) return;
-      const tabs = ['contents', 'typography', 'book'];
+      const tabs = ['contents', 'typography', 'book', 'covers', 'amazon'];
       const currentIndex = tabs.indexOf(activeTab || 'contents');
       const nextIndex = (currentIndex + 1) % tabs.length;
       const newTab = tabs[nextIndex];
@@ -1023,6 +1027,34 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 <IconBook size={20} />
               </Tabs.Tab>
             </Tooltip>
+            <Tooltip label="Cover Images" position="right">
+              <Tabs.Tab
+                value="covers"
+                style={{
+                  backgroundColor:
+                    activeTab === 'covers' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'covers' ? 'var(--mantine-color-blue-6)' : undefined,
+                  borderRadius: '6px',
+                  padding: '10px',
+                }}
+              >
+                <IconPhoto size={20} />
+              </Tabs.Tab>
+            </Tooltip>
+            <Tooltip label="Amazon Publishing" position="right">
+              <Tabs.Tab
+                value="amazon"
+                style={{
+                  backgroundColor:
+                    activeTab === 'amazon' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'amazon' ? 'var(--mantine-color-blue-6)' : undefined,
+                  borderRadius: '6px',
+                  padding: '10px',
+                }}
+              >
+                <IconRocket size={20} />
+              </Tabs.Tab>
+            </Tooltip>
           </Tabs.List>
 
           <Tabs.Panel value="contents" pl="md" style={{ flex: 1 }}>
@@ -1131,6 +1163,20 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
 
           <Tabs.Panel value="book" pl="md" style={{ flex: 1 }}>
             <BookSettingsTab
+              collectionId={collectionId}
+              collectionName={collection.collectionName}
+            />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="covers" pl="md" style={{ flex: 1 }}>
+            <CoverImagesTab
+              collectionId={collectionId}
+              collectionName={collection.collectionName}
+            />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="amazon" pl="md" style={{ flex: 1 }}>
+            <AmazonPublishingTab
               collectionId={collectionId}
               collectionName={collection.collectionName}
             />

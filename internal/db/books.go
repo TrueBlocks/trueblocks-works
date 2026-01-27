@@ -12,17 +12,19 @@ func (db *DB) CreateBook(b *models.Book) error {
 	now := time.Now().Format(time.RFC3339)
 	query := `INSERT INTO Books (
 		collID, title, subtitle, author, copyright, dedication,
-		acknowledgements, about_author, cover_path, isbn, published_date,
-		template_path, export_path, status, header_font, header_size,
+		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path, spine_text,
+		description_short, description_long,
+		isbn, published_date, template_path, export_path, status, header_font, header_size,
 		page_num_font, page_num_size, title_font, title_size,
 		subtitle_font, subtitle_size, author_font, author_size,
 		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
 		b.CollID, b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
-		b.Acknowledgements, b.AboutAuthor, b.CoverPath, b.ISBN, b.PublishedDate,
-		b.TemplatePath, b.ExportPath, b.Status, b.HeaderFont, b.HeaderSize,
+		b.Acknowledgements, b.AboutAuthor, b.CoverPath, b.FrontCoverPath, b.BackCoverPath, b.SpineText,
+		b.DescriptionShort, b.DescriptionLong,
+		b.ISBN, b.PublishedDate, b.TemplatePath, b.ExportPath, b.Status, b.HeaderFont, b.HeaderSize,
 		b.PageNumFont, b.PageNumSize, b.TitleFont, b.TitleSize,
 		b.SubtitleFont, b.SubtitleSize, b.AuthorFont, b.AuthorSize,
 		b.WorksStartRecto, b.ShowPageNumbers, b.SelectedParts, now, now,
@@ -43,8 +45,9 @@ func (db *DB) CreateBook(b *models.Book) error {
 
 func (db *DB) GetBook(id int64) (*models.Book, error) {
 	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication,
-		acknowledgements, about_author, cover_path, isbn, published_date,
-		template_path, export_path, status, header_font, header_size,
+		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path, spine_text,
+		description_short, description_long,
+		isbn, published_date, template_path, export_path, status, header_font, header_size,
 		page_num_font, page_num_size, title_font, title_size,
 		subtitle_font, subtitle_size, author_font, author_size,
 		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
@@ -54,6 +57,8 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 	err := db.conn.QueryRow(query, id).Scan(
 		&b.BookID, &b.CollID, &b.Title, &b.Subtitle, &b.Author, &b.Copyright,
 		&b.Dedication, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
+		&b.FrontCoverPath, &b.BackCoverPath, &b.SpineText,
+		&b.DescriptionShort, &b.DescriptionLong,
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
 		&b.Status, &b.HeaderFont, &b.HeaderSize, &b.PageNumFont, &b.PageNumSize,
 		&b.TitleFont, &b.TitleSize, &b.SubtitleFont, &b.SubtitleSize,
@@ -71,8 +76,9 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 
 func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication,
-		acknowledgements, about_author, cover_path, isbn, published_date,
-		template_path, export_path, status, header_font, header_size,
+		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path, spine_text,
+		description_short, description_long,
+		isbn, published_date, template_path, export_path, status, header_font, header_size,
 		page_num_font, page_num_size, title_font, title_size,
 		subtitle_font, subtitle_size, author_font, author_size,
 		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
@@ -82,6 +88,8 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 	err := db.conn.QueryRow(query, collID).Scan(
 		&b.BookID, &b.CollID, &b.Title, &b.Subtitle, &b.Author, &b.Copyright,
 		&b.Dedication, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
+		&b.FrontCoverPath, &b.BackCoverPath, &b.SpineText,
+		&b.DescriptionShort, &b.DescriptionLong,
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
 		&b.Status, &b.HeaderFont, &b.HeaderSize, &b.PageNumFont, &b.PageNumSize,
 		&b.TitleFont, &b.TitleSize, &b.SubtitleFont, &b.SubtitleSize,
@@ -100,8 +108,10 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 func (db *DB) UpdateBook(b *models.Book) error {
 	query := `UPDATE Books SET
 		title = ?, subtitle = ?, author = ?, copyright = ?, dedication = ?,
-		acknowledgements = ?, about_author = ?, cover_path = ?, isbn = ?,
-		published_date = ?, template_path = ?, export_path = ?, status = ?,
+		acknowledgements = ?, about_author = ?, cover_path = ?,
+		front_cover_path = ?, back_cover_path = ?, spine_text = ?,
+		description_short = ?, description_long = ?,
+		isbn = ?, published_date = ?, template_path = ?, export_path = ?, status = ?,
 		header_font = ?, header_size = ?, page_num_font = ?, page_num_size = ?,
 		title_font = ?, title_size = ?, subtitle_font = ?, subtitle_size = ?,
 		author_font = ?, author_size = ?, works_start_recto = ?, show_page_numbers = ?,
@@ -110,8 +120,10 @@ func (db *DB) UpdateBook(b *models.Book) error {
 
 	_, err := db.conn.Exec(query,
 		b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
-		b.Acknowledgements, b.AboutAuthor, b.CoverPath, b.ISBN,
-		b.PublishedDate, b.TemplatePath, b.ExportPath, b.Status,
+		b.Acknowledgements, b.AboutAuthor, b.CoverPath,
+		b.FrontCoverPath, b.BackCoverPath, b.SpineText,
+		b.DescriptionShort, b.DescriptionLong,
+		b.ISBN, b.PublishedDate, b.TemplatePath, b.ExportPath, b.Status,
 		b.HeaderFont, b.HeaderSize, b.PageNumFont, b.PageNumSize,
 		b.TitleFont, b.TitleSize, b.SubtitleFont, b.SubtitleSize,
 		b.AuthorFont, b.AuthorSize, b.WorksStartRecto, b.ShowPageNumbers,

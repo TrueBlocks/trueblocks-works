@@ -40,7 +40,11 @@ export function CheckWorkPath(arg1:number):Promise<app.PathCheckResult>;
 
 export function ClearPartCache(arg1:number,arg2:Array<string>):Promise<void>;
 
+export function CloseStatusBar():Promise<void>;
+
 export function CompleteSetup():Promise<void>;
+
+export function CopyCoverToClipboard(arg1:string):Promise<void>;
 
 export function CopyTemplateToLibrary(arg1:string,arg2:string):Promise<string>;
 
@@ -143,6 +147,10 @@ export function GetCollectionIsBook(arg1:number):Promise<boolean>;
 export function GetCollectionWorks(arg1:number):Promise<Array<models.CollectionWork>>;
 
 export function GetCollections():Promise<Array<models.CollectionView>>;
+
+export function GetCoverImageData(arg1:string):Promise<string>;
+
+export function GetCoversDir():Promise<string>;
 
 export function GetDashboardStats(arg1:string):Promise<app.DashboardStats>;
 
@@ -258,6 +266,8 @@ export function OpenOrgOtherURL(arg1:number):Promise<void>;
 
 export function OpenOrgURL(arg1:number):Promise<void>;
 
+export function OpenStatusBar():Promise<void>;
+
 export function OpenSupportingItem(arg1:number):Promise<void>;
 
 export function OpenTemplate(arg1:string):Promise<void>;
@@ -286,6 +296,8 @@ export function ReportFileSystemChecks():Promise<app.ReportCategory>;
 
 export function RestoreBackup(arg1:string):Promise<void>;
 
+export function SaveCoverFromBytes(arg1:number,arg2:string,arg3:string,arg4:string):Promise<string>;
+
 export function SaveWindowGeometry(arg1:number,arg2:number,arg3:number,arg4:number):Promise<void>;
 
 export function ScanImportFolder():Promise<Array<string>>;
@@ -293,6 +305,8 @@ export function ScanImportFolder():Promise<Array<string>>;
 export function Search(arg1:string,arg2:number):Promise<models.SearchResponse>;
 
 export function SelectBookTemplate():Promise<string>;
+
+export function SelectCoverImage(arg1:string):Promise<string>;
 
 export function SelectExportFolder():Promise<string>;
 

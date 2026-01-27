@@ -23,6 +23,7 @@ export function StatusBar({ sidebarWidth }: StatusBarProps) {
   const [visible, setVisible] = useState(false);
   const [currentMessage, setCurrentMessage] = useState<StatusMessage | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isHeld, setIsHeld] = useState(false);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearHideTimeout = useCallback(() => {
@@ -49,17 +50,38 @@ export function StatusBar({ sidebarWidth }: StatusBarProps) {
       setVisible(true);
       setCopied(false);
 
-      const config = LEVEL_CONFIG[msg.level] || LEVEL_CONFIG.info;
-      scheduleHide(config.duration);
+      // Only schedule auto-hide if bar is not held open
+      if (!isHeld) {
+        const config = LEVEL_CONFIG[msg.level] || LEVEL_CONFIG.info;
+        scheduleHide(config.duration);
+      }
+    };
+
+    const handleOpen = () => {
+      Log('StatusBar: held open');
+      setIsHeld(true);
+      setVisible(true);
+      clearHideTimeout();
+    };
+
+    const handleClose = () => {
+      Log('StatusBar: closing');
+      setIsHeld(false);
+      // Brief delay to show final message before hiding
+      scheduleHide(500);
     };
 
     EventsOn('status:message', handleMessage);
+    EventsOn('status:open', handleOpen);
+    EventsOn('status:close', handleClose);
 
     return () => {
       EventsOff('status:message');
+      EventsOff('status:open');
+      EventsOff('status:close');
       clearHideTimeout();
     };
-  }, [scheduleHide, clearHideTimeout]);
+  }, [isHeld, scheduleHide, clearHideTimeout]);
 
   const handleCopy = useCallback(() => {
     if (currentMessage) {

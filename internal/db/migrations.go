@@ -94,6 +94,16 @@ var migrations = []Migration{
 		Name:    "add_title_page_typography",
 		Up:      migrateAddTitlePageTypography,
 	},
+	{
+		Version: 26,
+		Name:    "add_book_cover_fields",
+		Up:      migrateAddBookCoverFields,
+	},
+	{
+		Version: 27,
+		Name:    "add_book_description_fields",
+		Up:      migrateAddBookDescriptionFields,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -871,6 +881,50 @@ func migrateAddTitlePageTypography(tx *sql.Tx) error {
 	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN show_page_numbers INTEGER DEFAULT 1`)
 	if err != nil {
 		return fmt.Errorf("add show_page_numbers column to Books: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddBookCoverFields(tx *sql.Tx) error {
+	// Add front cover path
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN front_cover_path TEXT`)
+	if err != nil {
+		return fmt.Errorf("add front_cover_path column to Books: %w", err)
+	}
+
+	// Add back cover path
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN back_cover_path TEXT`)
+	if err != nil {
+		return fmt.Errorf("add back_cover_path column to Books: %w", err)
+	}
+
+	// Add spine text (for full wraparound cover generation)
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN spine_text TEXT`)
+	if err != nil {
+		return fmt.Errorf("add spine_text column to Books: %w", err)
+	}
+
+	// Copy existing cover_path to front_cover_path
+	_, err = tx.Exec(`UPDATE Books SET front_cover_path = cover_path WHERE cover_path IS NOT NULL`)
+	if err != nil {
+		return fmt.Errorf("copy cover_path to front_cover_path: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddBookDescriptionFields(tx *sql.Tx) error {
+	// Add short description
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN description_short TEXT`)
+	if err != nil {
+		return fmt.Errorf("add description_short column to Books: %w", err)
+	}
+
+	// Add long description
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN description_long TEXT`)
+	if err != nil {
+		return fmt.Errorf("add description_long column to Books: %w", err)
 	}
 
 	return nil

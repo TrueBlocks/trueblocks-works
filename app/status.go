@@ -21,3 +21,15 @@ func (a *App) EmitStatus(level, message string) {
 
 	runtime.EventsEmit(a.ctx, "status:message", msg)
 }
+
+// OpenStatusBar opens the status bar and keeps it open until CloseStatusBar is called.
+// Use this before a series of status updates during long-running operations.
+func (a *App) OpenStatusBar() {
+	runtime.EventsEmit(a.ctx, "status:open", nil)
+}
+
+// CloseStatusBar closes the status bar after a brief delay to show the final message.
+// Call this when a long-running operation completes.
+func (a *App) CloseStatusBar() {
+	runtime.EventsEmit(a.ctx, "status:close", nil)
+}

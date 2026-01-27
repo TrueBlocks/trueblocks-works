@@ -58,5 +58,7 @@ export { ImportConfirmModal } from './ImportConfirmModal';
 export { FTSStatus } from './FTSStatus';
 export { BookSettingsTab } from './BookSettingsTab';
 export { BookTypographyTab } from './BookTypographyTab';
+export { AmazonPublishingTab } from './AmazonPublishingTab';
+export { CoverImagesTab } from './CoverImagesTab';
 export { PartSelectionModal } from './PartSelectionModal';
 export { StatusBar } from './StatusBar/StatusBar';

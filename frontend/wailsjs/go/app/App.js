@@ -62,8 +62,16 @@ export function ClearPartCache(arg1, arg2) {
   return window['go']['app']['App']['ClearPartCache'](arg1, arg2);
 }
 
+export function CloseStatusBar() {
+  return window['go']['app']['App']['CloseStatusBar']();
+}
+
 export function CompleteSetup() {
   return window['go']['app']['App']['CompleteSetup']();
+}
+
+export function CopyCoverToClipboard(arg1) {
+  return window['go']['app']['App']['CopyCoverToClipboard'](arg1);
 }
 
 export function CopyTemplateToLibrary(arg1, arg2) {
@@ -268,6 +276,14 @@ export function GetCollectionWorks(arg1) {
 
 export function GetCollections() {
   return window['go']['app']['App']['GetCollections']();
+}
+
+export function GetCoverImageData(arg1) {
+  return window['go']['app']['App']['GetCoverImageData'](arg1);
+}
+
+export function GetCoversDir() {
+  return window['go']['app']['App']['GetCoversDir']();
 }
 
 export function GetDashboardStats(arg1) {
@@ -498,6 +514,10 @@ export function OpenOrgURL(arg1) {
   return window['go']['app']['App']['OpenOrgURL'](arg1);
 }
 
+export function OpenStatusBar() {
+  return window['go']['app']['App']['OpenStatusBar']();
+}
+
 export function OpenSupportingItem(arg1) {
   return window['go']['app']['App']['OpenSupportingItem'](arg1);
 }
@@ -554,6 +574,10 @@ export function RestoreBackup(arg1) {
   return window['go']['app']['App']['RestoreBackup'](arg1);
 }
 
+export function SaveCoverFromBytes(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['SaveCoverFromBytes'](arg1, arg2, arg3, arg4);
+}
+
 export function SaveWindowGeometry(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['SaveWindowGeometry'](arg1, arg2, arg3, arg4);
 }
@@ -568,6 +592,10 @@ export function Search(arg1, arg2) {
 
 export function SelectBookTemplate() {
   return window['go']['app']['App']['SelectBookTemplate']();
+}
+
+export function SelectCoverImage(arg1) {
+  return window['go']['app']['App']['SelectCoverImage'](arg1);
 }
 
 export function SelectExportFolder() {

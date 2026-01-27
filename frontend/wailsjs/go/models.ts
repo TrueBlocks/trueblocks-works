@@ -1419,6 +1419,11 @@ export namespace models {
 	    acknowledgements?: string;
 	    aboutAuthor?: string;
 	    coverPath?: string;
+	    frontCoverPath?: string;
+	    backCoverPath?: string;
+	    spineText?: string;
+	    descriptionShort?: string;
+	    descriptionLong?: string;
 	    isbn?: string;
 	    publishedDate?: string;
 	    templatePath?: string;
@@ -1456,6 +1461,11 @@ export namespace models {
 	        this.acknowledgements = source["acknowledgements"];
 	        this.aboutAuthor = source["aboutAuthor"];
 	        this.coverPath = source["coverPath"];
+	        this.frontCoverPath = source["frontCoverPath"];
+	        this.backCoverPath = source["backCoverPath"];
+	        this.spineText = source["spineText"];
+	        this.descriptionShort = source["descriptionShort"];
+	        this.descriptionLong = source["descriptionLong"];
 	        this.isbn = source["isbn"];
 	        this.publishedDate = source["publishedDate"];
 	        this.templatePath = source["templatePath"];

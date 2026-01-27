@@ -174,7 +174,9 @@ func (a *App) OpenBookPDF(collID int64) (*OpenBookPDFResult, error) {
 func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
 	startTime := time.Now()
 
-	a.EmitStatus("progress", "Starting PDF export...")
+	a.OpenStatusBar()
+	defer a.CloseStatusBar()
+	a.EmitStatus("progress", "Making galley...")
 
 	book, err := a.db.GetBookByCollection(collID)
 	if err != nil || book == nil {
@@ -262,7 +264,7 @@ func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
 		return nil, fmt.Errorf("build failed: %w", err)
 	}
 
-	a.EmitStatus("success", fmt.Sprintf("PDF exported: %s", filepath.Base(outputPath)))
+	a.EmitStatus("success", "Galley created")
 
 	_ = exec.Command("open", outputPath).Start()
 
@@ -470,7 +472,9 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildAll bool) (*BookExportResult, error) {
 	startTime := time.Now()
 
-	a.EmitStatus("progress", "Starting PDF export...")
+	a.OpenStatusBar()
+	defer a.CloseStatusBar()
+	a.EmitStatus("progress", "Making galley...")
 
 	book, err := a.db.GetBookByCollection(collID)
 	if err != nil || book == nil {
@@ -572,7 +576,7 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 		return nil, fmt.Errorf("build failed: %w", err)
 	}
 
-	a.EmitStatus("success", fmt.Sprintf("PDF exported: %s", filepath.Base(outputPath)))
+	a.EmitStatus("success", "Galley created")
 
 	_ = exec.Command("open", outputPath).Start()
 

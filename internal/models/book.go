@@ -12,6 +12,11 @@ type Book struct {
 	Acknowledgements *string `json:"acknowledgements,omitempty" db:"acknowledgements"`
 	AboutAuthor      *string `json:"aboutAuthor,omitempty" db:"about_author"`
 	CoverPath        *string `json:"coverPath,omitempty" db:"cover_path"`
+	FrontCoverPath   *string `json:"frontCoverPath,omitempty" db:"front_cover_path"`
+	BackCoverPath    *string `json:"backCoverPath,omitempty" db:"back_cover_path"`
+	SpineText        *string `json:"spineText,omitempty" db:"spine_text"`
+	DescriptionShort *string `json:"descriptionShort,omitempty" db:"description_short"`
+	DescriptionLong  *string `json:"descriptionLong,omitempty" db:"description_long"`
 	ISBN             *string `json:"isbn,omitempty" db:"isbn"`
 	PublishedDate    *string `json:"publishedDate,omitempty" db:"published_date"`
 	TemplatePath     *string `json:"templatePath,omitempty" db:"template_path"`

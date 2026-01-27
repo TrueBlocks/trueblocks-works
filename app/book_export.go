@@ -232,8 +232,14 @@ func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
 
 	a.emitExportProgress("Preparing", 1, 6, "Generating front/back matter...")
 
-	_, _ = a.generateFrontMatterPDF(book, buildDir)
-	_, _ = a.generateBackMatterPDF(book, buildDir)
+	if _, err := a.generateFrontMatterPDF(book, buildDir); err != nil {
+		a.EmitStatus("error", fmt.Sprintf("Front matter generation failed: %v", err))
+		return nil, fmt.Errorf("front matter generation failed: %w", err)
+	}
+	if _, err := a.generateBackMatterPDF(book, buildDir); err != nil {
+		a.EmitStatus("error", fmt.Sprintf("Back matter generation failed: %v", err))
+		return nil, fmt.Errorf("back matter generation failed: %w", err)
+	}
 
 	manifest, err := a.buildManifestFromCollection(collID, book, coll, buildDir, outputPath)
 	if err != nil {
@@ -516,8 +522,14 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 
 	a.emitExportProgress("Preparing", 1, 5, "Generating front/back matter...")
 
-	_, _ = a.generateFrontMatterPDF(book, cacheDir)
-	_, _ = a.generateBackMatterPDF(book, cacheDir)
+	if _, err := a.generateFrontMatterPDF(book, cacheDir); err != nil {
+		a.EmitStatus("error", fmt.Sprintf("Front matter generation failed: %v", err))
+		return nil, fmt.Errorf("front matter generation failed: %w", err)
+	}
+	if _, err := a.generateBackMatterPDF(book, cacheDir); err != nil {
+		a.EmitStatus("error", fmt.Sprintf("Back matter generation failed: %v", err))
+		return nil, fmt.Errorf("back matter generation failed: %w", err)
+	}
 
 	manifest, err := a.buildManifestWithParts(collID, book, coll, cacheDir, outputPath)
 	if err != nil {
@@ -534,6 +546,12 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 		newSelection := bookbuild.FormatSelectedParts(selectedParts)
 		book.SelectedParts = &newSelection
 		_ = a.db.UpdateBook(book)
+	}
+
+	// Fail if manifest has no parts - don't silently fall back
+	if len(manifest.Parts) == 0 {
+		a.EmitStatus("error", "Manifest has no parts - check that works are not all suppressed")
+		return nil, fmt.Errorf("manifest has no parts - check that works are not all suppressed")
 	}
 
 	pipelineResult, err := bookbuild.BuildWithParts(bookbuild.PipelineOptions{
@@ -630,49 +648,11 @@ func sanitizeFilename(name string) string {
 
 // generateFrontMatterPDF creates a PDF with title page, copyright, dedication
 func (a *App) generateFrontMatterPDF(book *models.Book, buildDir string) (string, error) {
-	// Always generate front matter with at least the title page
-	var content strings.Builder
-
-	// Title page
-	title := book.Title
-	if title == "" {
-		title = "Untitled"
-	}
-	content.WriteString(fmt.Sprintf("# %s\n\n", title))
-
-	if book.Subtitle != nil && *book.Subtitle != "" {
-		content.WriteString(fmt.Sprintf("## %s\n\n", *book.Subtitle))
-	}
-
-	if book.Author != "" {
-		content.WriteString(fmt.Sprintf("### %s\n\n", book.Author))
-	}
-
-	content.WriteString("\\newpage\n\n")
-
-	// Copyright page
-	if book.Copyright != nil && *book.Copyright != "" {
-		content.WriteString(*book.Copyright)
-		content.WriteString("\n\n\\newpage\n\n")
-	}
-
-	// Dedication
-	if book.Dedication != nil && *book.Dedication != "" {
-		content.WriteString(fmt.Sprintf("*%s*\n\n", *book.Dedication))
-		content.WriteString("\\newpage\n\n")
-	}
-
-	// Write markdown file
-	mdPath := filepath.Join(buildDir, "front-matter.md")
-	if err := os.WriteFile(mdPath, []byte(content.String()), 0644); err != nil {
-		return "", fmt.Errorf("failed to write front matter: %w", err)
-	}
-
-	// Convert to PDF using pandoc with xelatex
 	pdfPath := filepath.Join(buildDir, "front-matter.pdf")
-	cmd := exec.Command("pandoc", "-o", pdfPath, "--pdf-engine=xelatex", mdPath)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return "", fmt.Errorf("pandoc PDF conversion failed: %v\n%s", err, string(output))
+	templatePath := a.fileOps.GetBookTemplatePath()
+
+	if err := bookbuild.CreateFrontMatterPDF(book, templatePath, pdfPath); err != nil {
+		return "", fmt.Errorf("failed to create front matter PDF: %w", err)
 	}
 
 	return pdfPath, nil
@@ -687,31 +667,11 @@ func (a *App) generateBackMatterPDF(book *models.Book, buildDir string) (string,
 		return "", nil
 	}
 
-	var content strings.Builder
-
-	if hasAcknowledgements {
-		content.WriteString("# Acknowledgements\n\n")
-		content.WriteString(*book.Acknowledgements)
-		content.WriteString("\n\n")
-	}
-
-	if hasAboutAuthor {
-		content.WriteString("# About the Author\n\n")
-		content.WriteString(*book.AboutAuthor)
-		content.WriteString("\n\n")
-	}
-
-	// Write markdown file
-	mdPath := filepath.Join(buildDir, "back-matter.md")
-	if err := os.WriteFile(mdPath, []byte(content.String()), 0644); err != nil {
-		return "", fmt.Errorf("failed to write back matter: %w", err)
-	}
-
-	// Convert to PDF using pandoc with xelatex
 	pdfPath := filepath.Join(buildDir, "back-matter.pdf")
-	cmd := exec.Command("pandoc", "-o", pdfPath, "--pdf-engine=xelatex", mdPath)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return "", fmt.Errorf("pandoc PDF conversion failed: %v\n%s", err, string(output))
+	templatePath := a.fileOps.GetBookTemplatePath()
+
+	if err := bookbuild.CreateBackMatterPDF(book, templatePath, pdfPath); err != nil {
+		return "", fmt.Errorf("failed to create back matter PDF: %w", err)
 	}
 
 	return pdfPath, nil

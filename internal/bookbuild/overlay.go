@@ -2,6 +2,7 @@ package bookbuild
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
@@ -15,7 +16,8 @@ type OverlayConfig struct {
 	PageHeight      float64
 	MarginBottom    float64
 	MarginTop       float64
-	MarginOuter     float64
+	MarginInner     float64 // Binding side margin
+	MarginOuter     float64 // Outside edge margin
 	HeaderYPosition float64
 }
 
@@ -23,12 +25,13 @@ func DefaultOverlayConfig(bookTitle string) OverlayConfig {
 	return OverlayConfig{
 		Typography:      DefaultTypography(),
 		BookTitle:       bookTitle,
-		PageWidth:       612,
-		PageHeight:      792,
-		MarginBottom:    36,
-		MarginTop:       36,
-		MarginOuter:     54,
-		HeaderYPosition: 36,
+		PageWidth:       432,  // 6 inches
+		PageHeight:      648,  // 9 inches
+		MarginBottom:    36,   // 0.5 inches from page edge for footer
+		MarginTop:       57.6, // 0.8 inches
+		MarginInner:     54,   // 0.75 inches (binding side)
+		MarginOuter:     46.8, // 0.65 inches (outside edge)
+		HeaderYPosition: 36,   // 0.5 inches from top edge
 	}
 }
 
@@ -70,7 +73,11 @@ func AddPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig
 		}
 
 		// fmt.Printf("  [%d/%d] Adding page number '%s' to page %d\n", i+1, len(mappings), pageNumStr, m.PhysicalPage)
-		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, "bottom-center"); err != nil {
+		position := "bottom-center-verso"
+		if !m.IsVerso() {
+			position = "bottom-center-recto"
+		}
+		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, position); err != nil {
 			return fmt.Errorf("failed to add page number to page %d: %w", m.PhysicalPage, err)
 		}
 	}
@@ -116,9 +123,19 @@ func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfi
 	var dx, dy float64
 	var anchor string
 
+	// Calculate body text center offset from page center
+	// Body center offset = (MarginInner - MarginOuter) / 2
+	// Verso: body center is LEFT of page center (negative offset)
+	// Recto: body center is RIGHT of page center (positive offset)
+	bodyCenterOffset := (config.MarginInner - config.MarginOuter) / 2
+
 	switch position {
-	case "bottom-center":
-		dx = 0
+	case PositionBottomCenterVerso:
+		dx = -bodyCenterOffset // shift left toward outside margin
+		dy = config.MarginBottom
+		anchor = "bc"
+	case PositionBottomCenterRecto:
+		dx = bodyCenterOffset // shift right toward outside margin
 		dy = config.MarginBottom
 		anchor = "bc"
 	case "top-left":
@@ -134,12 +151,12 @@ func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfi
 	}
 
 	fontSize := config.Typography.PageNumberSize
-	if position != "bottom-center" {
+	if !strings.HasPrefix(position, "bottom-center") {
 		fontSize = config.Typography.HeaderSize
 	}
 
 	wm, err := api.TextWatermark(text, fmt.Sprintf(
-		"font:Times-Roman, points:%d, position:%s, offset:%.0f %.0f, scale:1 abs, rotation:0, opacity:1",
+		"font:Times-Roman, points:%d, position:%s, offset:%.1f %.1f, scale:1 abs, rotation:0, opacity:1",
 		fontSize, anchor, dx, dy,
 	), true, false, types.POINTS)
 	if err != nil {

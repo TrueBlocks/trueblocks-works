@@ -321,7 +321,8 @@ func (f *FileOps) GetTemplatePath(workType string) string {
 }
 
 func (f *FileOps) GetBookTemplatePath() string {
-	return filepath.Join(f.Config.TemplateFolderPath, "book-template.dotm")
+	homeDir, _ := os.UserHomeDir()
+	return filepath.Join(homeDir, ".works", "templates", "book-template.dotm")
 }
 
 func (f *FileOps) CreateWorkFile(w *models.Work) error {

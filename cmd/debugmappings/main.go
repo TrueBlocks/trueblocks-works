@@ -61,7 +61,7 @@ func main() {
 	buildDir := "/tmp/debug-build"
 	_ = os.MkdirAll(buildDir, 0755)
 
-	mergeResult, err := bookbuild.MergePDFsWithTracking(analysis, buildDir, "/tmp/debug-merged.pdf")
+	mergeResult, err := bookbuild.MergePDFsWithTracking(analysis, buildDir, "/tmp/debug-merged.pdf", "")
 	if err != nil {
 		fmt.Println("Error merging:", err)
 		return

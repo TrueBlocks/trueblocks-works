@@ -33,7 +33,7 @@ func CreateTOCDocx(entries []TOCEntry, templatePath, outputPath string) error {
 	zipWriter := zip.NewWriter(outputFile)
 
 	for _, file := range reader.File {
-		if file.Name == "word/document.xml" {
+		if file.Name == documentXMLPath {
 			header := &zip.FileHeader{
 				Name:     file.Name,
 				Method:   zip.Deflate,
@@ -100,7 +100,7 @@ func buildTOCDocumentXML(entries []TOCEntry, templatePath string) ([]byte, error
 
 	var templateDocXML []byte
 	for _, file := range reader.File {
-		if file.Name == "word/document.xml" {
+		if file.Name == documentXMLPath {
 			rc, err := file.Open()
 			if err != nil {
 				return nil, fmt.Errorf("open document.xml: %w", err)
@@ -235,13 +235,16 @@ func ConvertDocxToPDF(docxPath, pdfPath string) error {
 		return fmt.Errorf("abs pdf path: %w", err)
 	}
 
-	script := `tell application "Microsoft Word"
-	activate
-	open POSIX file "` + absDocx + `"
+	script := fmt.Sprintf(`tell application "Microsoft Word"
+	launch
+	set visible of window 1 to false
+	open POSIX file "%s"
 	set theDoc to active document
-	save as theDoc file name POSIX file "` + absPDF + `" file format format PDF
+	set theFile to POSIX file "%s"
+	save as theDoc file name (theFile as text) file format format PDF
 	close theDoc saving no
-end tell`
+	quit
+end tell`, absDocx, absPDF)
 
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()

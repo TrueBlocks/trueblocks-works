@@ -114,7 +114,7 @@ type PageMapping struct {
 	PageInItem   int
 }
 
-func MergePDFsWithTracking(analysis *AnalysisResult, buildDir, outputPath string) (*MergeResult, error) {
+func MergePDFsWithTracking(analysis *AnalysisResult, buildDir, outputPath, templatePath string) (*MergeResult, error) {
 	if err := os.MkdirAll(buildDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create build directory: %w", err)
 	}
@@ -131,18 +131,15 @@ func MergePDFsWithTracking(analysis *AnalysisResult, buildDir, outputPath string
 
 		if item.Type == ContentTypeBlank {
 			if !blankCreated {
-				width, height := 612.0, 792.0
-				for j := i - 1; j >= 0; j-- {
-					if analysis.Items[j].PDF != "" {
-						w, h, err := GetPDFPageSize(analysis.Items[j].PDF)
-						if err == nil {
-							width, height = w, h
-							break
-						}
+				if templatePath != "" {
+					if err := CreateBlankPageFromTemplate(templatePath, blankPagePath); err != nil {
+						return nil, fmt.Errorf("failed to create blank page from template: %w", err)
 					}
-				}
-				if err := CreateBlankPage(blankPagePath, width, height); err != nil {
-					return nil, fmt.Errorf("failed to create blank page: %w", err)
+				} else {
+					width, height := 432.0, 648.0 // 6x9 inches in points
+					if err := CreateBlankPage(blankPagePath, width, height); err != nil {
+						return nil, fmt.Errorf("failed to create blank page: %w", err)
+					}
 				}
 				blankCreated = true
 			}

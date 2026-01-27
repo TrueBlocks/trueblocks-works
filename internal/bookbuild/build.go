@@ -105,7 +105,7 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 	progress("Merging", 3, 6, fmt.Sprintf("Merging %d PDFs...", len(analysis.Items)))
 
 	mergedPath := filepath.Join(opts.BuildDir, "merged.pdf")
-	mergeResult, err := MergePDFsWithTracking(analysis, opts.BuildDir, mergedPath)
+	mergeResult, err := MergePDFsWithTracking(analysis, opts.BuildDir, mergedPath, opts.Manifest.TemplatePath)
 	if err != nil {
 		return nil, fmt.Errorf("merge failed: %w", err)
 	}

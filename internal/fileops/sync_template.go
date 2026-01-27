@@ -49,6 +49,11 @@ func buildSyncTemplateScript(templatePath, docxPath string) string {
 	escapedTemplate := escapeAppleScriptString(templatePath)
 	escapedDocx := escapeAppleScriptString(docxPath)
 
+	// Extract essay title from filename (without path and extension)
+	baseName := filepath.Base(docxPath)
+	essayTitle := baseName[:len(baseName)-len(filepath.Ext(baseName))]
+	escapedTitle := escapeAppleScriptString(essayTitle)
+
 	return `
 tell application "Microsoft Word"
 	launch
@@ -64,6 +69,8 @@ tell application "Microsoft Word"
 	set templateBottomMargin to bottom margin of templatePageSetup
 	set templateLeftMargin to left margin of templatePageSetup
 	set templateRightMargin to right margin of templatePageSetup
+	set templateMirrorMargins to mirror margins of templatePageSetup
+	set templateGutter to gutter of templatePageSetup
 	close templateDoc saving no
 	
 	-- Open the document
@@ -83,16 +90,20 @@ tell application "Microsoft Word"
 	end if
 	
 	-- Scale inline shapes
-	repeat with inlineShape in inline shapes of theDoc
+	set inlineShapeCount to count of inline shapes of theDoc
+	repeat with i from 1 to inlineShapeCount
 		try
+			set inlineShape to inline shape i of theDoc
 			set width of inlineShape to (width of inlineShape) * scaleFactor
 			set height of inlineShape to (height of inlineShape) * scaleFactor
 		end try
 	end repeat
 	
 	-- Scale floating shapes
-	repeat with floatShape in shapes of theDoc
+	set floatShapeCount to count of shapes of theDoc
+	repeat with i from 1 to floatShapeCount
 		try
+			set floatShape to shape i of theDoc
 			set width of floatShape to (width of floatShape) * scaleFactor
 			set height of floatShape to (height of floatShape) * scaleFactor
 		end try
@@ -104,10 +115,15 @@ tell application "Microsoft Word"
 	-- Apply page setup from template
 	set page width of docPageSetup to templatePageWidth
 	set page height of docPageSetup to templatePageHeight
+	set mirror margins of docPageSetup to templateMirrorMargins
+	set gutter of docPageSetup to templateGutter
 	set top margin of docPageSetup to templateTopMargin
 	set bottom margin of docPageSetup to templateBottomMargin
 	set left margin of docPageSetup to templateLeftMargin
 	set right margin of docPageSetup to templateRightMargin
+	
+	-- Set Title document property for header field
+	set title of properties of theDoc to "` + escapedTitle + `"
 	
 	-- Save and close document, then quit Word
 	save theDoc

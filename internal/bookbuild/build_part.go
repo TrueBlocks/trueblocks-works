@@ -17,6 +17,7 @@ type PartBuildOptions struct {
 	Analysis       *AnalysisResult
 	PartIndex      int
 	CacheDir       string
+	BlankPagePath  string
 	Config         OverlayConfig
 	OnProgress     ProgressFunc
 	SkipOverlays   bool
@@ -115,32 +116,15 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 
 	physicalPage := pa.StartPage
 
-	// Use unique blank page name per part to avoid conflicts
-	blankPagePath := filepath.Join(opts.CacheDir, fmt.Sprintf("blank-part%d.pdf", opts.PartIndex))
-	blankCreated := false
-
 	workIndex := 0
 	for i := range partItems {
 		item := &partItems[i]
 
 		if item.Type == ContentTypeBlank {
-			if !blankCreated {
-				width, height := 612.0, 792.0
-				for j := i - 1; j >= 0; j-- {
-					if partItems[j].PDF != "" {
-						w, h, err := GetPDFPageSize(partItems[j].PDF)
-						if err == nil {
-							width, height = w, h
-							break
-						}
-					}
-				}
-				if err := CreateBlankPage(blankPagePath, width, height); err != nil {
-					return nil, fmt.Errorf("failed to create blank page: %w", err)
-				}
-				blankCreated = true
+			if opts.BlankPagePath == "" {
+				return nil, fmt.Errorf("blank page required but BlankPagePath not set")
 			}
-			pdfPaths = append(pdfPaths, blankPagePath)
+			pdfPaths = append(pdfPaths, opts.BlankPagePath)
 			partMappings = append(partMappings, PageMapping{
 				PhysicalPage: physicalPage,
 				ContentItem:  item,
@@ -263,7 +247,14 @@ func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayCo
 			continue
 		}
 
-		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, "bottom-center"); err != nil {
+		// Calculate the original book page number from ContentItem.StartPage + page within item
+		origPhysical := m.ContentItem.StartPage + m.PageInItem - 1
+		position := PositionBottomCenterVerso
+		if origPhysical%2 == 1 { // odd = recto
+			position = PositionBottomCenterRecto
+		}
+
+		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, position); err != nil {
 			return fmt.Errorf("failed to add page number to page %d: %w", m.PhysicalPage, err)
 		}
 	}

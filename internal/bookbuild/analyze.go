@@ -44,10 +44,12 @@ const (
 )
 
 const (
-	PlaceholderTOC       = "toc"
-	PositionTopLeft      = "top-left"
-	PositionTopRight     = "top-right"
-	PositionBottomCenter = "bottom-center"
+	PlaceholderTOC            = "toc"
+	PositionTopLeft           = "top-left"
+	PositionTopRight          = "top-right"
+	PositionBottomCenter      = "bottom-center"
+	PositionBottomCenterVerso = "bottom-center-verso"
+	PositionBottomCenterRecto = "bottom-center-recto"
 )
 
 type AnalysisResult struct {

@@ -99,6 +99,19 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		return nil, fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
+	// Create blank.pdf once at the start using the book template
+	blankPagePath := filepath.Join(opts.CacheDir, "blank.pdf")
+	if opts.Manifest.TemplatePath != "" {
+		if err := CreateBlankPageFromTemplate(opts.Manifest.TemplatePath, blankPagePath); err != nil {
+			return nil, fmt.Errorf("failed to create blank page: %w", err)
+		}
+	} else {
+		width, height := 432.0, 648.0 // 6x9 inches in points
+		if err := CreateBlankPage(blankPagePath, width, height); err != nil {
+			return nil, fmt.Errorf("failed to create blank page: %w", err)
+		}
+	}
+
 	progress := func(stage string, current, total int, message string) {
 		if opts.OnProgress != nil {
 			opts.OnProgress(stage, current, total, message)
@@ -178,6 +191,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 				Analysis:       analysis,
 				PartIndex:      partIdx,
 				CacheDir:       opts.CacheDir,
+				BlankPagePath:  blankPagePath,
 				Config:         config,
 				OnProgress:     opts.OnProgress,
 				SkipOverlays:   false,
@@ -199,6 +213,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 					Analysis:       analysis,
 					PartIndex:      partIdx,
 					CacheDir:       opts.CacheDir,
+					BlankPagePath:  blankPagePath,
 					Config:         config,
 					OnProgress:     opts.OnProgress,
 					SkipOverlays:   true,
@@ -226,6 +241,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 				Analysis:       analysis,
 				PartIndex:      partIdx,
 				CacheDir:       opts.CacheDir,
+				BlankPagePath:  blankPagePath,
 				Config:         config,
 				OnProgress:     opts.OnProgress,
 				SkipOverlays:   true,

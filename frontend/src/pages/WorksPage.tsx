@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { IconList, IconFileText } from '@tabler/icons-react';
 import { GetAppState, SetTab, GetWorks } from '@app';
 import { TabView, Tab } from '@/components';
+import { NavigationProvider } from '@trueblocks/scaffold';
 import { WorksList } from './WorksList';
 import { WorkDetail } from './WorkDetail';
 import { models } from '@models';
@@ -78,6 +79,14 @@ export function WorksPage() {
   );
 
   return (
-    <TabView pageName="works" tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
+    <NavigationProvider
+      onNavigate={(entityType, id) => {
+        if (entityType === 'work') {
+          navigate(`/works/${id}`);
+        }
+      }}
+    >
+      <TabView pageName="works" tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
+    </NavigationProvider>
   );
 }

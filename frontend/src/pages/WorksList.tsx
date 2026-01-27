@@ -17,6 +17,7 @@ import {
 import { models, db } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
 import { notifications } from '@mantine/notifications';
+import { useNavigation } from '@trueblocks/scaffold';
 import {
   StatusBadge,
   QualityBadge,
@@ -33,6 +34,7 @@ interface WorksListProps {
 }
 
 export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps) {
+  const { currentId, setCurrentId, setItems } = useNavigation();
   const location = useLocation();
   const [works, setWorks] = useState<models.WorkView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,11 +227,15 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
     [handleMove]
   );
 
-  const handleSelectedChange = useCallback((work: models.WorkView) => {
-    SetLastWorkID(work.workID).catch((err) => {
-      LogErr('Failed to set lastWorkID:', err);
-    });
-  }, []);
+  const handleSelectedChange = useCallback(
+    (work: models.WorkView) => {
+      SetLastWorkID(work.workID).catch((err) => {
+        LogErr('Failed to set lastWorkID:', err);
+      });
+      setCurrentId(work.workID);
+    },
+    [setCurrentId]
+  );
 
   const getLastSelectedID = useCallback(async () => {
     const state = await GetAppState();
@@ -312,6 +318,17 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
     [filterOptions]
   );
 
+  const handleFilteredSortedChange = useCallback(
+    (filteredWorks: models.WorkView[]) => {
+      onFilteredDataChange(filteredWorks);
+      // Update navigation with the filtered/sorted list
+      const items = filteredWorks.map((w) => ({ id: w.workID }));
+      const navCurrentId = currentId ?? filteredWorks[0]?.workID ?? 0;
+      setItems('work', items, navCurrentId);
+    },
+    [onFilteredDataChange, currentId, setItems]
+  );
+
   return (
     <>
       <DataTable<models.WorkView>
@@ -323,7 +340,7 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         getRowKey={(w) => w.workID}
         onRowClick={onWorkClick}
         onSelectedChange={handleSelectedChange}
-        onFilteredSortedChange={onFilteredDataChange}
+        onFilteredSortedChange={handleFilteredSortedChange}
         getLastSelectedID={getLastSelectedID}
         searchFn={searchFn}
         onDelete={handleDelete}

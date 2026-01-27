@@ -8,6 +8,7 @@ import { EventsOn, EventsOff } from '@wailsjs/runtime/runtime';
 import { LogErr, Log, showValidationResult } from '@/utils';
 import { useNotes } from '@/hooks';
 import { useDebug } from '@/stores';
+import { useNavigation } from '@trueblocks/scaffold';
 import {
   GetWork,
   GetSubmissionViewsByWork,
@@ -51,9 +52,10 @@ interface WorkDetailProps {
   filteredWorks: models.WorkView[];
 }
 
-export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
+export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetailProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const navigation = useNavigation();
   const { debugMode } = useDebug();
   const [work, setWork] = useState<models.Work | null>(null);
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
@@ -80,39 +82,35 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     collectionWorks?: number[];
   } | null;
 
-  // Use collection works if present, otherwise use filtered works
-  const worksToNavigate = collectionContext?.collectionWorks || filteredWorks.map((w) => w.workID);
-  const currentIndex = worksToNavigate.indexOf(workId);
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < worksToNavigate.length - 1;
+  // Use navigation context for prev/next (populated by WorksList or Collection)
+  const hasPrev = navigation.hasPrev;
+  const hasNext = navigation.hasNext;
+
+  // Keep workId in sync with navigation (only when workId changes, not when navigation changes)
+  useEffect(() => {
+    navigation.setCurrentId(workId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workId]);
 
   const handlePrev = useCallback(() => {
     if (hasPrev) {
-      const prevWorkID = worksToNavigate[currentIndex - 1];
-      navigate(`/works/${prevWorkID}`, { state: collectionContext });
+      navigation.goPrev();
     }
-  }, [hasPrev, worksToNavigate, currentIndex, navigate, collectionContext]);
+  }, [hasPrev, navigation]);
 
   const handleNext = useCallback(() => {
     if (hasNext) {
-      const nextWorkID = worksToNavigate[currentIndex + 1];
-      navigate(`/works/${nextWorkID}`, { state: collectionContext });
+      navigation.goNext();
     }
-  }, [hasNext, worksToNavigate, currentIndex, navigate, collectionContext]);
+  }, [hasNext, navigation]);
 
   const handleHome = useCallback(() => {
-    if (worksToNavigate.length > 0 && currentIndex !== 0) {
-      navigate(`/works/${worksToNavigate[0]}`, { state: collectionContext });
-    }
-  }, [worksToNavigate, currentIndex, navigate, collectionContext]);
+    navigation.goHome();
+  }, [navigation]);
 
   const handleEnd = useCallback(() => {
-    if (worksToNavigate.length > 0 && currentIndex !== worksToNavigate.length - 1) {
-      navigate(`/works/${worksToNavigate[worksToNavigate.length - 1]}`, {
-        state: collectionContext,
-      });
-    }
-  }, [worksToNavigate, currentIndex, navigate, collectionContext]);
+    navigation.goEnd();
+  }, [navigation]);
 
   const handleReturnToList = useCallback(() => {
     // If we came from a collection, go back to that collection
@@ -486,8 +484,8 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
         onPrev={handlePrev}
         onNext={handleNext}
         onBack={handleReturnToList}
-        currentIndex={currentIndex}
-        totalCount={worksToNavigate.length}
+        currentIndex={navigation.currentIndex}
+        totalCount={navigation.currentLevel?.items.length ?? 0}
         icon={<IconBook2 size={24} />}
         title={
           <Group gap="xs" align="baseline">

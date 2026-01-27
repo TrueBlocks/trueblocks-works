@@ -4,6 +4,10 @@ import { GetSettings, UpdateSettings } from '@app';
 import { createAppTheme, ThemeName } from '@/theme';
 import { Log, LogErr } from '@/utils';
 
+function isWailsRuntime(): boolean {
+  return typeof window !== 'undefined' && window.go !== undefined;
+}
+
 interface ThemeContextValue {
   themeName: ThemeName;
   setTheme: (theme: ThemeName) => Promise<void>;
@@ -30,9 +34,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   const [themeName, setThemeName] = useState<ThemeName>('default');
   const [darkMode, setDarkModeState] = useState(false);
   const [theme, setTheme] = useState(() => createAppTheme('default'));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isWailsRuntime);
 
   useEffect(() => {
+    if (!isWailsRuntime()) {
+      return;
+    }
     GetSettings()
       .then((settings) => {
         const savedTheme = (settings.theme as ThemeName) || 'default';
@@ -51,12 +58,13 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   }, []);
 
   const handleSetTheme = async (newTheme: ThemeName) => {
+    setThemeName(newTheme);
+    setTheme(createAppTheme(newTheme));
+    if (!isWailsRuntime()) return;
     try {
       const settings = await GetSettings();
       settings.theme = newTheme;
       await UpdateSettings(settings);
-      setThemeName(newTheme);
-      setTheme(createAppTheme(newTheme));
       Log('Theme changed to:', newTheme);
     } catch (err) {
       LogErr('Failed to save theme:', err);
@@ -65,11 +73,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   };
 
   const handleSetDarkMode = async (dark: boolean) => {
+    setDarkModeState(dark);
+    if (!isWailsRuntime()) return;
     try {
       const settings = await GetSettings();
       settings.darkMode = dark;
       await UpdateSettings(settings);
-      setDarkModeState(dark);
       Log('Dark mode changed to:', dark);
     } catch (err) {
       LogErr('Failed to save dark mode:', err);

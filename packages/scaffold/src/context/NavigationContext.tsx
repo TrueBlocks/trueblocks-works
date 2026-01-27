@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+  useMemo,
+  useRef,
+} from 'react';
 
 export interface NavigationLevel<T = unknown> {
   entityType: string;
@@ -37,6 +45,10 @@ export interface NavigationProviderProps {
 
 export function NavigationProvider({ children, onNavigate }: NavigationProviderProps) {
   const [stack, setStack] = useState<NavigationLevel[]>([]);
+  const onNavigateRef = useRef(onNavigate);
+  onNavigateRef.current = onNavigate;
+  const stackRef = useRef(stack);
+  stackRef.current = stack;
 
   const currentLevel = useMemo(() => {
     return stack.length > 0 ? (stack[stack.length - 1] ?? null) : null;
@@ -59,30 +71,39 @@ export function NavigationProvider({ children, onNavigate }: NavigationProviderP
     setStack([{ entityType, items, currentId }]);
   }, []);
 
-  const setCurrentId = useCallback(
-    (id: number) => {
-      setStack((prev) => {
-        if (prev.length === 0) return prev;
-        const newStack = [...prev];
-        const lastLevel = newStack[newStack.length - 1];
-        if (lastLevel) {
-          newStack[newStack.length - 1] = { ...lastLevel, currentId: id };
-        }
-        return newStack;
-      });
-      if (currentLevel) {
-        onNavigate?.(currentLevel.entityType, id);
+  // Update current ID without triggering navigation (for syncing state)
+  const setCurrentId = useCallback((id: number) => {
+    setStack((prev) => {
+      if (prev.length === 0) return prev;
+      const newStack = [...prev];
+      const lastLevel = newStack[newStack.length - 1];
+      if (lastLevel) {
+        newStack[newStack.length - 1] = { ...lastLevel, currentId: id };
       }
-    },
-    [currentLevel, onNavigate]
-  );
+      return newStack;
+    });
+  }, []);
+
+  // Navigate to an ID (update state AND trigger onNavigate callback)
+  const navigateTo = useCallback((id: number) => {
+    setStack((prev) => {
+      if (prev.length === 0) return prev;
+      const newStack = [...prev];
+      const lastLevel = newStack[newStack.length - 1];
+      if (lastLevel) {
+        newStack[newStack.length - 1] = { ...lastLevel, currentId: id };
+        onNavigateRef.current?.(lastLevel.entityType, id);
+      }
+      return newStack;
+    });
+  }, []);
 
   const push = useCallback(
     <T,>(entityType: string, items: T[], currentId: number, parentId: number) => {
       setStack((prev) => [...prev, { entityType, items, currentId, parentId }]);
-      onNavigate?.(entityType, currentId);
+      onNavigateRef.current?.(entityType, currentId);
     },
-    [onNavigate]
+    []
   );
 
   const pop = useCallback(() => {
@@ -91,37 +112,44 @@ export function NavigationProvider({ children, onNavigate }: NavigationProviderP
       const newStack = prev.slice(0, -1);
       const parentLevel = newStack[newStack.length - 1];
       if (parentLevel) {
-        onNavigate?.(parentLevel.entityType, parentLevel.currentId);
+        onNavigateRef.current?.(parentLevel.entityType, parentLevel.currentId);
       }
       return newStack;
     });
-  }, [onNavigate]);
+  }, []);
 
   const goNext = useCallback(() => {
-    if (!currentLevel || !hasNext) return;
-    const nextItem = currentLevel.items[currentIndex + 1] as { id?: number } | undefined;
+    const level = stackRef.current[stackRef.current.length - 1];
+    if (!level) return;
+    const idx = level.items.findIndex((item) => (item as { id?: number }).id === level.currentId);
+    if (idx < 0 || idx >= level.items.length - 1) return;
+    const nextItem = level.items[idx + 1] as { id?: number } | undefined;
     if (nextItem?.id !== undefined) {
-      setCurrentId(nextItem.id);
+      navigateTo(nextItem.id);
     }
-  }, [currentLevel, hasNext, currentIndex, setCurrentId]);
+  }, [navigateTo]);
 
   const goPrev = useCallback(() => {
-    if (!currentLevel || !hasPrev) return;
-    const prevItem = currentLevel.items[currentIndex - 1] as { id?: number } | undefined;
+    const level = stackRef.current[stackRef.current.length - 1];
+    if (!level) return;
+    const idx = level.items.findIndex((item) => (item as { id?: number }).id === level.currentId);
+    if (idx <= 0) return;
+    const prevItem = level.items[idx - 1] as { id?: number } | undefined;
     if (prevItem?.id !== undefined) {
-      setCurrentId(prevItem.id);
+      navigateTo(prevItem.id);
     }
-  }, [currentLevel, hasPrev, currentIndex, setCurrentId]);
+  }, [navigateTo]);
 
   const goToIndex = useCallback(
     (index: number) => {
-      if (!currentLevel) return;
-      const item = currentLevel.items[index] as { id?: number } | undefined;
+      const level = stackRef.current[stackRef.current.length - 1];
+      if (!level) return;
+      const item = level.items[index] as { id?: number } | undefined;
       if (item?.id !== undefined) {
-        setCurrentId(item.id);
+        navigateTo(item.id);
       }
     },
-    [currentLevel, setCurrentId]
+    [navigateTo]
   );
 
   const goHome = useCallback(() => {
@@ -129,9 +157,10 @@ export function NavigationProvider({ children, onNavigate }: NavigationProviderP
   }, [goToIndex]);
 
   const goEnd = useCallback(() => {
-    if (!currentLevel) return;
-    goToIndex(currentLevel.items.length - 1);
-  }, [currentLevel, goToIndex]);
+    const level = stackRef.current[stackRef.current.length - 1];
+    if (!level) return;
+    goToIndex(level.items.length - 1);
+  }, [goToIndex]);
 
   const value: NavigationContextValue = useMemo(
     () => ({

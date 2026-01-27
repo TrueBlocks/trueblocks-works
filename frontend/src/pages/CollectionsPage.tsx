@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { IconList, IconFileText } from '@tabler/icons-react';
 import { TabView, Tab } from '@/components';
 import { GetAppState, SetTab, GetCollections } from '@app';
+import { NavigationProvider } from '@trueblocks/scaffold';
 import { CollectionsList } from './CollectionsList';
 import { CollectionDetail } from './CollectionDetail';
 import { models } from '@models';
@@ -100,12 +101,22 @@ export function CollectionsPage() {
   );
 
   return (
-    <TabView
-      pageName="collections"
-      tabs={tabs}
-      defaultTab="list"
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
-    />
+    <NavigationProvider
+      onNavigate={(entityType, id) => {
+        if (entityType === 'collection') {
+          navigate(`/collections/${id}`);
+        } else if (entityType === 'work') {
+          navigate(`/works/${id}`);
+        }
+      }}
+    >
+      <TabView
+        pageName="collections"
+        tabs={tabs}
+        defaultTab="list"
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      />
+    </NavigationProvider>
   );
 }

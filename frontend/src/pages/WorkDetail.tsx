@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Stack, Grid, Loader, Flex, Text, Group } from '@mantine/core';
 import { IconBook2 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -63,6 +63,12 @@ export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetail
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
+
+  // Store collection context in a ref so it persists across prev/next navigation
+  const collectionContextRef = useRef<{
+    fromCollection?: number;
+    collectionWorks?: number[];
+  } | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -76,11 +82,31 @@ export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetail
     handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('work', workId);
 
-  // Check if we came from a collection
-  const collectionContext = location.state as {
+  // Check if we came from a collection (only on initial mount or new state)
+  const locationState = location.state as {
     fromCollection?: number;
     collectionWorks?: number[];
   } | null;
+
+  // Update ref when we get new collection context from location.state
+  useEffect(() => {
+    if (locationState?.fromCollection) {
+      collectionContextRef.current = locationState;
+    }
+  }, [locationState]);
+
+  // Convenience accessor for current collection context
+  const collectionContext = collectionContextRef.current;
+
+  // If we came from a collection, populate navigation with collection works
+  useEffect(() => {
+    if (locationState?.collectionWorks && locationState.collectionWorks.length > 0) {
+      const items = locationState.collectionWorks.map((id) => ({ id }));
+      navigation.setItems('work', items, workId);
+    }
+    // Only run when location.state changes (entering from collection)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationState]);
 
   // Use navigation context for prev/next (populated by WorksList or Collection)
   const hasPrev = navigation.hasPrev;
@@ -92,25 +118,66 @@ export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetail
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workId]);
 
+  // Helper to navigate to a work while preserving collection context
+  const navigateToWork = useCallback(
+    (newWorkId: number) => {
+      if (collectionContext?.fromCollection) {
+        navigate(`/works/${newWorkId}`, {
+          state: {
+            fromCollection: collectionContext.fromCollection,
+            collectionWorks: collectionContext.collectionWorks,
+          },
+        });
+      } else {
+        navigate(`/works/${newWorkId}`);
+      }
+    },
+    [navigate, collectionContext]
+  );
+
   const handlePrev = useCallback(() => {
-    if (hasPrev) {
-      navigation.goPrev();
+    if (hasPrev && navigation.currentLevel) {
+      const idx = navigation.currentIndex;
+      const prevItem = navigation.currentLevel.items[idx - 1] as { id: number } | undefined;
+      if (prevItem) {
+        navigation.setCurrentId(prevItem.id);
+        navigateToWork(prevItem.id);
+      }
     }
-  }, [hasPrev, navigation]);
+  }, [hasPrev, navigation, navigateToWork]);
 
   const handleNext = useCallback(() => {
-    if (hasNext) {
-      navigation.goNext();
+    if (hasNext && navigation.currentLevel) {
+      const idx = navigation.currentIndex;
+      const nextItem = navigation.currentLevel.items[idx + 1] as { id: number } | undefined;
+      if (nextItem) {
+        navigation.setCurrentId(nextItem.id);
+        navigateToWork(nextItem.id);
+      }
     }
-  }, [hasNext, navigation]);
+  }, [hasNext, navigation, navigateToWork]);
 
   const handleHome = useCallback(() => {
-    navigation.goHome();
-  }, [navigation]);
+    if (navigation.currentLevel && navigation.currentLevel.items.length > 0) {
+      const firstItem = navigation.currentLevel.items[0] as { id: number } | undefined;
+      if (firstItem) {
+        navigation.setCurrentId(firstItem.id);
+        navigateToWork(firstItem.id);
+      }
+    }
+  }, [navigation, navigateToWork]);
 
   const handleEnd = useCallback(() => {
-    navigation.goEnd();
-  }, [navigation]);
+    if (navigation.currentLevel && navigation.currentLevel.items.length > 0) {
+      const lastItem = navigation.currentLevel.items[navigation.currentLevel.items.length - 1] as
+        | { id: number }
+        | undefined;
+      if (lastItem) {
+        navigation.setCurrentId(lastItem.id);
+        navigateToWork(lastItem.id);
+      }
+    }
+  }, [navigation, navigateToWork]);
 
   const handleReturnToList = useCallback(() => {
     // If we came from a collection, go back to that collection

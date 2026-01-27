@@ -13,6 +13,7 @@ import {
 import { models, db } from '@models';
 import { DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
 import { notifications } from '@mantine/notifications';
+import { useNavigation } from '@trueblocks/scaffold';
 
 interface CollectionsListProps {
   onCollectionClick: (coll: models.CollectionView) => void;
@@ -20,6 +21,7 @@ interface CollectionsListProps {
 }
 
 export function CollectionsList({ onCollectionClick, onFilteredDataChange }: CollectionsListProps) {
+  const { currentId, setCurrentId, setItems } = useNavigation();
   const location = useLocation();
   const [collections, setCollections] = useState<models.CollectionView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,11 +88,15 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     return coll.collectionName.toLowerCase().includes(search.toLowerCase());
   }, []);
 
-  const handleSelectedChange = useCallback((coll: models.CollectionView) => {
-    SetLastCollectionID(coll.collID).catch((err) => {
-      LogErr('Failed to set lastCollectionID:', err);
-    });
-  }, []);
+  const handleSelectedChange = useCallback(
+    (coll: models.CollectionView) => {
+      SetLastCollectionID(coll.collID).catch((err) => {
+        LogErr('Failed to set lastCollectionID:', err);
+      });
+      setCurrentId(coll.collID);
+    },
+    [setCurrentId]
+  );
 
   const handleDelete = useCallback(async (coll: models.CollectionView) => {
     try {
@@ -205,6 +211,16 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     [availableTypes]
   );
 
+  const handleFilteredSortedChange = useCallback(
+    (filteredCollections: models.CollectionView[]) => {
+      onFilteredDataChange(filteredCollections);
+      const items = filteredCollections.map((c) => ({ id: c.collID }));
+      const navCurrentId = currentId ?? filteredCollections[0]?.collID ?? 0;
+      setItems('collection', items, navCurrentId);
+    },
+    [onFilteredDataChange, currentId, setItems]
+  );
+
   return (
     <>
       <DataTable<models.CollectionView>
@@ -217,7 +233,7 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
         onRowClick={onCollectionClick}
         onSelectedChange={handleSelectedChange}
         getLastSelectedID={getLastSelectedID}
-        onFilteredSortedChange={onFilteredDataChange}
+        onFilteredSortedChange={handleFilteredSortedChange}
         searchFn={searchFn}
         onDelete={handleDelete}
         onUndelete={handleUndelete}

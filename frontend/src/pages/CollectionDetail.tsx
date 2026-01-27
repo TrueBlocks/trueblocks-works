@@ -32,6 +32,7 @@ import {
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { LogErr } from '@/utils';
+import { useNavigation } from '@trueblocks/scaffold';
 import {
   GetCollection,
   GetCollectionWorks,
@@ -94,9 +95,13 @@ interface CollectionDetailProps {
   filteredCollections: models.CollectionView[];
 }
 
-export function CollectionDetail({ collectionId, filteredCollections }: CollectionDetailProps) {
+export function CollectionDetail({
+  collectionId,
+  filteredCollections: _filteredCollections,
+}: CollectionDetailProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const navigation = useNavigation();
 
   const [collection, setCollection] = useState<models.CollectionView | null>(null);
   const [works, setWorks] = useState<models.CollectionWork[]>([]);
@@ -139,34 +144,31 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('collection', collectionId);
 
-  const currentIndex = filteredCollections.findIndex((c) => c.collID === collectionId);
-  const hasPrev = currentIndex > 0;
-  const hasNext = currentIndex >= 0 && currentIndex < filteredCollections.length - 1;
+  // Use navigation context for prev/next (populated by CollectionsList)
+  const hasPrev = navigation.hasPrev;
+  const hasNext = navigation.hasNext;
+
+  // Keep collectionId in sync with navigation
+  useEffect(() => {
+    navigation.setCurrentId(collectionId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [collectionId]);
 
   const handlePrev = useCallback(() => {
     if (hasPrev) {
-      const prevColl = filteredCollections[currentIndex - 1];
-      navigate(`/collections/${prevColl.collID}`);
+      navigation.goPrev();
     }
-  }, [hasPrev, filteredCollections, currentIndex, navigate]);
+  }, [hasPrev, navigation]);
 
   const handleNext = useCallback(() => {
     if (hasNext) {
-      const nextColl = filteredCollections[currentIndex + 1];
-      navigate(`/collections/${nextColl.collID}`);
+      navigation.goNext();
     }
-  }, [hasNext, filteredCollections, currentIndex, navigate]);
+  }, [hasNext, navigation]);
 
   const handleReturnToList = useCallback(() => {
-    // Check if we came from the collections list
-    const fromList = (location.state as { fromList?: boolean } | null)?.fromList;
-    if (fromList) {
-      navigate('/collections');
-    } else {
-      // If navigated directly (e.g., via URL or Cmd+2), just go to list
-      navigate('/collections');
-    }
-  }, [navigate, location.state]);
+    navigate('/collections', { state: { selectID: collectionId } });
+  }, [navigate, collectionId]);
 
   useHotkeys([
     ['mod+shift+ArrowLeft', handleReturnToList],
@@ -851,8 +853,8 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         onPrev={handlePrev}
         onNext={handleNext}
         onBack={handleReturnToList}
-        currentIndex={currentIndex}
-        totalCount={filteredCollections.length}
+        currentIndex={navigation.currentIndex}
+        totalCount={navigation.currentLevel?.items.length ?? 0}
         icon={<IconFolder size={24} />}
         title={
           <Group gap="md" align="center">

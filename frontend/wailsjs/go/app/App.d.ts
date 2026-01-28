@@ -286,8 +286,6 @@ export function RefreshReport(arg1:string):Promise<void>;
 
 export function RegeneratePDF(arg1:number):Promise<string>;
 
-export function ReimportFromCSV():Promise<void>;
-
 export function RemoveWorkFromCollection(arg1:number,arg2:number):Promise<void>;
 
 export function RenameFieldValue(arg1:string,arg2:string,arg3:string,arg4:string):Promise<number>;

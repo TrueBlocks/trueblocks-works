@@ -60,7 +60,7 @@ func (a *App) SelectBookTemplate() (string, error) {
 		Filters: []runtime.FileFilter{
 			{
 				DisplayName: "Word Templates",
-				Pattern:     "*.docx;*.dotm",
+				Pattern:     "*.dotm",
 			},
 		},
 		DefaultDirectory: a.GetTemplatesDir(),
@@ -71,7 +71,7 @@ func (a *App) SelectBookTemplate() (string, error) {
 	return selected, nil
 }
 
-// ValidateTemplate checks if a DOCX file is a valid pandoc reference document
+// ValidateTemplate checks if a DOCX file exists and is a valid template file
 func (a *App) ValidateTemplate(path string) (*TemplateValidation, error) {
 	result := &TemplateValidation{
 		Path:          path,
@@ -92,43 +92,13 @@ func (a *App) ValidateTemplate(path string) (*TemplateValidation, error) {
 	}
 
 	lowerPath := strings.ToLower(path)
-	if !strings.HasSuffix(lowerPath, ".docx") && !strings.HasSuffix(lowerPath, ".dotm") {
-		result.Errors = append(result.Errors, "Template must be a .docx or .dotm file")
+	if !strings.HasSuffix(lowerPath, ".dotm") {
+		result.Errors = append(result.Errors, "Template must be a .dotm file")
 		return result, nil
 	}
 
-	styles, err := extractDOCXStyles(path)
-	if err != nil {
-		result.Errors = append(result.Errors, fmt.Sprintf("Failed to parse template: %v", err))
-		return result, nil
-	}
-	result.Styles = styles
-
-	// Check for required pandoc styles
-	requiredStyles := []string{
-		"Heading 1",
-		"Heading 2",
-		"Heading 3",
-		"Normal",
-		"First Paragraph",
-		"Body Text",
-	}
-
-	styleNames := make(map[string]bool)
-	for _, s := range styles {
-		styleNames[s.Name] = true
-	}
-
-	for _, req := range requiredStyles {
-		if styleNames[req] {
-			result.RequiredFound = append(result.RequiredFound, req)
-		} else {
-			result.RequiredMiss = append(result.RequiredMiss, req)
-		}
-	}
-
-	// Template is valid if we found all required styles or at least the basics
-	result.IsValid = len(result.Errors) == 0 && len(result.RequiredMiss) <= 2
+	// Template is valid if it exists and has correct extension
+	result.IsValid = len(result.Errors) == 0
 
 	return result, nil
 }
@@ -143,8 +113,8 @@ func (a *App) CopyTemplateToLibrary(sourcePath string, newName string) (string, 
 		newName = filepath.Base(sourcePath)
 	}
 	lowerName := strings.ToLower(newName)
-	if !strings.HasSuffix(lowerName, ".docx") && !strings.HasSuffix(lowerName, ".dotm") {
-		newName += ".docx"
+	if !strings.HasSuffix(lowerName, ".dotm") {
+		newName += ".dotm"
 	}
 
 	destPath := filepath.Join(a.GetTemplatesDir(), newName)
@@ -176,7 +146,7 @@ func (a *App) ListTemplates() ([]string, error) {
 	templates := []string{}
 	for _, entry := range entries {
 		lowerName := strings.ToLower(entry.Name())
-		if !entry.IsDir() && (strings.HasSuffix(lowerName, ".docx") || strings.HasSuffix(lowerName, ".dotm")) {
+		if !entry.IsDir() && strings.HasSuffix(lowerName, ".dotm") {
 			templates = append(templates, filepath.Join(dir, entry.Name()))
 		}
 	}
@@ -244,15 +214,13 @@ func extractDOCXStyles(path string) ([]TemplateStyle, error) {
 	return result, nil
 }
 
-// OpenTemplate opens the template file in the default application (Word)
+// OpenTemplate reveals the template in Finder (Word requires File→Open to edit .dotm files)
 func (a *App) OpenTemplate(path string) error {
 	if path == "" {
 		return fmt.Errorf("no template path provided")
 	}
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("template file not found")
-	}
-	return exec.Command("open", path).Start()
+	// Reveal the file in Finder - user must use Word's File→Open to edit .dotm templates
+	return exec.Command("open", "-R", path).Run()
 }
 
 // GetWorkTemplatePath returns the template path for a work (via its collection's book)

@@ -24,7 +24,6 @@ import {
   SaveWindowGeometry,
   SetLastRoute,
   ExportAllTables,
-  ReimportFromCSV,
   AutoImportFilesWithEdits,
   AddTypeAndContinue,
   AddExtensionAndContinue,
@@ -288,38 +287,6 @@ function App() {
     []
   );
 
-  const handleReimportAll = useCallback(async () => {
-    Log('Starting reimport from CSV...');
-    notifications.show({
-      id: 'reimport-progress',
-      title: 'Reimporting',
-      message: 'Reimporting data from CSV files...',
-      loading: true,
-      autoClose: false,
-    });
-    try {
-      await ReimportFromCSV();
-      Log('Reimport complete');
-      notifications.update({
-        id: 'reimport-progress',
-        message: 'Reimported',
-        color: 'green',
-        loading: false,
-        autoClose: 1500,
-      });
-    } catch (err) {
-      LogErr('Reimport failed:', err);
-      notifications.update({
-        id: 'reimport-progress',
-        title: 'Reimport Failed',
-        message: String(err),
-        color: 'red',
-        loading: false,
-        autoClose: 5000,
-      });
-    }
-  }, []);
-
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.metaKey && e.key === 'k') {
@@ -334,10 +301,6 @@ function App() {
         e.preventDefault();
         handleExportAll();
       }
-      if (e.metaKey && e.shiftKey && e.key === 'i') {
-        e.preventDefault();
-        handleReimportAll();
-      }
       if (e.metaKey && !e.shiftKey && e.key === 'i') {
         e.preventDefault();
         handleImportFiles();
@@ -345,7 +308,7 @@ function App() {
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleExportAll, handleReimportAll, handleImportFiles]);
+  }, [handleExportAll, handleImportFiles]);
 
   // Sidebar resize handlers
   const ICON_ONLY_WIDTH = 56;

@@ -236,14 +236,14 @@ func ConvertDocxToPDF(docxPath, pdfPath string) error {
 	}
 
 	script := fmt.Sprintf(`tell application "Microsoft Word"
-	launch
-	set visible of window 1 to false
+	activate
+	delay 1
 	open POSIX file "%s"
+	delay 0.5
 	set theDoc to active document
 	set theFile to POSIX file "%s"
 	save as theDoc file name (theFile as text) file format format PDF
 	close theDoc saving no
-	quit
 end tell`, absDocx, absPDF)
 
 	cmd := exec.Command("osascript", "-e", script)

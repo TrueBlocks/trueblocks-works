@@ -554,10 +554,6 @@ export function RegeneratePDF(arg1) {
   return window['go']['app']['App']['RegeneratePDF'](arg1);
 }
 
-export function ReimportFromCSV() {
-  return window['go']['app']['App']['ReimportFromCSV']();
-}
-
 export function RemoveWorkFromCollection(arg1, arg2) {
   return window['go']['app']['App']['RemoveWorkFromCollection'](arg1, arg2);
 }

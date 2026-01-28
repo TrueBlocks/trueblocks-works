@@ -24,6 +24,7 @@ import {
   IconLayoutList,
   IconBook,
   IconEyeOff,
+  IconFileText,
   IconTypography,
   IconChecks,
   IconRocket,
@@ -83,8 +84,9 @@ import {
   SubmissionsPortal,
   ConfirmDeleteModal,
   MoveToPositionModal,
-  BookSettingsTab,
-  BookTypographyTab,
+  TitlePageTab,
+  CopyrightDedicationTab,
+  AckAboutTab,
   AmazonPublishingTab,
   CoverImagesTab,
 } from '@/components';
@@ -286,11 +288,11 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadData]);
 
-  // Cmd+Shift+2: Cycle sub-tabs (Contents/Typography/Book/Covers/Amazon)
+  // Cmd+Shift+2: Cycle sub-tabs (Contents/TitlePage/Copyright/BackMatter/Covers/Amazon)
   useEffect(() => {
     function handleCycleSubTab() {
       if (!isBook) return;
-      const tabs = ['contents', 'typography', 'book', 'covers', 'amazon'];
+      const tabs = ['contents', 'titlepage', 'copyright', 'backmatter', 'covers', 'amazon'];
       const currentIndex = tabs.indexOf(activeTab || 'contents');
       const nextIndex = (currentIndex + 1) % tabs.length;
       const newTab = tabs[nextIndex];
@@ -1020,13 +1022,13 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 <IconLayoutList size={20} />
               </Tabs.Tab>
             </Tooltip>
-            <Tooltip label="Typography" position="right">
+            <Tooltip label="Title Page" position="right">
               <Tabs.Tab
-                value="typography"
+                value="titlepage"
                 style={{
                   backgroundColor:
-                    activeTab === 'typography' ? 'var(--mantine-color-blue-light)' : 'transparent',
-                  color: activeTab === 'typography' ? 'var(--mantine-color-blue-6)' : undefined,
+                    activeTab === 'titlepage' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'titlepage' ? 'var(--mantine-color-blue-6)' : undefined,
                   borderRadius: '6px',
                   padding: '10px',
                 }}
@@ -1034,13 +1036,27 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 <IconTypography size={20} />
               </Tabs.Tab>
             </Tooltip>
-            <Tooltip label="Book Settings" position="right">
+            <Tooltip label="Copyright & Dedication" position="right">
               <Tabs.Tab
-                value="book"
+                value="copyright"
                 style={{
                   backgroundColor:
-                    activeTab === 'book' ? 'var(--mantine-color-blue-light)' : 'transparent',
-                  color: activeTab === 'book' ? 'var(--mantine-color-blue-6)' : undefined,
+                    activeTab === 'copyright' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'copyright' ? 'var(--mantine-color-blue-6)' : undefined,
+                  borderRadius: '6px',
+                  padding: '10px',
+                }}
+              >
+                <IconFileText size={20} />
+              </Tabs.Tab>
+            </Tooltip>
+            <Tooltip label="Back Matter" position="right">
+              <Tabs.Tab
+                value="backmatter"
+                style={{
+                  backgroundColor:
+                    activeTab === 'backmatter' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'backmatter' ? 'var(--mantine-color-blue-6)' : undefined,
                   borderRadius: '6px',
                   padding: '10px',
                 }}
@@ -1180,15 +1196,16 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             </Grid>
           </Tabs.Panel>
 
-          <Tabs.Panel value="typography" pl="md" style={{ flex: 1 }}>
-            <BookTypographyTab collectionId={collectionId} />
+          <Tabs.Panel value="titlepage" pl="md" style={{ flex: 1 }}>
+            <TitlePageTab collectionId={collectionId} collectionName={collection.collectionName} />
           </Tabs.Panel>
 
-          <Tabs.Panel value="book" pl="md" style={{ flex: 1 }}>
-            <BookSettingsTab
-              collectionId={collectionId}
-              collectionName={collection.collectionName}
-            />
+          <Tabs.Panel value="copyright" pl="md" style={{ flex: 1 }}>
+            <CopyrightDedicationTab collectionId={collectionId} />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="backmatter" pl="md" style={{ flex: 1 }}>
+            <AckAboutTab collectionId={collectionId} />
           </Tabs.Panel>
 
           <Tabs.Panel value="covers" pl="md" style={{ flex: 1 }}>

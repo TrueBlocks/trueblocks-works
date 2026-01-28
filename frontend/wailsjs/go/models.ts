@@ -831,6 +831,9 @@ export namespace app {
 	    type: string;
 	    isCustom: boolean;
 	    isBuiltIn: boolean;
+	    fontName?: string;
+	    fontSize?: number;
+	    fontColor?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new TemplateStyle(source);
@@ -843,6 +846,9 @@ export namespace app {
 	        this.type = source["type"];
 	        this.isCustom = source["isCustom"];
 	        this.isBuiltIn = source["isBuiltIn"];
+	        this.fontName = source["fontName"];
+	        this.fontSize = source["fontSize"];
+	        this.fontColor = source["fontColor"];
 	    }
 	}
 	export class TemplateValidation {
@@ -884,6 +890,34 @@ export namespace app {
 		    }
 		    return a;
 		}
+	}
+	export class TitlePageStyleInfo {
+	    titleFont: string;
+	    titleSize: number;
+	    titleColor: string;
+	    subtitleFont: string;
+	    subtitleSize: number;
+	    subtitleColor: string;
+	    authorFont: string;
+	    authorSize: number;
+	    authorColor: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TitlePageStyleInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.titleFont = source["titleFont"];
+	        this.titleSize = source["titleSize"];
+	        this.titleColor = source["titleColor"];
+	        this.subtitleFont = source["subtitleFont"];
+	        this.subtitleSize = source["subtitleSize"];
+	        this.subtitleColor = source["subtitleColor"];
+	        this.authorFont = source["authorFont"];
+	        this.authorSize = source["authorSize"];
+	        this.authorColor = source["authorColor"];
+	    }
 	}
 	export class WorkBookAuditStatus {
 	    isInBook: boolean;
@@ -1439,6 +1473,9 @@ export namespace models {
 	    subtitleSize?: number;
 	    authorFont?: string;
 	    authorSize?: number;
+	    titleOffsetY?: number;
+	    subtitleOffsetY?: number;
+	    authorOffsetY?: number;
 	    worksStartRecto?: boolean;
 	    showPageNumbers?: boolean;
 	    selectedParts?: string;
@@ -1481,6 +1518,9 @@ export namespace models {
 	        this.subtitleSize = source["subtitleSize"];
 	        this.authorFont = source["authorFont"];
 	        this.authorSize = source["authorSize"];
+	        this.titleOffsetY = source["titleOffsetY"];
+	        this.subtitleOffsetY = source["subtitleOffsetY"];
+	        this.authorOffsetY = source["authorOffsetY"];
 	        this.worksStartRecto = source["worksStartRecto"];
 	        this.showPageNumbers = source["showPageNumbers"];
 	        this.selectedParts = source["selectedParts"];

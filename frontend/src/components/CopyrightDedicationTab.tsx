@@ -9,9 +9,12 @@ import {
   ExportBookPDFWithParts,
   HasCollectionParts,
   OpenBookPDF,
+  GetTitlePageStyles,
+  GetCollection,
 } from '@app';
 import { models } from '@models';
 import { LogErr, Log } from '@/utils';
+import { generateTitlePageHTML } from '@/utils/titlePageHTML';
 import { TwoPageSpread } from './TwoPageSpread';
 import { PartSelectionModal } from './PartSelectionModal';
 import classes from './PagePreview.module.css';
@@ -71,12 +74,23 @@ export function CopyrightDedicationTab({ collectionId }: CopyrightDedicationTabP
 
   const doExportPDF = useCallback(
     async (selectedParts: number[]) => {
+      if (!book) return;
       setExporting(true);
       try {
+        const [coll, styles] = await Promise.all([
+          GetCollection(collectionId),
+          book.templatePath ? GetTitlePageStyles(book.templatePath) : Promise.resolve(null),
+        ]);
+        const titlePageHTML = generateTitlePageHTML({
+          book,
+          collectionName: coll?.collectionName || '',
+          templateStyles: styles,
+        });
+
         const hasParts = selectedParts.length > 0 || (await HasCollectionParts(collectionId));
         const result = hasParts
-          ? await ExportBookPDFWithParts(collectionId, selectedParts, false)
-          : await ExportBookPDF(collectionId);
+          ? await ExportBookPDFWithParts(collectionId, selectedParts, false, titlePageHTML)
+          : await ExportBookPDF(collectionId, titlePageHTML);
 
         if (result?.success) {
           Log(`PDF exported to: ${result.outputPath}`);
@@ -106,7 +120,7 @@ export function CopyrightDedicationTab({ collectionId }: CopyrightDedicationTabP
         setExporting(false);
       }
     },
-    [collectionId]
+    [book, collectionId]
   );
 
   const handleExportPDF = useCallback(async () => {

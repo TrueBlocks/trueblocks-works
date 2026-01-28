@@ -104,6 +104,11 @@ var migrations = []Migration{
 		Name:    "add_book_description_fields",
 		Up:      migrateAddBookDescriptionFields,
 	},
+	{
+		Version: 28,
+		Name:    "add_title_page_offsets",
+		Up:      migrateAddTitlePageOffsets,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -925,6 +930,25 @@ func migrateAddBookDescriptionFields(tx *sql.Tx) error {
 	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN description_long TEXT`)
 	if err != nil {
 		return fmt.Errorf("add description_long column to Books: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddTitlePageOffsets(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN title_offset_y INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add title_offset_y column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN subtitle_offset_y INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add subtitle_offset_y column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN author_offset_y INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add author_offset_y column to Books: %w", err)
 	}
 
 	return nil

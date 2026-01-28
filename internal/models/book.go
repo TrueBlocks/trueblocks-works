@@ -32,6 +32,9 @@ type Book struct {
 	SubtitleSize     *int    `json:"subtitleSize,omitempty" db:"subtitle_size"`
 	AuthorFont       *string `json:"authorFont,omitempty" db:"author_font"`
 	AuthorSize       *int    `json:"authorSize,omitempty" db:"author_size"`
+	TitleOffsetY     *int    `json:"titleOffsetY,omitempty" db:"title_offset_y"`
+	SubtitleOffsetY  *int    `json:"subtitleOffsetY,omitempty" db:"subtitle_offset_y"`
+	AuthorOffsetY    *int    `json:"authorOffsetY,omitempty" db:"author_offset_y"`
 	WorksStartRecto  *bool   `json:"worksStartRecto,omitempty" db:"works_start_recto"`
 	ShowPageNumbers  *bool   `json:"showPageNumbers,omitempty" db:"show_page_numbers"`
 	SelectedParts    *string `json:"selectedParts,omitempty" db:"selected_parts"`

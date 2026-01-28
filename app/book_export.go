@@ -171,7 +171,7 @@ func (a *App) OpenBookPDF(collID int64) (*OpenBookPDFResult, error) {
 }
 
 // ExportBookPDF exports a collection as a PDF using the bookbuild pipeline
-func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
+func (a *App) ExportBookPDF(collID int64, titlePageHTML string) (*BookExportResult, error) {
 	startTime := time.Now()
 
 	a.OpenStatusBar()
@@ -234,7 +234,7 @@ func (a *App) ExportBookPDF(collID int64) (*BookExportResult, error) {
 
 	a.emitExportProgress("Preparing", 1, 6, "Generating front/back matter...")
 
-	if _, err := a.generateFrontMatterPDF(book, buildDir); err != nil {
+	if _, err := a.generateFrontMatterPDF(book, buildDir, titlePageHTML); err != nil {
 		a.EmitStatus("error", fmt.Sprintf("Front matter generation failed: %v", err))
 		return nil, fmt.Errorf("front matter generation failed: %w", err)
 	}
@@ -469,7 +469,7 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 }
 
 // ExportBookPDFWithParts exports a collection using the part-based pipeline
-func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildAll bool) (*BookExportResult, error) {
+func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildAll bool, titlePageHTML string) (*BookExportResult, error) {
 	startTime := time.Now()
 
 	a.OpenStatusBar()
@@ -526,7 +526,7 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 
 	a.emitExportProgress("Preparing", 1, 5, "Generating front/back matter...")
 
-	if _, err := a.generateFrontMatterPDF(book, cacheDir); err != nil {
+	if _, err := a.generateFrontMatterPDF(book, cacheDir, titlePageHTML); err != nil {
 		a.EmitStatus("error", fmt.Sprintf("Front matter generation failed: %v", err))
 		return nil, fmt.Errorf("front matter generation failed: %w", err)
 	}
@@ -651,11 +651,11 @@ func sanitizeFilename(name string) string {
 }
 
 // generateFrontMatterPDF creates a PDF with title page, copyright, dedication
-func (a *App) generateFrontMatterPDF(book *models.Book, buildDir string) (string, error) {
+func (a *App) generateFrontMatterPDF(book *models.Book, buildDir string, titlePageHTML string) (string, error) {
 	pdfPath := filepath.Join(buildDir, "front-matter.pdf")
 	templatePath := a.fileOps.GetBookTemplatePath()
 
-	if err := bookbuild.CreateFrontMatterPDF(book, templatePath, pdfPath); err != nil {
+	if err := bookbuild.CreateFrontMatterPDF(book, templatePath, pdfPath, titlePageHTML); err != nil {
 		return "", fmt.Errorf("failed to create front matter PDF: %w", err)
 	}
 

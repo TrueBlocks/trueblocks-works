@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -14,11 +15,14 @@ import (
 
 // TemplateStyle represents a style found in a DOCX template
 type TemplateStyle struct {
-	StyleID   string `json:"styleId"`
-	Name      string `json:"name"`
-	Type      string `json:"type"` // paragraph, character, table
-	IsCustom  bool   `json:"isCustom"`
-	IsBuiltIn bool   `json:"isBuiltIn"`
+	StyleID   string  `json:"styleId"`
+	Name      string  `json:"name"`
+	Type      string  `json:"type"` // paragraph, character, table
+	IsCustom  bool    `json:"isCustom"`
+	IsBuiltIn bool    `json:"isBuiltIn"`
+	FontName  *string `json:"fontName,omitempty"`
+	FontSize  *int    `json:"fontSize,omitempty"`  // in points
+	FontColor *string `json:"fontColor,omitempty"` // hex color without #
 }
 
 // TemplateValidation represents the result of validating a DOCX template
@@ -97,8 +101,31 @@ func (a *App) ValidateTemplate(path string) (*TemplateValidation, error) {
 		return result, nil
 	}
 
-	// Template is valid if it exists and has correct extension
-	result.IsValid = len(result.Errors) == 0
+	// Extract and validate styles
+	styles, err := extractDOCXStyles(path)
+	if err != nil {
+		result.Errors = append(result.Errors, fmt.Sprintf("Failed to read styles: %v", err))
+		return result, nil
+	}
+	result.Styles = styles
+
+	// Check for required styles
+	requiredStyles := []string{"BookTitle", "BookSubtitle", "BookAuthor"}
+	styleNames := make(map[string]bool)
+	for _, s := range styles {
+		styleNames[s.Name] = true
+	}
+
+	for _, req := range requiredStyles {
+		if styleNames[req] {
+			result.RequiredFound = append(result.RequiredFound, req)
+		} else {
+			result.RequiredMiss = append(result.RequiredMiss, req)
+		}
+	}
+
+	// Template is valid if it exists, has correct extension, and has all required styles
+	result.IsValid = len(result.Errors) == 0 && len(result.RequiredMiss) == 0
 
 	return result, nil
 }
@@ -179,16 +206,36 @@ func extractDOCXStyles(path string) ([]TemplateStyle, error) {
 	}
 	defer rc.Close()
 
-	// Parse the styles XML
+	// Parse the styles XML with font and size info
+	type FontAttr struct {
+		Ascii string `xml:"ascii,attr"`
+		HAnsi string `xml:"hAnsi,attr"`
+	}
+	type SizeAttr struct {
+		Val string `xml:"val,attr"`
+	}
+	type ColorAttr struct {
+		Val string `xml:"val,attr"`
+	}
+	type RunProps struct {
+		Fonts *FontAttr  `xml:"rFonts"`
+		Size  *SizeAttr  `xml:"sz"`
+		Color *ColorAttr `xml:"color"`
+	}
+	type ParaProps struct {
+		RunProps *RunProps `xml:"rPr"`
+	}
 	type StyleName struct {
 		Val string `xml:"val,attr"`
 	}
 	type Style struct {
-		StyleID   string    `xml:"styleId,attr"`
-		Type      string    `xml:"type,attr"`
-		Default   string    `xml:"default,attr"`
-		CustomStl string    `xml:"customStyle,attr"`
-		Name      StyleName `xml:"name"`
+		StyleID   string     `xml:"styleId,attr"`
+		Type      string     `xml:"type,attr"`
+		Default   string     `xml:"default,attr"`
+		CustomStl string     `xml:"customStyle,attr"`
+		Name      StyleName  `xml:"name"`
+		ParaProps *ParaProps `xml:"pPr"`
+		RunProps  *RunProps  `xml:"rPr"`
 	}
 	type Styles struct {
 		Styles []Style `xml:"style"`
@@ -208,6 +255,38 @@ func extractDOCXStyles(path string) ([]TemplateStyle, error) {
 			IsCustom:  s.CustomStl == "1",
 			IsBuiltIn: s.CustomStl != "1",
 		}
+
+		// Extract font name (check both direct rPr and pPr/rPr)
+		if s.RunProps != nil && s.RunProps.Fonts != nil && s.RunProps.Fonts.Ascii != "" {
+			fontName := s.RunProps.Fonts.Ascii
+			ts.FontName = &fontName
+		} else if s.ParaProps != nil && s.ParaProps.RunProps != nil && s.ParaProps.RunProps.Fonts != nil {
+			fontName := s.ParaProps.RunProps.Fonts.Ascii
+			ts.FontName = &fontName
+		}
+
+		// Extract font size (in half-points in XML, convert to points)
+		if s.RunProps != nil && s.RunProps.Size != nil && s.RunProps.Size.Val != "" {
+			if sizeHalfPts, err := strconv.Atoi(s.RunProps.Size.Val); err == nil {
+				sizePts := sizeHalfPts / 2
+				ts.FontSize = &sizePts
+			}
+		} else if s.ParaProps != nil && s.ParaProps.RunProps != nil && s.ParaProps.RunProps.Size != nil {
+			if sizeHalfPts, err := strconv.Atoi(s.ParaProps.RunProps.Size.Val); err == nil {
+				sizePts := sizeHalfPts / 2
+				ts.FontSize = &sizePts
+			}
+		}
+
+		// Extract font color (hex value without #)
+		if s.RunProps != nil && s.RunProps.Color != nil && s.RunProps.Color.Val != "" {
+			color := s.RunProps.Color.Val
+			ts.FontColor = &color
+		} else if s.ParaProps != nil && s.ParaProps.RunProps != nil && s.ParaProps.RunProps.Color != nil {
+			color := s.ParaProps.RunProps.Color.Val
+			ts.FontColor = &color
+		}
+
 		result = append(result, ts)
 	}
 
@@ -243,4 +322,78 @@ func (a *App) GetWorkTemplatePath(workID int64) (string, error) {
 	}
 
 	return "", nil
+}
+
+// TitlePageStyleInfo contains style information for rendering the title page
+type TitlePageStyleInfo struct {
+	TitleFont     string `json:"titleFont"`
+	TitleSize     int    `json:"titleSize"`
+	TitleColor    string `json:"titleColor"`
+	SubtitleFont  string `json:"subtitleFont"`
+	SubtitleSize  int    `json:"subtitleSize"`
+	SubtitleColor string `json:"subtitleColor"`
+	AuthorFont    string `json:"authorFont"`
+	AuthorSize    int    `json:"authorSize"`
+	AuthorColor   string `json:"authorColor"`
+}
+
+// GetTitlePageStyles extracts style info from a template for rendering the title page preview
+func (a *App) GetTitlePageStyles(templatePath string) (*TitlePageStyleInfo, error) {
+	result := &TitlePageStyleInfo{
+		TitleFont:     "Garamond",
+		TitleSize:     36,
+		TitleColor:    "000000",
+		SubtitleFont:  "Garamond",
+		SubtitleSize:  24,
+		SubtitleColor: "000000",
+		AuthorFont:    "Garamond",
+		AuthorSize:    18,
+		AuthorColor:   "000000",
+	}
+
+	if templatePath == "" {
+		return result, nil
+	}
+
+	styles, err := extractDOCXStyles(templatePath)
+	if err != nil {
+		return result, nil // Return defaults on error
+	}
+
+	for _, s := range styles {
+		switch s.Name {
+		case "BookTitle":
+			if s.FontName != nil {
+				result.TitleFont = *s.FontName
+			}
+			if s.FontSize != nil {
+				result.TitleSize = *s.FontSize
+			}
+			if s.FontColor != nil {
+				result.TitleColor = *s.FontColor
+			}
+		case "BookSubtitle":
+			if s.FontName != nil {
+				result.SubtitleFont = *s.FontName
+			}
+			if s.FontSize != nil {
+				result.SubtitleSize = *s.FontSize
+			}
+			if s.FontColor != nil {
+				result.SubtitleColor = *s.FontColor
+			}
+		case "BookAuthor":
+			if s.FontName != nil {
+				result.AuthorFont = *s.FontName
+			}
+			if s.FontSize != nil {
+				result.AuthorSize = *s.FontSize
+			}
+			if s.FontColor != nil {
+				result.AuthorColor = *s.FontColor
+			}
+		}
+	}
+
+	return result, nil
 }

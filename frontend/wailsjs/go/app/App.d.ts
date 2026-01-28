@@ -98,9 +98,9 @@ export function ExportAllCSV():Promise<Array<app.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<app.ExportResult>>;
 
-export function ExportBookPDF(arg1:number):Promise<app.BookExportResult>;
+export function ExportBookPDF(arg1:number,arg2:string):Promise<app.BookExportResult>;
 
-export function ExportBookPDFWithParts(arg1:number,arg2:Array<number>,arg3:boolean):Promise<app.BookExportResult>;
+export function ExportBookPDFWithParts(arg1:number,arg2:Array<number>,arg3:boolean,arg4:string):Promise<app.BookExportResult>;
 
 export function ExportCollectionFolder(arg1:number):Promise<number>;
 
@@ -219,6 +219,8 @@ export function GetTab(arg1:string):Promise<string>;
 export function GetTableState(arg1:string):Promise<state.TableState>;
 
 export function GetTemplatesDir():Promise<string>;
+
+export function GetTitlePageStyles(arg1:string):Promise<app.TitlePageStyleInfo>;
 
 export function GetValidExtensions():Promise<Array<string>>;
 

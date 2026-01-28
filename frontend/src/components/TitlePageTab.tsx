@@ -10,6 +10,8 @@ import {
   Button,
   Group,
   Badge,
+  ActionIcon,
+  Tooltip,
 } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -24,12 +26,13 @@ import {
   AuditCollectionStyles,
   OpenBookPDF,
   AnalyzeCollectionHeadings,
+  GetTitlePageStyles,
 } from '@app';
 import { models, app } from '@models';
 import { LogErr, Log } from '@/utils';
+import { generateTitlePageHTML } from '@/utils/titlePageHTML';
 import { PagePreview } from './PagePreview';
 import { PartSelectionModal } from './PartSelectionModal';
-import classes from './PagePreview.module.css';
 import {
   IconFileText,
   IconCheck,
@@ -37,6 +40,9 @@ import {
   IconFileTypePdf,
   IconExternalLink,
   IconChecks,
+  IconChevronUp,
+  IconChevronDown,
+  IconRefresh,
 } from '@tabler/icons-react';
 
 interface TitlePageTabProps {
@@ -44,15 +50,11 @@ interface TitlePageTabProps {
   collectionName: string;
 }
 
-const TITLE_FONT = 'Garamond, Georgia, serif';
-const TITLE_SIZE = 24;
-const SUBTITLE_SIZE = 14;
-const AUTHOR_SIZE = 12;
-
 export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps) {
   const [book, setBook] = useState<models.Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [templateValidation, setTemplateValidation] = useState<app.TemplateValidation | null>(null);
+  const [templateStyles, setTemplateStyles] = useState<app.TitlePageStyleInfo | null>(null);
   const [validating, setValidating] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [partModalOpen, setPartModalOpen] = useState(false);
@@ -66,8 +68,12 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
       const result = await GetBookByCollection(collectionId);
       setBook(result);
       if (result?.templatePath) {
-        const validation = await ValidateTemplate(result.templatePath);
+        const [validation, styles] = await Promise.all([
+          ValidateTemplate(result.templatePath),
+          GetTitlePageStyles(result.templatePath),
+        ]);
         setTemplateValidation(validation);
+        setTemplateStyles(styles);
       }
     } catch (err) {
       LogErr('Failed to load book:', err);
@@ -78,6 +84,22 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
 
   useEffect(() => {
     loadBook();
+  }, [loadBook]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'r') {
+        e.preventDefault();
+        loadBook();
+        notifications.show({
+          message: 'Template reloaded',
+          color: 'blue',
+          autoClose: 2000,
+        });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [loadBook]);
 
   const saveBook = useDebouncedCallback(async (updated: models.Book) => {
@@ -103,20 +125,84 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
     [book, saveBook]
   );
 
+  const OFFSET_STEP = 4;
+
+  const handleOffsetChange = useCallback(
+    (field: 'titleOffsetY' | 'subtitleOffsetY' | 'authorOffsetY', delta: number) => {
+      if (!book) return;
+      const current = book[field] ?? 0;
+      const updated = { ...book, [field]: current + delta };
+      setBook(updated);
+      saveBook(updated);
+    },
+    [book, saveBook]
+  );
+
+  const handleOffsetReset = useCallback(
+    (field: 'titleOffsetY' | 'subtitleOffsetY' | 'authorOffsetY') => {
+      if (!book) return;
+      const updated = { ...book, [field]: 0 };
+      setBook(updated);
+      saveBook(updated);
+    },
+    [book, saveBook]
+  );
+
+  const OffsetControl = ({
+    field,
+    value,
+  }: {
+    field: 'titleOffsetY' | 'subtitleOffsetY' | 'authorOffsetY';
+    value: number | undefined;
+  }) => (
+    <Group gap={2}>
+      <Text size="xs" c="dimmed" w={32} ta="right">
+        {value ?? 0}
+      </Text>
+      <ActionIcon
+        size="xs"
+        variant="subtle"
+        onClick={() => handleOffsetChange(field, -OFFSET_STEP)}
+      >
+        <IconChevronUp size={12} />
+      </ActionIcon>
+      <ActionIcon size="xs" variant="subtle" onClick={() => handleOffsetChange(field, OFFSET_STEP)}>
+        <IconChevronDown size={12} />
+      </ActionIcon>
+      <Tooltip label="Reset offset">
+        <ActionIcon
+          size="xs"
+          variant="subtle"
+          onClick={() => handleOffsetReset(field)}
+          disabled={(value ?? 0) === 0}
+        >
+          <IconRefresh size={12} />
+        </ActionIcon>
+      </Tooltip>
+    </Group>
+  );
+
   const handleSelectTemplate = useCallback(async () => {
     try {
       const path = await SelectBookTemplate();
       if (!path || !book) return;
 
       setValidating(true);
-      const validation = await ValidateTemplate(path);
+      const [validation, styles] = await Promise.all([
+        ValidateTemplate(path),
+        GetTitlePageStyles(path),
+      ]);
       setTemplateValidation(validation);
+      setTemplateStyles(styles);
       setValidating(false);
 
       if (!validation.isValid) {
         notifications.show({
           title: 'Invalid Template',
-          message: validation.errors?.join(', ') || 'Template file is invalid',
+          message:
+            validation.requiredMissing?.length > 0
+              ? `Missing required styles: ${validation.requiredMissing.join(', ')}`
+              : validation.errors?.join(', ') || 'Template file is invalid',
           color: 'red',
           autoClose: 8000,
         });
@@ -165,12 +251,20 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
 
   const doExportPDF = useCallback(
     async (selectedParts: number[]) => {
+      if (!book) return;
+
       setExporting(true);
       try {
+        const titlePageHTML = generateTitlePageHTML({
+          book,
+          collectionName,
+          templateStyles,
+        });
+
         const hasParts = selectedParts.length > 0 || (await HasCollectionParts(collectionId));
         const result = hasParts
-          ? await ExportBookPDFWithParts(collectionId, selectedParts, false)
-          : await ExportBookPDF(collectionId);
+          ? await ExportBookPDFWithParts(collectionId, selectedParts, false, titlePageHTML)
+          : await ExportBookPDF(collectionId, titlePageHTML);
 
         if (result?.success) {
           Log(`PDF exported to: ${result.outputPath}`);
@@ -200,7 +294,7 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
         setExporting(false);
       }
     },
-    [collectionId]
+    [book, collectionId, collectionName, templateStyles]
   );
 
   const handleExportPDF = useCallback(async () => {
@@ -268,26 +362,38 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
                 <Text fw={600} size="sm">
                   Title Page
                 </Text>
-                <TextInput
-                  size="xs"
-                  label="Title"
-                  value={book.title || ''}
-                  onChange={(e) => handleFieldChange('title', e.currentTarget.value)}
-                  placeholder={collectionName}
-                />
-                <TextInput
-                  size="xs"
-                  label="Subtitle"
-                  value={book.subtitle || ''}
-                  onChange={(e) => handleFieldChange('subtitle', e.currentTarget.value)}
-                  placeholder="Optional"
-                />
-                <TextInput
-                  size="xs"
-                  label="Author"
-                  value={book.author || ''}
-                  onChange={(e) => handleFieldChange('author', e.currentTarget.value)}
-                />
+                <Group gap="xs" align="flex-end">
+                  <TextInput
+                    size="xs"
+                    label="Title"
+                    value={book.title || ''}
+                    onChange={(e) => handleFieldChange('title', e.currentTarget.value)}
+                    placeholder={collectionName}
+                    style={{ flex: 1 }}
+                  />
+                  <OffsetControl field="titleOffsetY" value={book.titleOffsetY} />
+                </Group>
+                <Group gap="xs" align="flex-end">
+                  <TextInput
+                    size="xs"
+                    label="Subtitle"
+                    value={book.subtitle || ''}
+                    onChange={(e) => handleFieldChange('subtitle', e.currentTarget.value)}
+                    placeholder="Optional"
+                    style={{ flex: 1 }}
+                  />
+                  <OffsetControl field="subtitleOffsetY" value={book.subtitleOffsetY} />
+                </Group>
+                <Group gap="xs" align="flex-end">
+                  <TextInput
+                    size="xs"
+                    label="Author"
+                    value={book.author || ''}
+                    onChange={(e) => handleFieldChange('author', e.currentTarget.value)}
+                    style={{ flex: 1 }}
+                  />
+                  <OffsetControl field="authorOffsetY" value={book.authorOffsetY} />
+                </Group>
               </Stack>
             </Paper>
             <Paper p="sm" withBorder>
@@ -362,7 +468,15 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
               </Stack>
             </Paper>
             <Paper p="sm" withBorder>
-              <Group gap="xs">
+              <Group gap="xs" justify="flex-end">
+                <Button
+                  size="xs"
+                  variant="light"
+                  leftSection={<IconExternalLink size={12} />}
+                  onClick={handleOpenPDF}
+                >
+                  Open Galley
+                </Button>
                 <Button
                   size="xs"
                   leftSection={<IconFileTypePdf size={12} />}
@@ -371,47 +485,18 @@ export function TitlePageTab({ collectionId, collectionName }: TitlePageTabProps
                 >
                   Make Galley
                 </Button>
-                <Button
-                  size="xs"
-                  variant="light"
-                  leftSection={<IconExternalLink size={12} />}
-                  onClick={handleOpenPDF}
-                >
-                  Open
-                </Button>
               </Group>
             </Paper>
           </Stack>
         </Grid.Col>
         <Grid.Col span={6}>
-          <PagePreview>
-            <div className={classes.topThird}>
-              <p
-                className={classes.titleText}
-                style={{ fontFamily: TITLE_FONT, fontSize: TITLE_SIZE }}
-              >
-                {book.title || collectionName}
-              </p>
-              {book.subtitle && (
-                <>
-                  <div style={{ height: 8 }} />
-                  <p
-                    className={classes.subtitleText}
-                    style={{ fontFamily: TITLE_FONT, fontSize: SUBTITLE_SIZE }}
-                  >
-                    {book.subtitle}
-                  </p>
-                </>
-              )}
-              <div style={{ height: 32 }} />
-              <p
-                className={classes.authorText}
-                style={{ fontFamily: TITLE_FONT, fontSize: AUTHOR_SIZE }}
-              >
-                {book.author}
-              </p>
-            </div>
-          </PagePreview>
+          <PagePreview
+            html={generateTitlePageHTML({
+              book,
+              collectionName,
+              templateStyles,
+            })}
+          />
         </Grid.Col>
       </Grid>
     </>

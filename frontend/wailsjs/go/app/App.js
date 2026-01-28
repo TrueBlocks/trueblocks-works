@@ -178,12 +178,12 @@ export function ExportAllTables() {
   return window['go']['app']['App']['ExportAllTables']();
 }
 
-export function ExportBookPDF(arg1) {
-  return window['go']['app']['App']['ExportBookPDF'](arg1);
+export function ExportBookPDF(arg1, arg2) {
+  return window['go']['app']['App']['ExportBookPDF'](arg1, arg2);
 }
 
-export function ExportBookPDFWithParts(arg1, arg2, arg3) {
-  return window['go']['app']['App']['ExportBookPDFWithParts'](arg1, arg2, arg3);
+export function ExportBookPDFWithParts(arg1, arg2, arg3, arg4) {
+  return window['go']['app']['App']['ExportBookPDFWithParts'](arg1, arg2, arg3, arg4);
 }
 
 export function ExportCollectionFolder(arg1) {
@@ -420,6 +420,10 @@ export function GetTableState(arg1) {
 
 export function GetTemplatesDir() {
   return window['go']['app']['App']['GetTemplatesDir']();
+}
+
+export function GetTitlePageStyles(arg1) {
+  return window['go']['app']['App']['GetTitlePageStyles'](arg1);
 }
 
 export function GetValidExtensions() {

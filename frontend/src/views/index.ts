@@ -1,4 +1,3 @@
-export { FrontMatterView } from './FrontMatterView';
-export { BackMatterView } from './BackMatterView';
+export { MatterView } from './MatterView';
 export { CoversView } from './CoversView';
 export { AmazonView } from './AmazonView';

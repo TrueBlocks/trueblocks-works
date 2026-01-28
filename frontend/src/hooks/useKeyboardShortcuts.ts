@@ -43,6 +43,14 @@ export function useKeyboardShortcuts() {
 
   useEffect(() => {
     async function handleKeyDown(e: KeyboardEvent) {
+      // Option+Shift+2: Cycle matter sub-tabs (TitlePage/Copyright/etc)
+      // Use e.code since Option+Shift+2 produces special characters on Mac
+      if (e.altKey && e.shiftKey && !e.metaKey && e.code === 'Digit2') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('cycleMatterSubTab'));
+        return;
+      }
+
       if (!e.metaKey) return;
 
       // Cmd+Shift+D: Toggle show deleted items

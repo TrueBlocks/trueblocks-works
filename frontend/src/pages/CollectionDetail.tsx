@@ -22,7 +22,6 @@ import {
   IconFolderShare,
   IconReorder,
   IconLayoutList,
-  IconBook,
   IconEyeOff,
   IconFileText,
   IconChecks,
@@ -72,7 +71,7 @@ import { qualitySortOrder, Quality } from '@/types';
 import { DataTable, Column, StatusBadge, QualityBadge } from '@/components';
 import { NotesPortal, SubmissionsPortal } from '@/portals';
 import { WorkPickerModal, NewWorkModal, ConfirmDeleteModal } from '@/modals';
-import { FrontMatterView, BackMatterView, CoversView, AmazonView } from '@/views';
+import { MatterView, CoversView, AmazonView } from '@/views';
 import {
   DetailHeader,
   TypeBadge,
@@ -119,8 +118,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [numberAsSortedModalOpen, setNumberAsSortedModalOpen] = useState(false);
   const [isBook, setIsBook] = useState(false);
   const [activeTab, setActiveTab] = useState<string | null>('contents');
-  const [frontMatterSubTab, setFrontMatterSubTab] = useState<string>('titlepage');
-  const [backMatterSubTab, setBackMatterSubTab] = useState<string>('ack');
+  const [matterSubTab, setMatterSubTab] = useState<string>('titlepage');
   const [hasMarkedWorks, setHasMarkedWorks] = useState(false);
   const [hasSuppressedWorks, setHasSuppressedWorks] = useState(false);
   const hasInitialized = useRef(false);
@@ -194,8 +192,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         subsData,
         isBookResult,
         savedSubTab,
-        savedFmSubTab,
-        savedBmSubTab,
+        savedMatterSubTab,
         hasMarked,
         hasSuppressed,
       ] = await Promise.all([
@@ -204,8 +201,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         GetSubmissionViewsByCollection(collectionId),
         GetCollectionIsBook(collectionId),
         GetTab(`collection-${collectionId}-subtab`),
-        GetTab(`collection-${collectionId}-frontmatter-subtab`),
-        GetTab(`collection-${collectionId}-backmatter-subtab`),
+        GetTab(`collection-${collectionId}-matter-subtab`),
         GetCollectionHasMarkedWorks(collectionId),
         GetCollectionHasSuppressedWorks(collectionId),
       ]);
@@ -219,11 +215,8 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       } else {
         setActiveTab('contents');
       }
-      if (savedFmSubTab) {
-        setFrontMatterSubTab(savedFmSubTab);
-      }
-      if (savedBmSubTab) {
-        setBackMatterSubTab(savedBmSubTab);
+      if (savedMatterSubTab) {
+        setMatterSubTab(savedMatterSubTab);
       }
       const data = worksData || [];
       setWorks(data);
@@ -296,48 +289,42 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadData]);
 
-  // Cmd+Shift+2: Cycle sub-tabs depth-first
-  // contents -> frontmatter/titlepage -> frontmatter/copyright -> frontmatter/dedication
-  // -> backmatter/ack -> backmatter/about -> covers -> amazon -> contents
+  // Cmd+Shift+2: Cycle main tabs (contents -> matter -> covers -> amazon)
   useEffect(() => {
-    const TAB_CYCLE: Array<{ main: string; sub: string | null }> = [
-      { main: 'contents', sub: null },
-      { main: 'frontmatter', sub: 'titlepage' },
-      { main: 'frontmatter', sub: 'copyright' },
-      { main: 'frontmatter', sub: 'dedication' },
-      { main: 'backmatter', sub: 'ack' },
-      { main: 'backmatter', sub: 'about' },
-      { main: 'covers', sub: null },
-      { main: 'amazon', sub: null },
-    ];
+    const MAIN_TAB_CYCLE = ['contents', 'matter', 'covers', 'amazon'];
 
-    function handleCycleSubTab() {
+    function handleCycleMainTab() {
       if (!isBook) return;
 
-      const currentIndex = TAB_CYCLE.findIndex((t) => {
-        if (t.main !== activeTab) return false;
-        if (t.main === 'frontmatter') return t.sub === frontMatterSubTab;
-        if (t.main === 'backmatter') return t.sub === backMatterSubTab;
-        return true;
-      });
+      const currentIndex = MAIN_TAB_CYCLE.indexOf(activeTab || 'contents');
+      const nextIndex = (currentIndex + 1) % MAIN_TAB_CYCLE.length;
+      const next = MAIN_TAB_CYCLE[nextIndex];
 
-      const nextIndex = (currentIndex + 1) % TAB_CYCLE.length;
-      const next = TAB_CYCLE[nextIndex];
-
-      setActiveTab(next.main);
-      SetTab(`collection-${collectionId}-subtab`, next.main);
-
-      if (next.main === 'frontmatter' && next.sub) {
-        setFrontMatterSubTab(next.sub);
-        SetTab(`collection-${collectionId}-frontmatter-subtab`, next.sub);
-      } else if (next.main === 'backmatter' && next.sub) {
-        setBackMatterSubTab(next.sub);
-        SetTab(`collection-${collectionId}-backmatter-subtab`, next.sub);
-      }
+      setActiveTab(next);
+      SetTab(`collection-${collectionId}-subtab`, next);
     }
-    window.addEventListener('cycleCollectionSubTab', handleCycleSubTab);
-    return () => window.removeEventListener('cycleCollectionSubTab', handleCycleSubTab);
-  }, [isBook, activeTab, frontMatterSubTab, backMatterSubTab, collectionId]);
+    window.addEventListener('cycleCollectionSubTab', handleCycleMainTab);
+    return () => window.removeEventListener('cycleCollectionSubTab', handleCycleMainTab);
+  }, [isBook, activeTab, collectionId]);
+
+  // Option+Shift+2: Cycle matter sub-tabs (only when on matter tab)
+  useEffect(() => {
+    const MATTER_TAB_CYCLE = ['titlepage', 'copyright', 'dedication', 'ack', 'about'];
+
+    function handleCycleMatterTab() {
+      if (!isBook) return;
+      if (activeTab !== 'matter') return;
+
+      const currentIndex = MATTER_TAB_CYCLE.indexOf(matterSubTab);
+      const nextIndex = (currentIndex + 1) % MATTER_TAB_CYCLE.length;
+      const next = MATTER_TAB_CYCLE[nextIndex];
+
+      setMatterSubTab(next);
+      SetTab(`collection-${collectionId}-matter-subtab`, next);
+    }
+    window.addEventListener('cycleMatterSubTab', handleCycleMatterTab);
+    return () => window.removeEventListener('cycleMatterSubTab', handleCycleMatterTab);
+  }, [isBook, activeTab, matterSubTab, collectionId]);
 
   const handleDelete = useCallback(async () => {
     if (!collection) return;
@@ -1058,32 +1045,18 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 <IconLayoutList size={20} />
               </Tabs.Tab>
             </Tooltip>
-            <Tooltip label="Front Matter" position="right">
+            <Tooltip label="Matter" position="right">
               <Tabs.Tab
-                value="frontmatter"
+                value="matter"
                 style={{
                   backgroundColor:
-                    activeTab === 'frontmatter' ? 'var(--mantine-color-blue-light)' : 'transparent',
-                  color: activeTab === 'frontmatter' ? 'var(--mantine-color-blue-6)' : undefined,
+                    activeTab === 'matter' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                  color: activeTab === 'matter' ? 'var(--mantine-color-blue-6)' : undefined,
                   borderRadius: '6px',
                   padding: '10px',
                 }}
               >
                 <IconFileText size={20} />
-              </Tabs.Tab>
-            </Tooltip>
-            <Tooltip label="Back Matter" position="right">
-              <Tabs.Tab
-                value="backmatter"
-                style={{
-                  backgroundColor:
-                    activeTab === 'backmatter' ? 'var(--mantine-color-blue-light)' : 'transparent',
-                  color: activeTab === 'backmatter' ? 'var(--mantine-color-blue-6)' : undefined,
-                  borderRadius: '6px',
-                  padding: '10px',
-                }}
-              >
-                <IconBook size={20} />
               </Tabs.Tab>
             </Tooltip>
             <Tooltip label="Cover Images" position="right">
@@ -1218,29 +1191,15 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             </Grid>
           </Tabs.Panel>
 
-          <Tabs.Panel value="frontmatter" pl="md" style={{ flex: 1 }}>
-            <FrontMatterView
+          <Tabs.Panel value="matter" pl="md" style={{ flex: 1 }}>
+            <MatterView
               collectionId={collectionId}
               collectionName={collection.collectionName}
-              activeSubTab={frontMatterSubTab}
-              onSubTabChange={(value) => {
+              activeSubTab={matterSubTab}
+              onSubTabChange={(value: string | null) => {
                 if (value) {
-                  setFrontMatterSubTab(value);
-                  SetTab(`collection-${collectionId}-frontmatter-subtab`, value);
-                }
-              }}
-            />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="backmatter" pl="md" style={{ flex: 1 }}>
-            <BackMatterView
-              collectionId={collectionId}
-              collectionName={collection.collectionName}
-              activeSubTab={backMatterSubTab}
-              onSubTabChange={(value) => {
-                if (value) {
-                  setBackMatterSubTab(value);
-                  SetTab(`collection-${collectionId}-backmatter-subtab`, value);
+                  setMatterSubTab(value);
+                  SetTab(`collection-${collectionId}-matter-subtab`, value);
                 }
               }}
             />

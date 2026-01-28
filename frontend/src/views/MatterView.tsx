@@ -1,14 +1,25 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Tabs, Box, Button, Group, Paper, Loader, Flex, Text } from '@mantine/core';
+import { Tabs, Box, Button, Group, Paper, Loader, Flex, Text, Badge, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconUsers, IconUser, IconFileTypePdf, IconExternalLink } from '@tabler/icons-react';
+import {
+  IconTypography,
+  IconCopyright,
+  IconHeart,
+  IconUsers,
+  IconUser,
+  IconFileTypePdf,
+  IconExternalLink,
+  IconChecks,
+} from '@tabler/icons-react';
 import {
   GetBookByCollection,
   UpdateBook,
   ExportBookPDF,
   ExportBookPDFWithParts,
   HasCollectionParts,
+  AuditCollectionStyles,
   OpenBookPDF,
+  AnalyzeCollectionHeadings,
   GetTitlePageStyles,
   ValidateTemplate,
 } from '@app';
@@ -21,26 +32,37 @@ import {
   generateAboutAuthorHTML,
 } from '@/utils/bookPageHTML';
 import { PartSelectionModal } from '@/modals';
-import { AcknowledgementsPanel, AboutAuthorPanel } from '@/panels';
+import {
+  TitlePagePanel,
+  CopyrightPanel,
+  DedicationPanel,
+  AcknowledgementsPanel,
+  AboutAuthorPanel,
+} from '@/panels';
 
-interface BackMatterViewProps {
+interface MatterViewProps {
   collectionId: number;
   collectionName: string;
   activeSubTab: string;
   onSubTabChange: (value: string | null) => void;
 }
 
-export function BackMatterView({
+export function MatterView({
   collectionId,
   collectionName,
   activeSubTab,
   onSubTabChange,
-}: BackMatterViewProps) {
+}: MatterViewProps) {
   const [book, setBook] = useState<models.Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [templateStyles, setTemplateStyles] = useState<app.TitlePageStyleInfo | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [validating, setValidating] = useState(false);
   const [partModalOpen, setPartModalOpen] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    audit?: app.CollectionAuditSummary;
+    headings?: app.CollectionHeadingAnalysisResult;
+  } | null>(null);
 
   const loadBook = useCallback(async () => {
     try {
@@ -76,6 +98,10 @@ export function BackMatterView({
         autoClose: 5000,
       });
     }
+  }, []);
+
+  const handleTemplateStylesChange = useCallback((styles: app.TitlePageStyleInfo | null) => {
+    setTemplateStyles(styles);
   }, []);
 
   const buildHtmlContent = useCallback(() => {
@@ -162,6 +188,37 @@ export function BackMatterView({
     }
   }, [collectionId]);
 
+  const handleValidateAll = useCallback(async () => {
+    setValidating(true);
+    setValidationResult(null);
+    try {
+      const [audit, headings] = await Promise.all([
+        AuditCollectionStyles(collectionId),
+        AnalyzeCollectionHeadings(collectionId),
+      ]);
+      setValidationResult({ audit, headings });
+      const allClean = audit.cleanWorks === audit.totalWorks && headings.failed === 0;
+      notifications.show({
+        title: allClean ? 'Validation Passed' : 'Validation Complete',
+        message: allClean
+          ? 'All works pass style and heading validation'
+          : `${audit.dirtyWorks} style issues, ${headings.failed} heading issues`,
+        color: allClean ? 'green' : 'yellow',
+        autoClose: 5000,
+      });
+    } catch (err) {
+      LogErr('Validation failed:', err);
+      notifications.show({
+        title: 'Validation Failed',
+        message: String(err),
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setValidating(false);
+    }
+  }, [collectionId]);
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h={200}>
@@ -190,29 +247,17 @@ export function BackMatterView({
         collectionId={collectionId}
       />
 
-      <Paper p="xs" mb="md" withBorder>
-        <Group justify="flex-end" gap="xs">
-          <Button
-            size="xs"
-            variant="light"
-            leftSection={<IconExternalLink size={12} />}
-            onClick={handleOpenPDF}
-          >
-            Open Galley
-          </Button>
-          <Button
-            size="xs"
-            leftSection={<IconFileTypePdf size={12} />}
-            onClick={handleExportPDF}
-            loading={exporting}
-          >
-            Make Galley
-          </Button>
-        </Group>
-      </Paper>
-
       <Tabs value={activeSubTab} onChange={onSubTabChange}>
         <Tabs.List mb="md">
+          <Tabs.Tab value="titlepage" leftSection={<IconTypography size={16} />}>
+            Title Page
+          </Tabs.Tab>
+          <Tabs.Tab value="copyright" leftSection={<IconCopyright size={16} />}>
+            Copyright
+          </Tabs.Tab>
+          <Tabs.Tab value="dedication" leftSection={<IconHeart size={16} />}>
+            Dedication
+          </Tabs.Tab>
           <Tabs.Tab value="ack" leftSection={<IconUsers size={16} />}>
             Acknowledgements
           </Tabs.Tab>
@@ -220,6 +265,25 @@ export function BackMatterView({
             About Author
           </Tabs.Tab>
         </Tabs.List>
+
+        <Tabs.Panel value="titlepage">
+          <TitlePagePanel
+            book={book}
+            collectionName={collectionName}
+            collectionId={collectionId}
+            templateStyles={templateStyles}
+            onBookChange={handleBookChange}
+            onTemplateStylesChange={handleTemplateStylesChange}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="copyright">
+          <CopyrightPanel book={book} onBookChange={handleBookChange} />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="dedication">
+          <DedicationPanel book={book} onBookChange={handleBookChange} />
+        </Tabs.Panel>
 
         <Tabs.Panel value="ack">
           <AcknowledgementsPanel book={book} onBookChange={handleBookChange} />
@@ -229,6 +293,63 @@ export function BackMatterView({
           <AboutAuthorPanel book={book} onBookChange={handleBookChange} />
         </Tabs.Panel>
       </Tabs>
+
+      <Paper p="xs" mt="md" withBorder>
+        <Group justify="space-between">
+          <Group gap="xs">
+            <Tooltip label="Validate styles and headings">
+              <Button
+                size="xs"
+                variant="light"
+                leftSection={<IconChecks size={12} />}
+                onClick={handleValidateAll}
+                loading={validating}
+              >
+                Validate
+              </Button>
+            </Tooltip>
+            {validationResult && (
+              <>
+                <Badge
+                  size="xs"
+                  color={
+                    validationResult.audit?.cleanWorks === validationResult.audit?.totalWorks
+                      ? 'green'
+                      : 'yellow'
+                  }
+                >
+                  Styles: {validationResult.audit?.cleanWorks}/{validationResult.audit?.totalWorks}
+                </Badge>
+                <Badge
+                  size="xs"
+                  color={validationResult.headings?.failed === 0 ? 'green' : 'yellow'}
+                >
+                  Headings: {validationResult.headings?.successful}/
+                  {validationResult.headings?.totalWorks}
+                </Badge>
+              </>
+            )}
+          </Group>
+          <Group gap="xs">
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconExternalLink size={12} />}
+              onClick={handleOpenPDF}
+            >
+              Open Galley
+            </Button>
+            <Button
+              size="xs"
+              leftSection={<IconFileTypePdf size={12} />}
+              onClick={handleExportPDF}
+              loading={exporting}
+            >
+              Make Galley
+            </Button>
+          </Group>
+        </Group>
+      </Paper>
     </Box>
   );
 }

@@ -30,8 +30,9 @@ import {
 } from '@app';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import { models, db } from '@models';
-import { DetailHeader, ConfirmDeleteModal, NotesPortal, EditableField } from '@/components';
-import { EntityFieldSelect } from '@trueblocks/ui';
+import { NotesPortal } from '@/portals';
+import { ConfirmDeleteModal } from '@/modals';
+import { DetailHeader, EditableField, EntityFieldSelect } from '@trueblocks/ui';
 import { useNotes } from '@/hooks';
 import { useNavigation } from '@trueblocks/scaffold';
 import dayjs from 'dayjs';

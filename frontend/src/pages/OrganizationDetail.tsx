@@ -25,15 +25,10 @@ import {
   GetDistinctValues,
 } from '@app';
 import { models, db } from '@models';
-import {
-  DetailHeader,
-  OrgDetails,
-  NotesPortal,
-  SubmissionsPortal,
-  ConfirmDeleteModal,
-  EditableField,
-} from '@/components';
-import { EntityFieldSelect } from '@trueblocks/ui';
+import { OrganizationDetailPanel } from './OrganizationDetailPanel';
+import { NotesPortal, SubmissionsPortal } from '@/portals';
+import { ConfirmDeleteModal } from '@/modals';
+import { DetailHeader, EditableField, EntityFieldSelect } from '@trueblocks/ui';
 import { orgStatusColors } from '@/types';
 
 interface OrganizationDetailProps {
@@ -470,7 +465,7 @@ export function OrganizationDetail({
 
       <Grid>
         <Grid.Col span={{ base: 12, md: 9 }}>
-          <OrgDetails org={org} onUpdate={handleOrgUpdate} />
+          <OrganizationDetailPanel org={org} onUpdate={handleOrgUpdate} />
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 3 }}>
           <Stack gap="md">

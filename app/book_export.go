@@ -33,6 +33,16 @@ type BookExportProgress struct {
 	Message string `json:"message"`
 }
 
+// FrontBackMatterHTML contains all HTML content for front/back matter pages.
+// Each field is optional - if empty, that page is skipped.
+type FrontBackMatterHTML struct {
+	TitlePage        string `json:"titlePage"`
+	Copyright        string `json:"copyright"`
+	Dedication       string `json:"dedication"`
+	Acknowledgements string `json:"acknowledgements"`
+	AboutAuthor      string `json:"aboutAuthor"`
+}
+
 // PartInfo describes a part/section for the part selection modal
 type PartInfo struct {
 	Index     int    `json:"index"`
@@ -170,8 +180,9 @@ func (a *App) OpenBookPDF(collID int64) (*OpenBookPDFResult, error) {
 	}, nil
 }
 
-// ExportBookPDF exports a collection as a PDF using the bookbuild pipeline
-func (a *App) ExportBookPDF(collID int64, titlePageHTML string) (*BookExportResult, error) {
+// ExportBookPDF exports a collection as a PDF using the bookbuild pipeline.
+// Takes FrontBackMatterHTML struct with all page HTML content from frontend.
+func (a *App) ExportBookPDF(collID int64, htmlContent FrontBackMatterHTML) (*BookExportResult, error) {
 	startTime := time.Now()
 
 	a.OpenStatusBar()
@@ -234,13 +245,9 @@ func (a *App) ExportBookPDF(collID int64, titlePageHTML string) (*BookExportResu
 
 	a.emitExportProgress("Preparing", 1, 6, "Generating front/back matter...")
 
-	if _, err := a.generateFrontMatterPDF(book, buildDir, titlePageHTML); err != nil {
-		a.EmitStatus("error", fmt.Sprintf("Front matter generation failed: %v", err))
-		return nil, fmt.Errorf("front matter generation failed: %w", err)
-	}
-	if _, err := a.generateBackMatterPDF(book, buildDir); err != nil {
-		a.EmitStatus("error", fmt.Sprintf("Back matter generation failed: %v", err))
-		return nil, fmt.Errorf("back matter generation failed: %w", err)
+	if err := a.generateFrontBackMatterPDFs(buildDir, htmlContent); err != nil {
+		a.EmitStatus("error", fmt.Sprintf("Front/back matter generation failed: %v", err))
+		return nil, fmt.Errorf("front/back matter generation failed: %w", err)
 	}
 
 	manifest, err := a.buildManifestFromCollection(collID, book, coll, buildDir, outputPath)
@@ -322,9 +329,15 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 		manifest.Title = coll.CollectionName
 	}
 
-	frontMatterPDF := filepath.Join(buildDir, "front-matter.pdf")
-	if fileExists(frontMatterPDF) {
-		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "front-matter", PDF: frontMatterPDF})
+	// Add individual front matter PDFs in order: titlepage, copyright, dedication
+	if fileExists(filepath.Join(buildDir, "titlepage.pdf")) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "titlepage", PDF: filepath.Join(buildDir, "titlepage.pdf")})
+	}
+	if fileExists(filepath.Join(buildDir, "copyright.pdf")) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "copyright", PDF: filepath.Join(buildDir, "copyright.pdf")})
+	}
+	if fileExists(filepath.Join(buildDir, "dedication.pdf")) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "dedication", PDF: filepath.Join(buildDir, "dedication.pdf")})
 	}
 
 	manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "toc", Placeholder: true})
@@ -341,9 +354,12 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 		})
 	}
 
-	backMatterPDF := filepath.Join(buildDir, "back-matter.pdf")
-	if fileExists(backMatterPDF) {
-		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "back-matter", PDF: backMatterPDF})
+	// Add individual back matter PDFs in order: ack, about
+	if fileExists(filepath.Join(buildDir, "ack.pdf")) {
+		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "ack", PDF: filepath.Join(buildDir, "ack.pdf")})
+	}
+	if fileExists(filepath.Join(buildDir, "about.pdf")) {
+		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "about", PDF: filepath.Join(buildDir, "about.pdf")})
 	}
 
 	return manifest, nil
@@ -399,9 +415,15 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 		manifest.Title = coll.CollectionName
 	}
 
-	frontMatterPDF := filepath.Join(buildDir, "front-matter.pdf")
-	if fileExists(frontMatterPDF) {
-		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "front-matter", PDF: frontMatterPDF})
+	// Add individual front matter PDFs in order: titlepage, copyright, dedication
+	if fileExists(filepath.Join(buildDir, "titlepage.pdf")) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "titlepage", PDF: filepath.Join(buildDir, "titlepage.pdf")})
+	}
+	if fileExists(filepath.Join(buildDir, "copyright.pdf")) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "copyright", PDF: filepath.Join(buildDir, "copyright.pdf")})
+	}
+	if fileExists(filepath.Join(buildDir, "dedication.pdf")) {
+		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "dedication", PDF: filepath.Join(buildDir, "dedication.pdf")})
 	}
 
 	manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "toc", Placeholder: true})
@@ -460,16 +482,19 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 		return nil, fmt.Errorf("collection has no parts (no Section type works)")
 	}
 
-	backMatterPDF := filepath.Join(buildDir, "back-matter.pdf")
-	if fileExists(backMatterPDF) {
-		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "back-matter", PDF: backMatterPDF})
+	// Add individual back matter PDFs in order: ack, about
+	if fileExists(filepath.Join(buildDir, "ack.pdf")) {
+		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "ack", PDF: filepath.Join(buildDir, "ack.pdf")})
+	}
+	if fileExists(filepath.Join(buildDir, "about.pdf")) {
+		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "about", PDF: filepath.Join(buildDir, "about.pdf")})
 	}
 
 	return manifest, nil
 }
 
 // ExportBookPDFWithParts exports a collection using the part-based pipeline
-func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildAll bool, titlePageHTML string) (*BookExportResult, error) {
+func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildAll bool, htmlContent FrontBackMatterHTML) (*BookExportResult, error) {
 	startTime := time.Now()
 
 	a.OpenStatusBar()
@@ -526,13 +551,9 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 
 	a.emitExportProgress("Preparing", 1, 5, "Generating front/back matter...")
 
-	if _, err := a.generateFrontMatterPDF(book, cacheDir, titlePageHTML); err != nil {
-		a.EmitStatus("error", fmt.Sprintf("Front matter generation failed: %v", err))
-		return nil, fmt.Errorf("front matter generation failed: %w", err)
-	}
-	if _, err := a.generateBackMatterPDF(book, cacheDir); err != nil {
-		a.EmitStatus("error", fmt.Sprintf("Back matter generation failed: %v", err))
-		return nil, fmt.Errorf("back matter generation failed: %w", err)
+	if err := a.generateFrontBackMatterPDFs(cacheDir, htmlContent); err != nil {
+		a.EmitStatus("error", fmt.Sprintf("Front/back matter generation failed: %v", err))
+		return nil, fmt.Errorf("front/back matter generation failed: %w", err)
 	}
 
 	manifest, err := a.buildManifestWithParts(collID, book, coll, cacheDir, outputPath)
@@ -650,33 +671,39 @@ func sanitizeFilename(name string) string {
 	return result
 }
 
-// generateFrontMatterPDF creates a PDF with title page, copyright, dedication
-func (a *App) generateFrontMatterPDF(book *models.Book, buildDir string, titlePageHTML string) (string, error) {
-	pdfPath := filepath.Join(buildDir, "front-matter.pdf")
-	templatePath := a.fileOps.GetBookTemplatePath()
-
-	if err := bookbuild.CreateFrontMatterPDF(book, templatePath, pdfPath, titlePageHTML); err != nil {
-		return "", fmt.Errorf("failed to create front matter PDF: %w", err)
+// generateFrontBackMatterPDFs creates individual PDFs from HTML for each front/back matter page.
+// Empty HTML strings are skipped (no PDF generated for that page).
+func (a *App) generateFrontBackMatterPDFs(buildDir string, html FrontBackMatterHTML) error {
+	if err := os.MkdirAll(buildDir, 0755); err != nil {
+		return fmt.Errorf("create build dir: %w", err)
 	}
 
-	return pdfPath, nil
-}
-
-// generateBackMatterPDF creates a PDF with acknowledgements and about author
-func (a *App) generateBackMatterPDF(book *models.Book, buildDir string) (string, error) {
-	hasAcknowledgements := book.Acknowledgements != nil && *book.Acknowledgements != ""
-	hasAboutAuthor := book.AboutAuthor != nil && *book.AboutAuthor != ""
-
-	if !hasAcknowledgements && !hasAboutAuthor {
-		return "", nil
+	// Generate individual PDFs only for non-empty content
+	if html.TitlePage != "" {
+		if err := bookbuild.HTMLToPDFFile(html.TitlePage, filepath.Join(buildDir, "titlepage.pdf")); err != nil {
+			return fmt.Errorf("create titlepage pdf: %w", err)
+		}
+	}
+	if html.Copyright != "" {
+		if err := bookbuild.HTMLToPDFFile(html.Copyright, filepath.Join(buildDir, "copyright.pdf")); err != nil {
+			return fmt.Errorf("create copyright pdf: %w", err)
+		}
+	}
+	if html.Dedication != "" {
+		if err := bookbuild.HTMLToPDFFile(html.Dedication, filepath.Join(buildDir, "dedication.pdf")); err != nil {
+			return fmt.Errorf("create dedication pdf: %w", err)
+		}
+	}
+	if html.Acknowledgements != "" {
+		if err := bookbuild.HTMLToPDFFile(html.Acknowledgements, filepath.Join(buildDir, "ack.pdf")); err != nil {
+			return fmt.Errorf("create ack pdf: %w", err)
+		}
+	}
+	if html.AboutAuthor != "" {
+		if err := bookbuild.HTMLToPDFFile(html.AboutAuthor, filepath.Join(buildDir, "about.pdf")); err != nil {
+			return fmt.Errorf("create about pdf: %w", err)
+		}
 	}
 
-	pdfPath := filepath.Join(buildDir, "back-matter.pdf")
-	templatePath := a.fileOps.GetBookTemplatePath()
-
-	if err := bookbuild.CreateBackMatterPDF(book, templatePath, pdfPath); err != nil {
-		return "", fmt.Errorf("failed to create back matter PDF: %w", err)
-	}
-
-	return pdfPath, nil
+	return nil
 }

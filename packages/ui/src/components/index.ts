@@ -59,3 +59,6 @@ export type { TabViewProps, Tab } from './TabView';
 
 export { TypeBadge } from './TypeBadge';
 export type { TypeBadgeProps } from './TypeBadge';
+
+export { PagePreview, PAGE_WIDTH_PX, PAGE_HEIGHT_PX, DISPLAY_SCALE } from './PagePreview';
+export type { PagePreviewProps } from './PagePreview';

@@ -5,7 +5,7 @@ import { GetDistinctValues, UpdateOrganization } from '@app';
 import { LogErr, showValidationResult } from '@/utils';
 import { useMemo, useCallback } from 'react';
 
-interface OrgDetailsProps {
+interface OrganizationDetailPanelProps {
   org: models.Organization;
   onUpdate?: (org: models.Organization) => void;
 }
@@ -22,7 +22,7 @@ function Field({ label, value }: { label: string; value?: string | number }) {
   );
 }
 
-export function OrgDetails({ org, onUpdate }: OrgDetailsProps) {
+export function OrganizationDetailPanel({ org, onUpdate }: OrganizationDetailPanelProps) {
   const handleFieldChange = (field: keyof models.Organization, value: string) => {
     if (onUpdate) {
       onUpdate({ ...org, [field]: value } as models.Organization);

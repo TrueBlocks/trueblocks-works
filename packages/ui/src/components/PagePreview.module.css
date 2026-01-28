@@ -24,17 +24,6 @@
   box-sizing: border-box;
 }
 
-.twoPageSpread {
-  display: flex;
-  gap: 4px;
-  justify-content: center;
-  align-items: flex-start;
-  padding: var(--mantine-spacing-xs);
-  background-color: var(--mantine-color-gray-2);
-  border-radius: var(--mantine-radius-sm);
-  min-height: 620px;
-}
-
 .versoPage {
   border-right: 1px solid var(--mantine-color-gray-3);
 }

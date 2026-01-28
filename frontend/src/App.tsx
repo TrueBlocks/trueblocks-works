@@ -3,12 +3,9 @@ import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell } from '@mantine/core';
 import { WindowGetPosition, WindowGetSize, EventsOn, EventsOff } from '@wailsjs/runtime/runtime';
 import { Navigation } from '@/components/Navigation';
-import { SearchModal } from '@/components/SearchModal';
-import { BackupRestoreModal } from '@/components/BackupRestoreModal';
+import { SearchModal, BackupRestoreModal, ImportReviewModal, ImportConfirmModal } from '@/modals';
 import { StatusBar } from '@/components';
 import { SetupWizard } from '@/components/SetupWizard';
-import { ImportReviewModal } from '@/components/ImportReviewModal';
-import { ImportConfirmModal } from '@/components/ImportConfirmModal';
 import { SplashScreen } from '@trueblocks/ui';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { WorksPage } from '@/pages/WorksPage';
@@ -382,7 +379,7 @@ function App() {
         opened={importModalOpen}
         onClose={() => setImportModalOpen(false)}
         result={importResult}
-        onNavigateToCollection={(id) => navigate(`/collections/${id}`)}
+        onNavigateToCollection={(id: number) => navigate(`/collections/${id}`)}
         onAddType={handleAddType}
         onAddExtension={handleAddExtension}
         onCancelImport={handleCancelImport}

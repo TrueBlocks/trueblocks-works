@@ -49,7 +49,6 @@ export function ConfirmDeleteModal({
     onClose();
   }, [onClose]);
 
-  // Map app-specific type to generic type
   const mappedConfirmation: DeleteConfirmation | null = confirmation
     ? {
         entityName: confirmation.entityName,

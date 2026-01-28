@@ -29,21 +29,10 @@ import {
   GetEnumLists,
 } from '@app';
 import { models, db } from '@models';
-import {
-  DetailHeader,
-  PathDisplay,
-  NotesPortal,
-  SupportingPortal,
-  SubmissionsPortal,
-  CollectionsPortal,
-  CollectionPickerModal,
-  FileActionsToolbar,
-  PDFPreview,
-  DebugPopover,
-  ConfirmDeleteModal,
-  EditableField,
-} from '@/components';
-import { EntityFieldSelect } from '@trueblocks/ui';
+import { FileActionsToolbar, PDFPreview, DebugPopover } from '@/components';
+import { NotesPortal, SupportingPortal, SubmissionsPortal, CollectionsPortal } from '@/portals';
+import { CollectionPickerModal, ConfirmDeleteModal } from '@/modals';
+import { DetailHeader, PathDisplay, EditableField, EntityFieldSelect } from '@trueblocks/ui';
 import { workStatusColors, qualityColors } from '@/types';
 
 interface WorkDetailProps {

@@ -1,10 +1,10 @@
 import classes from './PagePreview.module.css';
 
 const DISPLAY_SCALE = 0.7;
-const PAGE_WIDTH_PX = 576; // 6in * 96px (CSS inch = 96px)
-const PAGE_HEIGHT_PX = 864; // 9in * 96px
+const PAGE_WIDTH_PX = 576;
+const PAGE_HEIGHT_PX = 864;
 
-interface PagePreviewProps {
+export interface PagePreviewProps {
   html: string;
 }
 
@@ -28,7 +28,7 @@ export function PagePreview({ html }: PagePreviewProps) {
             transform: `scale(${DISPLAY_SCALE})`,
             transformOrigin: 'top left',
           }}
-          title="Title Page Preview"
+          title="Page Preview"
         />
       </div>
     </div>

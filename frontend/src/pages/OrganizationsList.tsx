@@ -14,7 +14,9 @@ import {
   DeleteOrganizationPermanent,
 } from '@app';
 import { models, db } from '@models';
-import { OrgStatusBadge, DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
+import { OrgStatusBadge, DataTable, Column } from '@/components';
+import { TypeBadge } from '@trueblocks/ui';
+import { ConfirmDeleteModal } from '@/modals';
 import { Log, LogErr } from '@/utils';
 import { notifications } from '@mantine/notifications';
 import { useNavigation } from '@trueblocks/scaffold';

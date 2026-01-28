@@ -37,7 +37,7 @@ import { models } from '@models';
 import { LogErr, Log } from '@/utils';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 
-interface CoverImagesTabProps {
+interface CoversViewProps {
   collectionId: number;
   collectionName: string;
 }
@@ -138,7 +138,6 @@ function CoverDropZone({
         </Group>
       </Group>
 
-      {/* 6" × 9" aspect ratio container (2:3 = 0.667) */}
       {imageData && !isPdf ? (
         <Box
           mb="sm"
@@ -226,10 +225,7 @@ function CoverDropZone({
   );
 }
 
-export function CoverImagesTab({
-  collectionId,
-  collectionName: _collectionName,
-}: CoverImagesTabProps) {
+export function CoversView({ collectionId, collectionName: _collectionName }: CoversViewProps) {
   void _collectionName;
   const [book, setBook] = useState<models.Book | null>(null);
   const [loading, setLoading] = useState(true);
@@ -241,7 +237,6 @@ export function CoverImagesTab({
       const result = await GetBookByCollection(collectionId);
       setBook(result);
 
-      // Load cover image data
       if (result?.frontCoverPath) {
         try {
           const data = await GetCoverImageData(result.frontCoverPath);

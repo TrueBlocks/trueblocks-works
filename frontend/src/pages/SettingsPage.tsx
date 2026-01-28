@@ -11,7 +11,8 @@ import {
 } from '@tabler/icons-react';
 import { GetSettings, UpdateSettings, BrowseForFolder } from '@app';
 import { settings } from '@models';
-import { TabView, Tab, EnumManagement, SplashScreen, FTSStatus } from '@/components';
+import { TabView, Tab, EnumManagement, FTSStatus } from '@/components';
+import { SplashScreen } from '@trueblocks/ui';
 import { ThemeSelector } from '@/components/ThemeSelector';
 import { DarkModeSwitch } from '@/components/DarkModeSwitch';
 

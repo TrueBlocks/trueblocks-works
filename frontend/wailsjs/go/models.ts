@@ -528,6 +528,26 @@ export namespace app {
 	        this.errors = source["errors"];
 	    }
 	}
+	export class FrontBackMatterHTML {
+	    titlePage: string;
+	    copyright: string;
+	    dedication: string;
+	    acknowledgements: string;
+	    aboutAuthor: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FrontBackMatterHTML(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.titlePage = source["titlePage"];
+	        this.copyright = source["copyright"];
+	        this.dedication = source["dedication"];
+	        this.acknowledgements = source["acknowledgements"];
+	        this.aboutAuthor = source["aboutAuthor"];
+	    }
+	}
 	
 	export class ImportConflict {
 	    type: string;

@@ -18,15 +18,9 @@ import { models, db } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
 import { notifications } from '@mantine/notifications';
 import { useNavigation } from '@trueblocks/scaffold';
-import {
-  StatusBadge,
-  QualityBadge,
-  TypeBadge,
-  NewWorkModal,
-  ConfirmDeleteModal,
-  DataTable,
-  Column,
-} from '@/components';
+import { StatusBadge, QualityBadge, DataTable, Column } from '@/components';
+import { TypeBadge } from '@trueblocks/ui';
+import { NewWorkModal, ConfirmDeleteModal } from '@/modals';
 
 interface WorksListProps {
   onWorkClick: (work: models.WorkView) => void;

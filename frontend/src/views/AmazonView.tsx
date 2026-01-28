@@ -32,7 +32,7 @@ import { GetBookByCollection, OpenKDPManuscriptSpecs } from '@app';
 import { models } from '@models';
 import { LogErr } from '@/utils';
 
-interface AmazonPublishingTabProps {
+interface AmazonViewProps {
   collectionId: number;
   collectionName: string;
 }
@@ -45,11 +45,8 @@ interface PublishingStep {
   details?: string;
 }
 
-export function AmazonPublishingTab({
-  collectionId,
-  collectionName: _collectionName,
-}: AmazonPublishingTabProps) {
-  void _collectionName; // Reserved for future use
+export function AmazonView({ collectionId, collectionName: _collectionName }: AmazonViewProps) {
+  void _collectionName;
   const [book, setBook] = useState<models.Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishingSteps, setPublishingSteps] = useState<PublishingStep[]>([

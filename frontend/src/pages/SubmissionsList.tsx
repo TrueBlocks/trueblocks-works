@@ -14,7 +14,9 @@ import {
   DeleteSubmissionPermanent,
 } from '@app';
 import { models, db } from '@models';
-import { ResponseBadge, DataTable, Column, TypeBadge, ConfirmDeleteModal } from '@/components';
+import { ResponseBadge, DataTable, Column } from '@/components';
+import { TypeBadge } from '@trueblocks/ui';
+import { ConfirmDeleteModal } from '@/modals';
 import { notifications } from '@mantine/notifications';
 import { useNavigation } from '@trueblocks/scaffold';
 import dayjs from 'dayjs';

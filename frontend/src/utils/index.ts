@@ -8,6 +8,13 @@ export const LogWarn = (...args: unknown[]): void => LogWarning(args.map(String)
 export { matchesFilter, matchesNumericFilter, intersectFilter } from './filterHelpers';
 export { getEntityPageURL, toggleEntityPageTab } from './navigation';
 export { showValidationResult } from './validation';
+export { generateTitlePageHTML } from './titlePageHTML';
+export {
+  generateCopyrightHTML,
+  generateDedicationHTML,
+  generateAcknowledgementsHTML,
+  generateAboutAuthorHTML,
+} from './bookPageHTML';
 
 const HASH_COLORS = [
   'blue',

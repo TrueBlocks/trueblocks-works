@@ -98,9 +98,9 @@ export function ExportAllCSV():Promise<Array<app.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<app.ExportResult>>;
 
-export function ExportBookPDF(arg1:number,arg2:string):Promise<app.BookExportResult>;
+export function ExportBookPDF(arg1:number,arg2:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
 
-export function ExportBookPDFWithParts(arg1:number,arg2:Array<number>,arg3:boolean,arg4:string):Promise<app.BookExportResult>;
+export function ExportBookPDFWithParts(arg1:number,arg2:Array<number>,arg3:boolean,arg4:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
 
 export function ExportCollectionFolder(arg1:number):Promise<number>;
 

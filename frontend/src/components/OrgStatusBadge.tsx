@@ -1,5 +1,4 @@
-import { Badge } from '@mantine/core';
-import { hashColor } from '@trueblocks/ui';
+import { ColorBadge } from '@trueblocks/ui';
 import { orgStatusColors } from '@/types';
 
 interface OrgStatusBadgeProps {
@@ -7,10 +6,5 @@ interface OrgStatusBadgeProps {
 }
 
 export function OrgStatusBadge({ status }: OrgStatusBadgeProps) {
-  const color = orgStatusColors[status as keyof typeof orgStatusColors] || hashColor(status);
-  return (
-    <Badge color={color} variant="light">
-      {status || 'Unknown'}
-    </Badge>
-  );
+  return <ColorBadge value={status} colorMap={orgStatusColors} fallback="Unknown" />;
 }

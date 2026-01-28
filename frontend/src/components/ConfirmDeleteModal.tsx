@@ -1,5 +1,5 @@
-import { Modal, Text, Stack, Group, Button, Checkbox } from '@mantine/core';
 import { useState, useCallback, useEffect } from 'react';
+import { ConfirmDeleteModal as BaseConfirmDeleteModal, DeleteConfirmation } from '@trueblocks/ui';
 import { db } from '@models';
 import { GetSettings, UpdateSettings } from '@app';
 import { LogErr } from '@/utils';
@@ -49,70 +49,28 @@ export function ConfirmDeleteModal({
     onClose();
   }, [onClose]);
 
+  // Map app-specific type to generic type
+  const mappedConfirmation: DeleteConfirmation | null = confirmation
+    ? {
+        entityName: confirmation.entityName,
+        entityType: confirmation.entityType,
+        noteCount: confirmation.noteCount,
+        submissionCount: confirmation.submissionCount,
+        collectionCount: confirmation.collectionCount,
+        hasDocument: confirmation.hasFile,
+        documentPath: confirmation.filePath,
+      }
+    : null;
+
   return (
-    <Modal opened={opened} onClose={handleClose} title="Permanently Delete" centered size="md">
-      <Stack gap="md">
-        <Text size="sm">
-          You are about to permanently delete:{' '}
-          <Text span fw={700}>
-            {confirmation?.entityName}
-          </Text>
-        </Text>
-
-        {confirmation &&
-          (confirmation.noteCount > 0 ||
-            confirmation.submissionCount > 0 ||
-            confirmation.collectionCount > 0) && (
-            <Stack gap="xs">
-              <Text size="sm" fw={600} c="red">
-                This will also delete:
-              </Text>
-              {confirmation.noteCount > 0 && (
-                <Text size="sm">
-                  • {confirmation.noteCount} note{confirmation.noteCount !== 1 ? 's' : ''}
-                </Text>
-              )}
-              {confirmation.submissionCount > 0 && (
-                <Text size="sm">
-                  • {confirmation.submissionCount} submission
-                  {confirmation.submissionCount !== 1 ? 's' : ''}
-                </Text>
-              )}
-              {confirmation.collectionCount > 0 && (
-                <Text size="sm">
-                  • {confirmation.collectionCount} collection detail record
-                  {confirmation.collectionCount !== 1 ? 's' : ''}
-                </Text>
-              )}
-            </Stack>
-          )}
-
-        {confirmation?.hasFile && (
-          <Checkbox
-            label="Archive underlying document to 999 Trash folder"
-            checked={archiveDocument}
-            onChange={(event) => handleArchiveChange(event.currentTarget.checked)}
-          />
-        )}
-
-        <Text size="sm" c="red" fw={600}>
-          This action cannot be undone!
-        </Text>
-
-        <Group justify="flex-end" gap="sm">
-          <Button variant="default" onClick={handleClose} disabled={loading}>
-            Cancel
-          </Button>
-          <Button
-            color="red"
-            onClick={() => onConfirm(archiveDocument)}
-            disabled={loading}
-            loading={loading}
-          >
-            Remove Permanently
-          </Button>
-        </Group>
-      </Stack>
-    </Modal>
+    <BaseConfirmDeleteModal
+      opened={opened}
+      onClose={handleClose}
+      onConfirm={onConfirm}
+      confirmation={mappedConfirmation}
+      loading={loading}
+      initialArchiveDocument={archiveDocument}
+      onArchiveDocumentChange={handleArchiveChange}
+    />
   );
 }

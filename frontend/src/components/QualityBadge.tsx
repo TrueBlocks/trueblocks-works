@@ -1,5 +1,4 @@
-import { Badge } from '@mantine/core';
-import { hashColor } from '@trueblocks/ui';
+import { ColorBadge } from '@trueblocks/ui';
 import { qualityColors } from '@/types';
 
 interface QualityBadgeProps {
@@ -7,10 +6,7 @@ interface QualityBadgeProps {
 }
 
 export function QualityBadge({ quality }: QualityBadgeProps) {
-  const color = qualityColors[quality as keyof typeof qualityColors] || hashColor(quality);
   return (
-    <Badge color={color} variant="filled">
-      {quality || 'Unrated'}
-    </Badge>
+    <ColorBadge value={quality} colorMap={qualityColors} fallback="Unrated" variant="filled" />
   );
 }

@@ -1,6 +1,15 @@
 export { CreatableSelect } from './CreatableSelect';
 export type { CreatableSelectProps } from './CreatableSelect';
 
+export { ColorBadge } from './ColorBadge';
+export type { ColorBadgeProps } from './ColorBadge';
+
+export { ConfirmDeleteModal } from './ConfirmDeleteModal';
+export type { ConfirmDeleteModalProps, DeleteConfirmation } from './ConfirmDeleteModal';
+
+export { DarkModeSwitch } from './DarkModeSwitch';
+export type { DarkModeSwitchProps } from './DarkModeSwitch';
+
 export { DashboardCard, StatRow } from './DashboardCard';
 export type { DashboardCardProps, DashboardCardPage, StatRowProps } from './DashboardCard';
 
@@ -41,6 +50,9 @@ export type { SortableHeaderProps } from './SortableHeader';
 
 export { SplashScreen } from './SplashScreen';
 export type { SplashScreenProps } from './SplashScreen';
+
+export { TabView } from './TabView';
+export type { TabViewProps, Tab } from './TabView';
 
 export { TypeBadge } from './TypeBadge';
 export type { TypeBadgeProps } from './TypeBadge';

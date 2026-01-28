@@ -1,5 +1,4 @@
-import { Badge } from '@mantine/core';
-import { hashColor } from '@trueblocks/ui';
+import { ColorBadge } from '@trueblocks/ui';
 import { responseColors } from '@/types';
 
 interface ResponseBadgeProps {
@@ -7,12 +6,5 @@ interface ResponseBadgeProps {
 }
 
 export function ResponseBadge({ response }: ResponseBadgeProps) {
-  const displayValue = response || 'Pending';
-  const color =
-    responseColors[displayValue as keyof typeof responseColors] || hashColor(displayValue);
-  return (
-    <Badge color={color} variant="light">
-      {displayValue}
-    </Badge>
-  );
+  return <ColorBadge value={response} colorMap={responseColors} fallback="Pending" />;
 }

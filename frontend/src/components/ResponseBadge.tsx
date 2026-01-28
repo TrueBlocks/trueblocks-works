@@ -1,6 +1,6 @@
 import { Badge } from '@mantine/core';
+import { hashColor } from '@trueblocks/ui';
 import { responseColors } from '@/types';
-import { hashColor } from '@/utils';
 
 interface ResponseBadgeProps {
   response: string | undefined;

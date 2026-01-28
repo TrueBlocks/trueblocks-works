@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { GetDistinctValues, UpdateCollection } from '@app';
 import { models } from '@models';
-import { LogErr, hashColor, showValidationResult } from '@/utils';
+import { LogErr, showValidationResult } from '@/utils';
+import { hashColor } from '@trueblocks/ui';
 import { CreatableSelect } from '@trueblocks/ui';
 
 type CollectionField = 'type';

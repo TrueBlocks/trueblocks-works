@@ -32,9 +32,10 @@ const getSubmissionValue = (sub: models.SubmissionView, column: string): unknown
 
 interface SubmissionsListProps {
   onSubmissionClick: (sub: models.SubmissionView) => void;
+  onFilteredDataChange?: (subs: models.SubmissionView[]) => void;
 }
 
-export function SubmissionsList({ onSubmissionClick }: SubmissionsListProps) {
+export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: SubmissionsListProps) {
   const location = useLocation();
   const { currentId, setCurrentId, setItems } = useNavigation();
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
@@ -262,6 +263,7 @@ export function SubmissionsList({ onSubmissionClick }: SubmissionsListProps) {
         onSelectedChange={handleSelectedChange}
         getLastSelectedID={getLastSelectedID}
         onFilteredSortedChange={(subs) => {
+          onFilteredDataChange?.(subs);
           const items = subs.map((s) => ({ id: s.submissionID }));
           const navCurrentId = currentId ?? subs[0]?.submissionID ?? 0;
           setItems('submission', items, navCurrentId);

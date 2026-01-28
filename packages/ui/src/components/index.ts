@@ -1,6 +1,9 @@
 export { CreatableSelect } from './CreatableSelect';
 export type { CreatableSelectProps } from './CreatableSelect';
 
+export { DashboardCard, StatRow } from './DashboardCard';
+export type { DashboardCardProps, DashboardCardPage, StatRowProps } from './DashboardCard';
+
 export {
   DataTable,
   DataTableRow,
@@ -21,5 +24,23 @@ export type { EditableFieldProps } from './EditableField';
 export { KeyboardHints } from './KeyboardHints';
 export type { KeyboardHint, KeyboardHintsProps } from './KeyboardHints';
 
+export { MoveFileModal } from './MoveFileModal';
+export type { MoveFileModalProps } from './MoveFileModal';
+
+export { MoveToPositionModal } from './MoveToPositionModal';
+export type { MoveToPositionModalProps } from './MoveToPositionModal';
+
+export { PathDisplay } from './PathDisplay';
+export type { PathDisplayProps } from './PathDisplay';
+
+export { SelectablePopover } from './SelectablePopover';
+export type { SelectablePopoverProps } from './SelectablePopover';
+
 export { SortableHeader } from './SortableHeader';
 export type { SortableHeaderProps } from './SortableHeader';
+
+export { SplashScreen } from './SplashScreen';
+export type { SplashScreenProps } from './SplashScreen';
+
+export { TypeBadge } from './TypeBadge';
+export type { TypeBadgeProps } from './TypeBadge';

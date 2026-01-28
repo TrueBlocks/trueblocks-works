@@ -28,9 +28,10 @@ const getOrgValue = (org: models.OrganizationWithNotes, column: string): unknown
 
 interface OrganizationsListProps {
   onOrgClick: (org: models.OrganizationWithNotes) => void;
+  onFilteredDataChange?: (orgs: models.OrganizationWithNotes[]) => void;
 }
 
-export function OrganizationsList({ onOrgClick }: OrganizationsListProps) {
+export function OrganizationsList({ onOrgClick, onFilteredDataChange }: OrganizationsListProps) {
   const location = useLocation();
   const { currentId, setCurrentId, setItems } = useNavigation();
   const [orgs, setOrgs] = useState<models.OrganizationWithNotes[]>([]);
@@ -303,6 +304,7 @@ export function OrganizationsList({ onOrgClick }: OrganizationsListProps) {
         onSelectedChange={handleSelectedChange}
         getLastSelectedID={getLastSelectedID}
         onFilteredSortedChange={(filteredOrgs) => {
+          onFilteredDataChange?.(filteredOrgs);
           const items = filteredOrgs.map((o) => ({ id: o.orgID }));
           const navCurrentId = currentId ?? filteredOrgs[0]?.orgID ?? 0;
           setItems('organization', items, navCurrentId);

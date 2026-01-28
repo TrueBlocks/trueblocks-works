@@ -23,7 +23,7 @@ import {
 } from '@app';
 import { models } from '@models';
 import { LogErr, showValidationResult } from '@/utils';
-import { TypeBadge } from './TypeBadge';
+import { TypeBadge } from '@trueblocks/ui';
 
 interface CollectionPickerModalProps {
   opened: boolean;

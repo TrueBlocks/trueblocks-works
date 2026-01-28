@@ -4,7 +4,7 @@ import { IconSearch, IconPlus } from '@tabler/icons-react';
 import { GetWorks, GetCollectionWorks, AddWorkToCollection } from '@app';
 import { models } from '@models';
 import { LogErr } from '@/utils';
-import { TypeBadge } from './TypeBadge';
+import { TypeBadge } from '@trueblocks/ui';
 
 interface WorkPickerModalProps {
   opened: boolean;

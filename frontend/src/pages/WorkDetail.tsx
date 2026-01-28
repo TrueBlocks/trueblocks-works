@@ -52,7 +52,7 @@ interface WorkDetailProps {
   filteredWorks: models.WorkView[];
 }
 
-export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetailProps) {
+export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const navigation = useNavigation();
@@ -111,6 +111,19 @@ export function WorkDetail({ workId, filteredWorks: _filteredWorks }: WorkDetail
     // Only run when location.state changes (entering from collection)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationState]);
+
+  // If stack is empty and we have filteredWorks (e.g., on app restart), populate from list
+  useEffect(() => {
+    if (
+      navigation.stack.length === 0 &&
+      filteredWorks.length > 0 &&
+      !locationState?.collectionWorks
+    ) {
+      const items = filteredWorks.map((w) => ({ id: w.workID }));
+      navigation.setItems('work', items, workId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredWorks, navigation.stack.length]);
 
   // Use navigation context for prev/next (populated by WorksList or Collection)
   const hasPrev = navigation.hasPrev;

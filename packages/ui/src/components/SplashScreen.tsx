@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Center, Stack, Title, Text, Box } from '@mantine/core';
-import { EventsOn, EventsOff } from '@wailsjs/runtime/runtime';
 
-interface SplashScreenProps {
+export interface SplashScreenProps {
   duration?: number;
   onComplete: () => void;
+  title?: string;
+  subtitle?: string;
+  onSubscribe?: (handler: (data: { message: string }) => void) => () => void;
 }
 
-export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps) {
+export function SplashScreen({
+  duration = 2000,
+  onComplete,
+  title = 'Works',
+  subtitle = 'A Studio Ledger',
+  onSubscribe,
+}: SplashScreenProps) {
   const [fadeOut, setFadeOut] = useState(false);
   const [statusText, setStatusText] = useState('');
 
@@ -16,7 +24,7 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
       setStatusText(data.message);
     };
 
-    EventsOn('startup:status', handleStatus);
+    const unsubscribe = onSubscribe?.(handleStatus);
 
     const fadeTimer = setTimeout(() => {
       setFadeOut(true);
@@ -27,11 +35,11 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
     }, duration);
 
     return () => {
-      EventsOff('startup:status');
+      unsubscribe?.();
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
     };
-  }, [duration, onComplete]);
+  }, [duration, onComplete, onSubscribe]);
 
   return (
     <Box
@@ -52,7 +60,6 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
     >
       <Center h="100%">
         <Stack align="center" gap="lg">
-          {/* Factory/Studio inspired design */}
           <Box
             style={{
               width: 120,
@@ -65,7 +72,6 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
               position: 'relative',
             }}
           >
-            {/* Stylized "W" */}
             <Text
               style={{
                 fontSize: 72,
@@ -75,9 +81,8 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                 letterSpacing: -4,
               }}
             >
-              W
+              {title.charAt(0)}
             </Text>
-            {/* Corner accent - like a ledger binding */}
             <Box
               style={{
                 position: 'absolute',
@@ -103,7 +108,7 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                 fontSize: 32,
               }}
             >
-              Works
+              {title}
             </Title>
             <Text
               size="md"
@@ -113,7 +118,7 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
                 letterSpacing: 2,
               }}
             >
-              A Studio Ledger
+              {subtitle}
             </Text>
             {statusText && (
               <Text
@@ -128,7 +133,6 @@ export function SplashScreen({ duration = 2000, onComplete }: SplashScreenProps)
             )}
           </Stack>
 
-          {/* Subtle loading indicator */}
           <Box
             style={{
               width: 40,

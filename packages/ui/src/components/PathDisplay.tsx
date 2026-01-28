@@ -1,7 +1,7 @@
 import { Paper, Group, Text, Badge, CopyButton, ActionIcon, Tooltip } from '@mantine/core';
 import { IconFile, IconCopy, IconCheck } from '@tabler/icons-react';
 
-interface PathDisplayProps {
+export interface PathDisplayProps {
   path?: string;
   docType?: string;
   nWords?: number;

@@ -16,7 +16,8 @@ import {
 } from '@mantine/core';
 import { IconPencil, IconTrash } from '@tabler/icons-react';
 import { GetDistinctValues, RenameFieldValue } from '@app';
-import { LogErr, hashColor } from '@/utils';
+import { LogErr } from '@/utils';
+import { hashColor } from '@trueblocks/ui';
 import { notifications } from '@mantine/notifications';
 
 interface EnumField {

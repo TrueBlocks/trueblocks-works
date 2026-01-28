@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconList, IconFileText } from '@tabler/icons-react';
 import { TabView, Tab } from '@/components';
-import { GetAppState, SetTab } from '@app';
+import { GetAppState, SetTab, GetAllSubmissionViews } from '@app';
 import { SubmissionsList } from './SubmissionsList';
 import { SubmissionDetail } from './SubmissionDetail';
 import { NavigationProvider } from '@trueblocks/scaffold';
@@ -13,12 +13,24 @@ export function SubmissionsPage() {
   const { id } = useParams<{ id?: string }>();
   const submissionId = id ? parseInt(id, 10) : undefined;
   const lastSubmissionIdRef = useRef<number | undefined>(undefined);
+  const [filteredSortedSubs, setFilteredSortedSubs] = useState<models.SubmissionView[]>([]);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
     if (submissionId !== undefined) {
       lastSubmissionIdRef.current = submissionId;
     }
   }, [submissionId]);
+
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+    GetAllSubmissionViews().then((subs) => setFilteredSortedSubs(subs || []));
+  }, []);
+
+  const handleFilteredDataChange = useCallback((subs: models.SubmissionView[]) => {
+    setFilteredSortedSubs(subs);
+  }, []);
 
   const activeTab = submissionId !== undefined ? 'detail' : 'list';
 
@@ -60,20 +72,25 @@ export function SubmissionsPage() {
         value: 'list',
         label: 'List',
         icon: <IconList size={16} />,
-        content: <SubmissionsList onSubmissionClick={handleSubmissionClick} />,
+        content: (
+          <SubmissionsList
+            onSubmissionClick={handleSubmissionClick}
+            onFilteredDataChange={handleFilteredDataChange}
+          />
+        ),
       },
       {
         value: 'detail',
         label: 'Detail',
         icon: <IconFileText size={16} />,
         content: submissionId ? (
-          <SubmissionDetail submissionId={submissionId} />
+          <SubmissionDetail submissionId={submissionId} filteredSubmissions={filteredSortedSubs} />
         ) : (
           <div>Select a submission to view details</div>
         ),
       },
     ],
-    [submissionId, handleSubmissionClick]
+    [submissionId, handleSubmissionClick, handleFilteredDataChange, filteredSortedSubs]
   );
 
   return (

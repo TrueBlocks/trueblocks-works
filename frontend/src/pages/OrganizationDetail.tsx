@@ -40,7 +40,10 @@ interface OrganizationDetailProps {
   filteredOrganizations?: models.OrganizationWithNotes[];
 }
 
-export function OrganizationDetail({ organizationId }: OrganizationDetailProps) {
+export function OrganizationDetail({
+  organizationId,
+  filteredOrganizations,
+}: OrganizationDetailProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const navigation = useNavigation();
@@ -63,6 +66,19 @@ export function OrganizationDetail({ organizationId }: OrganizationDetailProps) 
     handleUndelete: handleUndeleteNote,
     handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('journal', organizationId);
+
+  // If stack is empty and we have filteredOrganizations (e.g., on app restart), populate from list
+  useEffect(() => {
+    if (
+      navigation.stack.length === 0 &&
+      filteredOrganizations &&
+      filteredOrganizations.length > 0
+    ) {
+      const items = filteredOrganizations.map((o) => ({ id: o.orgID }));
+      navigation.setItems('organization', items, organizationId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredOrganizations, navigation.stack.length]);
 
   const navigateToOrg = useCallback(
     (id: number) => {

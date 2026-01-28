@@ -1,0 +1,1 @@
+export { hashColor } from './hashColor';

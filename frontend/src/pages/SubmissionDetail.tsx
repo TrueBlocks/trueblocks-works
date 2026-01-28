@@ -57,7 +57,7 @@ interface SubmissionDetailProps {
   filteredSubmissions?: models.SubmissionView[];
 }
 
-export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
+export function SubmissionDetail({ submissionId, filteredSubmissions }: SubmissionDetailProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const returnToRef = useRef<string | undefined>(
@@ -81,6 +81,15 @@ export function SubmissionDetail({ submissionId }: SubmissionDetailProps) {
     handleUndelete: handleUndeleteNote,
     handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('submission', submissionId);
+
+  // If stack is empty and we have filteredSubmissions (e.g., on app restart), populate from list
+  useEffect(() => {
+    if (navigation.stack.length === 0 && filteredSubmissions && filteredSubmissions.length > 0) {
+      const items = filteredSubmissions.map((s) => ({ id: s.submissionID }));
+      navigation.setItems('submission', items, submissionId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredSubmissions, navigation.stack.length]);
 
   const loadData = useCallback(async () => {
     if (!submissionId) return;

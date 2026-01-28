@@ -12,12 +12,12 @@ import {
 } from '@mantine/core';
 import { IconChevronLeft, IconChevronRight, IconPlus, IconArrowRight } from '@tabler/icons-react';
 
-interface DashboardCardPage {
+export interface DashboardCardPage {
   title: string;
   content: React.ReactNode;
 }
 
-interface DashboardCardProps {
+export interface DashboardCardProps {
   title: string;
   icon: React.ReactNode;
   color: string;
@@ -182,7 +182,7 @@ function Sparkline({ data, color }: SparklineProps) {
   );
 }
 
-interface StatRowProps {
+export interface StatRowProps {
   label: string;
   value: number | string;
   onClick?: () => void;
@@ -199,11 +199,10 @@ export function StatRow({ label, value, onClick, color }: StatRowProps) {
         borderRadius: 4,
         transition: 'background-color 0.15s',
       }}
-      className={onClick ? 'stat-row-hover' : undefined}
-      onClick={onClick}
+      {...(onClick ? { className: 'stat-row-hover', onClick } : {})}
     >
       <Text size="sm">{label}</Text>
-      <Text size="sm" fw={600} c={color}>
+      <Text size="sm" fw={600} {...(color ? { c: color } : {})}>
         {typeof value === 'number' ? value.toLocaleString() : value}
       </Text>
     </Group>

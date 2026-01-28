@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconList, IconFileText } from '@tabler/icons-react';
 import { TabView, Tab } from '@/components';
-import { GetAppState, SetTab } from '@app';
+import { GetAppState, SetTab, GetOrganizationsWithNotes } from '@app';
 import { OrganizationsList } from './OrganizationsList';
 import { OrganizationDetail } from './OrganizationDetail';
 import { NavigationProvider } from '@trueblocks/scaffold';
@@ -13,12 +13,24 @@ export function OrganizationsPage() {
   const { id } = useParams<{ id?: string }>();
   const organizationId = id ? parseInt(id, 10) : undefined;
   const lastOrgIdRef = useRef<number | undefined>(undefined);
+  const [filteredSortedOrgs, setFilteredSortedOrgs] = useState<models.OrganizationWithNotes[]>([]);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
     if (organizationId !== undefined) {
       lastOrgIdRef.current = organizationId;
     }
   }, [organizationId]);
+
+  useEffect(() => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+    GetOrganizationsWithNotes().then((orgs) => setFilteredSortedOrgs(orgs || []));
+  }, []);
+
+  const handleFilteredDataChange = useCallback((orgs: models.OrganizationWithNotes[]) => {
+    setFilteredSortedOrgs(orgs);
+  }, []);
 
   const activeTab = organizationId !== undefined ? 'detail' : 'list';
 
@@ -60,20 +72,28 @@ export function OrganizationsPage() {
         value: 'list',
         label: 'List',
         icon: <IconList size={16} />,
-        content: <OrganizationsList onOrgClick={handleOrgClick} />,
+        content: (
+          <OrganizationsList
+            onOrgClick={handleOrgClick}
+            onFilteredDataChange={handleFilteredDataChange}
+          />
+        ),
       },
       {
         value: 'detail',
         label: 'Detail',
         icon: <IconFileText size={16} />,
         content: organizationId ? (
-          <OrganizationDetail organizationId={organizationId} />
+          <OrganizationDetail
+            organizationId={organizationId}
+            filteredOrganizations={filteredSortedOrgs}
+          />
         ) : (
           <div>Select an organization to view details</div>
         ),
       },
     ],
-    [organizationId, handleOrgClick]
+    [organizationId, handleOrgClick, handleFilteredDataChange, filteredSortedOrgs]
   );
 
   return (

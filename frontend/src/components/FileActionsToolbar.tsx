@@ -21,7 +21,7 @@ import {
 } from '@app';
 import { Log, LogErr } from '@/utils';
 import { useCallback, useEffect, useState } from 'react';
-import { MoveFileModal } from './MoveFileModal';
+import { MoveFileModal } from '@trueblocks/ui';
 
 interface FileActionsToolbarProps {
   workID: number;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Modal, NumberInput, Button, Group, Text, Stack } from '@mantine/core';
 
-interface MoveToPositionModalProps {
+export interface MoveToPositionModalProps {
   opened: boolean;
   onClose: () => void;
   onConfirm: (newPosition: number) => void;

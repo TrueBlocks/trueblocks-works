@@ -1,7 +1,7 @@
 import { Modal, Stack, Text, Group, Button, Code, Alert } from '@mantine/core';
 import { IconAlertTriangle } from '@tabler/icons-react';
 
-interface MoveFileModalProps {
+export interface MoveFileModalProps {
   opened: boolean;
   onClose: () => void;
   currentPath: string;

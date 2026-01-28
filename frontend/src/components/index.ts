@@ -1,10 +1,19 @@
 // Re-export reusable components from @trueblocks/ui
 export {
   CreatableSelect,
+  DashboardCard,
+  StatRow,
   DetailHeader,
   EditableField,
   KeyboardHints,
+  MoveFileModal,
+  MoveToPositionModal,
+  PathDisplay,
+  SelectablePopover,
   SortableHeader,
+  SplashScreen,
+  TypeBadge,
+  hashColor,
 } from '@trueblocks/ui';
 
 export { Navigation } from './Navigation';
@@ -21,10 +30,8 @@ export { SubmissionFieldSelect } from './SubmissionFieldSelect';
 export { OrgStatusBadge } from './OrgStatusBadge';
 export { QualityBadge } from './QualityBadge';
 export { ResponseBadge } from './ResponseBadge';
-export { TypeBadge } from './TypeBadge';
 export { CollectionSidebar } from './CollectionSidebar';
 export { WorksTable } from './WorksTable';
-export { PathDisplay } from './PathDisplay';
 export { TabView } from './TabView';
 export type { Tab } from './TabView';
 export { NotesPortal } from './NotesPortal';
@@ -44,9 +51,6 @@ export { WorkPickerModal } from './WorkPickerModal';
 export { SearchModal } from './SearchModal';
 export { BackupRestoreModal } from './BackupRestoreModal';
 export { SetupWizard } from './SetupWizard';
-export { MoveFileModal } from './MoveFileModal';
-export { MoveToPositionModal } from './MoveToPositionModal';
-export { SelectablePopover } from './SelectablePopover';
 export { DataTable } from './DataTable';
 export { EnumManagement } from './EnumManagement';
 export type { Column, ViewSort, SortColumn, SortDirection } from './DataTable';
@@ -55,7 +59,6 @@ export { ThemeSelector } from './ThemeSelector';
 export { DarkModeToggle } from './DarkModeToggle';
 export { DarkModeSwitch } from './DarkModeSwitch';
 export { DebugPopover } from './DebugPopover';
-export { SplashScreen } from './SplashScreen';
 export { ImportConfirmModal } from './ImportConfirmModal';
 export { FTSStatus } from './FTSStatus';
 export { BookSettingsTab } from './BookSettingsTab';

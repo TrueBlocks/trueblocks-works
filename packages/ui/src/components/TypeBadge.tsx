@@ -1,7 +1,7 @@
 import { Badge } from '@mantine/core';
-import { hashColor } from '@/utils';
+import { hashColor } from '../utils';
 
-interface TypeBadgeProps {
+export interface TypeBadgeProps {
   value: string | undefined | null;
   fallback?: string;
 }

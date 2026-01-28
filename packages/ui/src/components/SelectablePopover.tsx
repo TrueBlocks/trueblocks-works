@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Popover, Paper, Stack, Text, TextInput, UnstyledButton, Group } from '@mantine/core';
 import { IconPlus } from '@tabler/icons-react';
 
-interface SelectablePopoverProps {
+export interface SelectablePopoverProps {
   options: readonly string[];
   value: string;
   onChange: (value: string) => void;
@@ -75,11 +75,7 @@ export function SelectablePopover({
                     option === value ? 'var(--mantine-color-blue-1)' : 'transparent';
                 }}
               >
-                <Text
-                  size="sm"
-                  c={option === '' ? 'dimmed' : undefined}
-                  fs={option === '' ? 'italic' : undefined}
-                >
+                <Text size="sm" {...(option === '' ? { c: 'dimmed', fs: 'italic' } : {})}>
                   {option || '(Empty)'}
                 </Text>
               </UnstyledButton>

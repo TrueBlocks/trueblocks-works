@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { GetDistinctValues, UpdateSubmission } from '@app';
 import { models } from '@models';
-import { LogErr, hashColor, showValidationResult } from '@/utils';
-import { CreatableSelect } from '@trueblocks/ui';
+import { LogErr, showValidationResult } from '@/utils';
+import { CreatableSelect, hashColor } from '@trueblocks/ui';
 
 type SubmissionField = 'submissionType' | 'responseType';
 

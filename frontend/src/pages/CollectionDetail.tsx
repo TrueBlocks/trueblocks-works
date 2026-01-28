@@ -95,10 +95,7 @@ interface CollectionDetailProps {
   filteredCollections: models.CollectionView[];
 }
 
-export function CollectionDetail({
-  collectionId,
-  filteredCollections: _filteredCollections,
-}: CollectionDetailProps) {
+export function CollectionDetail({ collectionId, filteredCollections }: CollectionDetailProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const navigation = useNavigation();
@@ -147,6 +144,15 @@ export function CollectionDetail({
   // Use navigation context for prev/next (populated by CollectionsList)
   const hasPrev = navigation.hasPrev;
   const hasNext = navigation.hasNext;
+
+  // If stack is empty and we have filteredCollections (e.g., on app restart), populate from list
+  useEffect(() => {
+    if (navigation.stack.length === 0 && filteredCollections.length > 0) {
+      const items = filteredCollections.map((c) => ({ id: c.collID }));
+      navigation.setItems('collection', items, collectionId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredCollections, navigation.stack.length]);
 
   // Keep collectionId in sync with navigation
   useEffect(() => {

@@ -9,7 +9,7 @@ import { StatusBar } from '@/components';
 import { SetupWizard } from '@/components/SetupWizard';
 import { ImportReviewModal } from '@/components/ImportReviewModal';
 import { ImportConfirmModal } from '@/components/ImportConfirmModal';
-import { SplashScreen } from '@/components/SplashScreen';
+import { SplashScreen } from '@trueblocks/ui';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { WorksPage } from '@/pages/WorksPage';
 import { OrganizationsPage } from '@/pages/OrganizationsPage';
@@ -393,7 +393,16 @@ function App() {
   }
 
   if (showSplash) {
-    return <SplashScreen duration={2000} onComplete={() => setShowSplash(false)} />;
+    return (
+      <SplashScreen
+        duration={2000}
+        onComplete={() => setShowSplash(false)}
+        onSubscribe={(handler) => {
+          EventsOn('startup:status', handler);
+          return () => EventsOff('startup:status');
+        }}
+      />
+    );
   }
 
   return (

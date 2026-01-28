@@ -18,15 +18,6 @@ export {
 
 export { Navigation } from './Navigation';
 export { StatusBadge } from './StatusBadge';
-export { StatusSelect } from './StatusSelect';
-export { TypeSelect } from './TypeSelect';
-export { QualitySelect } from './QualitySelect';
-export { YearSelect } from './YearSelect';
-export { WorkFieldSelect } from './WorkFieldSelect';
-export { OrgFieldSelect } from './OrgFieldSelect';
-export { CollectionFieldSelect } from './CollectionFieldSelect';
-export { NoteFieldSelect } from './NoteFieldSelect';
-export { SubmissionFieldSelect } from './SubmissionFieldSelect';
 export { OrgStatusBadge } from './OrgStatusBadge';
 export { QualityBadge } from './QualityBadge';
 export { ResponseBadge } from './ResponseBadge';

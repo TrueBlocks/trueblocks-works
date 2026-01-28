@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   Paper,
   Title,
@@ -13,7 +13,9 @@ import {
 } from '@mantine/core';
 import { IconPlus, IconTrash, IconEdit, IconArrowBackUp, IconX } from '@tabler/icons-react';
 import { models } from '@models';
-import { NoteFieldSelect } from './NoteFieldSelect';
+import { EntityFieldSelect } from '@trueblocks/ui';
+import { GetDistinctValues, UpdateNote } from '@app';
+import { LogErr, showValidationResult } from '@/utils';
 import dayjs from 'dayjs';
 
 interface NotesPortalProps {
@@ -43,6 +45,16 @@ export function NotesPortal({
   const [newNote, setNewNote] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
+
+  const updateNoteField = useCallback(async (n: models.Note) => {
+    const result = await UpdateNote(n);
+    if (showValidationResult(result)) return { hasErrors: true };
+  }, []);
+
+  const loadNoteTypeOptions = useMemo(
+    () => () => GetDistinctValues('Notes', 'type').then((v) => v || []),
+    []
+  );
 
   const handleAdd = () => {
     if (newNote.trim()) {
@@ -145,7 +157,15 @@ export function NotesPortal({
                       <Text size="xs" c="dimmed">
                         {dayjs(note.createdAt).format('MMM D, YYYY')}
                       </Text>
-                      <NoteFieldSelect note={note} onUpdate={onUpdate} width={80} />
+                      <EntityFieldSelect
+                        entity={note}
+                        field="type"
+                        loadOptions={loadNoteTypeOptions}
+                        updateEntity={updateNoteField}
+                        width={80}
+                        onUpdate={onUpdate}
+                        onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
+                      />
                     </Group>
                     <Group gap="xs">
                       {deleted ? (

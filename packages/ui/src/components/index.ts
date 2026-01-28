@@ -10,6 +10,9 @@ export type { ConfirmDeleteModalProps, DeleteConfirmation } from './ConfirmDelet
 export { DarkModeSwitch } from './DarkModeSwitch';
 export type { DarkModeSwitchProps } from './DarkModeSwitch';
 
+export { EntityFieldSelect } from './EntityFieldSelect';
+export type { EntityFieldSelectProps } from './EntityFieldSelect';
+
 export { DashboardCard, StatRow } from './DashboardCard';
 export type { DashboardCardProps, DashboardCardPage, StatRowProps } from './DashboardCard';
 

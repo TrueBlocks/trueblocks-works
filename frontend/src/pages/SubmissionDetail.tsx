@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Stack,
@@ -26,16 +26,12 @@ import {
   DeleteSubmissionPermanent,
   SetLastSubmissionID,
   UpdateSubmission,
+  GetDistinctValues,
 } from '@app';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
 import { models, db } from '@models';
-import {
-  DetailHeader,
-  SubmissionFieldSelect,
-  ConfirmDeleteModal,
-  NotesPortal,
-  EditableField,
-} from '@/components';
+import { DetailHeader, ConfirmDeleteModal, NotesPortal, EditableField } from '@/components';
+import { EntityFieldSelect } from '@trueblocks/ui';
 import { useNotes } from '@/hooks';
 import { useNavigation } from '@trueblocks/scaffold';
 import dayjs from 'dayjs';
@@ -90,6 +86,20 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredSubmissions, navigation.stack.length]);
+
+  const updateSubmissionField = useCallback(async (s: models.Submission) => {
+    const result = await UpdateSubmission(s);
+    if (showValidationResult(result)) return { hasErrors: true };
+  }, []);
+
+  const loadResponseTypeOptions = useMemo(
+    () => () => GetDistinctValues('Submissions', 'response_type').then((v) => v || []),
+    []
+  );
+  const loadSubmissionTypeOptions = useMemo(
+    () => () => GetDistinctValues('Submissions', 'submission_type').then((v) => v || []),
+    []
+  );
 
   const loadData = useCallback(async () => {
     if (!submissionId) return;
@@ -342,17 +352,23 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
         }
         subtitle={
           <Group gap="xs">
-            <SubmissionFieldSelect
-              submission={submission}
+            <EntityFieldSelect
+              entity={submission}
               field="responseType"
+              loadOptions={loadResponseTypeOptions}
+              updateEntity={updateSubmissionField}
               width={100}
               onUpdate={setSubmission}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
             />
-            <SubmissionFieldSelect
-              submission={submission}
+            <EntityFieldSelect
+              entity={submission}
               field="submissionType"
+              loadOptions={loadSubmissionTypeOptions}
+              updateEntity={updateSubmissionField}
               width={100}
               onUpdate={setSubmission}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
             />
           </Group>
         }

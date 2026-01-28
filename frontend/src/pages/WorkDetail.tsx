@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Stack, Grid, Loader, Flex, Text, Group } from '@mantine/core';
 import { IconBook2 } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -26,6 +26,7 @@ import {
   OpenDocument,
   RegeneratePDF,
   UpdateWork,
+  GetEnumLists,
 } from '@app';
 import { models, db } from '@models';
 import {
@@ -41,11 +42,9 @@ import {
   DebugPopover,
   ConfirmDeleteModal,
   EditableField,
-  TypeSelect,
-  StatusSelect,
-  QualitySelect,
-  YearSelect,
 } from '@/components';
+import { EntityFieldSelect } from '@trueblocks/ui';
+import { workStatusColors, qualityColors } from '@/types';
 
 interface WorkDetailProps {
   workId: number;
@@ -298,6 +297,19 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     setWork(updatedWork);
     setRefreshKey((k) => k + 1);
   }, []);
+
+  const updateWorkField = useCallback(async (w: models.Work) => {
+    const result = await UpdateWork(w);
+    if (showValidationResult(result)) return { hasErrors: true };
+  }, []);
+
+  const loadStatusOptions = useMemo(() => () => GetEnumLists().then((l) => l.statusList || []), []);
+  const loadQualityOptions = useMemo(
+    () => () => GetEnumLists().then((l) => l.qualityList || []),
+    []
+  );
+  const loadTypeOptions = useMemo(() => () => GetEnumLists().then((l) => l.workTypeList || []), []);
+  const loadYearOptions = useMemo(() => () => GetEnumLists().then((l) => l.yearList || []), []);
 
   const handleTitleChange = useCallback(
     async (newTitle: string) => {
@@ -589,10 +601,44 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
         }
         subtitle={
           <>
-            <TypeSelect work={work} onUpdate={handleWorkUpdate} />
-            <StatusSelect work={work} onUpdate={handleWorkUpdate} />
-            <QualitySelect work={work} onUpdate={handleWorkUpdate} />
-            <YearSelect work={work} onUpdate={handleWorkUpdate} />
+            <EntityFieldSelect
+              entity={work}
+              field="type"
+              loadOptions={loadTypeOptions}
+              updateEntity={updateWorkField}
+              width={120}
+              onUpdate={handleWorkUpdate}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
+            />
+            <EntityFieldSelect
+              entity={work}
+              field="status"
+              loadOptions={loadStatusOptions}
+              updateEntity={updateWorkField}
+              colorMap={workStatusColors}
+              width={120}
+              onUpdate={handleWorkUpdate}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
+            />
+            <EntityFieldSelect
+              entity={work}
+              field="quality"
+              loadOptions={loadQualityOptions}
+              updateEntity={updateWorkField}
+              colorMap={qualityColors}
+              width={100}
+              onUpdate={handleWorkUpdate}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
+            />
+            <EntityFieldSelect
+              entity={work}
+              field="year"
+              loadOptions={loadYearOptions}
+              updateEntity={updateWorkField}
+              width={80}
+              onUpdate={handleWorkUpdate}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
+            />
             {work.status === 'Published' && work.qualityAtPublish && (
               <Text size="sm" c="dimmed" fs="italic">
                 (was {work.qualityAtPublish})

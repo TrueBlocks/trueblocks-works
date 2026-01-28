@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Stack, Grid, Loader, Flex, Text, Group, Badge, Button, Tooltip } from '@mantine/core';
 import { IconExternalLink, IconBuilding } from '@tabler/icons-react';
@@ -22,6 +22,7 @@ import {
   OpenOrgURL,
   OpenOrgOtherURL,
   OpenDuotrope,
+  GetDistinctValues,
 } from '@app';
 import { models, db } from '@models';
 import {
@@ -31,8 +32,8 @@ import {
   SubmissionsPortal,
   ConfirmDeleteModal,
   EditableField,
-  OrgFieldSelect,
 } from '@/components';
+import { EntityFieldSelect } from '@trueblocks/ui';
 import { orgStatusColors } from '@/types';
 
 interface OrganizationDetailProps {
@@ -247,6 +248,20 @@ export function OrganizationDetail({
     showValidationResult(result);
   }, []);
 
+  const updateOrgField = useCallback(async (o: models.Organization) => {
+    const result = await UpdateOrganization(o);
+    if (showValidationResult(result)) return { hasErrors: true };
+  }, []);
+
+  const loadOrgTypeOptions = useMemo(
+    () => () => GetDistinctValues('Organizations', 'type').then((v) => v || []),
+    []
+  );
+  const loadOrgStatusOptions = useMemo(
+    () => () => GetDistinctValues('Organizations', 'status').then((v) => v || []),
+    []
+  );
+
   const handleOpenURL = useCallback(() => {
     if (org) OpenOrgURL(org.orgID);
   }, [org]);
@@ -379,13 +394,24 @@ export function OrganizationDetail({
         }
         subtitle={
           <>
-            <OrgFieldSelect org={org} field="type" onUpdate={handleOrgUpdate} width={100} />
-            <OrgFieldSelect
-              org={org}
-              field="status"
-              colorMap={orgStatusColors}
-              onUpdate={handleOrgUpdate}
+            <EntityFieldSelect
+              entity={org}
+              field="type"
+              loadOptions={loadOrgTypeOptions}
+              updateEntity={updateOrgField}
               width={100}
+              onUpdate={handleOrgUpdate}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
+            />
+            <EntityFieldSelect
+              entity={org}
+              field="status"
+              loadOptions={loadOrgStatusOptions}
+              updateEntity={updateOrgField}
+              colorMap={orgStatusColors}
+              width={100}
+              onUpdate={handleOrgUpdate}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
             />
             {org.timing && <Badge variant="outline">{org.timing}</Badge>}
             {org.ranking && (

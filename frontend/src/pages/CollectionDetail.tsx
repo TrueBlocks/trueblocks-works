@@ -65,6 +65,7 @@ import {
   GetCollectionHasMarkedWorks,
   ToggleCollectionSuppressed,
   GetCollectionHasSuppressedWorks,
+  GetDistinctValues,
 } from '@app';
 import { models, db, state } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
@@ -80,7 +81,6 @@ import {
   NewWorkModal,
   NotesPortal,
   SubmissionsPortal,
-  CollectionFieldSelect,
   ConfirmDeleteModal,
   MoveToPositionModal,
   BookSettingsTab,
@@ -88,6 +88,7 @@ import {
   AmazonPublishingTab,
   CoverImagesTab,
 } from '@/components';
+import { EntityFieldSelect } from '@trueblocks/ui';
 import { useNotes } from '@/hooks';
 
 interface CollectionDetailProps {
@@ -180,6 +181,15 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     ['mod+shift+ArrowLeft', handleReturnToList],
     ['mod+shift+ArrowUp', handleReturnToList],
   ]);
+
+  const updateCollectionField = useCallback(async (c: models.Collection) => {
+    await UpdateCollection(c);
+  }, []);
+
+  const loadCollectionTypeOptions = useMemo(
+    () => () => GetDistinctValues('Collections', 'type').then((v) => v || []),
+    []
+  );
 
   const loadData = useCallback(async () => {
     if (!collectionId) return;
@@ -882,11 +892,14 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 {collection.type || 'No type'}
               </Text>
             ) : (
-              <CollectionFieldSelect
-                collection={collection}
+              <EntityFieldSelect
+                entity={collection}
                 field="type"
+                loadOptions={loadCollectionTypeOptions}
+                updateEntity={updateCollectionField}
                 width={100}
                 onUpdate={(updated) => setCollection(updated as models.CollectionView)}
+                onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
               />
             )}
             <Text size="sm" c="dimmed">

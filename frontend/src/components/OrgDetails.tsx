@@ -1,7 +1,9 @@
 import { Paper, SimpleGrid, Text, Stack, Box } from '@mantine/core';
 import { models } from '@models';
-import { EditableField } from '@trueblocks/ui';
-import { OrgFieldSelect } from './OrgFieldSelect';
+import { EditableField, EntityFieldSelect } from '@trueblocks/ui';
+import { GetDistinctValues, UpdateOrganization } from '@app';
+import { LogErr, showValidationResult } from '@/utils';
+import { useMemo, useCallback } from 'react';
 
 interface OrgDetailsProps {
   org: models.Organization;
@@ -26,6 +28,16 @@ export function OrgDetails({ org, onUpdate }: OrgDetailsProps) {
       onUpdate({ ...org, [field]: value } as models.Organization);
     }
   };
+
+  const updateOrgField = useCallback(async (o: models.Organization) => {
+    const result = await UpdateOrganization(o);
+    if (showValidationResult(result)) return { hasErrors: true };
+  }, []);
+
+  const loadMyInterestOptions = useMemo(
+    () => () => GetDistinctValues('Organizations', 'my_interest').then((v) => v || []),
+    []
+  );
 
   return (
     <Paper p="md" withBorder>
@@ -52,7 +64,15 @@ export function OrgDetails({ org, onUpdate }: OrgDetailsProps) {
             <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
               My Interest
             </Text>
-            <OrgFieldSelect org={org} field="myInterest" onUpdate={onUpdate} width={100} />
+            <EntityFieldSelect
+              entity={org}
+              field="myInterest"
+              loadOptions={loadMyInterestOptions}
+              updateEntity={updateOrgField}
+              width={100}
+              onUpdate={onUpdate}
+              onError={(err, field) => LogErr(`Failed to update ${field}:`, err)}
+            />
           </Box>
           <Field label="Source" value={org.source} />
           <Field label="Duotrope #" value={org.duotropeNum} />

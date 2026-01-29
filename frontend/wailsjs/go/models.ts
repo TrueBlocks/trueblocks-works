@@ -226,6 +226,22 @@ export namespace app {
 		    return a;
 		}
 	}
+	export class CoverExportResult {
+	    success: boolean;
+	    outputPath?: string;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CoverExportResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.success = source["success"];
+	        this.outputPath = source["outputPath"];
+	        this.error = source["error"];
+	    }
+	}
 	export class PendingAlert {
 	    submissionID: number;
 	    workTitle: string;
@@ -751,6 +767,56 @@ export namespace app {
 	    }
 	}
 	
+	export class ValidationResult {
+	    passed: boolean;
+	    errors: string[];
+	    warnings: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ValidationResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.passed = source["passed"];
+	        this.errors = source["errors"];
+	        this.warnings = source["warnings"];
+	    }
+	}
+	export class PublicationReadiness {
+	    content: ValidationResult;
+	    matter: ValidationResult;
+	    cover: ValidationResult;
+	
+	    static createFrom(source: any = {}) {
+	        return new PublicationReadiness(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.content = this.convertValues(source["content"], ValidationResult);
+	        this.matter = this.convertValues(source["matter"], ValidationResult);
+	        this.cover = this.convertValues(source["cover"], ValidationResult);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	
 	export class ReportIssue {
 	    id: number;
@@ -939,6 +1005,7 @@ export namespace app {
 	        this.authorColor = source["authorColor"];
 	    }
 	}
+	
 	export class WorkBookAuditStatus {
 	    isInBook: boolean;
 	    unknownStyles: number;
@@ -1496,6 +1563,8 @@ export namespace models {
 	    titleOffsetY?: number;
 	    subtitleOffsetY?: number;
 	    authorOffsetY?: number;
+	    publisher?: string;
+	    backgroundColor?: string;
 	    worksStartRecto?: boolean;
 	    showPageNumbers?: boolean;
 	    selectedParts?: string;
@@ -1541,6 +1610,8 @@ export namespace models {
 	        this.titleOffsetY = source["titleOffsetY"];
 	        this.subtitleOffsetY = source["subtitleOffsetY"];
 	        this.authorOffsetY = source["authorOffsetY"];
+	        this.publisher = source["publisher"];
+	        this.backgroundColor = source["backgroundColor"];
 	        this.worksStartRecto = source["worksStartRecto"];
 	        this.showPageNumbers = source["showPageNumbers"];
 	        this.selectedParts = source["selectedParts"];

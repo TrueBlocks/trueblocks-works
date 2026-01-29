@@ -104,6 +104,8 @@ export function ExportBookPDFWithParts(arg1:number,arg2:Array<number>,arg3:boole
 
 export function ExportCollectionFolder(arg1:number):Promise<number>;
 
+export function ExportCoverPDF(arg1:number,arg2:string):Promise<app.CoverExportResult>;
+
 export function ExportToSubmissions(arg1:number):Promise<string>;
 
 export function FTSBatchContent(arg1:Array<number>):Promise<Array<fts.ExtractionResult>>;
@@ -150,6 +152,8 @@ export function GetCollections():Promise<Array<models.CollectionView>>;
 
 export function GetCoverImageData(arg1:string):Promise<string>;
 
+export function GetCoverPDFPath(arg1:number):Promise<string>;
+
 export function GetCoversDir():Promise<string>;
 
 export function GetDashboardStats(arg1:string):Promise<app.DashboardStats>;
@@ -187,6 +191,8 @@ export function GetOrgsFilterOptions():Promise<app.OrgsFilterOptions>;
 export function GetPartCacheStatus(arg1:number):Promise<Record<number, boolean>>;
 
 export function GetPreviewURL(arg1:number):Promise<string>;
+
+export function GetPublicationReadiness(arg1:number):Promise<app.PublicationReadiness>;
 
 export function GetReportNames():Promise<Array<string>>;
 
@@ -257,6 +263,8 @@ export function ListTemplates():Promise<Array<string>>;
 export function MoveWorkFile(arg1:number):Promise<void>;
 
 export function OpenBookPDF(arg1:number):Promise<app.OpenBookPDFResult>;
+
+export function OpenCoverPDF(arg1:number):Promise<app.CoverExportResult>;
 
 export function OpenDocument(arg1:number):Promise<void>;
 
@@ -377,5 +385,11 @@ export function UpdateSubmission(arg1:models.Submission):Promise<validation.Vali
 export function UpdateWork(arg1:models.Work):Promise<validation.ValidationResult>;
 
 export function UpdateWorkWithWorkflow(arg1:models.Work):Promise<app.WorkUpdateResult>;
+
+export function ValidateContent(arg1:number):Promise<app.ValidationResult>;
+
+export function ValidateCover(arg1:number):Promise<app.ValidationResult>;
+
+export function ValidateMatter(arg1:number):Promise<app.ValidationResult>;
 
 export function ValidateTemplate(arg1:string):Promise<app.TemplateValidation>;

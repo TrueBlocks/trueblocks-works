@@ -18,8 +18,9 @@ func (db *DB) CreateBook(b *models.Book) error {
 		page_num_font, page_num_size, title_font, title_size,
 		subtitle_font, subtitle_size, author_font, author_size,
 		title_offset_y, subtitle_offset_y, author_offset_y,
+		publisher, background_color,
 		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
 		b.CollID, b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
@@ -29,6 +30,7 @@ func (db *DB) CreateBook(b *models.Book) error {
 		b.PageNumFont, b.PageNumSize, b.TitleFont, b.TitleSize,
 		b.SubtitleFont, b.SubtitleSize, b.AuthorFont, b.AuthorSize,
 		b.TitleOffsetY, b.SubtitleOffsetY, b.AuthorOffsetY,
+		b.Publisher, b.BackgroundColor,
 		b.WorksStartRecto, b.ShowPageNumbers, b.SelectedParts, now, now,
 	)
 	if err != nil {
@@ -53,6 +55,7 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 		page_num_font, page_num_size, title_font, title_size,
 		subtitle_font, subtitle_size, author_font, author_size,
 		title_offset_y, subtitle_offset_y, author_offset_y,
+		publisher, background_color,
 		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
 		FROM Books WHERE bookID = ?`
 
@@ -66,6 +69,7 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 		&b.Status, &b.HeaderFont, &b.HeaderSize, &b.PageNumFont, &b.PageNumSize,
 		&b.TitleFont, &b.TitleSize, &b.SubtitleFont, &b.SubtitleSize,
 		&b.AuthorFont, &b.AuthorSize, &b.TitleOffsetY, &b.SubtitleOffsetY, &b.AuthorOffsetY,
+		&b.Publisher, &b.BackgroundColor,
 		&b.WorksStartRecto, &b.ShowPageNumbers,
 		&b.SelectedParts, &b.CreatedAt, &b.ModifiedAt,
 	)
@@ -86,6 +90,7 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 		page_num_font, page_num_size, title_font, title_size,
 		subtitle_font, subtitle_size, author_font, author_size,
 		title_offset_y, subtitle_offset_y, author_offset_y,
+		publisher, background_color,
 		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
 		FROM Books WHERE collID = ?`
 
@@ -99,6 +104,7 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 		&b.Status, &b.HeaderFont, &b.HeaderSize, &b.PageNumFont, &b.PageNumSize,
 		&b.TitleFont, &b.TitleSize, &b.SubtitleFont, &b.SubtitleSize,
 		&b.AuthorFont, &b.AuthorSize, &b.TitleOffsetY, &b.SubtitleOffsetY, &b.AuthorOffsetY,
+		&b.Publisher, &b.BackgroundColor,
 		&b.WorksStartRecto, &b.ShowPageNumbers,
 		&b.SelectedParts, &b.CreatedAt, &b.ModifiedAt,
 	)
@@ -122,6 +128,7 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		title_font = ?, title_size = ?, subtitle_font = ?, subtitle_size = ?,
 		author_font = ?, author_size = ?,
 		title_offset_y = ?, subtitle_offset_y = ?, author_offset_y = ?,
+		publisher = ?, background_color = ?,
 		works_start_recto = ?, show_page_numbers = ?,
 		selected_parts = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE bookID = ?`
@@ -136,6 +143,7 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		b.TitleFont, b.TitleSize, b.SubtitleFont, b.SubtitleSize,
 		b.AuthorFont, b.AuthorSize,
 		b.TitleOffsetY, b.SubtitleOffsetY, b.AuthorOffsetY,
+		b.Publisher, b.BackgroundColor,
 		b.WorksStartRecto, b.ShowPageNumbers,
 		b.SelectedParts, b.BookID,
 	)

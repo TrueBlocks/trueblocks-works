@@ -17,11 +17,10 @@ import {
   ExportBookPDF,
   ExportBookPDFWithParts,
   HasCollectionParts,
-  AuditCollectionStyles,
   OpenBookPDF,
-  AnalyzeCollectionHeadings,
   GetTitlePageStyles,
   ValidateTemplate,
+  ValidateMatter,
 } from '@app';
 import { models, app } from '@models';
 import { LogErr, Log, generateTitlePageHTML } from '@/utils';
@@ -45,6 +44,7 @@ interface MatterViewProps {
   collectionName: string;
   activeSubTab: string;
   onSubTabChange: (value: string | null) => void;
+  onNavigateToAmazon: () => void;
 }
 
 export function MatterView({
@@ -52,6 +52,7 @@ export function MatterView({
   collectionName,
   activeSubTab,
   onSubTabChange,
+  onNavigateToAmazon,
 }: MatterViewProps) {
   const [book, setBook] = useState<models.Book | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,10 +60,7 @@ export function MatterView({
   const [exporting, setExporting] = useState(false);
   const [validating, setValidating] = useState(false);
   const [partModalOpen, setPartModalOpen] = useState(false);
-  const [validationResult, setValidationResult] = useState<{
-    audit?: app.CollectionAuditSummary;
-    headings?: app.CollectionHeadingAnalysisResult;
-  } | null>(null);
+  const [validationResult, setValidationResult] = useState<app.ValidationResult | null>(null);
 
   const loadBook = useCallback(async () => {
     try {
@@ -192,18 +190,14 @@ export function MatterView({
     setValidating(true);
     setValidationResult(null);
     try {
-      const [audit, headings] = await Promise.all([
-        AuditCollectionStyles(collectionId),
-        AnalyzeCollectionHeadings(collectionId),
-      ]);
-      setValidationResult({ audit, headings });
-      const allClean = audit.cleanWorks === audit.totalWorks && headings.failed === 0;
+      const result = await ValidateMatter(collectionId);
+      setValidationResult(result);
       notifications.show({
-        title: allClean ? 'Validation Passed' : 'Validation Complete',
-        message: allClean
-          ? 'All works pass style and heading validation'
-          : `${audit.dirtyWorks} style issues, ${headings.failed} heading issues`,
-        color: allClean ? 'green' : 'yellow',
+        title: result.passed ? 'Validation Passed' : 'Validation Issues Found',
+        message: result.passed
+          ? 'All front matter checks passed'
+          : `${result.errors.length} errors, ${result.warnings.length} warnings`,
+        color: result.passed ? 'green' : result.errors.length > 0 ? 'red' : 'yellow',
         autoClose: 5000,
       });
     } catch (err) {
@@ -312,21 +306,22 @@ export function MatterView({
               <>
                 <Badge
                   size="xs"
-                  color={
-                    validationResult.audit?.cleanWorks === validationResult.audit?.totalWorks
-                      ? 'green'
-                      : 'yellow'
-                  }
+                  color={validationResult.passed ? 'green' : 'red'}
+                  style={{ cursor: 'pointer' }}
+                  onClick={onNavigateToAmazon}
                 >
-                  Styles: {validationResult.audit?.cleanWorks}/{validationResult.audit?.totalWorks}
+                  {validationResult.passed ? 'Passed' : `${validationResult.errors.length} errors`}
                 </Badge>
-                <Badge
-                  size="xs"
-                  color={validationResult.headings?.failed === 0 ? 'green' : 'yellow'}
-                >
-                  Headings: {validationResult.headings?.successful}/
-                  {validationResult.headings?.totalWorks}
-                </Badge>
+                {validationResult.warnings.length > 0 && (
+                  <Badge
+                    size="xs"
+                    color="yellow"
+                    style={{ cursor: 'pointer' }}
+                    onClick={onNavigateToAmazon}
+                  >
+                    {validationResult.warnings.length} warnings
+                  </Badge>
+                )}
               </>
             )}
           </Group>

@@ -109,6 +109,11 @@ var migrations = []Migration{
 		Name:    "add_title_page_offsets",
 		Up:      migrateAddTitlePageOffsets,
 	},
+	{
+		Version: 29,
+		Name:    "add_book_cover_metadata",
+		Up:      migrateAddBookCoverMetadata,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -949,6 +954,20 @@ func migrateAddTitlePageOffsets(tx *sql.Tx) error {
 	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN author_offset_y INTEGER DEFAULT 0`)
 	if err != nil {
 		return fmt.Errorf("add author_offset_y column to Books: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddBookCoverMetadata(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN publisher TEXT DEFAULT 'Stony Lane Press'`)
+	if err != nil {
+		return fmt.Errorf("add publisher column to Books: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN background_color TEXT DEFAULT '#F5F5DC'`)
+	if err != nil {
+		return fmt.Errorf("add background_color column to Books: %w", err)
 	}
 
 	return nil

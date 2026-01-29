@@ -14,6 +14,8 @@ import {
   Box,
   Progress,
   UnstyledButton,
+  Button,
+  ThemeIcon,
 } from '@mantine/core';
 import {
   IconExternalLink,
@@ -25,12 +27,15 @@ import {
   IconPhoto,
   IconWorld,
   IconClipboardList,
-  IconFileText,
+  IconChecks,
+  IconX,
+  IconAlertTriangle,
 } from '@tabler/icons-react';
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
-import { GetBookByCollection, OpenKDPManuscriptSpecs } from '@app';
-import { models } from '@models';
+import { GetBookByCollection, GetPublicationReadiness } from '@app';
+import { models, app } from '@models';
 import { LogErr } from '@/utils';
+import { notifications } from '@mantine/notifications';
 
 interface AmazonViewProps {
   collectionId: number;
@@ -45,29 +50,74 @@ interface PublishingStep {
   details?: string;
 }
 
+function ValidationSection({ title, result }: { title: string; result: app.ValidationResult }) {
+  const icon = result.passed ? (
+    <ThemeIcon color="green" size="sm" radius="xl">
+      <IconCheck size={12} />
+    </ThemeIcon>
+  ) : result.errors.length > 0 ? (
+    <ThemeIcon color="red" size="sm" radius="xl">
+      <IconX size={12} />
+    </ThemeIcon>
+  ) : (
+    <ThemeIcon color="yellow" size="sm" radius="xl">
+      <IconAlertTriangle size={12} />
+    </ThemeIcon>
+  );
+
+  return (
+    <Paper p="sm" withBorder>
+      <Group
+        justify="space-between"
+        mb={result.errors.length > 0 || result.warnings.length > 0 ? 'xs' : 0}
+      >
+        <Group gap="xs">
+          {icon}
+          <Text size="sm" fw={500}>
+            {title}
+          </Text>
+        </Group>
+        <Badge
+          size="xs"
+          color={result.passed ? 'green' : result.errors.length > 0 ? 'red' : 'yellow'}
+        >
+          {result.passed
+            ? 'Passed'
+            : result.errors.length > 0
+              ? `${result.errors.length} errors`
+              : `${result.warnings.length} warnings`}
+        </Badge>
+      </Group>
+      {result.errors.length > 0 && (
+        <List size="xs" spacing={2} ml="md">
+          {result.errors.map((err, i) => (
+            <List.Item key={i} c="red">
+              {err}
+            </List.Item>
+          ))}
+        </List>
+      )}
+      {result.warnings.length > 0 && (
+        <List size="xs" spacing={2} ml="md">
+          {result.warnings.map((warn, i) => (
+            <List.Item key={i} c="yellow.7">
+              {warn}
+            </List.Item>
+          ))}
+        </List>
+      )}
+    </Paper>
+  );
+}
+
 export function AmazonView({ collectionId, collectionName: _collectionName }: AmazonViewProps) {
   void _collectionName;
   const [book, setBook] = useState<models.Book | null>(null);
   const [loading, setLoading] = useState(true);
-  const [publishingSteps, setPublishingSteps] = useState<PublishingStep[]>([
-    {
-      id: 'manuscript',
-      title: 'Prepare Manuscript',
-      description: 'Export book as PDF and verify formatting',
-      status: 'not-started',
-    },
-    {
-      id: 'cover',
-      title: 'Prepare Cover',
-      description: 'Create front and back cover with proper dimensions',
-      status: 'not-started',
-    },
-    {
-      id: 'metadata',
-      title: 'Book Metadata',
-      description: 'Title, subtitle, author, description, keywords',
-      status: 'not-started',
-    },
+  const [validating, setValidating] = useState(false);
+  const [readiness, setReadiness] = useState<app.PublicationReadiness | null>(null);
+
+  const publishingSteps: PublishingStep[] = [
     {
       id: 'upload',
       title: 'Upload to KDP',
@@ -86,29 +136,12 @@ export function AmazonView({ collectionId, collectionName: _collectionName }: Am
       description: 'Submit for review and publishing',
       status: 'not-started',
     },
-  ]);
+  ];
 
   const loadBook = useCallback(async () => {
     try {
       const result = await GetBookByCollection(collectionId);
       setBook(result);
-
-      if (result) {
-        setPublishingSteps((prev) =>
-          prev.map((step) => {
-            if (step.id === 'manuscript' && result.exportPath) {
-              return { ...step, status: 'completed' as const };
-            }
-            if (step.id === 'cover' && result.coverPath) {
-              return { ...step, status: 'completed' as const };
-            }
-            if (step.id === 'metadata' && result.title && result.author) {
-              return { ...step, status: 'completed' as const };
-            }
-            return step;
-          })
-        );
-      }
     } catch (err) {
       LogErr('Failed to load book:', err);
     } finally {
@@ -119,6 +152,49 @@ export function AmazonView({ collectionId, collectionName: _collectionName }: Am
   useEffect(() => {
     loadBook();
   }, [loadBook]);
+
+  const runValidation = useCallback(async () => {
+    setValidating(true);
+    try {
+      const result = await GetPublicationReadiness(collectionId);
+      setReadiness(result);
+    } catch (err) {
+      LogErr('Validation failed:', err);
+    } finally {
+      setValidating(false);
+    }
+  }, [collectionId]);
+
+  useEffect(() => {
+    runValidation();
+  }, [runValidation]);
+
+  const handleValidateAll = useCallback(async () => {
+    setValidating(true);
+    try {
+      const result = await GetPublicationReadiness(collectionId);
+      setReadiness(result);
+      const allPassed = result.content.passed && result.matter.passed && result.cover.passed;
+      notifications.show({
+        title: allPassed ? 'All Validations Passed' : 'Validation Issues Found',
+        message: allPassed
+          ? 'Your book is ready for publication'
+          : 'Review the checklist below for details',
+        color: allPassed ? 'green' : 'yellow',
+        autoClose: 5000,
+      });
+    } catch (err) {
+      LogErr('Validation failed:', err);
+      notifications.show({
+        title: 'Validation Failed',
+        message: String(err),
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setValidating(false);
+    }
+  }, [collectionId]);
 
   const completedSteps = publishingSteps.filter((s) => s.status === 'completed').length;
   const totalSteps = publishingSteps.length;
@@ -192,6 +268,34 @@ export function AmazonView({ collectionId, collectionName: _collectionName }: Am
       </Paper>
 
       <Paper p="md" withBorder>
+        <Group justify="space-between" mb="md">
+          <Text size="sm" fw={600}>
+            Publication Readiness
+          </Text>
+          <Button
+            size="xs"
+            leftSection={<IconChecks size={14} />}
+            onClick={handleValidateAll}
+            loading={validating}
+          >
+            Validate All
+          </Button>
+        </Group>
+
+        {readiness ? (
+          <Stack gap="sm">
+            <ValidationSection title="Content" result={readiness.content} />
+            <ValidationSection title="Matter" result={readiness.matter} />
+            <ValidationSection title="Cover" result={readiness.cover} />
+          </Stack>
+        ) : (
+          <Text size="sm" c="dimmed">
+            Click &quot;Validate All&quot; to check publication readiness
+          </Text>
+        )}
+      </Paper>
+
+      <Paper p="md" withBorder>
         <Text size="sm" fw={600} mb="md">
           Publishing Checklist
         </Text>
@@ -212,89 +316,6 @@ export function AmazonView({ collectionId, collectionName: _collectionName }: Am
                   <Text size="sm" c="dimmed">
                     {step.description}
                   </Text>
-
-                  {step.id === 'manuscript' && (
-                    <Box>
-                      <List size="sm" spacing="xs">
-                        <List.Item icon={<IconFileTypePdf size={16} />}>
-                          Export book as PDF from the Book Settings tab
-                        </List.Item>
-                        <List.Item icon={<IconCheck size={16} />}>
-                          Verify all essays are styled correctly
-                        </List.Item>
-                        <List.Item icon={<IconCheck size={16} />}>
-                          Check page breaks and section starts
-                        </List.Item>
-                      </List>
-                      <UnstyledButton
-                        onClick={() => {
-                          OpenKDPManuscriptSpecs().catch((err) =>
-                            LogErr('Failed to open KDP specs:', err)
-                          );
-                        }}
-                        style={{ color: 'var(--mantine-color-blue-6)', marginTop: 8 }}
-                      >
-                        <Group gap={4}>
-                          <IconFileText size={14} />
-                          KDP Manuscript Specifications
-                        </Group>
-                      </UnstyledButton>
-                      {book?.exportPath && (
-                        <Alert color="green" mt="sm" icon={<IconCheck size={16} />}>
-                          <Text size="sm">Manuscript exported to: {book.exportPath}</Text>
-                        </Alert>
-                      )}
-                    </Box>
-                  )}
-
-                  {step.id === 'cover' && (
-                    <Box>
-                      <List size="sm" spacing="xs">
-                        <List.Item icon={<IconPhoto size={16} />}>
-                          Front cover: 2560 x 1600 pixels (1.6:1 ratio)
-                        </List.Item>
-                        <List.Item icon={<IconPhoto size={16} />}>
-                          Back cover: Include barcode area (ISBN)
-                        </List.Item>
-                        <List.Item icon={<IconCheck size={16} />}>
-                          Spine width depends on page count
-                        </List.Item>
-                      </List>
-                      <UnstyledButton
-                        onClick={() =>
-                          BrowserOpenURL('https://kdp.amazon.com/en_US/help/topic/G201953020')
-                        }
-                        style={{ color: 'var(--mantine-color-blue-6)', marginTop: 8 }}
-                      >
-                        <Group gap={4}>
-                          KDP Cover Guidelines <IconExternalLink size={14} />
-                        </Group>
-                      </UnstyledButton>
-                    </Box>
-                  )}
-
-                  {step.id === 'metadata' && (
-                    <Box>
-                      <List size="sm" spacing="xs">
-                        <List.Item>
-                          <strong>Title:</strong> {book?.title || 'Not set'}
-                        </List.Item>
-                        <List.Item>
-                          <strong>Subtitle:</strong> {book?.subtitle || 'None'}
-                        </List.Item>
-                        <List.Item>
-                          <strong>Author:</strong> {book?.author || 'Not set'}
-                        </List.Item>
-                        <List.Item>
-                          <strong>ISBN:</strong> {book?.isbn || 'Not set'}
-                        </List.Item>
-                      </List>
-                      <Text size="sm" c="dimmed" mt="sm">
-                        Also prepare: book description (4000 chars max), keywords (7 max),
-                        categories
-                      </Text>
-                    </Box>
-                  )}
 
                   {step.id === 'upload' && (
                     <Box>

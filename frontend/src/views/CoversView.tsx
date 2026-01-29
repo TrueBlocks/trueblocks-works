@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Stack,
   Paper,
@@ -9,228 +9,40 @@ import {
   Button,
   TextInput,
   Textarea,
-  Image,
-  Box,
-  Alert,
-  ActionIcon,
-  Tooltip,
-  Divider,
+  ColorInput,
+  Grid,
+  Badge,
 } from '@mantine/core';
-import {
-  IconPhoto,
-  IconUpload,
-  IconX,
-  IconCopy,
-  IconExternalLink,
-  IconAlertCircle,
-} from '@tabler/icons-react';
+import { IconFileTypePdf, IconExternalLink, IconPhoto, IconChecks } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import {
   GetBookByCollection,
   UpdateBook,
   SelectCoverImage,
   GetCoverImageData,
-  SaveCoverFromBytes,
-  CopyCoverToClipboard,
+  ExportCoverPDF,
+  OpenCoverPDF,
+  GetCoverPDFPath,
+  ValidateCover,
 } from '@app';
-import { models } from '@models';
-import { LogErr, Log } from '@/utils';
-import { BrowserOpenURL } from '@wailsjs/runtime/runtime';
+import { models, app } from '@models';
+import { LogErr, generateCoverHTML, COVER_DIMENSIONS } from '@/utils';
+import { PagePreview } from '@trueblocks/ui';
 
 interface CoversViewProps {
   collectionId: number;
   collectionName: string;
+  onNavigateToAmazon: () => void;
 }
 
-interface CoverDropZoneProps {
-  label: string;
-  imagePath?: string;
-  imageData?: string;
-  onSelect: () => void;
-  onDrop: (file: File) => void;
-  onClear: () => void;
-  onCopy: () => void;
-}
-
-function CoverDropZone({
-  label,
-  imagePath,
-  imageData,
-  onSelect,
-  onDrop,
-  onClear,
-  onCopy,
-}: CoverDropZoneProps) {
-  const [isDragging, setIsDragging] = useState(false);
-  const dropRef = useRef<HTMLDivElement>(null);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragging(false);
-
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        const file = files[0];
-        const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
-        if (validTypes.includes(file.type)) {
-          onDrop(file);
-        } else {
-          notifications.show({
-            message: 'Please drop a PNG, JPG, or PDF file',
-            color: 'red',
-          });
-        }
-      }
-    },
-    [onDrop]
-  );
-
-  const isPdf = imagePath?.toLowerCase().endsWith('.pdf');
-
-  return (
-    <Paper
-      p="md"
-      withBorder
-      ref={dropRef}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      style={{
-        borderStyle: isDragging ? 'dashed' : 'solid',
-        borderColor: isDragging ? 'var(--mantine-color-blue-5)' : undefined,
-        backgroundColor: isDragging ? 'var(--mantine-color-blue-0)' : undefined,
-        transition: 'all 0.2s ease',
-      }}
-    >
-      <Group justify="space-between" mb="sm">
-        <Text fw={600} size="sm">
-          {label}
-        </Text>
-        <Group gap="xs">
-          {imagePath && (
-            <>
-              <Tooltip label="Copy path to clipboard">
-                <ActionIcon variant="subtle" size="sm" onClick={onCopy}>
-                  <IconCopy size={16} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label="Clear image">
-                <ActionIcon variant="subtle" size="sm" color="red" onClick={onClear}>
-                  <IconX size={16} />
-                </ActionIcon>
-              </Tooltip>
-            </>
-          )}
-        </Group>
-      </Group>
-
-      {imageData && !isPdf ? (
-        <Box
-          mb="sm"
-          style={{
-            width: 180,
-            height: 270,
-            margin: '0 auto',
-          }}
-        >
-          <Image
-            src={imageData}
-            alt={label}
-            fit="contain"
-            w={180}
-            h={270}
-            radius="sm"
-            style={{ backgroundColor: 'var(--mantine-color-gray-1)' }}
-          />
-        </Box>
-      ) : imagePath && isPdf ? (
-        <Box
-          mb="sm"
-          style={{
-            width: 180,
-            height: 270,
-            margin: '0 auto',
-            backgroundColor: 'var(--mantine-color-gray-1)',
-            borderRadius: 'var(--mantine-radius-sm)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <IconPhoto size={48} color="var(--mantine-color-gray-5)" />
-          <Text size="sm" c="dimmed" mt="xs">
-            PDF Cover
-          </Text>
-        </Box>
-      ) : (
-        <Box
-          mb="sm"
-          style={{
-            width: 180,
-            height: 270,
-            margin: '0 auto',
-            backgroundColor: 'var(--mantine-color-gray-1)',
-            borderRadius: 'var(--mantine-radius-sm)',
-            border: '2px dashed var(--mantine-color-gray-4)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <IconUpload size={32} color="var(--mantine-color-gray-5)" />
-          <Text size="sm" c="dimmed" mt="xs">
-            Drag & drop image here
-          </Text>
-          <Text size="xs" c="dimmed">
-            PNG, JPG, or PDF
-          </Text>
-          <Text size="xs" c="dimmed" mt="md">
-            6&quot; × 9&quot; format
-          </Text>
-        </Box>
-      )}
-
-      {imagePath && (
-        <Text size="xs" c="dimmed" mb="sm" style={{ wordBreak: 'break-all' }}>
-          {imagePath}
-        </Text>
-      )}
-
-      <Button
-        variant="light"
-        size="xs"
-        leftSection={<IconPhoto size={14} />}
-        onClick={onSelect}
-        fullWidth
-      >
-        {imagePath ? 'Change Image' : 'Select Image'}
-      </Button>
-    </Paper>
-  );
-}
-
-export function CoversView({ collectionId, collectionName: _collectionName }: CoversViewProps) {
-  void _collectionName;
+export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps) {
   const [book, setBook] = useState<models.Book | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<app.ValidationResult | null>(null);
   const [frontCoverData, setFrontCoverData] = useState<string>('');
-  const [backCoverData, setBackCoverData] = useState<string>('');
+  const [coverPdfExists, setCoverPdfExists] = useState(false);
 
   const loadBook = useCallback(async () => {
     try {
@@ -242,17 +54,12 @@ export function CoversView({ collectionId, collectionName: _collectionName }: Co
           const data = await GetCoverImageData(result.frontCoverPath);
           setFrontCoverData(data);
         } catch {
-          Log('Could not load front cover image data');
+          setFrontCoverData('');
         }
       }
-      if (result?.backCoverPath) {
-        try {
-          const data = await GetCoverImageData(result.backCoverPath);
-          setBackCoverData(data);
-        } catch {
-          Log('Could not load back cover image data');
-        }
-      }
+
+      const pdfPath = await GetCoverPDFPath(collectionId);
+      setCoverPdfExists(!!pdfPath);
     } catch (err) {
       LogErr('Failed to load book:', err);
     } finally {
@@ -263,6 +70,20 @@ export function CoversView({ collectionId, collectionName: _collectionName }: Co
   useEffect(() => {
     loadBook();
   }, [loadBook]);
+
+  const handleBookChange = useCallback(
+    async (field: keyof models.Book, value: string | undefined) => {
+      if (!book) return;
+      const updated = { ...book, [field]: value || undefined };
+      setBook(updated);
+      try {
+        await UpdateBook(updated);
+      } catch (err) {
+        LogErr('Failed to update book:', err);
+      }
+    },
+    [book]
+  );
 
   const handleSelectFrontCover = useCallback(async () => {
     if (!book) return;
@@ -282,151 +103,79 @@ export function CoversView({ collectionId, collectionName: _collectionName }: Co
     }
   }, [book]);
 
-  const handleSelectBackCover = useCallback(async () => {
+  const handleMakeCover = useCallback(async () => {
     if (!book) return;
+    setExporting(true);
     try {
-      const path = await SelectCoverImage('back');
-      if (path) {
-        const updated = { ...book, backCoverPath: path };
-        await UpdateBook(updated);
-        setBook(updated);
-        const data = await GetCoverImageData(path);
-        setBackCoverData(data);
-        notifications.show({ message: 'Back cover updated', color: 'green' });
+      const html = generateCoverHTML({
+        book,
+        frontCoverDataUrl: frontCoverData,
+        isPreview: false,
+      });
+      const result = await ExportCoverPDF(collectionId, html);
+      if (result?.success) {
+        setCoverPdfExists(true);
+        notifications.show({
+          title: 'Cover PDF Created',
+          message: `Saved to ${result.outputPath}`,
+          color: 'green',
+        });
+        await OpenCoverPDF(collectionId);
+      } else {
+        notifications.show({
+          title: 'Cover Export Failed',
+          message: result?.error || 'Unknown error',
+          color: 'red',
+        });
       }
     } catch (err) {
-      LogErr('Failed to select back cover:', err);
-      notifications.show({ message: 'Failed to update cover', color: 'red' });
+      LogErr('Failed to export cover:', err);
+      notifications.show({ message: 'Failed to create cover PDF', color: 'red' });
+    } finally {
+      setExporting(false);
     }
-  }, [book]);
+  }, [book, collectionId, frontCoverData]);
 
-  const handleDropFrontCover = useCallback(
-    async (file: File) => {
-      if (!book) return;
-      try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const base64 = e.target?.result as string;
-          const savedPath = await SaveCoverFromBytes(collectionId, 'front', base64, file.name);
-          const updated = { ...book, frontCoverPath: savedPath };
-          await UpdateBook(updated);
-          setBook(updated);
-          setFrontCoverData(base64);
-          notifications.show({ message: 'Front cover saved', color: 'green' });
-        };
-        reader.readAsDataURL(file);
-      } catch (err) {
-        LogErr('Failed to save front cover:', err);
-        notifications.show({ message: 'Failed to save cover', color: 'red' });
-      }
-    },
-    [book, collectionId]
-  );
-
-  const handleDropBackCover = useCallback(
-    async (file: File) => {
-      if (!book) return;
-      try {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const base64 = e.target?.result as string;
-          const savedPath = await SaveCoverFromBytes(collectionId, 'back', base64, file.name);
-          const updated = { ...book, backCoverPath: savedPath };
-          await UpdateBook(updated);
-          setBook(updated);
-          setBackCoverData(base64);
-          notifications.show({ message: 'Back cover saved', color: 'green' });
-        };
-        reader.readAsDataURL(file);
-      } catch (err) {
-        LogErr('Failed to save back cover:', err);
-        notifications.show({ message: 'Failed to save cover', color: 'red' });
-      }
-    },
-    [book, collectionId]
-  );
-
-  const handleClearFrontCover = useCallback(async () => {
-    if (!book) return;
+  const handleOpenCover = useCallback(async () => {
     try {
-      const updated = { ...book, frontCoverPath: undefined };
-      await UpdateBook(updated);
-      setBook(updated);
-      setFrontCoverData('');
-      notifications.show({ message: 'Front cover cleared', color: 'blue' });
+      const result = await OpenCoverPDF(collectionId);
+      if (!result?.success) {
+        notifications.show({
+          message: result?.error || 'Failed to open cover',
+          color: 'red',
+        });
+      }
     } catch (err) {
-      LogErr('Failed to clear front cover:', err);
+      LogErr('Failed to open cover:', err);
     }
-  }, [book]);
+  }, [collectionId]);
 
-  const handleClearBackCover = useCallback(async () => {
-    if (!book) return;
+  const handleValidate = useCallback(async () => {
+    setValidating(true);
+    setValidationResult(null);
     try {
-      const updated = { ...book, backCoverPath: undefined };
-      await UpdateBook(updated);
-      setBook(updated);
-      setBackCoverData('');
-      notifications.show({ message: 'Back cover cleared', color: 'blue' });
+      const result = await ValidateCover(collectionId);
+      setValidationResult(result);
+      notifications.show({
+        title: result.passed ? 'Validation Passed' : 'Validation Issues Found',
+        message: result.passed
+          ? 'All cover checks passed'
+          : `${result.errors.length} errors, ${result.warnings.length} warnings`,
+        color: result.passed ? 'green' : result.errors.length > 0 ? 'red' : 'yellow',
+        autoClose: 5000,
+      });
     } catch (err) {
-      LogErr('Failed to clear back cover:', err);
+      LogErr('Validation failed:', err);
+      notifications.show({
+        title: 'Validation Failed',
+        message: String(err),
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setValidating(false);
     }
-  }, [book]);
-
-  const handleCopyFrontCover = useCallback(async () => {
-    if (book?.frontCoverPath) {
-      await CopyCoverToClipboard(book.frontCoverPath);
-      notifications.show({ message: 'Path copied to clipboard', color: 'blue' });
-    }
-  }, [book]);
-
-  const handleCopyBackCover = useCallback(async () => {
-    if (book?.backCoverPath) {
-      await CopyCoverToClipboard(book.backCoverPath);
-      notifications.show({ message: 'Path copied to clipboard', color: 'blue' });
-    }
-  }, [book]);
-
-  const handleSpineTextChange = useCallback(
-    async (value: string) => {
-      if (!book) return;
-      const updated = { ...book, spineText: value || undefined };
-      setBook(updated);
-      try {
-        await UpdateBook(updated);
-      } catch (err) {
-        LogErr('Failed to update spine text:', err);
-      }
-    },
-    [book]
-  );
-
-  const handleDescriptionShortChange = useCallback(
-    async (value: string) => {
-      if (!book) return;
-      const updated = { ...book, descriptionShort: value || undefined };
-      setBook(updated);
-      try {
-        await UpdateBook(updated);
-      } catch (err) {
-        LogErr('Failed to update short description:', err);
-      }
-    },
-    [book]
-  );
-
-  const handleDescriptionLongChange = useCallback(
-    async (value: string) => {
-      if (!book) return;
-      const updated = { ...book, descriptionLong: value || undefined };
-      setBook(updated);
-      try {
-        await UpdateBook(updated);
-      } catch (err) {
-        LogErr('Failed to update long description:', err);
-      }
-    },
-    [book]
-  );
+  }, [collectionId]);
 
   if (loading) {
     return (
@@ -436,165 +185,153 @@ export function CoversView({ collectionId, collectionName: _collectionName }: Co
     );
   }
 
+  if (!book) {
+    return (
+      <Flex justify="center" align="center" h={200}>
+        <Text c="dimmed">No book settings found for this collection.</Text>
+      </Flex>
+    );
+  }
+
+  const coverHTML = generateCoverHTML({
+    book,
+    frontCoverDataUrl: frontCoverData,
+  });
+
   return (
-    <Stack gap="md">
-      <Paper p="md" withBorder>
-        <Group gap="xs" mb="md">
-          <IconPhoto size={20} />
-          <Text fw={600}>Cover Images</Text>
-        </Group>
-
-        <Alert icon={<IconAlertCircle size={18} />} color="blue" mb="md">
-          <Text size="sm">
-            For Amazon KDP paperbacks, you&apos;ll need a single PDF with front cover, spine, and
-            back cover combined. Use the individual images here to create your wraparound cover in
-            design software.
-          </Text>
-        </Alert>
-
-        <Group grow align="flex-start">
-          <CoverDropZone
-            label="Back Cover"
-            imagePath={book?.backCoverPath}
-            imageData={backCoverData}
-            onSelect={handleSelectBackCover}
-            onDrop={handleDropBackCover}
-            onClear={handleClearBackCover}
-            onCopy={handleCopyBackCover}
+    <>
+      <Grid gutter="md">
+        <Grid.Col span={6}>
+          <Stack gap="sm">
+            <Paper p="sm" withBorder>
+              <Stack gap="xs">
+                <Text fw={600} size="sm">
+                  Cover
+                </Text>
+                <Group gap="xs" align="flex-end">
+                  <TextInput
+                    size="xs"
+                    label="Publisher"
+                    value={book.publisher || ''}
+                    onChange={(e) => handleBookChange('publisher', e.currentTarget.value)}
+                    placeholder="Stony Lane Press"
+                    style={{ flex: 1 }}
+                  />
+                  <TextInput
+                    size="xs"
+                    label="ISBN"
+                    value={book.isbn || ''}
+                    onChange={(e) => handleBookChange('isbn', e.currentTarget.value)}
+                    placeholder="ISBN-PENDING"
+                    style={{ flex: 1 }}
+                  />
+                  <Button
+                    size="xs"
+                    variant="light"
+                    leftSection={<IconPhoto size={12} />}
+                    onClick={handleSelectFrontCover}
+                  >
+                    {book.frontCoverPath ? 'Change' : 'Image'}
+                  </Button>
+                </Group>
+                <Textarea
+                  size="xs"
+                  label="Back Cover Description"
+                  value={book.descriptionLong || ''}
+                  onChange={(e) => handleBookChange('descriptionLong', e.currentTarget.value)}
+                  placeholder="Book description for the back cover..."
+                  minRows={6}
+                  autosize
+                  maxRows={12}
+                />
+                <Text size="xs" c="dimmed">
+                  {(book.descriptionLong || '').split(/\s+/).filter(Boolean).length} words
+                </Text>
+                <ColorInput
+                  size="xs"
+                  label="Background Color"
+                  value={book.backgroundColor || '#F5F5DC'}
+                  onChange={(value) => handleBookChange('backgroundColor', value)}
+                  swatches={[
+                    '#F5F5DC',
+                    '#FAF0E6',
+                    '#FFF8DC',
+                    '#FFFAF0',
+                    '#F5F5F5',
+                    '#E8E8E8',
+                    '#2C2C2C',
+                    '#1A1A2E',
+                  ]}
+                />
+              </Stack>
+            </Paper>
+          </Stack>
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <PagePreview
+            html={coverHTML}
+            canvasWidthMM={COVER_DIMENSIONS.widthMM}
+            canvasHeightMM={COVER_DIMENSIONS.heightMM}
+            fillWidth
           />
-
-          <CoverDropZone
-            label="Front Cover"
-            imagePath={book?.frontCoverPath}
-            imageData={frontCoverData}
-            onSelect={handleSelectFrontCover}
-            onDrop={handleDropFrontCover}
-            onClear={handleClearFrontCover}
-            onCopy={handleCopyFrontCover}
-          />
-        </Group>
-      </Paper>
-
-      <Paper p="md" withBorder>
-        <Text fw={600} size="sm" mb="md">
-          Spine Text
-        </Text>
-        <TextInput
-          placeholder="Text to appear on the spine (for thick books)"
-          value={book?.spineText || ''}
-          onChange={(e) => handleSpineTextChange(e.target.value)}
-          description="Usually the book title and author name. Spine width depends on page count."
-        />
-      </Paper>
-
-      <Paper p="md" withBorder>
-        <Text fw={600} size="sm" mb="md">
-          Back Cover Descriptions
-        </Text>
-        <Stack gap="md">
-          <Box>
-            <Group justify="space-between" mb={4}>
-              <Text size="sm" fw={500}>
-                Short Description
-              </Text>
-              <Tooltip label="Copy to clipboard">
-                <ActionIcon
-                  variant="subtle"
-                  size="sm"
-                  onClick={() => {
-                    if (book?.descriptionShort) {
-                      navigator.clipboard.writeText(book.descriptionShort);
-                      notifications.show({ message: 'Short description copied', color: 'blue' });
-                    }
-                  }}
-                  disabled={!book?.descriptionShort}
-                >
-                  <IconCopy size={16} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-            <Textarea
-              placeholder="A brief 2-3 sentence hook for the book..."
-              value={book?.descriptionShort || ''}
-              onChange={(e) => handleDescriptionShortChange(e.target.value)}
-              description="Used for tight spaces or marketing copy."
-              minRows={3}
-              autosize
-            />
-          </Box>
-          <Box>
-            <Group justify="space-between" mb={4}>
-              <Text size="sm" fw={500}>
-                Long Description
-              </Text>
-              <Tooltip label="Copy to clipboard">
-                <ActionIcon
-                  variant="subtle"
-                  size="sm"
-                  onClick={() => {
-                    if (book?.descriptionLong) {
-                      navigator.clipboard.writeText(book.descriptionLong);
-                      notifications.show({ message: 'Long description copied', color: 'blue' });
-                    }
-                  }}
-                  disabled={!book?.descriptionLong}
-                >
-                  <IconCopy size={16} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-            <Textarea
-              placeholder="Full back cover description..."
-              value={book?.descriptionLong || ''}
-              onChange={(e) => handleDescriptionLongChange(e.target.value)}
-              description="The complete back cover text."
-              minRows={8}
-              autosize
-            />
-          </Box>
-        </Stack>
-      </Paper>
-
-      <Paper p="md" withBorder>
-        <Text fw={600} size="sm" mb="md">
-          KDP Cover Requirements
-        </Text>
-        <Divider mb="md" />
-
-        <Stack gap="xs">
-          <Text size="sm">
-            <strong>Paperback cover:</strong> Single PDF with front, spine, and back
-          </Text>
-          <Text size="sm">
-            <strong>eBook cover:</strong> Front cover only, 2560 × 1600 pixels (1.6:1 ratio)
-          </Text>
-          <Text size="sm">
-            <strong>Resolution:</strong> Minimum 300 DPI for print
-          </Text>
-          <Text size="sm">
-            <strong>Bleed:</strong> 0.125&quot; on all sides for paperback
-          </Text>
-
-          <Group mt="sm">
+        </Grid.Col>
+      </Grid>
+      <Paper p="xs" mt="md" withBorder>
+        <Group justify="space-between">
+          <Group gap="xs">
             <Button
-              variant="light"
               size="xs"
-              leftSection={<IconExternalLink size={14} />}
-              onClick={() => BrowserOpenURL('https://kdp.amazon.com/en_US/help/topic/G201953020')}
+              variant="light"
+              leftSection={<IconChecks size={12} />}
+              onClick={handleValidate}
+              loading={validating}
             >
-              KDP Cover Guidelines
+              Validate
+            </Button>
+            {validationResult && (
+              <>
+                <Badge
+                  size="xs"
+                  color={validationResult.passed ? 'green' : 'red'}
+                  style={{ cursor: 'pointer' }}
+                  onClick={onNavigateToAmazon}
+                >
+                  {validationResult.passed ? 'Passed' : `${validationResult.errors.length} errors`}
+                </Badge>
+                {validationResult.warnings.length > 0 && (
+                  <Badge
+                    size="xs"
+                    color="yellow"
+                    style={{ cursor: 'pointer' }}
+                    onClick={onNavigateToAmazon}
+                  >
+                    {validationResult.warnings.length} warnings
+                  </Badge>
+                )}
+              </>
+            )}
+          </Group>
+          <Group gap="xs">
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconExternalLink size={12} />}
+              onClick={handleOpenCover}
+              disabled={!coverPdfExists}
+            >
+              Open Cover
             </Button>
             <Button
-              variant="light"
               size="xs"
-              leftSection={<IconExternalLink size={14} />}
-              onClick={() => BrowserOpenURL('https://kdp.amazon.com/cover-calculator')}
+              leftSection={<IconFileTypePdf size={12} />}
+              onClick={handleMakeCover}
+              loading={exporting}
             >
-              Cover Size Calculator
+              Make Cover
             </Button>
           </Group>
-        </Stack>
+        </Group>
       </Paper>
-    </Stack>
+    </>
   );
 }

@@ -248,6 +248,8 @@ export function TitlePagePanel({
             collectionName,
             templateStyles,
           })}
+          canvasWidthMM={152.4}
+          canvasHeightMM={228.6}
         />
       </Grid.Col>
     </Grid>

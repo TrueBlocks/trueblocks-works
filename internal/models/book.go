@@ -35,6 +35,8 @@ type Book struct {
 	TitleOffsetY     *int    `json:"titleOffsetY,omitempty" db:"title_offset_y"`
 	SubtitleOffsetY  *int    `json:"subtitleOffsetY,omitempty" db:"subtitle_offset_y"`
 	AuthorOffsetY    *int    `json:"authorOffsetY,omitempty" db:"author_offset_y"`
+	Publisher        *string `json:"publisher,omitempty" db:"publisher"`
+	BackgroundColor  *string `json:"backgroundColor,omitempty" db:"background_color"`
 	WorksStartRecto  *bool   `json:"worksStartRecto,omitempty" db:"works_start_recto"`
 	ShowPageNumbers  *bool   `json:"showPageNumbers,omitempty" db:"show_page_numbers"`
 	SelectedParts    *string `json:"selectedParts,omitempty" db:"selected_parts"`

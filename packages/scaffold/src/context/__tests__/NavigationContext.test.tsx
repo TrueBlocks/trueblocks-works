@@ -28,9 +28,15 @@ describe('NavigationContext', () => {
     });
 
     it('throws when useNavigation is used outside provider', () => {
-      expect(() => {
-        renderHook(() => useNavigation());
-      }).toThrow('useNavigation must be used within a NavigationProvider');
+      const originalError = console.error;
+      console.error = vi.fn();
+      try {
+        expect(() => {
+          renderHook(() => useNavigation());
+        }).toThrow('useNavigation must be used within a NavigationProvider');
+      } finally {
+        console.error = originalError;
+      }
     });
   });
 

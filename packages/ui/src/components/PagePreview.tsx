@@ -1,31 +1,65 @@
+import { useRef, useState, useEffect } from 'react';
 import classes from './PagePreview.module.css';
 
-const DISPLAY_SCALE = 0.7;
-const PAGE_WIDTH_PX = 576;
-const PAGE_HEIGHT_PX = 864;
+const MM_TO_PX = 3.7795275591;
+const DEFAULT_DISPLAY_WIDTH = 403;
 
 export interface PagePreviewProps {
   html: string;
+  canvasWidthMM: number;
+  canvasHeightMM: number;
+  displayWidth?: number;
+  fillWidth?: boolean;
 }
 
-export function PagePreview({ html }: PagePreviewProps) {
+export function PagePreview({
+  html,
+  canvasWidthMM,
+  canvasHeightMM,
+  displayWidth: targetWidth,
+  fillWidth,
+}: PagePreviewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!fillWidth || !containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setContainerWidth(entry.contentRect.width - 32);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [fillWidth]);
+
+  const canvasWidthPx = canvasWidthMM * MM_TO_PX;
+  const canvasHeightPx = canvasHeightMM * MM_TO_PX;
+  const effectiveWidth =
+    fillWidth && containerWidth ? containerWidth : (targetWidth ?? DEFAULT_DISPLAY_WIDTH);
+  const scale = effectiveWidth / canvasWidthPx;
+  const displayWidth = canvasWidthPx * scale;
+  const displayHeight = canvasHeightPx * scale;
+
   return (
-    <div className={classes.pageContainer}>
+    <div ref={containerRef} className={classes.pageContainer}>
       <div
         style={{
-          width: PAGE_WIDTH_PX * DISPLAY_SCALE,
-          height: PAGE_HEIGHT_PX * DISPLAY_SCALE,
+          width: displayWidth,
+          height: displayHeight,
           overflow: 'hidden',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+          borderRadius: 4,
         }}
       >
         <iframe
           srcDoc={html}
           style={{
-            width: PAGE_WIDTH_PX,
-            height: PAGE_HEIGHT_PX,
+            width: canvasWidthPx,
+            height: canvasHeightPx,
             border: 'none',
-            transform: `scale(${DISPLAY_SCALE})`,
+            transform: `scale(${scale})`,
             transformOrigin: 'top left',
           }}
           title="Page Preview"
@@ -34,5 +68,3 @@ export function PagePreview({ html }: PagePreviewProps) {
     </div>
   );
 }
-
-export { PAGE_WIDTH_PX, PAGE_HEIGHT_PX, DISPLAY_SCALE };

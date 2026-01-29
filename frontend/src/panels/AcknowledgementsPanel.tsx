@@ -44,7 +44,11 @@ export function AcknowledgementsPanel({ book, onBookChange }: AcknowledgementsPa
         </Stack>
       </Grid.Col>
       <Grid.Col span={6}>
-        <PagePreview html={generateAcknowledgementsHTML({ book })} />
+        <PagePreview
+          html={generateAcknowledgementsHTML({ book })}
+          canvasWidthMM={152.4}
+          canvasHeightMM={228.6}
+        />
       </Grid.Col>
     </Grid>
   );

@@ -190,6 +190,10 @@ export function ExportCollectionFolder(arg1) {
   return window['go']['app']['App']['ExportCollectionFolder'](arg1);
 }
 
+export function ExportCoverPDF(arg1, arg2) {
+  return window['go']['app']['App']['ExportCoverPDF'](arg1, arg2);
+}
+
 export function ExportToSubmissions(arg1) {
   return window['go']['app']['App']['ExportToSubmissions'](arg1);
 }
@@ -282,6 +286,10 @@ export function GetCoverImageData(arg1) {
   return window['go']['app']['App']['GetCoverImageData'](arg1);
 }
 
+export function GetCoverPDFPath(arg1) {
+  return window['go']['app']['App']['GetCoverPDFPath'](arg1);
+}
+
 export function GetCoversDir() {
   return window['go']['app']['App']['GetCoversDir']();
 }
@@ -356,6 +364,10 @@ export function GetPartCacheStatus(arg1) {
 
 export function GetPreviewURL(arg1) {
   return window['go']['app']['App']['GetPreviewURL'](arg1);
+}
+
+export function GetPublicationReadiness(arg1) {
+  return window['go']['app']['App']['GetPublicationReadiness'](arg1);
 }
 
 export function GetReportNames() {
@@ -496,6 +508,10 @@ export function MoveWorkFile(arg1) {
 
 export function OpenBookPDF(arg1) {
   return window['go']['app']['App']['OpenBookPDF'](arg1);
+}
+
+export function OpenCoverPDF(arg1) {
+  return window['go']['app']['App']['OpenCoverPDF'](arg1);
 }
 
 export function OpenDocument(arg1) {
@@ -736,6 +752,18 @@ export function UpdateWork(arg1) {
 
 export function UpdateWorkWithWorkflow(arg1) {
   return window['go']['app']['App']['UpdateWorkWithWorkflow'](arg1);
+}
+
+export function ValidateContent(arg1) {
+  return window['go']['app']['App']['ValidateContent'](arg1);
+}
+
+export function ValidateCover(arg1) {
+  return window['go']['app']['App']['ValidateCover'](arg1);
+}
+
+export function ValidateMatter(arg1) {
+  return window['go']['app']['App']['ValidateMatter'](arg1);
 }
 
 export function ValidateTemplate(arg1) {

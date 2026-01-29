@@ -1202,11 +1202,16 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                   SetTab(`collection-${collectionId}-matter-subtab`, value);
                 }
               }}
+              onNavigateToAmazon={() => setActiveTab('amazon')}
             />
           </Tabs.Panel>
 
           <Tabs.Panel value="covers" pl="md" style={{ flex: 1 }}>
-            <CoversView collectionId={collectionId} collectionName={collection.collectionName} />
+            <CoversView
+              collectionId={collectionId}
+              collectionName={collection.collectionName}
+              onNavigateToAmazon={() => setActiveTab('amazon')}
+            />
           </Tabs.Panel>
 
           <Tabs.Panel value="amazon" pl="md" style={{ flex: 1 }}>

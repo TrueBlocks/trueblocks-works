@@ -44,7 +44,11 @@ export function CopyrightPanel({ book, onBookChange }: CopyrightPanelProps) {
         </Stack>
       </Grid.Col>
       <Grid.Col span={6}>
-        <PagePreview html={generateCopyrightHTML({ book })} />
+        <PagePreview
+          html={generateCopyrightHTML({ book })}
+          canvasWidthMM={152.4}
+          canvasHeightMM={228.6}
+        />
       </Grid.Col>
     </Grid>
   );

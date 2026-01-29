@@ -44,7 +44,11 @@ export function AboutAuthorPanel({ book, onBookChange }: AboutAuthorPanelProps) 
         </Stack>
       </Grid.Col>
       <Grid.Col span={6}>
-        <PagePreview html={generateAboutAuthorHTML({ book })} />
+        <PagePreview
+          html={generateAboutAuthorHTML({ book })}
+          canvasWidthMM={152.4}
+          canvasHeightMM={228.6}
+        />
       </Grid.Col>
     </Grid>
   );

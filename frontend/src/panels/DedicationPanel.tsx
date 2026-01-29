@@ -44,7 +44,11 @@ export function DedicationPanel({ book, onBookChange }: DedicationPanelProps) {
         </Stack>
       </Grid.Col>
       <Grid.Col span={6}>
-        <PagePreview html={generateDedicationHTML({ book })} />
+        <PagePreview
+          html={generateDedicationHTML({ book })}
+          canvasWidthMM={152.4}
+          canvasHeightMM={228.6}
+        />
       </Grid.Col>
     </Grid>
   );

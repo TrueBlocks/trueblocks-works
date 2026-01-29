@@ -114,6 +114,11 @@ var migrations = []Migration{
 		Name:    "add_book_cover_metadata",
 		Up:      migrateAddBookCoverMetadata,
 	},
+	{
+		Version: 30,
+		Name:    "drop_deprecated_font_columns",
+		Up:      migrateDropDeprecatedFontColumns,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -968,6 +973,93 @@ func migrateAddBookCoverMetadata(tx *sql.Tx) error {
 	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN background_color TEXT DEFAULT '#F5F5DC'`)
 	if err != nil {
 		return fmt.Errorf("add background_color column to Books: %w", err)
+	}
+
+	return nil
+}
+
+// migrateDropDeprecatedFontColumns removes font styling columns that are now derived from DOCX template
+func migrateDropDeprecatedFontColumns(tx *sql.Tx) error {
+	// SQLite doesn't support DROP COLUMN well, so we recreate the table
+	// Per §17a: wrap in transaction (already done), use idempotent statements
+
+	// Clean up any failed previous attempt
+	_, _ = tx.Exec(`DROP TABLE IF EXISTS Books_new`)
+
+	// Create new table without the deprecated columns
+	_, err := tx.Exec(`CREATE TABLE Books_new (
+		bookID INTEGER PRIMARY KEY AUTOINCREMENT,
+		collID INTEGER NOT NULL UNIQUE,
+		title TEXT NOT NULL,
+		subtitle TEXT,
+		author TEXT DEFAULT 'Thomas Jay Rush',
+		copyright TEXT,
+		dedication TEXT,
+		acknowledgements TEXT,
+		about_author TEXT,
+		cover_path TEXT,
+		front_cover_path TEXT,
+		back_cover_path TEXT,
+		spine_text TEXT,
+		description_short TEXT,
+		description_long TEXT,
+		isbn TEXT,
+		published_date TEXT,
+		template_path TEXT,
+		export_path TEXT,
+		status TEXT DEFAULT 'draft',
+		title_offset_y INTEGER DEFAULT 0,
+		subtitle_offset_y INTEGER DEFAULT 0,
+		author_offset_y INTEGER DEFAULT 0,
+		publisher TEXT DEFAULT 'Stony Lane Press',
+		background_color TEXT DEFAULT '#F5F5DC',
+		works_start_recto INTEGER DEFAULT 1,
+		show_page_numbers INTEGER DEFAULT 1,
+		selected_parts TEXT,
+		created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+		updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (collID) REFERENCES Collections(collID)
+	)`)
+	if err != nil {
+		return fmt.Errorf("create Books_new: %w", err)
+	}
+
+	// Copy data (excluding deprecated columns)
+	_, err = tx.Exec(`INSERT INTO Books_new (
+		bookID, collID, title, subtitle, author, copyright, dedication,
+		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path,
+		spine_text, description_short, description_long, isbn, published_date,
+		template_path, export_path, status, title_offset_y, subtitle_offset_y,
+		author_offset_y, publisher, background_color, works_start_recto,
+		show_page_numbers, selected_parts, created_at, updated_at
+	) SELECT
+		bookID, collID, title, subtitle, author, copyright, dedication,
+		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path,
+		spine_text, description_short, description_long, isbn, published_date,
+		template_path, export_path, status, title_offset_y, subtitle_offset_y,
+		author_offset_y, publisher, background_color, works_start_recto,
+		show_page_numbers, selected_parts, created_at, updated_at
+	FROM Books`)
+	if err != nil {
+		return fmt.Errorf("copy data to Books_new: %w", err)
+	}
+
+	// Drop old table
+	_, err = tx.Exec(`DROP TABLE Books`)
+	if err != nil {
+		return fmt.Errorf("drop old Books table: %w", err)
+	}
+
+	// Rename new table
+	_, err = tx.Exec(`ALTER TABLE Books_new RENAME TO Books`)
+	if err != nil {
+		return fmt.Errorf("rename Books_new to Books: %w", err)
+	}
+
+	// Recreate index
+	_, err = tx.Exec(`CREATE INDEX IF NOT EXISTS idx_books_collid ON Books(collID)`)
+	if err != nil {
+		return fmt.Errorf("recreate Books index: %w", err)
 	}
 
 	return nil

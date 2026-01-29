@@ -22,16 +22,6 @@ type Book struct {
 	TemplatePath     *string `json:"templatePath,omitempty" db:"template_path"`
 	ExportPath       *string `json:"exportPath,omitempty" db:"export_path"`
 	Status           string  `json:"status" db:"status"`
-	HeaderFont       *string `json:"headerFont,omitempty" db:"header_font"`
-	HeaderSize       *int    `json:"headerSize,omitempty" db:"header_size"`
-	PageNumFont      *string `json:"pageNumFont,omitempty" db:"page_num_font"`
-	PageNumSize      *int    `json:"pageNumSize,omitempty" db:"page_num_size"`
-	TitleFont        *string `json:"titleFont,omitempty" db:"title_font"`
-	TitleSize        *int    `json:"titleSize,omitempty" db:"title_size"`
-	SubtitleFont     *string `json:"subtitleFont,omitempty" db:"subtitle_font"`
-	SubtitleSize     *int    `json:"subtitleSize,omitempty" db:"subtitle_size"`
-	AuthorFont       *string `json:"authorFont,omitempty" db:"author_font"`
-	AuthorSize       *int    `json:"authorSize,omitempty" db:"author_size"`
 	TitleOffsetY     *int    `json:"titleOffsetY,omitempty" db:"title_offset_y"`
 	SubtitleOffsetY  *int    `json:"subtitleOffsetY,omitempty" db:"subtitle_offset_y"`
 	AuthorOffsetY    *int    `json:"authorOffsetY,omitempty" db:"author_offset_y"`

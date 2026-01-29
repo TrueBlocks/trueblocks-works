@@ -108,18 +108,6 @@ func buildManifestWithParts(database *db.DB, fops *fileops.FileOps, collID int64
 	pdfPreviewPath := fops.Config.PDFPreviewPath
 
 	typography := bookbuild.DefaultTypography()
-	if book.HeaderFont != nil && *book.HeaderFont != "" {
-		typography.HeaderFont = *book.HeaderFont
-	}
-	if book.HeaderSize != nil && *book.HeaderSize > 0 {
-		typography.HeaderSize = *book.HeaderSize
-	}
-	if book.PageNumFont != nil && *book.PageNumFont != "" {
-		typography.PageNumberFont = *book.PageNumFont
-	}
-	if book.PageNumSize != nil && *book.PageNumSize > 0 {
-		typography.PageNumberSize = *book.PageNumSize
-	}
 
 	manifest := &bookbuild.Manifest{
 		Title:      book.Title,

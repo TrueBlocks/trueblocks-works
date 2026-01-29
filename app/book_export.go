@@ -297,18 +297,6 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 	pdfPreviewPath := a.fileOps.Config.PDFPreviewPath
 
 	typography := bookbuild.DefaultTypography()
-	if book.HeaderFont != nil && *book.HeaderFont != "" {
-		typography.HeaderFont = *book.HeaderFont
-	}
-	if book.HeaderSize != nil && *book.HeaderSize > 0 {
-		typography.HeaderSize = *book.HeaderSize
-	}
-	if book.PageNumFont != nil && *book.PageNumFont != "" {
-		typography.PageNumberFont = *book.PageNumFont
-	}
-	if book.PageNumSize != nil && *book.PageNumSize > 0 {
-		typography.PageNumberSize = *book.PageNumSize
-	}
 
 	templatePath := ""
 	if book.TemplatePath != nil && *book.TemplatePath != "" {
@@ -383,18 +371,6 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 	pdfPreviewPath := a.fileOps.Config.PDFPreviewPath
 
 	typography := bookbuild.DefaultTypography()
-	if book.HeaderFont != nil && *book.HeaderFont != "" {
-		typography.HeaderFont = *book.HeaderFont
-	}
-	if book.HeaderSize != nil && *book.HeaderSize > 0 {
-		typography.HeaderSize = *book.HeaderSize
-	}
-	if book.PageNumFont != nil && *book.PageNumFont != "" {
-		typography.PageNumberFont = *book.PageNumFont
-	}
-	if book.PageNumSize != nil && *book.PageNumSize > 0 {
-		typography.PageNumberSize = *book.PageNumSize
-	}
 
 	templatePath := ""
 	if book.TemplatePath != nil && *book.TemplatePath != "" {

@@ -27,6 +27,8 @@ import {
   RegeneratePDF,
   UpdateWork,
   GetEnumLists,
+  GetWorkMarked,
+  SetWorkMarked,
 } from '@app';
 import { models, db } from '@models';
 import { FileActionsToolbar, PDFPreview, DebugPopover } from '@/components';
@@ -60,6 +62,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [isMarked, setIsMarked] = useState(false);
 
   const {
     notes,
@@ -321,14 +324,16 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     if (!workId) return;
     setLoading(true);
     try {
-      const [workData, subsData, collsData] = await Promise.all([
+      const [workData, subsData, collsData, markedData] = await Promise.all([
         GetWork(workId),
         GetSubmissionViewsByWork(workId),
         GetWorkCollections(workId),
+        GetWorkMarked(workId),
       ]);
       setWork(workData);
       setSubmissions(subsData || []);
       setCollections(collsData || []);
+      setIsMarked(markedData);
       SetLastWorkID(workId);
     } catch (err) {
       LogErr('Failed to load work data:', err);
@@ -429,10 +434,27 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     });
   }, [workId, collections]);
 
+  const handleToggleMark = useCallback(async () => {
+    if (!workId) return;
+    try {
+      const newMarked = !isMarked;
+      await SetWorkMarked(workId, newMarked);
+      setIsMarked(newMarked);
+      setRefreshKey((k) => k + 1);
+      notifications.show({
+        message: newMarked ? 'Work marked' : 'Work unmarked',
+        autoClose: 1500,
+      });
+    } catch (err) {
+      LogErr('Failed to toggle mark:', err);
+    }
+  }, [workId, isMarked]);
+
   // Collection hotkeys
   useHotkeys([
     ['mod+L', handleAssignLastCollection],
     ['mod+shift+0', handleRemoveFromAllCollections],
+    ['mod+shift+M', handleToggleMark],
   ]);
 
   const handleDeleteSubmission = useCallback(

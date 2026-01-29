@@ -651,6 +651,9 @@ func (a *App) emitExportProgress(stage string, current, total int, message strin
 
 // sanitizeFilename removes or replaces characters not suitable for filenames
 func sanitizeFilename(name string) string {
+	// Replace " | " (newline marker from titles) with space first
+	name = strings.ReplaceAll(name, " | ", " ")
+
 	replacer := strings.NewReplacer(
 		"/", "-",
 		"\\", "-",

@@ -232,7 +232,8 @@ export function generateCoverHTML({
   const coverWidthMM = dimensions?.widthMM ?? DEFAULT_COVER_WIDTH_MM;
 
   const backgroundColor = book.backgroundColor || DEFAULT_BACKGROUND;
-  const title = book.title || '';
+  // Replace " | " (newline marker) with space for cleaner display
+  const title = (book.title || '').replace(/ \| /g, ' ');
   const author = book.author || '';
   const spineText = [title, author].filter(Boolean).join(' · ');
   const description = book.descriptionLong || book.descriptionShort || '';

@@ -564,6 +564,30 @@ export namespace app {
 	        this.aboutAuthor = source["aboutAuthor"];
 	    }
 	}
+	export class GalleyInfo {
+	    exists: boolean;
+	    path: string;
+	    pageCount: number;
+	    spineMM: number;
+	    widthMM: number;
+	    heightMM: number;
+	    modTime: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new GalleyInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.exists = source["exists"];
+	        this.path = source["path"];
+	        this.pageCount = source["pageCount"];
+	        this.spineMM = source["spineMM"];
+	        this.widthMM = source["widthMM"];
+	        this.heightMM = source["heightMM"];
+	        this.modTime = source["modTime"];
+	    }
+	}
 	
 	export class ImportConflict {
 	    type: string;

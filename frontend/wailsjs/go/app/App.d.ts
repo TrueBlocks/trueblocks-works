@@ -176,6 +176,8 @@ export function GetFileModTimes(arg1:number):Promise<app.FileModTimes>;
 
 export function GetFileServerPort():Promise<number>;
 
+export function GetGalleyInfo(arg1:number):Promise<app.GalleyInfo>;
+
 export function GetNotes(arg1:string,arg2:number):Promise<Array<models.Note>>;
 
 export function GetOrganization(arg1:number):Promise<models.Organization>;

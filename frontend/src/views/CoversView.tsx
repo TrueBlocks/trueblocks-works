@@ -24,9 +24,10 @@ import {
   OpenCoverPDF,
   GetCoverPDFPath,
   ValidateCover,
+  GetGalleyInfo,
 } from '@app';
 import { models, app } from '@models';
-import { LogErr, generateCoverHTML, COVER_DIMENSIONS } from '@/utils';
+import { LogErr, generateCoverHTML, getCoverDimensions, DEFAULT_COVER_DIMENSIONS } from '@/utils';
 import { PagePreview } from '@trueblocks/ui';
 
 interface CoversViewProps {
@@ -43,6 +44,7 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
   const [validationResult, setValidationResult] = useState<app.ValidationResult | null>(null);
   const [frontCoverData, setFrontCoverData] = useState<string>('');
   const [coverPdfExists, setCoverPdfExists] = useState(false);
+  const [galleyInfo, setGalleyInfo] = useState<app.GalleyInfo | null>(null);
 
   const loadBook = useCallback(async () => {
     try {
@@ -60,6 +62,9 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
 
       const pdfPath = await GetCoverPDFPath(collectionId);
       setCoverPdfExists(!!pdfPath);
+
+      const gInfo = await GetGalleyInfo(collectionId);
+      setGalleyInfo(gInfo);
     } catch (err) {
       LogErr('Failed to load book:', err);
     } finally {
@@ -105,12 +110,25 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
 
   const handleMakeCover = useCallback(async () => {
     if (!book) return;
+    if (!galleyInfo?.exists) {
+      notifications.show({
+        title: 'Galley Required',
+        message: 'Export a galley PDF first before creating the cover',
+        color: 'red',
+      });
+      return;
+    }
     setExporting(true);
     try {
       const html = generateCoverHTML({
         book,
         frontCoverDataUrl: frontCoverData,
         isPreview: false,
+        dimensions: {
+          spineMM: galleyInfo.spineMM,
+          widthMM: galleyInfo.widthMM,
+          heightMM: galleyInfo.heightMM,
+        },
       });
       const result = await ExportCoverPDF(collectionId, html);
       if (result?.success) {
@@ -134,7 +152,7 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
     } finally {
       setExporting(false);
     }
-  }, [book, collectionId, frontCoverData]);
+  }, [book, collectionId, frontCoverData, galleyInfo]);
 
   const handleOpenCover = useCallback(async () => {
     try {
@@ -193,9 +211,18 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
     );
   }
 
+  // Use galley dimensions if available, otherwise defaults for preview
+  const coverDimensions = galleyInfo?.exists
+    ? getCoverDimensions(galleyInfo.spineMM)
+    : DEFAULT_COVER_DIMENSIONS;
+
   const coverHTML = generateCoverHTML({
     book,
     frontCoverDataUrl: frontCoverData,
+    isPreview: true,
+    dimensions: galleyInfo?.exists
+      ? { spineMM: galleyInfo.spineMM, widthMM: galleyInfo.widthMM, heightMM: galleyInfo.heightMM }
+      : undefined,
   });
 
   return (
@@ -268,12 +295,25 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
           </Stack>
         </Grid.Col>
         <Grid.Col span={6}>
-          <PagePreview
-            html={coverHTML}
-            canvasWidthMM={COVER_DIMENSIONS.widthMM}
-            canvasHeightMM={COVER_DIMENSIONS.heightMM}
-            fillWidth
-          />
+          <Stack gap="xs">
+            {!galleyInfo?.exists && (
+              <Text size="xs" c="orange" ta="center">
+                ⚠️ Export a galley PDF first for accurate cover dimensions
+              </Text>
+            )}
+            {galleyInfo?.exists && (
+              <Text size="xs" c="dimmed" ta="center">
+                {galleyInfo.pageCount} pages · Spine: {galleyInfo.spineMM.toFixed(2)}mm · Cover:{' '}
+                {galleyInfo.widthMM.toFixed(2)}×{galleyInfo.heightMM.toFixed(2)}mm
+              </Text>
+            )}
+            <PagePreview
+              html={coverHTML}
+              canvasWidthMM={coverDimensions.widthMM + 16}
+              canvasHeightMM={coverDimensions.heightMM + 16}
+              fillWidth
+            />
+          </Stack>
         </Grid.Col>
       </Grid>
       <Paper p="xs" mt="md" withBorder>

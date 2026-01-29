@@ -334,6 +334,10 @@ export function GetFileServerPort() {
   return window['go']['app']['App']['GetFileServerPort']();
 }
 
+export function GetGalleyInfo(arg1) {
+  return window['go']['app']['App']['GetGalleyInfo'](arg1);
+}
+
 export function GetNotes(arg1, arg2) {
   return window['go']['app']['App']['GetNotes'](arg1, arg2);
 }

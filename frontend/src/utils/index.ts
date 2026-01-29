@@ -15,7 +15,7 @@ export {
   generateAcknowledgementsHTML,
   generateAboutAuthorHTML,
 } from './bookPageHTML';
-export { generateCoverHTML, COVER_DIMENSIONS } from './coverHTML';
+export { generateCoverHTML, getCoverDimensions, DEFAULT_COVER_DIMENSIONS } from './coverHTML';
 
 const HASH_COLORS = [
   'blue',

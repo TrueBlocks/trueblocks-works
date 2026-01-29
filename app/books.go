@@ -129,6 +129,77 @@ func (a *App) GetCoversDir() string {
 	return filepath.Join(homeDir, ".works", "covers")
 }
 
+// GalleyInfo contains information about the galley PDF
+type GalleyInfo struct {
+	Exists    bool    `json:"exists"`
+	Path      string  `json:"path"`
+	PageCount int     `json:"pageCount"`
+	SpineMM   float64 `json:"spineMM"`
+	WidthMM   float64 `json:"widthMM"`
+	HeightMM  float64 `json:"heightMM"`
+	ModTime   int64   `json:"modTime"` // Unix timestamp
+}
+
+// KDP cover dimension constants
+const (
+	kdpFrontCoverWidthMM = 152.4  // 6 inches
+	kdpBackCoverWidthMM  = 152.4  // 6 inches
+	kdpCoverHeightMM     = 234.95 // 9.25 inches
+	kdpBleedMM           = 3.17   // 0.125 inches
+	kdpWhitePaperSpinePP = 0.0572 // mm per page for white paper
+)
+
+// GetGalleyInfo returns information about the galley PDF including page count and calculated cover dimensions
+func (a *App) GetGalleyInfo(collID int64) (*GalleyInfo, error) {
+	book, err := a.db.GetBookByCollection(collID)
+	if err != nil || book == nil {
+		return &GalleyInfo{Exists: false}, nil
+	}
+
+	coll, err := a.db.GetCollection(collID)
+	if err != nil {
+		return &GalleyInfo{Exists: false}, nil
+	}
+
+	bookTitle := book.Title
+	if bookTitle == "" {
+		bookTitle = coll.CollectionName
+	}
+	filename := sanitizeFilename(bookTitle) + ".pdf"
+
+	homeDir, _ := os.UserHomeDir()
+	pdfPath := filepath.Join(homeDir, "Desktop", filename)
+
+	info, err := os.Stat(pdfPath)
+	if os.IsNotExist(err) {
+		return &GalleyInfo{Exists: false, Path: pdfPath}, nil
+	}
+	if err != nil {
+		return &GalleyInfo{Exists: false}, nil
+	}
+
+	pageCount, err := bookbuild.GetPageCount(pdfPath)
+	if err != nil {
+		return &GalleyInfo{Exists: true, Path: pdfPath, ModTime: info.ModTime().Unix()}, nil
+	}
+
+	// Calculate spine width: page count * mm per page
+	spineMM := float64(pageCount) * kdpWhitePaperSpinePP
+
+	// Calculate total cover width: back + spine + front + bleed on both sides
+	widthMM := kdpBackCoverWidthMM + spineMM + kdpFrontCoverWidthMM + (kdpBleedMM * 2)
+
+	return &GalleyInfo{
+		Exists:    true,
+		Path:      pdfPath,
+		PageCount: pageCount,
+		SpineMM:   spineMM,
+		WidthMM:   widthMM,
+		HeightMM:  kdpCoverHeightMM,
+		ModTime:   info.ModTime().Unix(),
+	}, nil
+}
+
 // CopyCoverToClipboard copies the cover image bytes to the system clipboard
 func (a *App) CopyCoverToClipboard(path string) error {
 	if path == "" {
@@ -165,6 +236,15 @@ func (a *App) ExportCoverPDF(collID int64, coverHTML string) (*CoverExportResult
 		}, nil
 	}
 
+	// Get galley info to calculate correct cover dimensions
+	galleyInfo, err := a.GetGalleyInfo(collID)
+	if err != nil || !galleyInfo.Exists || galleyInfo.PageCount == 0 {
+		return &CoverExportResult{
+			Success: false,
+			Error:   "Galley PDF must be generated first to determine cover dimensions",
+		}, nil
+	}
+
 	bookTitle := book.Title
 	if bookTitle == "" {
 		bookTitle = coll.CollectionName
@@ -182,7 +262,11 @@ func (a *App) ExportCoverPDF(collID int64, coverHTML string) (*CoverExportResult
 
 	outputPath := filepath.Join(coversDir, filename)
 
-	if err := a.htmlToCoverPDF(coverHTML, outputPath); err != nil {
+	// Convert mm to inches for PDF generation
+	coverWidthInches := galleyInfo.WidthMM / 25.4
+	coverHeightInches := galleyInfo.HeightMM / 25.4
+
+	if err := bookbuild.HTMLToPDFFileWithSize(coverHTML, outputPath, coverWidthInches, coverHeightInches); err != nil {
 		return &CoverExportResult{
 			Success: false,
 			Error:   fmt.Sprintf("Failed to generate cover PDF: %v", err),
@@ -197,17 +281,6 @@ func (a *App) ExportCoverPDF(collID int64, coverHTML string) (*CoverExportResult
 		Success:    true,
 		OutputPath: outputPath,
 	}, nil
-}
-
-// htmlToCoverPDF converts cover HTML to PDF with custom dimensions for KDP covers.
-// Uses chromedp (headless Chrome) for accurate rendering.
-// Cover size: 334.6mm x 234.95mm = 13.173" x 9.250" (landscape for wraparound)
-func (a *App) htmlToCoverPDF(html string, outputPath string) error {
-	const (
-		coverWidthInches  = 13.173 // 334.6mm
-		coverHeightInches = 9.250  // 234.95mm
-	)
-	return bookbuild.HTMLToPDFFileWithSize(html, outputPath, coverWidthInches, coverHeightInches)
 }
 
 // OpenCoverPDF opens the generated cover PDF in the default application

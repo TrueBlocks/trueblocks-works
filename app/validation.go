@@ -182,8 +182,18 @@ func (a *App) ValidateCover(collID int64) (*ValidationResult, error) {
 	if book.CoverPath == nil || *book.CoverPath == "" {
 		result.Warnings = append(result.Warnings, "Cover PDF not yet generated")
 	} else {
-		if _, err := os.Stat(*book.CoverPath); os.IsNotExist(err) {
+		coverInfo, err := os.Stat(*book.CoverPath)
+		if os.IsNotExist(err) {
 			result.Warnings = append(result.Warnings, "Cover PDF file not found on disk")
+		} else if err == nil {
+			// Check that cover was generated after galley
+			galleyInfo, galleyErr := a.GetGalleyInfo(collID)
+			if galleyErr == nil && galleyInfo.Exists && galleyInfo.ModTime > 0 {
+				if coverInfo.ModTime().Unix() < galleyInfo.ModTime {
+					result.Errors = append(result.Errors, "Cover PDF is older than galley - regenerate cover after galley changes")
+					result.Passed = false
+				}
+			}
 		}
 	}
 

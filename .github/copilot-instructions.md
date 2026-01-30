@@ -76,6 +76,7 @@ When the user types ONLY these words (no other text), execute the corresponding 
 | `push`             | `git add -A; and git commit -m "<message>"; and git push`                             | Short, meaningful commit message based on recent changes |
 | `plan`             | Exit design mode, read `ai/Invoker.md` and `ai/Rules.md`, follow instructions therein | Obey checkpoints                                         |
 | `discuss <topics>` | Enter design mode focused on discussing `<topics>`                                    | Topics are the text after "discuss"                      |
+| `cmds`             | List available tools from `github-pull-request_copilot-coding-agent`                  | Shows coding agent capabilities                          |
 
 **CRITICAL**: The `push` command is the ONLY exception to the "never git commit" rule. Only execute git commands when user types `push` alone on a line. Never run git add/commit/push otherwise.
 

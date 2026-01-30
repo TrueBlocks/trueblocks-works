@@ -120,6 +120,11 @@ func AddRunningHeaders(pdfPath string, mappings []PageMapping, config OverlayCon
 }
 
 func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfig, position string) error {
+	// Ensure embedded fonts are installed
+	if err := EnsureFontsInstalled(); err != nil {
+		return fmt.Errorf("failed to install fonts: %w", err)
+	}
+
 	var dx, dy float64
 	var anchor string
 
@@ -155,9 +160,10 @@ func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfi
 		fontSize = config.Typography.HeaderSize
 	}
 
+	fontName := GetHeaderFontName()
 	wm, err := api.TextWatermark(text, fmt.Sprintf(
-		"font:Times-Roman, points:%d, position:%s, offset:%.1f %.1f, scale:1 abs, rotation:0, opacity:1",
-		fontSize, anchor, dx, dy,
+		"font:%s, points:%d, position:%s, offset:%.1f %.1f, scale:1 abs, rotation:0, opacity:1",
+		fontName, fontSize, anchor, dx, dy,
 	), true, false, types.POINTS)
 	if err != nil {
 		return fmt.Errorf("failed to create watermark: %w", err)

@@ -42,6 +42,7 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     unknownStyleNames: string[];
     directFormatting: number;
     directFormattingTypes: string[];
+    isCompatibilityMode: boolean;
   } | null>(null);
   const [templatePath, setTemplatePath] = useState<string>('');
   const [isMarked, setIsMarked] = useState(false);
@@ -152,9 +153,13 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     status: {
       unknownStyleNames?: string[];
       directFormattingTypes?: string[];
+      isCompatibilityMode?: boolean;
     } | null
   ): string => {
     const parts: string[] = [];
+    if (status?.isCompatibilityMode) {
+      parts.push('Document is in Compatibility Mode (resave in Word 2013+ format)');
+    }
     if (status?.unknownStyleNames?.length) {
       parts.push(`Unknown styles: ${status.unknownStyleNames.join(', ')}`);
     }
@@ -167,7 +172,9 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   // Build audit status text if work is in a book and fails audit
   const auditStatusText =
     auditStatus?.isInBook && !auditStatus?.isClean
-      ? `${auditStatus.unknownStyles} unknown styles, ${auditStatus.directFormatting} direct`
+      ? auditStatus?.isCompatibilityMode
+        ? 'Compatibility Mode'
+        : `${auditStatus.unknownStyles} unknown styles, ${auditStatus.directFormatting} direct`
       : '';
 
   return (

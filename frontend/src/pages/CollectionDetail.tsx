@@ -60,6 +60,7 @@ import {
   GetTab,
   SetTab,
   SetWorkSuppressed,
+  SetWorkMarked,
   ToggleCollectionMarks,
   GetCollectionHasMarkedWorks,
   ToggleCollectionSuppressed,
@@ -123,6 +124,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [hasSuppressedWorks, setHasSuppressedWorks] = useState(false);
   const hasInitialized = useRef(false);
   const prevCollectionIdRef = useRef<number | undefined>(undefined);
+  const selectedWorkRef = useRef<models.CollectionWork | null>(null);
 
   const {
     notes,
@@ -597,6 +599,39 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     }
   }, [collectionId, loadData]);
 
+  const handleToggleSelectedMark = useCallback(async () => {
+    const work = selectedWorkRef.current;
+    if (!work) return;
+    try {
+      await SetWorkMarked(work.workID, !work.isMarked);
+      setWorks((prev) =>
+        prev.map((w) => (w.workID === work.workID ? { ...w, isMarked: !work.isMarked } : w))
+      );
+      selectedWorkRef.current = { ...work, isMarked: !work.isMarked };
+    } catch (err) {
+      LogErr('Failed to toggle mark:', err);
+    }
+  }, []);
+
+  const handleToggleSelectedSuppressed = useCallback(async () => {
+    const work = selectedWorkRef.current;
+    if (!work || !collectionId) return;
+    try {
+      await SetWorkSuppressed(collectionId, work.workID, !work.isSuppressed);
+      setWorks((prev) =>
+        prev.map((w) => (w.workID === work.workID ? { ...w, isSuppressed: !work.isSuppressed } : w))
+      );
+      selectedWorkRef.current = { ...work, isSuppressed: !work.isSuppressed };
+    } catch (err) {
+      LogErr('Failed to toggle suppressed:', err);
+    }
+  }, [collectionId]);
+
+  useHotkeys([
+    ['mod+shift+M', handleToggleSelectedMark],
+    ['mod+shift+S', handleToggleSelectedSuppressed],
+  ]);
+
   const expandFiltersForWorks = useCallback(
     async (addedWorks: models.WorkView[]) => {
       const tableName = `collection-${collectionId}`;
@@ -719,6 +754,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   );
 
   const handleSelectedChange = useCallback((work: models.CollectionWork) => {
+    selectedWorkRef.current = work;
     SetLastWorkID(work.workID).catch((err) => {
       LogErr('Failed to set lastWorkID:', err);
     });

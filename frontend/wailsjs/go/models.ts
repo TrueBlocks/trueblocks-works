@@ -29,6 +29,7 @@ export namespace app {
 	    unknownStyles: string[];
 	    directFormattingCount: number;
 	    directFormattingTypes: string[];
+	    isCompatibilityMode: boolean;
 	    isClean: boolean;
 	    error?: string;
 	
@@ -44,6 +45,7 @@ export namespace app {
 	        this.unknownStyles = source["unknownStyles"];
 	        this.directFormattingCount = source["directFormattingCount"];
 	        this.directFormattingTypes = source["directFormattingTypes"];
+	        this.isCompatibilityMode = source["isCompatibilityMode"];
 	        this.isClean = source["isClean"];
 	        this.error = source["error"];
 	    }
@@ -1036,6 +1038,7 @@ export namespace app {
 	    unknownStyleNames: string[];
 	    directFormatting: number;
 	    directFormattingTypes: string[];
+	    isCompatibilityMode: boolean;
 	    isClean: boolean;
 	    error?: string;
 	
@@ -1050,6 +1053,7 @@ export namespace app {
 	        this.unknownStyleNames = source["unknownStyleNames"];
 	        this.directFormatting = source["directFormatting"];
 	        this.directFormattingTypes = source["directFormattingTypes"];
+	        this.isCompatibilityMode = source["isCompatibilityMode"];
 	        this.isClean = source["isClean"];
 	        this.error = source["error"];
 	    }
@@ -1582,6 +1586,12 @@ export namespace models {
 	    worksStartRecto?: boolean;
 	    showPageNumbers?: boolean;
 	    selectedParts?: string;
+	    kdpUploaded: boolean;
+	    kdpPreviewed: boolean;
+	    kdpProofOrdered: boolean;
+	    kdpPublished: boolean;
+	    amazonUrl?: string;
+	    lastPublished?: string;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -1619,6 +1629,12 @@ export namespace models {
 	        this.worksStartRecto = source["worksStartRecto"];
 	        this.showPageNumbers = source["showPageNumbers"];
 	        this.selectedParts = source["selectedParts"];
+	        this.kdpUploaded = source["kdpUploaded"];
+	        this.kdpPreviewed = source["kdpPreviewed"];
+	        this.kdpProofOrdered = source["kdpProofOrdered"];
+	        this.kdpPublished = source["kdpPublished"];
+	        this.amazonUrl = source["amazonUrl"];
+	        this.lastPublished = source["lastPublished"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }

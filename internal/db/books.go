@@ -17,8 +17,10 @@ func (db *DB) CreateBook(b *models.Book) error {
 		isbn, published_date, template_path, export_path, status,
 		title_offset_y, subtitle_offset_y, author_offset_y,
 		publisher, background_color,
-		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		works_start_recto, show_page_numbers, selected_parts,
+		kdp_uploaded, kdp_previewed, kdp_proof_ordered, kdp_published, amazon_url, last_published,
+		created_at, updated_at
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
 		b.CollID, b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
@@ -27,7 +29,9 @@ func (db *DB) CreateBook(b *models.Book) error {
 		b.ISBN, b.PublishedDate, b.TemplatePath, b.ExportPath, b.Status,
 		b.TitleOffsetY, b.SubtitleOffsetY, b.AuthorOffsetY,
 		b.Publisher, b.BackgroundColor,
-		b.WorksStartRecto, b.ShowPageNumbers, b.SelectedParts, now, now,
+		b.WorksStartRecto, b.ShowPageNumbers, b.SelectedParts,
+		b.KdpUploaded, b.KdpPreviewed, b.KdpProofOrdered, b.KdpPublished, b.AmazonUrl, b.LastPublished,
+		now, now,
 	)
 	if err != nil {
 		return fmt.Errorf("insert book: %w", err)
@@ -50,7 +54,9 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 		isbn, published_date, template_path, export_path, status,
 		title_offset_y, subtitle_offset_y, author_offset_y,
 		publisher, background_color,
-		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
+		works_start_recto, show_page_numbers, selected_parts,
+		kdp_uploaded, kdp_previewed, kdp_proof_ordered, kdp_published, amazon_url, last_published,
+		created_at, updated_at
 		FROM Books WHERE bookID = ?`
 
 	b := &models.Book{}
@@ -62,8 +68,9 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
 		&b.Status, &b.TitleOffsetY, &b.SubtitleOffsetY, &b.AuthorOffsetY,
 		&b.Publisher, &b.BackgroundColor,
-		&b.WorksStartRecto, &b.ShowPageNumbers,
-		&b.SelectedParts, &b.CreatedAt, &b.ModifiedAt,
+		&b.WorksStartRecto, &b.ShowPageNumbers, &b.SelectedParts,
+		&b.KdpUploaded, &b.KdpPreviewed, &b.KdpProofOrdered, &b.KdpPublished, &b.AmazonUrl, &b.LastPublished,
+		&b.CreatedAt, &b.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -81,7 +88,9 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 		isbn, published_date, template_path, export_path, status,
 		title_offset_y, subtitle_offset_y, author_offset_y,
 		publisher, background_color,
-		works_start_recto, show_page_numbers, selected_parts, created_at, updated_at
+		works_start_recto, show_page_numbers, selected_parts,
+		kdp_uploaded, kdp_previewed, kdp_proof_ordered, kdp_published, amazon_url, last_published,
+		created_at, updated_at
 		FROM Books WHERE collID = ?`
 
 	b := &models.Book{}
@@ -93,8 +102,9 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
 		&b.Status, &b.TitleOffsetY, &b.SubtitleOffsetY, &b.AuthorOffsetY,
 		&b.Publisher, &b.BackgroundColor,
-		&b.WorksStartRecto, &b.ShowPageNumbers,
-		&b.SelectedParts, &b.CreatedAt, &b.ModifiedAt,
+		&b.WorksStartRecto, &b.ShowPageNumbers, &b.SelectedParts,
+		&b.KdpUploaded, &b.KdpPreviewed, &b.KdpProofOrdered, &b.KdpPublished, &b.AmazonUrl, &b.LastPublished,
+		&b.CreatedAt, &b.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -115,7 +125,9 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		title_offset_y = ?, subtitle_offset_y = ?, author_offset_y = ?,
 		publisher = ?, background_color = ?,
 		works_start_recto = ?, show_page_numbers = ?,
-		selected_parts = ?, updated_at = CURRENT_TIMESTAMP
+		selected_parts = ?,
+		kdp_uploaded = ?, kdp_previewed = ?, kdp_proof_ordered = ?, kdp_published = ?, amazon_url = ?, last_published = ?,
+		updated_at = CURRENT_TIMESTAMP
 		WHERE bookID = ?`
 
 	_, err := db.conn.Exec(query,
@@ -127,7 +139,9 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		b.TitleOffsetY, b.SubtitleOffsetY, b.AuthorOffsetY,
 		b.Publisher, b.BackgroundColor,
 		b.WorksStartRecto, b.ShowPageNumbers,
-		b.SelectedParts, b.BookID,
+		b.SelectedParts,
+		b.KdpUploaded, b.KdpPreviewed, b.KdpProofOrdered, b.KdpPublished, b.AmazonUrl, b.LastPublished,
+		b.BookID,
 	)
 	if err != nil {
 		return fmt.Errorf("update book: %w", err)

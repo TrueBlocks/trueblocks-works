@@ -30,6 +30,12 @@ type Book struct {
 	WorksStartRecto  *bool   `json:"worksStartRecto,omitempty" db:"works_start_recto"`
 	ShowPageNumbers  *bool   `json:"showPageNumbers,omitempty" db:"show_page_numbers"`
 	SelectedParts    *string `json:"selectedParts,omitempty" db:"selected_parts"`
+	KdpUploaded      bool    `json:"kdpUploaded" db:"kdp_uploaded"`
+	KdpPreviewed     bool    `json:"kdpPreviewed" db:"kdp_previewed"`
+	KdpProofOrdered  bool    `json:"kdpProofOrdered" db:"kdp_proof_ordered"`
+	KdpPublished     bool    `json:"kdpPublished" db:"kdp_published"`
+	AmazonUrl        *string `json:"amazonUrl,omitempty" db:"amazon_url"`
+	LastPublished    *string `json:"lastPublished,omitempty" db:"last_published"`
 	CreatedAt        string  `json:"createdAt" db:"created_at"`
 	ModifiedAt       string  `json:"modifiedAt" db:"updated_at"`
 }

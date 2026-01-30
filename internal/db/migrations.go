@@ -127,6 +127,16 @@ var migrations = []Migration{
 		Name:    "add_part_id_to_collection_details",
 		Up:      migrateAddPartIDToCollectionDetails,
 	},
+	{
+		Version: 32,
+		Name:    "add_kdp_publishing_fields",
+		Up:      migrateAddKdpPublishingFields,
+	},
+	{
+		Version: 33,
+		Name:    "add_kdp_proof_ordered",
+		Up:      migrateAddKdpProofOrdered,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1206,4 +1216,30 @@ func cleanOldPartCaches(cacheDir string) {
 			_ = os.Remove(filepath.Join(cacheDir, name))
 		}
 	}
+}
+
+func migrateAddKdpPublishingFields(tx *sql.Tx) error {
+	columns := []string{
+		`ALTER TABLE Books ADD COLUMN kdp_uploaded INTEGER DEFAULT 0`,
+		`ALTER TABLE Books ADD COLUMN kdp_previewed INTEGER DEFAULT 0`,
+		`ALTER TABLE Books ADD COLUMN kdp_published INTEGER DEFAULT 0`,
+		`ALTER TABLE Books ADD COLUMN amazon_url TEXT`,
+		`ALTER TABLE Books ADD COLUMN last_published TEXT`,
+	}
+
+	for _, col := range columns {
+		if _, err := tx.Exec(col); err != nil {
+			return fmt.Errorf("add kdp column: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func migrateAddKdpProofOrdered(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN kdp_proof_ordered INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add kdp_proof_ordered column: %w", err)
+	}
+	return nil
 }

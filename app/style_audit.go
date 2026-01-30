@@ -10,6 +10,7 @@ import (
 )
 
 const wordDocumentXML = "word/document.xml"
+const wordSettingsXML = "word/settings.xml"
 
 // StyleAuditResult represents the style audit for a single work
 type StyleAuditResult struct {
@@ -19,6 +20,7 @@ type StyleAuditResult struct {
 	UnknownStyles         []string `json:"unknownStyles"`
 	DirectFormatting      int      `json:"directFormattingCount"`
 	DirectFormattingTypes []string `json:"directFormattingTypes"`
+	IsCompatibilityMode   bool     `json:"isCompatibilityMode"`
 	IsClean               bool     `json:"isClean"`
 	Error                 string   `json:"error,omitempty"`
 }
@@ -113,10 +115,73 @@ func (a *App) AuditWorkStyles(workID int64, templatePath string) (*StyleAuditRes
 		}
 	}
 
+	// Check compatibility mode
+	result.IsCompatibilityMode = checkCompatibilityMode(fullPath)
+
 	// Determine if clean
-	result.IsClean = len(result.UnknownStyles) == 0 && result.DirectFormatting == 0
+	result.IsClean = len(result.UnknownStyles) == 0 && result.DirectFormatting == 0 && !result.IsCompatibilityMode
 
 	return result, nil
+}
+
+// checkCompatibilityMode checks if a DOCX is saved in compatibility mode (Word 2010 or earlier)
+func checkCompatibilityMode(docxPath string) bool {
+	r, err := zip.OpenReader(docxPath)
+	if err != nil {
+		return false
+	}
+	defer r.Close()
+
+	var settingsFile *zip.File
+	for _, f := range r.File {
+		if f.Name == wordSettingsXML {
+			settingsFile = f
+			break
+		}
+	}
+
+	if settingsFile == nil {
+		return false
+	}
+
+	rc, err := settingsFile.Open()
+	if err != nil {
+		return false
+	}
+	defer rc.Close()
+
+	decoder := xml.NewDecoder(rc)
+	for {
+		tok, err := decoder.Token()
+		if err != nil {
+			break
+		}
+
+		if se, ok := tok.(xml.StartElement); ok {
+			if se.Name.Local == "compatSetting" {
+				var name, val string
+				for _, attr := range se.Attr {
+					if attr.Name.Local == "name" {
+						name = attr.Value
+					}
+					if attr.Name.Local == "val" {
+						val = attr.Value
+					}
+				}
+				if name == "compatibilityMode" {
+					// Word 2013+ uses val="15", Word 2010 uses "14", Word 2007 uses "12"
+					// Anything less than 15 is compatibility mode
+					if val != "" && val != "15" && val != "16" && val != "17" {
+						return true
+					}
+					return false
+				}
+			}
+		}
+	}
+
+	// No compatibilityMode setting found - could be very old doc
+	return false
 }
 
 // isPandocSyntaxStyle returns true if the style is a pandoc syntax highlighting token style
@@ -204,6 +269,7 @@ type WorkBookAuditStatus struct {
 	UnknownStyleNames     []string `json:"unknownStyleNames"`
 	DirectFormatting      int      `json:"directFormatting"`
 	DirectFormattingTypes []string `json:"directFormattingTypes"`
+	IsCompatibilityMode   bool     `json:"isCompatibilityMode"`
 	IsClean               bool     `json:"isClean"`
 	Error                 string   `json:"error,omitempty"`
 }
@@ -259,6 +325,7 @@ func (a *App) GetWorkBookAuditStatus(workID int64) (*WorkBookAuditStatus, error)
 	result.UnknownStyleNames = auditResult.UnknownStyles
 	result.DirectFormatting = auditResult.DirectFormatting
 	result.DirectFormattingTypes = auditResult.DirectFormattingTypes
+	result.IsCompatibilityMode = auditResult.IsCompatibilityMode
 	result.IsClean = auditResult.IsClean
 
 	return result, nil

@@ -5,8 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
@@ -49,28 +47,16 @@ func NewPageNumberTracker() *PageNumberTracker {
 	}
 }
 
-func sanitizePartTitle(title string) string {
-	re := regexp.MustCompile(`[^a-zA-Z0-9-]`)
-	sanitized := re.ReplaceAllString(strings.ToLower(title), "-")
-	re2 := regexp.MustCompile(`-+`)
-	sanitized = re2.ReplaceAllString(sanitized, "-")
-	sanitized = strings.Trim(sanitized, "-")
-	if len(sanitized) > 50 {
-		sanitized = sanitized[:50]
-	}
-	return sanitized
+func PartCachePath(cacheDir string, partID int64) string {
+	return filepath.Join(cacheDir, fmt.Sprintf("part-%d-overlaid.pdf", partID))
 }
 
-func PartCachePath(cacheDir string, partTitle string) string {
-	return filepath.Join(cacheDir, fmt.Sprintf("part-%s-overlaid.pdf", sanitizePartTitle(partTitle)))
+func PartMergedPath(cacheDir string, partID int64) string {
+	return filepath.Join(cacheDir, fmt.Sprintf("part-%d-merged.pdf", partID))
 }
 
-func PartMergedPath(cacheDir string, partTitle string) string {
-	return filepath.Join(cacheDir, fmt.Sprintf("part-%s-merged.pdf", sanitizePartTitle(partTitle)))
-}
-
-func IsPartCached(cacheDir string, partTitle string) bool {
-	cachePath := PartCachePath(cacheDir, partTitle)
+func IsPartCached(cacheDir string, partID int64) bool {
+	cachePath := PartCachePath(cacheDir, partID)
 	_, err := os.Stat(cachePath)
 	return err == nil
 }
@@ -94,8 +80,8 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 		return nil, fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
-	cachePath := PartCachePath(opts.CacheDir, pa.PartTitle)
-	mergedPath := PartMergedPath(opts.CacheDir, pa.PartTitle)
+	cachePath := PartCachePath(opts.CacheDir, pa.PartID)
+	mergedPath := PartMergedPath(opts.CacheDir, pa.PartID)
 
 	progress := func(stage string, current, total int, message string) {
 		if opts.OnProgress != nil {
@@ -299,8 +285,8 @@ func addPartHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig
 	return nil
 }
 
-func LoadCachedPart(cacheDir string, partTitle string, partIndex int) (*PartBuildResult, error) {
-	cachePath := PartCachePath(cacheDir, partTitle)
+func LoadCachedPart(cacheDir string, partID int64, partTitle string, partIndex int) (*PartBuildResult, error) {
+	cachePath := PartCachePath(cacheDir, partID)
 
 	if _, err := os.Stat(cachePath); err != nil {
 		return nil, fmt.Errorf("cached part %s not found: %w", partTitle, err)
@@ -321,9 +307,9 @@ func LoadCachedPart(cacheDir string, partTitle string, partIndex int) (*PartBuil
 	}, nil
 }
 
-func ClearPartCache(cacheDir string, partTitle string) error {
-	cachePath := PartCachePath(cacheDir, partTitle)
-	mergedPath := PartMergedPath(cacheDir, partTitle)
+func ClearPartCache(cacheDir string, partID int64) error {
+	cachePath := PartCachePath(cacheDir, partID)
+	mergedPath := PartMergedPath(cacheDir, partID)
 
 	_ = os.Remove(cachePath)
 	_ = os.Remove(mergedPath)

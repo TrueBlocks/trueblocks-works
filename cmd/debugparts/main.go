@@ -138,6 +138,7 @@ func buildManifestWithParts(database *db.DB, fops *fileops.FileOps, collID int64
 			}
 			partDividerPDF := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
 			currentPart = &bookbuild.Part{
+				ID:    w.WorkID,
 				Title: w.Title,
 				PDF:   partDividerPDF,
 				Works: []bookbuild.Work{},

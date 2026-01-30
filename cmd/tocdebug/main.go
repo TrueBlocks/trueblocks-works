@@ -71,6 +71,7 @@ func buildManifestWithParts(database *db.DB, fops *fileops.FileOps, collID int64
 				manifest.Parts = append(manifest.Parts, *currentPart)
 			}
 			currentPart = &bookbuild.Part{
+				ID:    w.WorkID,
 				Title: w.Title,
 				PDF:   filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID)),
 				Works: []bookbuild.Work{},

@@ -180,7 +180,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 	for partIdx := range analysis.PartAnalyses {
 		pa := analysis.PartAnalyses[partIdx]
 		isSelected := opts.RebuildAll || isPartSelected(partIdx, opts.SelectedParts)
-		isCached := IsPartCached(opts.CacheDir, pa.PartTitle)
+		isCached := IsPartCached(opts.CacheDir, pa.PartID)
 
 		progress("Parts", 3, 5, fmt.Sprintf("Part %d (%s): selected=%v, cached=%v", partIdx, pa.PartTitle, isSelected, isCached))
 
@@ -205,7 +205,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 			result.Warnings = append(result.Warnings, partResult.Warnings...)
 		} else if isCached {
 			// Not selected but cached: use cached version (already has overlays)
-			cached, err := LoadCachedPart(opts.CacheDir, pa.PartTitle, partIdx)
+			cached, err := LoadCachedPart(opts.CacheDir, pa.PartID, pa.PartTitle, partIdx)
 			if err != nil {
 				// Cache load failed, build without overlays
 				partResult, err := BuildPart(PartBuildOptions{

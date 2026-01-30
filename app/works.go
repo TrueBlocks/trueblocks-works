@@ -67,6 +67,11 @@ func (a *App) UpdateWork(work *models.Work) (*validation.ValidationResult, error
 			}
 			work.QualityAtPublish = nil
 		}
+
+		// If type changed to/from Section, recalculate part_ids for all affected collections
+		if work.Type != existing.Type && (work.Type == "Section" || existing.Type == "Section") {
+			a.recalculatePartIDsForWork(work.WorkID)
+		}
 	}
 	return a.db.UpdateWork(work)
 }
@@ -135,4 +140,16 @@ func (a *App) findWorkWithPath(path string, excludeID int64) *models.Work {
 		}
 	}
 	return nil
+}
+
+// recalculatePartIDsForWork recalculates part_ids for all collections containing the work.
+// Called when a work's type changes to/from Section.
+func (a *App) recalculatePartIDsForWork(workID int64) {
+	collections, err := a.db.GetWorkCollections(workID)
+	if err != nil {
+		return
+	}
+	for _, coll := range collections {
+		_ = a.db.RecalculatePartIDs(coll.CollID)
+	}
 }

@@ -24,6 +24,7 @@ type CollectionDetail struct {
 	CollID         int64   `json:"collID" db:"collID"`
 	WorkID         int64   `json:"workID" db:"workID"`
 	Position       int64   `json:"position" db:"position"`
+	PartID         int64   `json:"partID" db:"part_id"`
 	CollectionName *string `json:"collectionName,omitempty" db:"collection_name"`
 }
 

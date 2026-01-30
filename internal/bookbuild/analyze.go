@@ -65,6 +65,7 @@ type AnalysisResult struct {
 
 type PartAnalysis struct {
 	PartIndex      int
+	PartID         int64
 	PartTitle      string
 	StartPage      int
 	EndPage        int
@@ -137,6 +138,7 @@ func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
 
 			result.PartAnalyses = append(result.PartAnalyses, PartAnalysis{
 				PartIndex:      partIdx,
+				PartID:         part.ID,
 				PartTitle:      part.Title,
 				StartPage:      partStartPage,
 				EndPage:        currentPage - 1,

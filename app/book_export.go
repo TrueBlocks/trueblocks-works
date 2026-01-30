@@ -419,6 +419,7 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 			}
 			partDividerPDF := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
 			currentPart = &bookbuild.Part{
+				ID:    w.WorkID,
 				Title: w.Title,
 				PDF:   partDividerPDF,
 				Works: []bookbuild.Work{},
@@ -446,6 +447,7 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 
 	if len(prologueWorks) > 0 && hasParts {
 		prologuePart := bookbuild.Part{
+			ID:    0, // Prologue has ID 0
 			Title: "Prologue",
 			Works: prologueWorks,
 		}
@@ -587,15 +589,15 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 }
 
 // ClearPartCache clears cached PDFs for specific parts or all parts
-func (a *App) ClearPartCache(collID int64, partTitles []string) error {
+func (a *App) ClearPartCache(collID int64, partIDs []int64) error {
 	cacheDir := bookbuild.GetCacheDir(collID)
 
-	if len(partTitles) == 0 {
+	if len(partIDs) == 0 {
 		return bookbuild.ClearAllPartsCache(cacheDir)
 	}
 
-	for _, title := range partTitles {
-		_ = bookbuild.ClearPartCache(cacheDir, title)
+	for _, partID := range partIDs {
+		_ = bookbuild.ClearPartCache(cacheDir, partID)
 	}
 	return nil
 }

@@ -151,6 +151,11 @@ func (db *DB) AddWorkToCollection(collID, workID int64) error {
 		return fmt.Errorf("add work to collection: %w", err)
 	}
 
+	// Recalculate part_ids for the collection
+	if err := db.RecalculatePartIDs(collID); err != nil {
+		return fmt.Errorf("recalculate part_ids: %w", err)
+	}
+
 	// Update collection's modified_at timestamp
 	_, err = db.conn.Exec(`UPDATE Collections SET modified_at = CURRENT_TIMESTAMP WHERE collID = ?`, collID)
 	if err != nil {
@@ -164,6 +169,11 @@ func (db *DB) RemoveWorkFromCollection(collID, workID int64) error {
 	_, err := db.conn.Exec(query, collID, workID)
 	if err != nil {
 		return fmt.Errorf("remove work from collection: %w", err)
+	}
+
+	// Recalculate part_ids for the collection
+	if err := db.RecalculatePartIDs(collID); err != nil {
+		return fmt.Errorf("recalculate part_ids: %w", err)
 	}
 
 	// Update collection's modified_at timestamp
@@ -281,6 +291,11 @@ func (db *DB) ReorderCollectionWorks(collID int64, workIDs []int64) error {
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	// Recalculate part_ids after reorder (outside transaction since it's already committed)
+	if err := db.RecalculatePartIDs(collID); err != nil {
+		return fmt.Errorf("recalculate part_ids: %w", err)
 	}
 
 	return nil
@@ -418,4 +433,85 @@ func (db *DB) DeleteCollectionPermanent(collID int64) error {
 	}
 
 	return nil
+}
+
+// RecalculatePartIDs updates part_id for all works in a collection
+// based on their position relative to Section-type works.
+// part_id = 0 for works before any Section
+// part_id = Section's workID for works after that Section
+func (db *DB) RecalculatePartIDs(collID int64) error {
+	// Get works ordered by position with their type
+	rows, err := db.conn.Query(`
+		SELECT cd.workID, w.type
+		FROM CollectionDetails cd
+		JOIN Works w ON cd.workID = w.workID
+		WHERE cd.collID = ?
+		ORDER BY cd.position`, collID)
+	if err != nil {
+		return fmt.Errorf("query collection works: %w", err)
+	}
+	defer rows.Close()
+
+	type workInfo struct {
+		workID   int64
+		workType string
+	}
+	var works []workInfo
+	for rows.Next() {
+		var w workInfo
+		if err := rows.Scan(&w.workID, &w.workType); err != nil {
+			return fmt.Errorf("scan work info: %w", err)
+		}
+		works = append(works, w)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate works: %w", err)
+	}
+
+	// Calculate and update part_id for each work
+	var currentPartID int64 = 0
+	for _, w := range works {
+		if w.workType == "Section" {
+			currentPartID = w.workID
+		}
+		_, err := db.conn.Exec(`UPDATE CollectionDetails SET part_id = ? WHERE collID = ? AND workID = ?`,
+			currentPartID, collID, w.workID)
+		if err != nil {
+			return fmt.Errorf("update part_id for work %d: %w", w.workID, err)
+		}
+	}
+
+	return nil
+}
+
+// GetWorkPartInfo returns the collID and part_id for all collections containing the given work.
+// This is used by the file watcher to know which part caches to invalidate.
+func (db *DB) GetWorkPartInfo(workID int64) ([]struct {
+	CollID int64
+	PartID int64
+}, error) {
+	rows, err := db.conn.Query(`
+		SELECT collID, part_id
+		FROM CollectionDetails
+		WHERE workID = ?`, workID)
+	if err != nil {
+		return nil, fmt.Errorf("query work part info: %w", err)
+	}
+	defer rows.Close()
+
+	var result []struct {
+		CollID int64
+		PartID int64
+	}
+	for rows.Next() {
+		var info struct {
+			CollID int64
+			PartID int64
+		}
+		if err := rows.Scan(&info.CollID, &info.PartID); err != nil {
+			return nil, fmt.Errorf("scan part info: %w", err)
+		}
+		result = append(result, info)
+	}
+	return result, rows.Err()
 }

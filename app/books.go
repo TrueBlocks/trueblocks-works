@@ -249,18 +249,42 @@ func (a *App) ExportCoverPDF(collID int64, coverHTML string) (*CoverExportResult
 	if bookTitle == "" {
 		bookTitle = coll.CollectionName
 	}
-	filename := sanitizeFilename(bookTitle) + "-cover.pdf"
+	defaultFilename := sanitizeFilename(bookTitle) + "-cover.pdf"
 
-	homeDir, _ := os.UserHomeDir()
-	coversDir := filepath.Join(homeDir, ".works", "covers")
-	if err := os.MkdirAll(coversDir, 0755); err != nil {
-		return &CoverExportResult{
-			Success: false,
-			Error:   fmt.Sprintf("Failed to create covers directory: %v", err),
-		}, nil
+	// Use the same persisted export directory as galley export
+	defaultDir := ""
+	if book.ExportPath != nil && *book.ExportPath != "" {
+		defaultDir = *book.ExportPath
+	} else {
+		homeDir, _ := os.UserHomeDir()
+		defaultDir = filepath.Join(homeDir, "Desktop")
 	}
 
-	outputPath := filepath.Join(coversDir, filename)
+	outputPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:            "Export Cover as PDF",
+		DefaultDirectory: defaultDir,
+		DefaultFilename:  defaultFilename,
+		Filters: []runtime.FileFilter{
+			{DisplayName: "PDF Files", Pattern: "*.pdf"},
+		},
+	})
+	if err != nil {
+		return &CoverExportResult{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to open save dialog: %v", err),
+		}, nil
+	}
+	if outputPath == "" {
+		// User cancelled
+		return nil, nil
+	}
+
+	// Persist the chosen directory (same as galley export uses)
+	newExportDir := filepath.Dir(outputPath)
+	if book.ExportPath == nil || *book.ExportPath != newExportDir {
+		book.ExportPath = &newExportDir
+		_ = a.db.UpdateBook(book)
+	}
 
 	// Convert mm to inches for PDF generation
 	coverWidthInches := galleyInfo.WidthMM / 25.4
@@ -276,6 +300,9 @@ func (a *App) ExportCoverPDF(collID int64, coverHTML string) (*CoverExportResult
 	// Update book with cover path
 	book.CoverPath = &outputPath
 	_ = a.db.UpdateBook(book)
+
+	// Open the generated PDF
+	_ = exec.Command("open", outputPath).Start()
 
 	return &CoverExportResult{
 		Success:    true,

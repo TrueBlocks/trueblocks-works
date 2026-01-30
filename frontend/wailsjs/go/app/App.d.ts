@@ -38,7 +38,7 @@ export function CheckLibreOffice():Promise<boolean>;
 
 export function CheckWorkPath(arg1:number):Promise<app.PathCheckResult>;
 
-export function ClearPartCache(arg1:number,arg2:Array<string>):Promise<void>;
+export function ClearPartCache(arg1:number,arg2:Array<number>):Promise<void>;
 
 export function CloseStatusBar():Promise<void>;
 

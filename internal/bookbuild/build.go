@@ -205,6 +205,7 @@ func reanalyzeWithTOC(m *Manifest, tocPages int) (*AnalysisResult, error) {
 
 			result.PartAnalyses = append(result.PartAnalyses, PartAnalysis{
 				PartIndex:      partIdx,
+				PartID:         part.ID,
 				PartTitle:      part.Title,
 				StartPage:      partStartPage,
 				EndPage:        currentPage - 1,

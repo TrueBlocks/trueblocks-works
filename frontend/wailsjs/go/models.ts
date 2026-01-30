@@ -1652,6 +1652,7 @@ export namespace models {
 	    collID: number;
 	    workID: number;
 	    position: number;
+	    partID: number;
 	    collectionName?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -1664,6 +1665,7 @@ export namespace models {
 	        this.collID = source["collID"];
 	        this.workID = source["workID"];
 	        this.position = source["position"];
+	        this.partID = source["partID"];
 	        this.collectionName = source["collectionName"];
 	    }
 	}

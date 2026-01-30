@@ -4,6 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 // Migration represents a database schema migration.
@@ -118,6 +121,11 @@ var migrations = []Migration{
 		Version: 30,
 		Name:    "drop_deprecated_font_columns",
 		Up:      migrateDropDeprecatedFontColumns,
+	},
+	{
+		Version: 31,
+		Name:    "add_part_id_to_collection_details",
+		Up:      migrateAddPartIDToCollectionDetails,
 	},
 }
 
@@ -1063,4 +1071,139 @@ func migrateDropDeprecatedFontColumns(tx *sql.Tx) error {
 	}
 
 	return nil
+}
+
+// migrateAddPartIDToCollectionDetails adds part_id column to CollectionDetails
+// and populates it based on current collection ordering, then cleans old title-based caches.
+func migrateAddPartIDToCollectionDetails(tx *sql.Tx) error {
+	// Add part_id column
+	_, err := tx.Exec(`ALTER TABLE CollectionDetails ADD COLUMN part_id INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add part_id column: %w", err)
+	}
+
+	// Get all collections
+	rows, err := tx.Query(`SELECT DISTINCT collID FROM CollectionDetails`)
+	if err != nil {
+		return fmt.Errorf("get collections: %w", err)
+	}
+	defer rows.Close()
+
+	var collIDs []int64
+	for rows.Next() {
+		var collID int64
+		if err := rows.Scan(&collID); err != nil {
+			return fmt.Errorf("scan collID: %w", err)
+		}
+		collIDs = append(collIDs, collID)
+	}
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate collections: %w", err)
+	}
+
+	// For each collection, calculate and update part_id for each work
+	for _, collID := range collIDs {
+		if err := recalculatePartIDsForCollection(tx, collID); err != nil {
+			return fmt.Errorf("recalculate part_ids for collection %d: %w", collID, err)
+		}
+	}
+
+	// Clean up old title-based cache files
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		cacheBaseDir := filepath.Join(homeDir, ".works", "book-builds")
+		if entries, err := os.ReadDir(cacheBaseDir); err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() && strings.HasPrefix(entry.Name(), "coll-") {
+					collCacheDir := filepath.Join(cacheBaseDir, entry.Name())
+					cleanOldPartCaches(collCacheDir)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// recalculatePartIDsForCollection updates part_id for all works in a collection
+// based on their position relative to Section-type works.
+func recalculatePartIDsForCollection(tx *sql.Tx, collID int64) error {
+	// Get works ordered by position with their type
+	rows, err := tx.Query(`
+		SELECT cd.workID, w.type
+		FROM CollectionDetails cd
+		JOIN Works w ON cd.workID = w.workID
+		WHERE cd.collID = ?
+		ORDER BY cd.position`, collID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	type workInfo struct {
+		workID   int64
+		workType string
+	}
+	var works []workInfo
+	for rows.Next() {
+		var w workInfo
+		if err := rows.Scan(&w.workID, &w.workType); err != nil {
+			return err
+		}
+		works = append(works, w)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	// Calculate part_id for each work
+	// Works before any Section have part_id = 0
+	// Works after a Section have part_id = that Section's workID
+	var currentPartID int64 = 0
+	for _, w := range works {
+		if w.workType == "Section" {
+			currentPartID = w.workID
+		}
+		_, err := tx.Exec(`UPDATE CollectionDetails SET part_id = ? WHERE collID = ? AND workID = ?`,
+			currentPartID, collID, w.workID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// cleanOldPartCaches removes title-based cache files (non-numeric part names)
+func cleanOldPartCaches(cacheDir string) {
+	entries, err := os.ReadDir(cacheDir)
+	if err != nil {
+		return
+	}
+
+	// Match part-<something>-overlaid.pdf or part-<something>-merged.pdf
+	// where <something> is NOT purely numeric
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if !strings.HasPrefix(name, "part-") {
+			continue
+		}
+		// Extract the middle part between "part-" and "-overlaid.pdf" or "-merged.pdf"
+		var middle string
+		if strings.HasSuffix(name, "-overlaid.pdf") {
+			middle = strings.TrimSuffix(strings.TrimPrefix(name, "part-"), "-overlaid.pdf")
+		} else if strings.HasSuffix(name, "-merged.pdf") {
+			middle = strings.TrimSuffix(strings.TrimPrefix(name, "part-"), "-merged.pdf")
+		} else {
+			continue
+		}
+
+		// If middle is NOT a valid number, it's an old title-based cache - delete it
+		if _, err := strconv.ParseInt(middle, 10, 64); err != nil {
+			_ = os.Remove(filepath.Join(cacheDir, name))
+		}
+	}
 }

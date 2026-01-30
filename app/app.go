@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/backup"
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/bookbuild"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/db"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/fileops"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/fts"
@@ -153,7 +154,24 @@ func (a *App) handlePDFRegeneration(workID int64, filePath string) {
 			runtime.EventsEmit(a.ctx, "watcher:error", fmt.Sprintf("PDF generation failed: %v", err))
 		} else {
 			runtime.EventsEmit(a.ctx, "preview:updated", workID)
+
+			// Invalidate part caches for all collections containing this work
+			a.invalidatePartCachesForWork(workID)
 		}
+	}
+}
+
+// invalidatePartCachesForWork clears the part cache for the part containing the given work
+// in all collections that include the work.
+func (a *App) invalidatePartCachesForWork(workID int64) {
+	partInfos, err := a.db.GetWorkPartInfo(workID)
+	if err != nil {
+		return
+	}
+
+	for _, info := range partInfos {
+		cacheDir := bookbuild.GetCacheDir(info.CollID)
+		_ = bookbuild.ClearPartCache(cacheDir, info.PartID)
 	}
 }
 

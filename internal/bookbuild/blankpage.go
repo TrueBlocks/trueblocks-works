@@ -164,3 +164,69 @@ func buildBlankDocumentXML(templatePath string) ([]byte, error) {
 
 	return buf.Bytes(), nil
 }
+
+// copyAndFixContentTypes copies [Content_Types].xml and converts template content type to document.
+func copyAndFixContentTypes(zipWriter *zip.Writer, file *zip.File) error {
+	rc, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("open file: %w", err)
+	}
+	defer rc.Close()
+
+	content, err := io.ReadAll(rc)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	contentStr := string(content)
+	contentStr = strings.ReplaceAll(contentStr,
+		"application/vnd.ms-word.template.macroEnabledTemplate.main+xml",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml")
+
+	header := &zip.FileHeader{
+		Name:     file.Name,
+		Method:   zip.Deflate,
+		Modified: file.Modified,
+	}
+	w, err := zipWriter.CreateHeader(header)
+	if err != nil {
+		return fmt.Errorf("create header: %w", err)
+	}
+	if _, err := w.Write([]byte(contentStr)); err != nil {
+		return fmt.Errorf("write content: %w", err)
+	}
+	return nil
+}
+
+// copyAndFixAppXML copies docProps/app.xml and removes custom template reference.
+func copyAndFixAppXML(zipWriter *zip.Writer, file *zip.File) error {
+	rc, err := file.Open()
+	if err != nil {
+		return fmt.Errorf("open file: %w", err)
+	}
+	defer rc.Close()
+
+	content, err := io.ReadAll(rc)
+	if err != nil {
+		return fmt.Errorf("read file: %w", err)
+	}
+
+	contentStr := string(content)
+	contentStr = strings.ReplaceAll(contentStr,
+		"<Template>book-template.dotm</Template>",
+		"<Template>Normal.dotm</Template>")
+
+	header := &zip.FileHeader{
+		Name:     file.Name,
+		Method:   zip.Deflate,
+		Modified: file.Modified,
+	}
+	w, err := zipWriter.CreateHeader(header)
+	if err != nil {
+		return fmt.Errorf("create header: %w", err)
+	}
+	if _, err := w.Write([]byte(contentStr)); err != nil {
+		return fmt.Errorf("write content: %w", err)
+	}
+	return nil
+}

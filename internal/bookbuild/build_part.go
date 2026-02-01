@@ -165,6 +165,7 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 		}
 
 		if err := addPartPageNumbers(mergedPath, adjustedMappings, opts.Config, tracker); err != nil {
+			fmt.Printf("ERROR: Page numbers failed for part %d: %v\n", opts.PartIndex, err)
 			result.Warnings = append(result.Warnings, fmt.Sprintf("Page numbers failed: %v", err))
 		}
 
@@ -174,6 +175,7 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 			fmt.Sprintf("Adding headers to part %d...", opts.PartIndex+1))
 
 		if err := addPartHeaders(mergedPath, adjustedMappings, opts.Config); err != nil {
+			fmt.Printf("ERROR: Headers failed for part %d: %v\n", opts.PartIndex, err)
 			result.Warnings = append(result.Warnings, fmt.Sprintf("Headers failed: %v", err))
 		}
 	}

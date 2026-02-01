@@ -2,6 +2,7 @@ package bookbuild
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
@@ -161,10 +162,12 @@ func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfi
 	}
 
 	fontName := GetHeaderFontName()
-	wm, err := api.TextWatermark(text, fmt.Sprintf(
+	wmSpec := fmt.Sprintf(
 		"font:%s, points:%d, position:%s, offset:%.1f %.1f, scale:1 abs, rotation:0, opacity:1",
 		fontName, fontSize, anchor, dx, dy,
-	), true, false, types.POINTS)
+	)
+
+	wm, err := api.TextWatermark(text, wmSpec, true, false, types.POINTS)
 	if err != nil {
 		return fmt.Errorf("failed to create watermark: %w", err)
 	}
@@ -172,7 +175,30 @@ func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfi
 	conf := model.NewDefaultConfiguration()
 	pages := []string{fmt.Sprintf("%d", pageNum)}
 
-	return api.AddWatermarksFile(pdfPath, pdfPath, pages, wm, conf)
+	// Use a temp file to avoid in-place write issues with pdfcpu
+	tempPath := pdfPath + ".tmp"
+	fmt.Printf("DEBUG: Adding watermark to page %d, text='%s', src=%s, dst=%s\n", pageNum, text, pdfPath, tempPath)
+	if err := api.AddWatermarksFile(pdfPath, tempPath, pages, wm, conf); err != nil {
+		os.Remove(tempPath)
+		fmt.Printf("DEBUG: AddWatermarksFile FAILED: %v\n", err)
+		return fmt.Errorf("failed to add watermark: %w", err)
+	}
+
+	// Check if temp file was created
+	if info, err := os.Stat(tempPath); err != nil {
+		fmt.Printf("DEBUG: Temp file not created: %v\n", err)
+		return fmt.Errorf("temp file not created: %w", err)
+	} else {
+		fmt.Printf("DEBUG: Temp file created, size=%d\n", info.Size())
+	}
+
+	// Replace original with watermarked version
+	if err := os.Rename(tempPath, pdfPath); err != nil {
+		os.Remove(tempPath)
+		return fmt.Errorf("failed to replace file: %w", err)
+	}
+
+	return nil
 }
 
 func AddOverlays(pdfPath string, mappings []PageMapping, config OverlayConfig) error {

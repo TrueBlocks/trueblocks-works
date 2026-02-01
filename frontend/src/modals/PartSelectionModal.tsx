@@ -12,7 +12,7 @@ import {
   ScrollArea,
 } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
-import { GetBookParts, GetPartCacheStatus, GetSavedPartSelection } from '@app';
+import { GetBookParts, GetPartCacheStatus, GetSavedPartSelection, ClearPartCache } from '@app';
 import { LogErr } from '@/utils';
 
 export interface PartInfo {
@@ -39,6 +39,8 @@ export function PartSelectionModal({
   const [parts, setParts] = useState<PartInfo[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
+  const [invalidating, setInvalidating] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!opened) return;
@@ -73,7 +75,19 @@ export function PartSelectionModal({
     };
 
     loadParts();
-  }, [opened, collectionId]);
+  }, [opened, collectionId, refreshKey]);
+
+  const handleInvalidateCaches = async () => {
+    setInvalidating(true);
+    try {
+      await ClearPartCache(collectionId, []);
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      LogErr('Failed to invalidate caches:', err);
+    } finally {
+      setInvalidating(false);
+    }
+  };
 
   const togglePart = (index: number) => {
     setSelected((prev) => {
@@ -96,7 +110,11 @@ export function PartSelectionModal({
   };
 
   const handleConfirm = () => {
-    onConfirm(Array.from(selected).sort((a, b) => a - b));
+    // parts[i].index contains the actual part index from the backend
+    const partIndices = Array.from(selected)
+      .map((i) => parts[i].index)
+      .sort((a, b) => a - b);
+    onConfirm(partIndices);
   };
 
   return (
@@ -159,13 +177,25 @@ export function PartSelectionModal({
               headers applied; unselected parts will be merged without overlays.
             </Text>
 
-            <Group justify="flex-end" gap="sm">
-              <Button variant="default" onClick={onClose}>
-                Cancel
+            <Group justify="space-between" gap="sm">
+              <Button
+                variant="subtle"
+                color="red"
+                size="xs"
+                onClick={handleInvalidateCaches}
+                loading={invalidating}
+                disabled={!parts.some((p) => p.isCached)}
+              >
+                Invalidate Caches
               </Button>
-              <Button onClick={handleConfirm} disabled={selected.size === 0}>
-                Apply Overlays to {selected.size} Part{selected.size !== 1 ? 's' : ''}
-              </Button>
+              <Group gap="sm">
+                <Button variant="default" onClick={onClose}>
+                  Cancel
+                </Button>
+                <Button onClick={handleConfirm} disabled={selected.size === 0}>
+                  Apply Overlays to {selected.size} Part{selected.size !== 1 ? 's' : ''}
+                </Button>
+              </Group>
             </Group>
           </>
         )}

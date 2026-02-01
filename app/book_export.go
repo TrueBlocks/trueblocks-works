@@ -62,6 +62,20 @@ func (a *App) GetBookParts(collID int64) ([]PartInfo, error) {
 	var parts []PartInfo
 	var currentPart *PartInfo
 	partIndex := 0
+	// Check if there are works before the first section (Prologue)
+	// If the first work is not a section, we have a Prologue
+	hasPrologue := len(works) > 0 && works[0].Type != workTypeSection
+
+	// If there's a Prologue, create Part 0 for it
+	if hasPrologue {
+		currentPart = &PartInfo{
+			Index:     0,
+			Title:     "Prologue",
+			WorkCount: 0,
+			PageCount: 0,
+		}
+		partIndex = 1
+	}
 
 	for _, w := range works {
 		if w.Type == workTypeSection {
@@ -72,7 +86,7 @@ func (a *App) GetBookParts(collID int64) ([]PartInfo, error) {
 				Index:     partIndex,
 				Title:     w.Title,
 				WorkCount: 0,
-				PageCount: 1,
+				PageCount: 1, // Section divider page
 			}
 			partIndex++
 		} else if currentPart != nil {

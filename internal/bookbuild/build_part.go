@@ -329,7 +329,8 @@ func ClearAllPartsCache(cacheDir string) error {
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			name := entry.Name()
-			if len(name) > 5 && name[:5] == "part-" {
+			// Remove part caches and stitched.pdf (which depends on parts)
+			if (len(name) > 5 && name[:5] == "part-") || name == "stitched.pdf" {
 				_ = os.Remove(filepath.Join(cacheDir, name))
 			}
 		}

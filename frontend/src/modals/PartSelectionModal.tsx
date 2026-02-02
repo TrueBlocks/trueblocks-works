@@ -12,7 +12,7 @@ import {
   ScrollArea,
 } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
-import { GetBookParts, GetPartCacheStatus, GetSavedPartSelection, ClearPartCache } from '@app';
+import { GetBookParts, GetSavedPartSelection, ClearPartCache } from '@app';
 import { LogErr } from '@/utils';
 
 export interface PartInfo {
@@ -48,16 +48,15 @@ export function PartSelectionModal({
     const loadParts = async () => {
       setLoading(true);
       try {
-        const [partsData, cacheStatus, savedSelection] = await Promise.all([
+        const [partsData, savedSelection] = await Promise.all([
           GetBookParts(collectionId),
-          GetPartCacheStatus(collectionId),
           GetSavedPartSelection(collectionId),
         ]);
 
         const partsWithCache = (partsData || []).map((p: PartInfo, idx: number) => ({
           ...p,
           index: idx,
-          isCached: cacheStatus?.[idx] || false,
+          // isCached is already set correctly by GetBookParts
         }));
 
         setParts(partsWithCache);

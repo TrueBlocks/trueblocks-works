@@ -539,7 +539,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
               return;
             }
           }
-          setActiveTab('book');
+          setActiveTab('contents');
         }
       } catch (err) {
         const errMsg = err instanceof Error ? err.message : String(err);
@@ -778,11 +778,11 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         width: isBook ? '5%' : '6%',
         render: (work) => {
           const posStr = String(work.position);
-          return work.isMarked ? (
+          return (
             <span>
               <span
                 style={{
-                  color: 'var(--mantine-color-green-6)',
+                  color: work.isMarked ? 'var(--mantine-color-green-6)' : 'transparent',
                   marginRight: 3,
                   fontSize: '0.5em',
                   verticalAlign: 'middle',
@@ -792,8 +792,6 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
               </span>
               {posStr}
             </span>
-          ) : (
-            posStr
           );
         },
       },

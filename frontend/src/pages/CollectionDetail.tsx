@@ -779,13 +779,13 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         render: (work) => {
           const posStr = String(work.position);
           return (
-            <span>
+            <span style={{ color: work.isMarked ? 'var(--mantine-color-green-6)' : undefined }}>
               <span
                 style={{
-                  color: work.isMarked ? 'var(--mantine-color-green-6)' : 'transparent',
                   marginRight: 3,
                   fontSize: '0.5em',
                   verticalAlign: 'middle',
+                  opacity: work.isMarked ? 1 : 0,
                 }}
               >
                 ●

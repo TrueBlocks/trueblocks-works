@@ -50,6 +50,8 @@ const (
 	PositionBottomCenter      = "bottom-center"
 	PositionBottomCenterVerso = "bottom-center-verso"
 	PositionBottomCenterRecto = "bottom-center-recto"
+	PositionBottomLeftVerso   = "bottom-left-verso"
+	PositionBottomRightRecto  = "bottom-right-recto"
 )
 
 type AnalysisResult struct {

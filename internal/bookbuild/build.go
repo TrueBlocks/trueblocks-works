@@ -76,6 +76,7 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 	if opts.Manifest.Typography.HeaderFont != "" {
 		config.Typography = opts.Manifest.Typography
 	}
+	config.PageNumbersFlushOutside = opts.Manifest.PageNumbersFlushOutside
 
 	tocEntries, err := GenerateTOC(analysis, config)
 	if err != nil {

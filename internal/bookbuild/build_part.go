@@ -239,9 +239,19 @@ func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayCo
 
 		// Calculate the original book page number from ContentItem.StartPage + page within item
 		origPhysical := m.ContentItem.StartPage + m.PageInItem - 1
-		position := PositionBottomCenterVerso
-		if origPhysical%2 == 1 { // odd = recto
-			position = PositionBottomCenterRecto
+		var position string
+		if config.PageNumbersFlushOutside {
+			if origPhysical%2 == 0 { // even = verso
+				position = PositionBottomLeftVerso
+			} else { // odd = recto
+				position = PositionBottomRightRecto
+			}
+		} else {
+			if origPhysical%2 == 0 { // even = verso
+				position = PositionBottomCenterVerso
+			} else { // odd = recto
+				position = PositionBottomCenterRecto
+			}
 		}
 
 		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, position); err != nil {

@@ -10,6 +10,7 @@ import {
   Badge,
   ActionIcon,
   Tooltip,
+  Switch,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { SelectBookTemplate, ValidateTemplate, GetTitlePageStyles } from '@app';
@@ -237,6 +238,23 @@ export function TitlePagePanel({
                   {book.templatePath.split('/').pop()}
                 </Text>
               )}
+            </Stack>
+          </Paper>
+          <Paper p="sm" withBorder>
+            <Stack gap="xs">
+              <Text fw={600} size="sm">
+                Build Options
+              </Text>
+              <Switch
+                size="xs"
+                label="Flush page numbers to outside edge"
+                description="Instead of centering, align to left (verso) and right (recto)"
+                checked={book.pageNumbersFlushOutside ?? false}
+                onChange={(e) => {
+                  const updated = { ...book, pageNumbersFlushOutside: e.currentTarget.checked };
+                  onBookChange(updated);
+                }}
+              />
             </Stack>
           </Paper>
         </Stack>

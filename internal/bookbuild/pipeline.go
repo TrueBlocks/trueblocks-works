@@ -136,6 +136,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 	if opts.Manifest.Typography.HeaderFont != "" {
 		config.Typography = opts.Manifest.Typography
 	}
+	config.PageNumbersFlushOutside = opts.Manifest.PageNumbersFlushOutside
 
 	progress("TOC", 2, 5, "Generating table of contents...")
 

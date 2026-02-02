@@ -191,7 +191,7 @@ export function PartSelectionModal({
                 <Button variant="default" onClick={onClose}>
                   Cancel
                 </Button>
-                <Button onClick={handleConfirm} disabled={selected.size === 0}>
+                <Button onClick={handleConfirm}>
                   Apply Overlays to {selected.size} Part{selected.size !== 1 ? 's' : ''}
                 </Button>
               </Group>

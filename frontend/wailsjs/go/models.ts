@@ -1591,6 +1591,7 @@ export namespace models {
 	    backgroundColor?: string;
 	    worksStartRecto?: boolean;
 	    showPageNumbers?: boolean;
+	    pageNumbersFlushOutside?: boolean;
 	    selectedParts?: string;
 	    kdpUploaded: boolean;
 	    kdpPreviewed: boolean;
@@ -1634,6 +1635,7 @@ export namespace models {
 	        this.backgroundColor = source["backgroundColor"];
 	        this.worksStartRecto = source["worksStartRecto"];
 	        this.showPageNumbers = source["showPageNumbers"];
+	        this.pageNumbersFlushOutside = source["pageNumbersFlushOutside"];
 	        this.selectedParts = source["selectedParts"];
 	        this.kdpUploaded = source["kdpUploaded"];
 	        this.kdpPreviewed = source["kdpPreviewed"];

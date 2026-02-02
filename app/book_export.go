@@ -340,6 +340,10 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 		Typography:   typography,
 	}
 
+	if book.PageNumbersFlushOutside != nil && *book.PageNumbersFlushOutside {
+		manifest.PageNumbersFlushOutside = true
+	}
+
 	if manifest.Title == "" {
 		manifest.Title = coll.CollectionName
 	}
@@ -412,6 +416,10 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 		OutputPath:   outputPath,
 		TemplatePath: templatePath,
 		Typography:   typography,
+	}
+
+	if book.PageNumbersFlushOutside != nil && *book.PageNumbersFlushOutside {
+		manifest.PageNumbersFlushOutside = true
 	}
 
 	if manifest.Title == "" {

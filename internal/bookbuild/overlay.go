@@ -11,15 +11,16 @@ import (
 )
 
 type OverlayConfig struct {
-	Typography      Typography
-	BookTitle       string
-	PageWidth       float64
-	PageHeight      float64
-	MarginBottom    float64
-	MarginTop       float64
-	MarginInner     float64 // Binding side margin
-	MarginOuter     float64 // Outside edge margin
-	HeaderYPosition float64
+	Typography              Typography
+	BookTitle               string
+	PageWidth               float64
+	PageHeight              float64
+	MarginBottom            float64
+	MarginTop               float64
+	MarginInner             float64 // Binding side margin
+	MarginOuter             float64 // Outside edge margin
+	HeaderYPosition         float64
+	PageNumbersFlushOutside bool // When true, page numbers flush to outside edge instead of centered
 }
 
 func DefaultOverlayConfig(bookTitle string) OverlayConfig {
@@ -74,9 +75,19 @@ func AddPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig
 		}
 
 		// fmt.Printf("  [%d/%d] Adding page number '%s' to page %d\n", i+1, len(mappings), pageNumStr, m.PhysicalPage)
-		position := "bottom-center-verso"
-		if !m.IsVerso() {
-			position = "bottom-center-recto"
+		var position string
+		if config.PageNumbersFlushOutside {
+			if m.IsVerso() {
+				position = PositionBottomLeftVerso
+			} else {
+				position = PositionBottomRightRecto
+			}
+		} else {
+			if m.IsVerso() {
+				position = PositionBottomCenterVerso
+			} else {
+				position = PositionBottomCenterRecto
+			}
 		}
 		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, position); err != nil {
 			return fmt.Errorf("failed to add page number to page %d: %w", m.PhysicalPage, err)
@@ -144,6 +155,14 @@ func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfi
 		dx = bodyCenterOffset // shift right toward outside margin
 		dy = config.MarginBottom
 		anchor = "bc"
+	case PositionBottomLeftVerso:
+		dx = config.MarginOuter
+		dy = config.MarginBottom
+		anchor = "bl"
+	case PositionBottomRightRecto:
+		dx = -config.MarginOuter
+		dy = config.MarginBottom
+		anchor = "br"
 	case "top-left":
 		dx = config.MarginOuter
 		dy = -config.HeaderYPosition
@@ -157,7 +176,7 @@ func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfi
 	}
 
 	fontSize := config.Typography.PageNumberSize
-	if !strings.HasPrefix(position, "bottom-center") {
+	if !strings.HasPrefix(position, "bottom") {
 		fontSize = config.Typography.HeaderSize
 	}
 

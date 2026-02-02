@@ -142,6 +142,11 @@ var migrations = []Migration{
 		Name:    "add_skip_audits_to_works",
 		Up:      migrateAddSkipAuditsToWorks,
 	},
+	{
+		Version: 35,
+		Name:    "add_page_numbers_flush_outside",
+		Up:      migrateAddPageNumbersFlushOutside,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1253,6 +1258,14 @@ func migrateAddSkipAuditsToWorks(tx *sql.Tx) error {
 	_, err := tx.Exec(`ALTER TABLE Works ADD COLUMN skip_audits INTEGER DEFAULT 0`)
 	if err != nil {
 		return fmt.Errorf("add skip_audits column: %w", err)
+	}
+	return nil
+}
+
+func migrateAddPageNumbersFlushOutside(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN page_numbers_flush_outside INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add page_numbers_flush_outside column: %w", err)
 	}
 	return nil
 }

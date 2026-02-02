@@ -60,45 +60,52 @@ func (f *FileOps) NeedsRegeneration(docPath string, workID int64) bool {
 
 func (f *FileOps) generatePDFWithWord(docPath string, pdfPath string) error {
 	script := fmt.Sprintf(`
+tell application "System Events"
+	set wasRunning to (name of processes) contains "Microsoft Word"
+end tell
 tell application "Microsoft Word"
-	set wasRunning to running
+	-- Check if doc is already open
 	set docWasOpen to false
+	set docList to every document
+	repeat with d in docList
+		set thePath to POSIX path of (full name of d as text)
+		if thePath is "%s" then
+			set docWasOpen to true
+			exit repeat
+		end if
+	end repeat
 	
-	-- Check if document is already open
-	if wasRunning then
-		try
-			set docList to every document
-			repeat with d in docList
-				try
-					set docPath to POSIX path of (get full name of d)
-					if docPath is "%s" then
-						set docWasOpen to true
-						set theDoc to d
-						exit repeat
-					end if
-				end try
-			end repeat
-		end try
+	-- Open the document (may already be open)
+	open POSIX file "%s"
+	
+	-- Find it by path to get a reliable reference
+	set theDoc to missing value
+	set docList to every document
+	repeat with d in docList
+		set thePath to POSIX path of (full name of d as text)
+		if thePath is "%s" then
+			set theDoc to d
+			exit repeat
+		end if
+	end repeat
+	
+	if theDoc is missing value then
+		error "Could not find opened document"
 	end if
 	
-	-- Only open if not already open
-	if not docWasOpen then
-		set theDoc to open POSIX file "%s"
-	end if
-	
-	-- Save as PDF (uses current markup settings - All Markup with inline revisions)
 	save as theDoc file name POSIX file "%s" file format format PDF
 	
 	-- Only close if we opened it
 	if not docWasOpen then
-		close theDoc saving no
-	end if
-	
-	if not wasRunning then
-		quit
+		close theDoc saving ask
 	end if
 end tell
-`, docPath, docPath, pdfPath)
+
+-- Only quit Word if it wasn't running before
+if not wasRunning then
+	tell application "Microsoft Word" to quit
+end if
+`, docPath, docPath, docPath, pdfPath)
 
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
@@ -144,45 +151,52 @@ func (f *FileOps) CheckExcel() bool {
 
 func (f *FileOps) generatePDFWithExcel(docPath string, pdfPath string) error {
 	script := fmt.Sprintf(`
+tell application "System Events"
+	set wasRunning to (name of processes) contains "Microsoft Excel"
+end tell
 tell application "Microsoft Excel"
-	set wasRunning to running
-	set docWasOpen to false
-	
 	-- Check if workbook is already open
-	if wasRunning then
-		try
-			set wbList to every workbook
-			repeat with wb in wbList
-				try
-					set wbPath to POSIX path of (get full name of wb)
-					if wbPath is "%s" then
-						set docWasOpen to true
-						set theWorkbook to wb
-						exit repeat
-					end if
-				end try
-			end repeat
-		end try
+	set wbWasOpen to false
+	set wbList to every workbook
+	repeat with w in wbList
+		set thePath to POSIX path of (full name of w as text)
+		if thePath is "%s" then
+			set wbWasOpen to true
+			exit repeat
+		end if
+	end repeat
+	
+	-- Open the workbook (may already be open)
+	open POSIX file "%s"
+	
+	-- Find it by path to get a reliable reference
+	set theWorkbook to missing value
+	set wbList to every workbook
+	repeat with w in wbList
+		set thePath to POSIX path of (full name of w as text)
+		if thePath is "%s" then
+			set theWorkbook to w
+			exit repeat
+		end if
+	end repeat
+	
+	if theWorkbook is missing value then
+		error "Could not find opened workbook"
 	end if
 	
-	-- Only open if not already open
-	if not docWasOpen then
-		set theWorkbook to open POSIX file "%s"
-	end if
-	
-	-- Save as PDF
 	save theWorkbook in POSIX file "%s" as PDF file format
 	
 	-- Only close if we opened it
-	if not docWasOpen then
-		close theWorkbook saving no
-	end if
-	
-	if not wasRunning then
-		quit
+	if not wbWasOpen then
+		close theWorkbook saving ask
 	end if
 end tell
-`, docPath, docPath, pdfPath)
+
+-- Only quit Excel if it wasn't running before
+if not wasRunning then
+	tell application "Microsoft Excel" to quit
+end if
+`, docPath, docPath, docPath, pdfPath)
 
 	cmd := exec.Command("osascript", "-e", script)
 	output, err := cmd.CombinedOutput()

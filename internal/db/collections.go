@@ -211,7 +211,7 @@ func (db *DB) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.CollectionWork, error) {
 	query := `SELECT w.workID, w.title, w.type, w.year, w.status, w.quality, w.doc_type,
 		w.path, w.draft, w.n_words, w.course_name, w.attributes, w.access_date, w.created_at, w.modified_at,
-		cd.position, COALESCE(w.is_marked, 0), COALESCE(cd.is_suppressed, 0)
+		cd.position, COALESCE(w.is_marked, 0), COALESCE(cd.is_suppressed, 0), COALESCE(w.skip_audits, 0)
 		FROM Works w
 		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
 		WHERE cd.collID = ?`
@@ -235,7 +235,7 @@ func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.Colle
 			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
 			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
 			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
-			&w.Position, &w.IsMarked, &w.IsSuppressed,
+			&w.Position, &w.IsMarked, &w.IsSuppressed, &w.SkipAudits,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan work: %w", err)

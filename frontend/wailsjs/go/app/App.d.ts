@@ -244,6 +244,8 @@ export function GetWorkFullPath(arg1:number):Promise<string>;
 
 export function GetWorkMarked(arg1:number):Promise<boolean>;
 
+export function GetWorkSkipAudits(arg1:number):Promise<boolean>;
+
 export function GetWorkTemplatePath(arg1:number):Promise<string>;
 
 export function GetWorks():Promise<Array<models.WorkView>>;
@@ -347,6 +349,8 @@ export function SetTab(arg1:string,arg2:string):Promise<void>;
 export function SetTableState(arg1:string,arg2:state.TableState):Promise<void>;
 
 export function SetWorkMarked(arg1:number,arg2:boolean):Promise<void>;
+
+export function SetWorkSkipAudits(arg1:number,arg2:boolean):Promise<void>;
 
 export function SetWorkSuppressed(arg1:number,arg2:number,arg3:boolean):Promise<void>;
 

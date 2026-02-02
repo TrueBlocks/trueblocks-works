@@ -22,6 +22,7 @@ type StyleAuditResult struct {
 	DirectFormattingTypes []string `json:"directFormattingTypes"`
 	IsCompatibilityMode   bool     `json:"isCompatibilityMode"`
 	IsClean               bool     `json:"isClean"`
+	IsSkipped             bool     `json:"isSkipped"`
 	Error                 string   `json:"error,omitempty"`
 }
 
@@ -46,6 +47,12 @@ func (a *App) AuditWorkStyles(workID int64, templatePath string) (*StyleAuditRes
 		Title:              work.Title,
 		TemplateStylesUsed: []string{},
 		UnknownStyles:      []string{},
+	}
+
+	if work.SkipAudits {
+		result.IsSkipped = true
+		result.IsClean = true
+		return result, nil
 	}
 
 	if work.Path == nil || *work.Path == "" {
@@ -226,7 +233,7 @@ func (a *App) AuditCollectionStyles(collID int64) (*CollectionAuditSummary, erro
 		}
 		if result.Error != "" {
 			summary.MissingFiles++
-		} else if result.IsClean {
+		} else if result.IsSkipped || result.IsClean {
 			summary.CleanWorks++
 		} else {
 			summary.DirtyWorks++
@@ -257,6 +264,26 @@ func (a *App) GetWorkMarked(workID int64) (bool, error) {
 	return isMarked == 1, nil
 }
 
+// SetWorkSkipAudits sets or clears the skip_audits flag for a work
+func (a *App) SetWorkSkipAudits(workID int64, skip bool) error {
+	skipVal := 0
+	if skip {
+		skipVal = 1
+	}
+	_, err := a.db.Conn().Exec("UPDATE Works SET skip_audits = ? WHERE workID = ?", skipVal, workID)
+	return err
+}
+
+// GetWorkSkipAudits checks if a work has skip_audits enabled
+func (a *App) GetWorkSkipAudits(workID int64) (bool, error) {
+	var skipAudits int
+	err := a.db.Conn().QueryRow("SELECT COALESCE(skip_audits, 0) FROM Works WHERE workID = ?", workID).Scan(&skipAudits)
+	if err != nil {
+		return false, err
+	}
+	return skipAudits == 1, nil
+}
+
 // SetWorkSuppressed sets or clears the suppressed flag for a work in a collection
 func (a *App) SetWorkSuppressed(collID, workID int64, suppressed bool) error {
 	return a.db.SetWorkSuppressed(collID, workID, suppressed)
@@ -265,6 +292,7 @@ func (a *App) SetWorkSuppressed(collID, workID int64, suppressed bool) error {
 // WorkBookAuditStatus contains audit info for a work if it's in a book
 type WorkBookAuditStatus struct {
 	IsInBook              bool     `json:"isInBook"`
+	IsSkipped             bool     `json:"isSkipped"`
 	UnknownStyles         int      `json:"unknownStyles"`
 	UnknownStyleNames     []string `json:"unknownStyleNames"`
 	DirectFormatting      int      `json:"directFormatting"`
@@ -327,6 +355,7 @@ func (a *App) GetWorkBookAuditStatus(workID int64) (*WorkBookAuditStatus, error)
 	result.DirectFormattingTypes = auditResult.DirectFormattingTypes
 	result.IsCompatibilityMode = auditResult.IsCompatibilityMode
 	result.IsClean = auditResult.IsClean
+	result.IsSkipped = auditResult.IsSkipped
 
 	return result, nil
 }

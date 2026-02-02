@@ -470,6 +470,10 @@ export function GetWorkMarked(arg1) {
   return window['go']['app']['App']['GetWorkMarked'](arg1);
 }
 
+export function GetWorkSkipAudits(arg1) {
+  return window['go']['app']['App']['GetWorkSkipAudits'](arg1);
+}
+
 export function GetWorkTemplatePath(arg1) {
   return window['go']['app']['App']['GetWorkTemplatePath'](arg1);
 }
@@ -676,6 +680,10 @@ export function SetTableState(arg1, arg2) {
 
 export function SetWorkMarked(arg1, arg2) {
   return window['go']['app']['App']['SetWorkMarked'](arg1, arg2);
+}
+
+export function SetWorkSkipAudits(arg1, arg2) {
+  return window['go']['app']['App']['SetWorkSkipAudits'](arg1, arg2);
 }
 
 export function SetWorkSuppressed(arg1, arg2, arg3) {

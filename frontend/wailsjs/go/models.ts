@@ -31,6 +31,7 @@ export namespace app {
 	    directFormattingTypes: string[];
 	    isCompatibilityMode: boolean;
 	    isClean: boolean;
+	    isSkipped: boolean;
 	    error?: string;
 	
 	    static createFrom(source: any = {}) {
@@ -47,6 +48,7 @@ export namespace app {
 	        this.directFormattingTypes = source["directFormattingTypes"];
 	        this.isCompatibilityMode = source["isCompatibilityMode"];
 	        this.isClean = source["isClean"];
+	        this.isSkipped = source["isSkipped"];
 	        this.error = source["error"];
 	    }
 	}
@@ -1036,6 +1038,7 @@ export namespace app {
 	
 	export class WorkBookAuditStatus {
 	    isInBook: boolean;
+	    isSkipped: boolean;
 	    unknownStyles: number;
 	    unknownStyleNames: string[];
 	    directFormatting: number;
@@ -1051,6 +1054,7 @@ export namespace app {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.isInBook = source["isInBook"];
+	        this.isSkipped = source["isSkipped"];
 	        this.unknownStyles = source["unknownStyles"];
 	        this.unknownStyleNames = source["unknownStyleNames"];
 	        this.directFormatting = source["directFormatting"];
@@ -1731,6 +1735,7 @@ export namespace models {
 	    attributes: string;
 	    accessDate?: string;
 	    fileMtime?: number;
+	    skipAudits: boolean;
 	    createdAt: string;
 	    modifiedAt: string;
 	    position: number;
@@ -1758,6 +1763,7 @@ export namespace models {
 	        this.attributes = source["attributes"];
 	        this.accessDate = source["accessDate"];
 	        this.fileMtime = source["fileMtime"];
+	        this.skipAudits = source["skipAudits"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.position = source["position"];
@@ -2110,6 +2116,7 @@ export namespace models {
 	    attributes: string;
 	    accessDate?: string;
 	    fileMtime?: number;
+	    skipAudits: boolean;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -2134,6 +2141,7 @@ export namespace models {
 	        this.attributes = source["attributes"];
 	        this.accessDate = source["accessDate"];
 	        this.fileMtime = source["fileMtime"];
+	        this.skipAudits = source["skipAudits"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }
@@ -2154,6 +2162,7 @@ export namespace models {
 	    attributes: string;
 	    accessDate?: string;
 	    fileMtime?: number;
+	    skipAudits: boolean;
 	    createdAt: string;
 	    modifiedAt: string;
 	    isDeleted: boolean;
@@ -2185,6 +2194,7 @@ export namespace models {
 	        this.attributes = source["attributes"];
 	        this.accessDate = source["accessDate"];
 	        this.fileMtime = source["fileMtime"];
+	        this.skipAudits = source["skipAudits"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.isDeleted = source["isDeleted"];

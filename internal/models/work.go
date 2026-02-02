@@ -16,6 +16,7 @@ type Work struct {
 	Attributes       string  `json:"attributes" db:"attributes"`
 	AccessDate       *string `json:"accessDate,omitempty" db:"access_date"`
 	FileMtime        *int64  `json:"fileMtime,omitempty" db:"file_mtime"`
+	SkipAudits       bool    `json:"skipAudits" db:"skip_audits"`
 	CreatedAt        string  `json:"createdAt" db:"created_at"`
 	ModifiedAt       string  `json:"modifiedAt" db:"modified_at"`
 }

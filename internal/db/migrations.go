@@ -137,6 +137,11 @@ var migrations = []Migration{
 		Name:    "add_kdp_proof_ordered",
 		Up:      migrateAddKdpProofOrdered,
 	},
+	{
+		Version: 34,
+		Name:    "add_skip_audits_to_works",
+		Up:      migrateAddSkipAuditsToWorks,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1240,6 +1245,14 @@ func migrateAddKdpProofOrdered(tx *sql.Tx) error {
 	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN kdp_proof_ordered INTEGER DEFAULT 0`)
 	if err != nil {
 		return fmt.Errorf("add kdp_proof_ordered column: %w", err)
+	}
+	return nil
+}
+
+func migrateAddSkipAuditsToWorks(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Works ADD COLUMN skip_audits INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add skip_audits column: %w", err)
 	}
 	return nil
 }

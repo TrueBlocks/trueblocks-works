@@ -83,14 +83,14 @@ func (db *DB) CreateWork(w *models.Work) (*validation.ValidationResult, error) {
 
 func (db *DB) GetWork(id int64) (*models.Work, error) {
 	query := `SELECT workID, title, type, year, status, quality, quality_at_publish, doc_type,
-		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime
+		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime, COALESCE(skip_audits, 0)
 		FROM Works WHERE workID = ?`
 
 	w := &models.Work{}
 	err := db.conn.QueryRow(query, id).Scan(
 		&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.QualityAtPublish,
 		&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
-		&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime,
+		&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime, &w.SkipAudits,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -116,14 +116,14 @@ func (db *DB) GetWorkByPath(path string) (*models.Work, error) {
 	}
 
 	query := `SELECT workID, title, type, year, status, quality, quality_at_publish, doc_type,
-		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime
+		path, draft, n_words, course_name, attributes, access_date, created_at, modified_at, file_mtime, COALESCE(skip_audits, 0)
 		FROM Works WHERE path = ?`
 
 	w := &models.Work{}
 	err = db.conn.QueryRow(query, path).Scan(
 		&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality, &w.QualityAtPublish,
 		&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
-		&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime,
+		&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt, &w.FileMtime, &w.SkipAudits,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil

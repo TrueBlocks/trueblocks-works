@@ -224,6 +224,13 @@ func (a *App) AnalyzeCollectionHeadings(collID int64) (*CollectionHeadingAnalysi
 			Title:  w.Title,
 		}
 
+		if w.SkipAudits {
+			workResult.Success = true
+			result.Successful++
+			result.Results = append(result.Results, workResult)
+			continue
+		}
+
 		if w.Path == nil || *w.Path == "" {
 			workResult.Error = "No file path"
 			result.Failed++

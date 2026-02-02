@@ -1,4 +1,4 @@
-import { Button, Checkbox, Group, Text, Tooltip } from '@mantine/core';
+import { Button, Checkbox, Group, Modal, Text, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconArrowsExchange,
@@ -12,11 +12,13 @@ import {
   ExportToSubmissions,
   GetWorkBookAuditStatus,
   GetWorkMarked,
+  GetWorkSkipAudits,
   GetWorkTemplatePath,
   MoveWorkFile,
   OpenDocument,
   PrintWork,
   SetWorkMarked,
+  SetWorkSkipAudits,
   SyncWorkTemplate,
 } from '@app';
 import { Log, LogErr } from '@/utils';
@@ -37,6 +39,7 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   const [modalOpen, setModalOpen] = useState(false);
   const [auditStatus, setAuditStatus] = useState<{
     isInBook: boolean;
+    isSkipped: boolean;
     isClean: boolean;
     unknownStyles: number;
     unknownStyleNames: string[];
@@ -47,6 +50,8 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   const [templatePath, setTemplatePath] = useState<string>('');
   const [isMarked, setIsMarked] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [skipAuditModalOpen, setSkipAuditModalOpen] = useState(false);
+  const [skipAudits, setSkipAudits] = useState(false);
 
   useEffect(() => {
     CheckWorkPath(workID).then((result) => {
@@ -55,17 +60,17 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
       setCurrentPath(result.storedPath);
       setGeneratedPath(result.generatedPath);
     });
-    // Check if this work is in a book collection and get audit status
     GetWorkBookAuditStatus(workID).then((status) => {
       setAuditStatus(status);
     });
-    // Get template path for this work
     GetWorkTemplatePath(workID).then((path) => {
       setTemplatePath(path || '');
     });
-    // Get marked status
     GetWorkMarked(workID).then((marked) => {
       setIsMarked(marked);
+    });
+    GetWorkSkipAudits(workID).then((skip) => {
+      setSkipAudits(skip);
     });
   }, [workID, refreshKey]);
 
@@ -154,8 +159,12 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
       unknownStyleNames?: string[];
       directFormattingTypes?: string[];
       isCompatibilityMode?: boolean;
+      isSkipped?: boolean;
     } | null
   ): string => {
+    if (status?.isSkipped) {
+      return 'Audit skipped for this work (Cmd+click to change)';
+    }
     const parts: string[] = [];
     if (status?.isCompatibilityMode) {
       parts.push('Document is in Compatibility Mode (resave in Word 2013+ format)');
@@ -166,16 +175,38 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     if (status?.directFormattingTypes?.length) {
       parts.push(`Direct formatting: ${status.directFormattingTypes.join(', ')}`);
     }
-    return parts.length > 0 ? parts.join('\n') : 'Style issues found - click wand to fix';
+    parts.push('Cmd+click to skip audit');
+    return parts.join('\n');
   };
 
-  // Build audit status text if work is in a book and fails audit
-  const auditStatusText =
-    auditStatus?.isInBook && !auditStatus?.isClean
-      ? auditStatus?.isCompatibilityMode
-        ? 'Compatibility Mode'
-        : `${auditStatus.unknownStyles} unknown styles, ${auditStatus.directFormatting} direct`
-      : '';
+  const handleAuditClick = (e: React.MouseEvent) => {
+    if (e.metaKey) {
+      e.preventDefault();
+      setSkipAuditModalOpen(true);
+    }
+  };
+
+  const handleSkipAuditChange = async (skip: boolean) => {
+    try {
+      await SetWorkSkipAudits(workID, skip);
+      setSkipAudits(skip);
+      const status = await GetWorkBookAuditStatus(workID);
+      setAuditStatus(status);
+      setSkipAuditModalOpen(false);
+    } catch (err) {
+      LogErr('Failed to update skip audits:', err);
+    }
+  };
+
+  const auditStatusText = auditStatus?.isInBook
+    ? auditStatus?.isSkipped
+      ? 'Audit Skipped'
+      : !auditStatus?.isClean
+        ? auditStatus?.isCompatibilityMode
+          ? 'Compatibility Mode'
+          : `${auditStatus.unknownStyles} unknown styles, ${auditStatus.directFormatting} direct`
+        : ''
+    : '';
 
   return (
     <>
@@ -204,7 +235,13 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
 
         {templatePath && auditStatusText && (
           <Tooltip label={buildAuditTooltip(auditStatus)} multiline maw={400}>
-            <Text size="xs" c="orange" fw={500}>
+            <Text
+              size="xs"
+              c={auditStatus?.isSkipped ? 'dimmed' : 'orange'}
+              fw={500}
+              style={{ cursor: 'pointer' }}
+              onClick={handleAuditClick}
+            >
               {auditStatusText}
             </Text>
           </Tooltip>
@@ -272,6 +309,24 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
         newPath={generatedPath}
         onMove={handleMove}
       />
+
+      <Modal
+        opened={skipAuditModalOpen}
+        onClose={() => setSkipAuditModalOpen(false)}
+        title="Skip Style Audit"
+        size="sm"
+      >
+        <Checkbox
+          label="Skip audit for this work (uses custom template/formatting)"
+          checked={skipAudits}
+          onChange={(e) => handleSkipAuditChange(e.currentTarget.checked)}
+          mb="md"
+        />
+        <Text size="sm" c="dimmed">
+          When enabled, this work will not be checked for style issues and will not appear in audit
+          failure counts.
+        </Text>
+      </Modal>
     </>
   );
 }

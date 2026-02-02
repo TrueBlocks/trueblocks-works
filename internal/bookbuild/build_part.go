@@ -176,13 +176,17 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 		if err := addPartHeaders(mergedPath, adjustedMappings, opts.Config); err != nil {
 			return nil, fmt.Errorf("headers failed for part %d: %w", opts.PartIndex, err)
 		}
+
+		// Only cache when overlays were applied
+		if err := copyFile(mergedPath, cachePath); err != nil {
+			return nil, fmt.Errorf("failed to save part to cache: %w", err)
+		}
+		result.OutputPath = cachePath
+	} else {
+		// SkipOverlays: use merged path directly, don't cache as overlaid
+		result.OutputPath = mergedPath
 	}
 
-	if err := copyFile(mergedPath, cachePath); err != nil {
-		return nil, fmt.Errorf("failed to save part to cache: %w", err)
-	}
-
-	result.OutputPath = cachePath
 	result.FromCache = false
 
 	return result, nil

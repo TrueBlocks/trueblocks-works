@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/bookbuild"
 )
@@ -19,6 +20,17 @@ type PublicationReadiness struct {
 	Content ValidationResult `json:"content"`
 	Matter  ValidationResult `json:"matter"`
 	Cover   ValidationResult `json:"cover"`
+}
+
+// joinTitles joins work titles for display in error messages
+func joinTitles(titles []string) string {
+	if len(titles) == 0 {
+		return ""
+	}
+	if len(titles) <= 3 {
+		return strings.Join(titles, ", ")
+	}
+	return strings.Join(titles[:3], ", ") + fmt.Sprintf(" (+%d more)", len(titles)-3)
 }
 
 // ValidateContent checks if the collection's works are publication-ready
@@ -55,7 +67,13 @@ func (a *App) ValidateContent(collID int64) (*ValidationResult, error) {
 		return nil, fmt.Errorf("style audit: %w", err)
 	}
 	if audit.DirtyWorks > 0 {
-		result.Errors = append(result.Errors, fmt.Sprintf("%d works have style issues", audit.DirtyWorks))
+		var dirtyTitles []string
+		for _, r := range audit.Results {
+			if !r.IsClean && r.Error == "" {
+				dirtyTitles = append(dirtyTitles, r.Title)
+			}
+		}
+		result.Errors = append(result.Errors, fmt.Sprintf("%d works have style issues: %s", audit.DirtyWorks, joinTitles(dirtyTitles)))
 		result.Passed = false
 	}
 
@@ -65,7 +83,13 @@ func (a *App) ValidateContent(collID int64) (*ValidationResult, error) {
 		return nil, fmt.Errorf("heading analysis: %w", err)
 	}
 	if headings.Failed > 0 {
-		result.Errors = append(result.Errors, fmt.Sprintf("%d works have heading issues", headings.Failed))
+		var failedTitles []string
+		for _, r := range headings.Results {
+			if r.Error != "" {
+				failedTitles = append(failedTitles, r.Title)
+			}
+		}
+		result.Errors = append(result.Errors, fmt.Sprintf("%d works have heading issues: %s", headings.Failed, joinTitles(failedTitles)))
 		result.Passed = false
 	}
 

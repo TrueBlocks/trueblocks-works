@@ -229,8 +229,31 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 				}
 			}
 		} else {
-			// Not selected and not cached: this is an error - all parts must have overlays
-			return nil, fmt.Errorf("part %d (%s) is not selected and not cached - cannot build without overlays", partIdx+1, pa.PartTitle)
+			// Not selected and not cached: merge without overlays (raw content)
+			partResult, err := BuildPart(PartBuildOptions{
+				Manifest:       opts.Manifest,
+				Analysis:       analysis,
+				PartIndex:      partIdx,
+				CacheDir:       opts.CacheDir,
+				BlankPagePath:  blankPagePath,
+				Config:         config,
+				OnProgress:     opts.OnProgress,
+				SkipOverlays:   true,
+				PageNumTracker: tracker,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("failed to build part %d (no overlays): %w", partIdx, err)
+			}
+			// Use merged path directly (no overlays applied)
+			partPDFs[partIdx] = PartMergedPath(opts.CacheDir, pa.PartID)
+			result.PartsBuilt++
+			// Advance tracker to keep page numbers in sync for subsequent parts
+			for _, item := range analysis.GetPartItems(partIdx) {
+				if item.Type == ContentTypePartDivider || item.Type == ContentTypeWork {
+					tracker.BodyNum += item.PageCount
+				}
+			}
+			_ = partResult // suppress unused warning
 		}
 	}
 

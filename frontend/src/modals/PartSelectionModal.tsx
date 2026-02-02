@@ -2,31 +2,23 @@ import { useState, useEffect } from 'react';
 import {
   Modal,
   Stack,
-  Checkbox,
   Group,
   Button,
   Text,
-  Anchor,
   Loader,
   Badge,
   ScrollArea,
+  Tooltip,
 } from '@mantine/core';
-import { IconCheck } from '@tabler/icons-react';
-import { GetBookParts, GetSavedPartSelection, ClearPartCache } from '@app';
+import { IconCheck, IconTrash } from '@tabler/icons-react';
+import { GetBookParts, ClearPartCache } from '@app';
 import { LogErr } from '@/utils';
-
-export interface PartInfo {
-  index: number;
-  title: string;
-  workCount: number;
-  pageCount: number;
-  isCached: boolean;
-}
+import { app } from '@models';
 
 interface PartSelectionModalProps {
   opened: boolean;
   onClose: () => void;
-  onConfirm: (selectedIndices: number[]) => void;
+  onConfirm: () => void;
   collectionId: number;
 }
 
@@ -36,11 +28,10 @@ export function PartSelectionModal({
   onConfirm,
   collectionId,
 }: PartSelectionModalProps) {
-  const [parts, setParts] = useState<PartInfo[]>([]);
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [parts, setParts] = useState<app.PartInfo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [invalidating, setInvalidating] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [clearingAll, setClearingAll] = useState(false);
+  const [clearingPart, setClearingPart] = useState<number | null>(null);
 
   useEffect(() => {
     if (!opened) return;
@@ -48,24 +39,8 @@ export function PartSelectionModal({
     const loadParts = async () => {
       setLoading(true);
       try {
-        const [partsData, savedSelection] = await Promise.all([
-          GetBookParts(collectionId),
-          GetSavedPartSelection(collectionId),
-        ]);
-
-        const partsWithCache = (partsData || []).map((p: PartInfo, idx: number) => ({
-          ...p,
-          index: idx,
-          // isCached is already set correctly by GetBookParts
-        }));
-
-        setParts(partsWithCache);
-        // Use saved selection if available, otherwise select all parts
-        if (savedSelection && savedSelection.length > 0) {
-          setSelected(new Set(savedSelection));
-        } else {
-          setSelected(new Set(partsWithCache.map((_: PartInfo, i: number) => i)));
-        }
+        const partsData = await GetBookParts(collectionId);
+        setParts(partsData || []);
       } catch (err) {
         LogErr('Failed to load parts:', err);
       } finally {
@@ -74,50 +49,39 @@ export function PartSelectionModal({
     };
 
     loadParts();
-  }, [opened, collectionId, refreshKey]);
+  }, [opened, collectionId]);
 
-  const handleInvalidateCaches = async () => {
-    setInvalidating(true);
+  const handleClearAll = async () => {
+    setClearingAll(true);
     try {
       await ClearPartCache(collectionId, []);
-      setRefreshKey((k) => k + 1);
+      // Update local state instead of reloading
+      setParts((prev) => prev.map((p) => ({ ...p, isCached: false })));
     } catch (err) {
-      LogErr('Failed to invalidate caches:', err);
+      LogErr('Failed to clear all caches:', err);
     } finally {
-      setInvalidating(false);
+      setClearingAll(false);
     }
   };
 
-  const togglePart = (index: number) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
+  const handleClearPart = async (partId: number) => {
+    setClearingPart(partId);
+    try {
+      await ClearPartCache(collectionId, [partId]);
+      // Update local state instead of reloading
+      setParts((prev) => prev.map((p) => (p.partId === partId ? { ...p, isCached: false } : p)));
+    } catch (err) {
+      LogErr('Failed to clear part cache:', err);
+    } finally {
+      setClearingPart(null);
+    }
   };
 
-  const selectAll = () => {
-    setSelected(new Set(parts.map((_, i) => i)));
-  };
-
-  const selectNone = () => {
-    setSelected(new Set());
-  };
-
-  const handleConfirm = () => {
-    // parts[i].index contains the actual part index from the backend
-    const partIndices = Array.from(selected)
-      .map((i) => parts[i].index)
-      .sort((a, b) => a - b);
-    onConfirm(partIndices);
-  };
+  const cachedCount = parts.filter((p) => p.isCached).length;
+  const needsBuildCount = parts.length - cachedCount;
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Select Parts to Build" size="lg">
+    <Modal opened={opened} onClose={onClose} title="Build Galley" size="lg">
       <Stack gap="md">
         {loading ? (
           <Group justify="center" py="xl">
@@ -128,42 +92,56 @@ export function PartSelectionModal({
           </Group>
         ) : (
           <>
-            <Group justify="flex-start" gap="xs">
-              <Anchor size="sm" onClick={selectAll}>
-                All
-              </Anchor>
+            <Group justify="space-between">
               <Text size="sm" c="dimmed">
-                |
+                {cachedCount} of {parts.length} parts cached
               </Text>
-              <Anchor size="sm" onClick={selectNone}>
-                None
-              </Anchor>
+              {cachedCount > 0 && (
+                <Button
+                  variant="subtle"
+                  color="red"
+                  size="xs"
+                  leftSection={<IconTrash size={14} />}
+                  onClick={handleClearAll}
+                  loading={clearingAll}
+                >
+                  Clear All Caches
+                </Button>
+              )}
             </Group>
 
             <ScrollArea.Autosize mah={400}>
               <Stack gap="xs">
                 {parts.map((part) => (
-                  <Group key={part.index} justify="space-between" wrap="nowrap">
-                    <Checkbox
-                      checked={selected.has(part.index)}
-                      onChange={() => togglePart(part.index)}
-                      label={
-                        <Group gap="xs" wrap="nowrap">
-                          <Text size="sm">{part.title}</Text>
-                          <Text size="xs" c="dimmed">
-                            ({part.workCount} works, {part.pageCount} pages)
-                          </Text>
-                        </Group>
-                      }
-                    />
-                    {part.isCached && (
-                      <Badge
-                        size="xs"
-                        variant="light"
-                        color="green"
-                        leftSection={<IconCheck size={10} />}
-                      >
-                        cached
+                  <Group key={part.partId} justify="space-between" wrap="nowrap">
+                    <Group gap="xs" wrap="nowrap">
+                      <Text size="sm">{part.title}</Text>
+                      <Text size="xs" c="dimmed">
+                        ({part.workCount} works, {part.pageCount} pages)
+                      </Text>
+                    </Group>
+                    {part.isCached ? (
+                      <Tooltip label="Click to clear cache">
+                        <Badge
+                          size="xs"
+                          variant="light"
+                          color="green"
+                          leftSection={
+                            clearingPart === part.partId ? (
+                              <Loader size={10} color="green" />
+                            ) : (
+                              <IconCheck size={10} />
+                            )
+                          }
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => handleClearPart(part.partId)}
+                        >
+                          cached
+                        </Badge>
+                      </Tooltip>
+                    ) : (
+                      <Badge size="xs" variant="light" color="yellow">
+                        needs build
                       </Badge>
                     )}
                   </Group>
@@ -172,29 +150,19 @@ export function PartSelectionModal({
             </ScrollArea.Autosize>
 
             <Text size="xs" c="dimmed">
-              All parts will be included in the book. Selected parts will have page numbers and
-              headers applied; unselected parts will be merged without overlays.
+              Cached parts will be reused. Parts without cache will be built with page numbers and
+              headers. Click a cached badge to force rebuild.
             </Text>
 
-            <Group justify="space-between" gap="sm">
-              <Button
-                variant="subtle"
-                color="red"
-                size="xs"
-                onClick={handleInvalidateCaches}
-                loading={invalidating}
-                disabled={!parts.some((p) => p.isCached)}
-              >
-                Invalidate Caches
+            <Group justify="flex-end" gap="sm">
+              <Button variant="default" onClick={onClose}>
+                Cancel
               </Button>
-              <Group gap="sm">
-                <Button variant="default" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button onClick={handleConfirm}>
-                  Apply Overlays to {selected.size} Part{selected.size !== 1 ? 's' : ''}
-                </Button>
-              </Group>
+              <Button onClick={onConfirm}>
+                {needsBuildCount > 0
+                  ? `Build Galley (${needsBuildCount} part${needsBuildCount !== 1 ? 's' : ''} to process)`
+                  : 'Build Galley (all cached)'}
+              </Button>
             </Group>
           </>
         )}

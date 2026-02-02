@@ -182,8 +182,8 @@ export function ExportBookPDF(arg1, arg2) {
   return window['go']['app']['App']['ExportBookPDF'](arg1, arg2);
 }
 
-export function ExportBookPDFWithParts(arg1, arg2, arg3, arg4) {
-  return window['go']['app']['App']['ExportBookPDFWithParts'](arg1, arg2, arg3, arg4);
+export function ExportBookPDFWithParts(arg1, arg2, arg3) {
+  return window['go']['app']['App']['ExportBookPDFWithParts'](arg1, arg2, arg3);
 }
 
 export function ExportCollectionFolder(arg1) {
@@ -376,10 +376,6 @@ export function GetPublicationReadiness(arg1) {
 
 export function GetReportNames() {
   return window['go']['app']['App']['GetReportNames']();
-}
-
-export function GetSavedPartSelection(arg1) {
-  return window['go']['app']['App']['GetSavedPartSelection'](arg1);
 }
 
 export function GetSearchHistory() {

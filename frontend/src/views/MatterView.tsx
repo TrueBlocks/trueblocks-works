@@ -113,48 +113,45 @@ export function MatterView({
     };
   }, [book, collectionName, templateStyles]);
 
-  const doExportPDF = useCallback(
-    async (selectedParts: number[]) => {
-      const htmlContent = buildHtmlContent();
-      if (!htmlContent) return;
+  const doExportPDF = useCallback(async () => {
+    const htmlContent = buildHtmlContent();
+    if (!htmlContent) return;
 
-      setExporting(true);
-      try {
-        const hasParts = selectedParts.length > 0 || (await HasCollectionParts(collectionId));
-        const result = hasParts
-          ? await ExportBookPDFWithParts(collectionId, selectedParts, false, htmlContent)
-          : await ExportBookPDF(collectionId, htmlContent);
+    setExporting(true);
+    try {
+      const hasParts = await HasCollectionParts(collectionId);
+      const result = hasParts
+        ? await ExportBookPDFWithParts(collectionId, false, htmlContent)
+        : await ExportBookPDF(collectionId, htmlContent);
 
-        if (result?.success) {
-          Log(`PDF exported to: ${result.outputPath}`);
-          notifications.show({
-            title: 'PDF Export Complete',
-            message: `Exported ${result.workCount} works in ${result.duration}`,
-            color: 'green',
-            autoClose: 8000,
-          });
-        } else {
-          notifications.show({
-            title: 'PDF Export Failed',
-            message: result?.error || 'Unknown error',
-            color: 'red',
-            autoClose: 8000,
-          });
-        }
-      } catch (err) {
-        LogErr('PDF export failed:', err);
+      if (result?.success) {
+        Log(`PDF exported to: ${result.outputPath}`);
+        notifications.show({
+          title: 'PDF Export Complete',
+          message: `Exported ${result.workCount} works in ${result.duration}`,
+          color: 'green',
+          autoClose: 8000,
+        });
+      } else {
         notifications.show({
           title: 'PDF Export Failed',
-          message: String(err),
+          message: result?.error || 'Unknown error',
           color: 'red',
           autoClose: 8000,
         });
-      } finally {
-        setExporting(false);
       }
-    },
-    [buildHtmlContent, collectionId]
-  );
+    } catch (err) {
+      LogErr('PDF export failed:', err);
+      notifications.show({
+        title: 'PDF Export Failed',
+        message: String(err),
+        color: 'red',
+        autoClose: 8000,
+      });
+    } finally {
+      setExporting(false);
+    }
+  }, [buildHtmlContent, collectionId]);
 
   const handleExportPDF = useCallback(async () => {
     try {
@@ -162,11 +159,11 @@ export function MatterView({
       if (hasParts) {
         setPartModalOpen(true);
       } else {
-        await doExportPDF([]);
+        await doExportPDF();
       }
     } catch (err) {
       LogErr('PDF export check failed:', err);
-      await doExportPDF([]);
+      await doExportPDF();
     }
   }, [collectionId, doExportPDF]);
 
@@ -234,9 +231,9 @@ export function MatterView({
       <PartSelectionModal
         opened={partModalOpen}
         onClose={() => setPartModalOpen(false)}
-        onConfirm={(indices) => {
+        onConfirm={() => {
           setPartModalOpen(false);
-          doExportPDF(indices);
+          doExportPDF();
         }}
         collectionId={collectionId}
       />

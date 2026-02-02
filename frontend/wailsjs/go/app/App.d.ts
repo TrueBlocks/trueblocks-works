@@ -100,7 +100,7 @@ export function ExportAllTables():Promise<Array<app.ExportResult>>;
 
 export function ExportBookPDF(arg1:number,arg2:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
 
-export function ExportBookPDFWithParts(arg1:number,arg2:Array<number>,arg3:boolean,arg4:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
+export function ExportBookPDFWithParts(arg1:number,arg2:boolean,arg3:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
 
 export function ExportCollectionFolder(arg1:number):Promise<number>;
 
@@ -197,8 +197,6 @@ export function GetPreviewURL(arg1:number):Promise<string>;
 export function GetPublicationReadiness(arg1:number):Promise<app.PublicationReadiness>;
 
 export function GetReportNames():Promise<Array<string>>;
-
-export function GetSavedPartSelection(arg1:number):Promise<Array<number>>;
 
 export function GetSearchHistory():Promise<Array<string>>;
 

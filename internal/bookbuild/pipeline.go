@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 )
 
 // createTOCPDFWithTemplate uses the template-based DOCX approach if a template
@@ -20,13 +18,12 @@ func createTOCPDFWithTemplate(entries []TOCEntry, outputPath, templatePath strin
 }
 
 type PipelineOptions struct {
-	Manifest      *Manifest
-	CollectionID  int64
-	CacheDir      string
-	OutputPath    string
-	SelectedParts []int
-	RebuildAll    bool
-	OnProgress    ProgressFunc
+	Manifest     *Manifest
+	CollectionID int64
+	CacheDir     string
+	OutputPath   string
+	RebuildAll   bool
+	OnProgress   ProgressFunc
 }
 
 type PipelineResult struct {
@@ -46,43 +43,6 @@ func GetCacheDir(collectionID int64) string {
 		panic(fmt.Sprintf("failed to get home directory: %v", err))
 	}
 	return filepath.Join(home, ".works", "book-builds", fmt.Sprintf("coll-%d", collectionID))
-}
-
-func ParseSelectedParts(s string) []int {
-	if s == "" {
-		return nil
-	}
-	parts := strings.Split(s, ",")
-	result := make([]int, 0, len(parts))
-	for _, p := range parts {
-		if n, err := strconv.Atoi(strings.TrimSpace(p)); err == nil {
-			result = append(result, n)
-		}
-	}
-	return result
-}
-
-func FormatSelectedParts(parts []int) string {
-	if len(parts) == 0 {
-		return ""
-	}
-	strs := make([]string, len(parts))
-	for i, p := range parts {
-		strs[i] = strconv.Itoa(p)
-	}
-	return strings.Join(strs, ",")
-}
-
-func isPartSelected(partIndex int, selected []int) bool {
-	if len(selected) == 0 {
-		return true
-	}
-	for _, s := range selected {
-		if s == partIndex {
-			return true
-		}
-	}
-	return false
 }
 
 func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
@@ -148,38 +108,55 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 	var tocPDFPath string
 	var frontMatterPDFs []string
 
-	for i, fm := range opts.Manifest.FrontMatter {
-		if fm.Placeholder && fm.Type == "toc" {
+	// Process analysis.Items for front matter (includes blank pages for recto positioning)
+frontMatterLoop:
+	for i := range analysis.Items {
+		item := &analysis.Items[i]
+
+		// Stop when we hit the first part (blank pages after TOC belong to the part)
+		if item.Type == ContentTypePartDivider || item.Type == ContentTypeWork {
+			break
+		}
+
+		switch item.Type {
+		case ContentTypeBlank:
+			// Insert blank page for recto positioning (only before TOC)
+			frontMatterPDFs = append(frontMatterPDFs, blankPagePath)
+
+		case ContentTypeTOC:
 			if len(tocEntries) > 0 {
 				tocPDFPath = filepath.Join(opts.CacheDir, "toc.pdf")
 				tocErr := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
 				if tocErr != nil {
 					return nil, fmt.Errorf("TOC PDF creation failed: %w", tocErr)
 				}
-				{
-					actualTOCPages, err := GetPageCount(tocPDFPath)
-					if err != nil {
-						return nil, fmt.Errorf("failed to get TOC page count: %w", err)
-					}
-					if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
-						analysis, err = reanalyzeWithTOC(opts.Manifest, actualTOCPages)
-						if err != nil {
-							return nil, fmt.Errorf("TOC re-analysis failed: %w", err)
-						}
-						tocEntries, err = GenerateTOC(analysis, config)
-						if err != nil {
-							return nil, fmt.Errorf("TOC regeneration failed: %w", err)
-						}
-						if err := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config); err != nil {
-							return nil, fmt.Errorf("TOC PDF recreation failed: %w", err)
-						}
-					}
-					frontMatterPDFs = append(frontMatterPDFs, tocPDFPath)
+				actualTOCPages, err := GetPageCount(tocPDFPath)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get TOC page count: %w", err)
 				}
+				if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
+					analysis, err = reanalyzeWithTOC(opts.Manifest, actualTOCPages)
+					if err != nil {
+						return nil, fmt.Errorf("TOC re-analysis failed: %w", err)
+					}
+					// TOC page count changed - page positions shifted, must rebuild all parts
+					opts.RebuildAll = true
+					tocEntries, err = GenerateTOC(analysis, config)
+					if err != nil {
+						return nil, fmt.Errorf("TOC regeneration failed: %w", err)
+					}
+					if err := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config); err != nil {
+						return nil, fmt.Errorf("TOC PDF recreation failed: %w", err)
+					}
+				}
+				frontMatterPDFs = append(frontMatterPDFs, tocPDFPath)
 			}
-		} else {
-			if analysis.Items[i].PDF != "" {
-				frontMatterPDFs = append(frontMatterPDFs, ExpandPath(analysis.Items[i].PDF))
+			// TOC is always the last front matter item - blanks after it belong to the first part
+			break frontMatterLoop
+
+		case ContentTypeFrontMatter:
+			if item.PDF != "" {
+				frontMatterPDFs = append(frontMatterPDFs, ExpandPath(item.PDF))
 			}
 		}
 	}
@@ -192,13 +169,13 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 
 	for partIdx := range analysis.PartAnalyses {
 		pa := analysis.PartAnalyses[partIdx]
-		isSelected := opts.RebuildAll || isPartSelected(partIdx, opts.SelectedParts)
 		isCached := IsPartCached(opts.CacheDir, pa.PartID)
+		shouldRebuild := opts.RebuildAll || !isCached
 
-		progress("Parts", 3, 5, fmt.Sprintf("Part %d (%s): selected=%v, cached=%v", partIdx, pa.PartTitle, isSelected, isCached))
+		progress("Parts", 3, 5, fmt.Sprintf("Part %d (%s): cached=%v", partIdx, pa.PartTitle, isCached))
 
-		if isSelected {
-			// Selected: rebuild with overlays and cache the result
+		if shouldRebuild {
+			// Not cached or rebuild requested: build with overlays and cache
 			partResult, err := BuildPart(PartBuildOptions{
 				Manifest:       opts.Manifest,
 				Analysis:       analysis,
@@ -215,8 +192,8 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 			}
 			partPDFs[partIdx] = partResult.OutputPath
 			result.PartsBuilt++
-		} else if isCached {
-			// Not selected but cached: use cached version (already has overlays)
+		} else {
+			// Cached: use cached version (already has overlays)
 			cached, err := LoadCachedPart(opts.CacheDir, pa.PartID, pa.PartTitle, partIdx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to load cached part %d: %w", partIdx, err)
@@ -229,32 +206,6 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 					tracker.BodyNum += item.PageCount
 				}
 			}
-		} else {
-			// Not selected and not cached: merge without overlays (raw content)
-			partResult, err := BuildPart(PartBuildOptions{
-				Manifest:       opts.Manifest,
-				Analysis:       analysis,
-				PartIndex:      partIdx,
-				CacheDir:       opts.CacheDir,
-				BlankPagePath:  blankPagePath,
-				Config:         config,
-				OnProgress:     opts.OnProgress,
-				SkipOverlays:   true,
-				PageNumTracker: tracker,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to build part %d (no overlays): %w", partIdx, err)
-			}
-			// Use merged path directly (no overlays applied)
-			partPDFs[partIdx] = PartMergedPath(opts.CacheDir, pa.PartID)
-			result.PartsBuilt++
-			// Advance tracker to keep page numbers in sync for subsequent parts
-			for _, item := range analysis.GetPartItems(partIdx) {
-				if item.Type == ContentTypePartDivider || item.Type == ContentTypeWork {
-					tracker.BodyNum += item.PageCount
-				}
-			}
-			_ = partResult // suppress unused warning
 		}
 	}
 

@@ -109,20 +109,6 @@ func (a *App) GetBookParts(collID int64) ([]PartInfo, error) {
 	return parts, nil
 }
 
-// GetSavedPartSelection returns the previously saved part selection for a collection
-func (a *App) GetSavedPartSelection(collID int64) ([]int, error) {
-	book, err := a.db.GetBookByCollection(collID)
-	if err != nil || book == nil {
-		return nil, nil
-	}
-
-	if book.SelectedParts == nil || *book.SelectedParts == "" {
-		return nil, nil
-	}
-
-	return bookbuild.ParseSelectedParts(*book.SelectedParts), nil
-}
-
 // GetPartCacheStatus returns a map of part index -> cached status
 func (a *App) GetPartCacheStatus(collID int64) (map[int]bool, error) {
 	homeDir, err := os.UserHomeDir()
@@ -507,7 +493,7 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 }
 
 // ExportBookPDFWithParts exports a collection using the part-based pipeline
-func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildAll bool, htmlContent FrontBackMatterHTML) (*BookExportResult, error) {
+func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent FrontBackMatterHTML) (*BookExportResult, error) {
 	startTime := time.Now()
 
 	a.OpenStatusBar()
@@ -577,18 +563,6 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 		return nil, fmt.Errorf("failed to build manifest: %w", err)
 	}
 
-	if book.SelectedParts != nil && *book.SelectedParts != "" {
-		newSelection := bookbuild.FormatSelectedParts(selectedParts)
-		if newSelection != *book.SelectedParts {
-			book.SelectedParts = &newSelection
-			_ = a.db.UpdateBook(book)
-		}
-	} else if len(selectedParts) > 0 {
-		newSelection := bookbuild.FormatSelectedParts(selectedParts)
-		book.SelectedParts = &newSelection
-		_ = a.db.UpdateBook(book)
-	}
-
 	// Fail if manifest has no parts - don't silently fall back
 	if len(manifest.Parts) == 0 {
 		a.EmitStatus("error", "Manifest has no parts - check that works are not all suppressed")
@@ -596,12 +570,11 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 	}
 
 	pipelineResult, err := bookbuild.BuildWithParts(bookbuild.PipelineOptions{
-		Manifest:      manifest,
-		CollectionID:  collID,
-		CacheDir:      cacheDir,
-		OutputPath:    outputPath,
-		SelectedParts: selectedParts,
-		RebuildAll:    rebuildAll,
+		Manifest:     manifest,
+		CollectionID: collID,
+		CacheDir:     cacheDir,
+		OutputPath:   outputPath,
+		RebuildAll:   rebuildAll,
 		OnProgress: func(stage string, current, total int, message string) {
 			a.emitExportProgress(stage, current, total, message)
 			a.EmitStatus("progress", message)

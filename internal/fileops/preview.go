@@ -83,8 +83,7 @@ tell application "Microsoft Word"
 	
 	-- Only open if not already open
 	if not docWasOpen then
-		open POSIX file "%s"
-		set theDoc to active document
+		set theDoc to open POSIX file "%s"
 	end if
 	
 	-- Save as PDF (uses current markup settings - All Markup with inline revisions)
@@ -168,8 +167,7 @@ tell application "Microsoft Excel"
 	
 	-- Only open if not already open
 	if not docWasOpen then
-		open POSIX file "%s"
-		set theWorkbook to active workbook
+		set theWorkbook to open POSIX file "%s"
 	end if
 	
 	-- Save as PDF

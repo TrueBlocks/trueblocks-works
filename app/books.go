@@ -41,6 +41,29 @@ func (a *App) GetCollectionIsBook(collID int64) (bool, error) {
 	return a.db.GetCollectionIsBook(collID)
 }
 
+// ValidateCoverImagePath checks if a file path is a valid cover image
+func (a *App) ValidateCoverImagePath(path string) (bool, error) {
+	if path == "" {
+		return false, nil
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, fmt.Errorf("file not found: %w", err)
+	}
+	if info.IsDir() {
+		return false, fmt.Errorf("path is a directory, not a file")
+	}
+
+	ext := strings.ToLower(filepath.Ext(path))
+	validExts := map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".pdf": true}
+	if !validExts[ext] {
+		return false, fmt.Errorf("invalid file type: %s (expected png, jpg, jpeg, or pdf)", ext)
+	}
+
+	return true, nil
+}
+
 // SelectCoverImage opens a file dialog to select a cover image (PNG, JPG, PDF)
 func (a *App) SelectCoverImage(coverType string) (string, error) {
 	title := "Select Front Cover Image"

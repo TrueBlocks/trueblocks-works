@@ -392,6 +392,8 @@ export function ValidateContent(arg1:number):Promise<app.ValidationResult>;
 
 export function ValidateCover(arg1:number):Promise<app.ValidationResult>;
 
+export function ValidateCoverImagePath(arg1:string):Promise<boolean>;
+
 export function ValidateMatter(arg1:number):Promise<app.ValidationResult>;
 
 export function ValidateTemplate(arg1:string):Promise<app.TemplateValidation>;

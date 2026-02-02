@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Stack,
   Paper,
@@ -12,9 +12,11 @@ import {
   ColorInput,
   Grid,
   Badge,
+  Box,
 } from '@mantine/core';
 import { IconFileTypePdf, IconExternalLink, IconPhoto, IconChecks } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { OnFileDrop, OnFileDropOff } from '@wailsjs/runtime/runtime';
 import {
   GetBookByCollection,
   UpdateBook,
@@ -25,6 +27,7 @@ import {
   GetCoverPDFPath,
   ValidateCover,
   GetGalleyInfo,
+  ValidateCoverImagePath,
 } from '@app';
 import { models, app } from '@models';
 import { LogErr, generateCoverHTML, getCoverDimensions, DEFAULT_COVER_DIMENSIONS } from '@/utils';
@@ -45,6 +48,43 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
   const [frontCoverData, setFrontCoverData] = useState<string>('');
   const [coverPdfExists, setCoverPdfExists] = useState(false);
   const [galleyInfo, setGalleyInfo] = useState<app.GalleyInfo | null>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const bookRef = useRef<models.Book | null>(null);
+
+  useEffect(() => {
+    bookRef.current = book;
+  }, [book]);
+
+  useEffect(() => {
+    const handleFileDrop = async (_x: number, _y: number, paths: string[]) => {
+      const currentBook = bookRef.current;
+      if (!currentBook || paths.length === 0) return;
+
+      const path = paths[0];
+      try {
+        const valid = await ValidateCoverImagePath(path);
+        if (!valid) {
+          notifications.show({ message: 'Invalid image file type', color: 'red' });
+          return;
+        }
+
+        const updated = { ...currentBook, frontCoverPath: path };
+        await UpdateBook(updated);
+        setBook(updated);
+        const data = await GetCoverImageData(path);
+        setFrontCoverData(data);
+        notifications.show({ message: 'Front cover updated', color: 'green' });
+      } catch (err) {
+        LogErr('Failed to set cover from drop:', err);
+        notifications.show({ message: `Failed to set cover: ${err}`, color: 'red' });
+      }
+    };
+
+    OnFileDrop(handleFileDrop, true);
+    return () => {
+      OnFileDropOff();
+    };
+  }, []);
 
   const loadBook = useCallback(async () => {
     try {
@@ -307,12 +347,28 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
                 {galleyInfo.widthMM.toFixed(2)}×{galleyInfo.heightMM.toFixed(2)}mm
               </Text>
             )}
-            <PagePreview
-              html={coverHTML}
-              canvasWidthMM={coverDimensions.widthMM + 16}
-              canvasHeightMM={coverDimensions.heightMM + 16}
-              fillWidth
-            />
+            <Box
+              ref={dropZoneRef}
+              style={
+                {
+                  '--wails-drop-target': 'drop',
+                  position: 'relative',
+                  borderRadius: 'var(--mantine-radius-sm)',
+                  border: '2px dashed var(--mantine-color-gray-4)',
+                  padding: '4px',
+                } as React.CSSProperties
+              }
+            >
+              <PagePreview
+                html={coverHTML}
+                canvasWidthMM={coverDimensions.widthMM + 16}
+                canvasHeightMM={coverDimensions.heightMM + 16}
+                fillWidth
+              />
+            </Box>
+            <Text size="xs" c="dimmed" ta="center">
+              Drop an image here to set as front cover
+            </Text>
           </Stack>
         </Grid.Col>
       </Grid>

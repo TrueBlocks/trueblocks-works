@@ -756,6 +756,7 @@ export namespace app {
 	}
 	export class PartInfo {
 	    index: number;
+	    partId: number;
 	    title: string;
 	    workCount: number;
 	    pageCount: number;
@@ -768,6 +769,7 @@ export namespace app {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.index = source["index"];
+	        this.partId = source["partId"];
 	        this.title = source["title"];
 	        this.workCount = source["workCount"];
 	        this.pageCount = source["pageCount"];

@@ -46,6 +46,7 @@ type FrontBackMatterHTML struct {
 // PartInfo describes a part/section for the part selection modal
 type PartInfo struct {
 	Index     int    `json:"index"`
+	PartID    int64  `json:"partId"`
 	Title     string `json:"title"`
 	WorkCount int    `json:"workCount"`
 	PageCount int    `json:"pageCount"`
@@ -59,20 +60,21 @@ func (a *App) GetBookParts(collID int64) ([]PartInfo, error) {
 		return nil, err
 	}
 
+	cacheDir := bookbuild.GetCacheDir(collID)
+
 	var parts []PartInfo
 	var currentPart *PartInfo
 	partIndex := 0
-	// Check if there are works before the first section (Prologue)
-	// If the first work is not a section, we have a Prologue
 	hasPrologue := len(works) > 0 && works[0].Type != workTypeSection
 
-	// If there's a Prologue, create Part 0 for it
 	if hasPrologue {
 		currentPart = &PartInfo{
 			Index:     0,
+			PartID:    0,
 			Title:     "Prologue",
 			WorkCount: 0,
 			PageCount: 0,
+			IsCached:  bookbuild.IsPartCached(cacheDir, 0),
 		}
 		partIndex = 1
 	}
@@ -84,9 +86,11 @@ func (a *App) GetBookParts(collID int64) ([]PartInfo, error) {
 			}
 			currentPart = &PartInfo{
 				Index:     partIndex,
+				PartID:    w.WorkID,
 				Title:     w.Title,
 				WorkCount: 0,
-				PageCount: 1, // Section divider page
+				PageCount: 1,
+				IsCached:  bookbuild.IsPartCached(cacheDir, w.WorkID),
 			}
 			partIndex++
 		} else if currentPart != nil {
@@ -121,7 +125,10 @@ func (a *App) GetSavedPartSelection(collID int64) ([]int, error) {
 
 // GetPartCacheStatus returns a map of part index -> cached status
 func (a *App) GetPartCacheStatus(collID int64) (map[int]bool, error) {
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get home directory: %w", err)
+	}
 	buildDir := filepath.Join(homeDir, ".works", "book-builds", fmt.Sprintf("coll-%d", collID))
 
 	result := make(map[int]bool)
@@ -167,7 +174,10 @@ func (a *App) OpenBookPDF(collID int64) (*OpenBookPDFResult, error) {
 	}
 	filename := sanitizeFilename(bookTitle) + ".pdf"
 
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get home directory: %w", err)
+	}
 	pdfPath := filepath.Join(homeDir, "Desktop", filename)
 
 	if _, err := os.Stat(pdfPath); os.IsNotExist(err) {
@@ -221,7 +231,10 @@ func (a *App) ExportBookPDF(collID int64, htmlContent FrontBackMatterHTML) (*Boo
 	defaultFilename := sanitizeFilename(bookTitle) + ".pdf"
 
 	// TEMPORARY: Skip save dialog, use Desktop directly
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get home directory: %w", err)
+	}
 	outputPath := filepath.Join(homeDir, "Desktop", defaultFilename)
 
 	/*
@@ -514,7 +527,10 @@ func (a *App) ExportBookPDFWithParts(collID int64, selectedParts []int, rebuildA
 	if book.ExportPath != nil && *book.ExportPath != "" {
 		defaultDir = *book.ExportPath
 	} else {
-		homeDir, _ := os.UserHomeDir()
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get home directory: %w", err)
+		}
 		defaultDir = filepath.Join(homeDir, "Desktop")
 	}
 

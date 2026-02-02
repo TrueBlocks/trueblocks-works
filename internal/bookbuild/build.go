@@ -39,7 +39,10 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 	}
 
 	if opts.BuildDir == "" {
-		home, _ := os.UserHomeDir()
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get home directory: %w", err)
+		}
 		opts.BuildDir = filepath.Join(home, ".works", "book-builds", "temp")
 	}
 
@@ -76,7 +79,7 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 
 	tocEntries, err := GenerateTOC(analysis, config)
 	if err != nil {
-		result.Warnings = append(result.Warnings, fmt.Sprintf("TOC generation warning: %v", err))
+		return nil, fmt.Errorf("TOC generation failed: %w", err)
 	}
 
 	var tocPDFPath string
@@ -84,16 +87,25 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 		tocPDFPath = filepath.Join(opts.BuildDir, "toc.pdf")
 		tocErr := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
 		if tocErr != nil {
-			result.Warnings = append(result.Warnings, fmt.Sprintf("TOC PDF creation failed: %v", tocErr))
-		} else {
-			actualTOCPages, _ := GetPageCount(tocPDFPath)
+			return nil, fmt.Errorf("TOC PDF creation failed: %w", tocErr)
+		}
+		{
+			actualTOCPages, err := GetPageCount(tocPDFPath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get TOC page count: %w", err)
+			}
 			if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
 				analysis, err = reanalyzeWithTOC(opts.Manifest, actualTOCPages)
 				if err != nil {
-					result.Warnings = append(result.Warnings, fmt.Sprintf("Re-analysis failed: %v", err))
+					return nil, fmt.Errorf("TOC re-analysis failed: %w", err)
 				}
-				tocEntries, _ = GenerateTOC(analysis, config)
-				_ = createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
+				tocEntries, err = GenerateTOC(analysis, config)
+				if err != nil {
+					return nil, fmt.Errorf("TOC regeneration failed: %w", err)
+				}
+				if err := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config); err != nil {
+					return nil, fmt.Errorf("TOC PDF recreation failed: %w", err)
+				}
 			}
 
 			if analysis.TOCIndex >= 0 && analysis.TOCIndex < len(analysis.Items) {
@@ -118,10 +130,8 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 		limitedMappings := limitMappingsToEssays(mergeResult.PageMappings, opts.MaxEssays)
 		progress("Page Numbers", 4, 6, fmt.Sprintf("Adding page numbers to %d pages...", len(limitedMappings)))
 		if err := AddPageNumbers(mergedPath, limitedMappings, config); err != nil {
-			result.Warnings = append(result.Warnings, fmt.Sprintf("Page numbers failed: %v", err))
+			return nil, fmt.Errorf("page numbers failed: %w", err)
 		}
-	} else {
-		result.Warnings = append(result.Warnings, "Page numbers skipped (use --max-essays to enable)")
 	}
 
 	progress("Headers", 5, 6, "Adding running headers...")
@@ -130,10 +140,8 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 		limitedMappings := limitMappingsToEssays(mergeResult.PageMappings, opts.MaxEssays)
 		progress("Headers", 5, 6, fmt.Sprintf("Adding headers to %d pages...", len(limitedMappings)))
 		if err := AddRunningHeaders(mergedPath, limitedMappings, config); err != nil {
-			result.Warnings = append(result.Warnings, fmt.Sprintf("Running headers failed: %v", err))
+			return nil, fmt.Errorf("running headers failed: %w", err)
 		}
-	} else {
-		result.Warnings = append(result.Warnings, "Running headers skipped (use --max-essays to enable)")
 	}
 
 	progress("Finalizing", 6, 6, "Writing final PDF...")

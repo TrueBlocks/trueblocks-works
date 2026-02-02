@@ -766,6 +766,10 @@ export function ValidateCover(arg1) {
   return window['go']['app']['App']['ValidateCover'](arg1);
 }
 
+export function ValidateCoverImagePath(arg1) {
+  return window['go']['app']['App']['ValidateCoverImagePath'](arg1);
+}
+
 export function ValidateMatter(arg1) {
   return window['go']['app']['App']['ValidateMatter'](arg1);
 }

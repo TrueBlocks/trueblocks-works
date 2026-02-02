@@ -41,7 +41,10 @@ type PipelineResult struct {
 }
 
 func GetCacheDir(collectionID int64) string {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(fmt.Sprintf("failed to get home directory: %v", err))
+	}
 	return filepath.Join(home, ".works", "book-builds", fmt.Sprintf("coll-%d", collectionID))
 }
 
@@ -138,7 +141,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 
 	tocEntries, err := GenerateTOC(analysis, config)
 	if err != nil {
-		result.Warnings = append(result.Warnings, fmt.Sprintf("TOC generation warning: %v", err))
+		return nil, fmt.Errorf("TOC generation failed: %w", err)
 	}
 
 	var tocPDFPath string
@@ -150,16 +153,25 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 				tocPDFPath = filepath.Join(opts.CacheDir, "toc.pdf")
 				tocErr := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
 				if tocErr != nil {
-					result.Warnings = append(result.Warnings, fmt.Sprintf("TOC PDF creation failed: %v", tocErr))
-				} else {
-					actualTOCPages, _ := GetPageCount(tocPDFPath)
+					return nil, fmt.Errorf("TOC PDF creation failed: %w", tocErr)
+				}
+				{
+					actualTOCPages, err := GetPageCount(tocPDFPath)
+					if err != nil {
+						return nil, fmt.Errorf("failed to get TOC page count: %w", err)
+					}
 					if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
 						analysis, err = reanalyzeWithTOC(opts.Manifest, actualTOCPages)
 						if err != nil {
-							result.Warnings = append(result.Warnings, fmt.Sprintf("Re-analysis failed: %v", err))
+							return nil, fmt.Errorf("TOC re-analysis failed: %w", err)
 						}
-						tocEntries, _ = GenerateTOC(analysis, config)
-						_ = createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
+						tocEntries, err = GenerateTOC(analysis, config)
+						if err != nil {
+							return nil, fmt.Errorf("TOC regeneration failed: %w", err)
+						}
+						if err := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config); err != nil {
+							return nil, fmt.Errorf("TOC PDF recreation failed: %w", err)
+						}
 					}
 					frontMatterPDFs = append(frontMatterPDFs, tocPDFPath)
 				}
@@ -202,56 +214,23 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 			}
 			partPDFs[partIdx] = partResult.OutputPath
 			result.PartsBuilt++
-			result.Warnings = append(result.Warnings, partResult.Warnings...)
 		} else if isCached {
 			// Not selected but cached: use cached version (already has overlays)
 			cached, err := LoadCachedPart(opts.CacheDir, pa.PartID, pa.PartTitle, partIdx)
 			if err != nil {
-				// Cache load failed, build without overlays
-				partResult, err := BuildPart(PartBuildOptions{
-					Manifest:       opts.Manifest,
-					Analysis:       analysis,
-					PartIndex:      partIdx,
-					CacheDir:       opts.CacheDir,
-					BlankPagePath:  blankPagePath,
-					Config:         config,
-					OnProgress:     opts.OnProgress,
-					SkipOverlays:   true,
-					PageNumTracker: tracker,
-				})
-				if err != nil {
-					return nil, fmt.Errorf("failed to build part %d: %w", partIdx, err)
-				}
-				partPDFs[partIdx] = partResult.OutputPath
-				result.Warnings = append(result.Warnings, fmt.Sprintf("Part %d cache load failed, built without overlays", partIdx))
-			} else {
-				partPDFs[partIdx] = cached.OutputPath
-				result.PartsCached++
-				// Advance tracker to keep page numbers in sync
-				for _, item := range analysis.GetPartItems(partIdx) {
-					if item.Type == ContentTypePartDivider || item.Type == ContentTypeWork {
-						tracker.BodyNum += item.PageCount
-					}
+				return nil, fmt.Errorf("failed to load cached part %d: %w", partIdx, err)
+			}
+			partPDFs[partIdx] = cached.OutputPath
+			result.PartsCached++
+			// Advance tracker to keep page numbers in sync
+			for _, item := range analysis.GetPartItems(partIdx) {
+				if item.Type == ContentTypePartDivider || item.Type == ContentTypeWork {
+					tracker.BodyNum += item.PageCount
 				}
 			}
 		} else {
-			// Not selected and not cached: build without overlays (fast)
-			partResult, err := BuildPart(PartBuildOptions{
-				Manifest:       opts.Manifest,
-				Analysis:       analysis,
-				PartIndex:      partIdx,
-				CacheDir:       opts.CacheDir,
-				BlankPagePath:  blankPagePath,
-				Config:         config,
-				OnProgress:     opts.OnProgress,
-				SkipOverlays:   true,
-				PageNumTracker: tracker,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to build part %d: %w", partIdx, err)
-			}
-			partPDFs[partIdx] = partResult.OutputPath
-			result.Warnings = append(result.Warnings, fmt.Sprintf("Part %d (%s) has no overlays", partIdx+1, pa.PartTitle))
+			// Not selected and not cached: this is an error - all parts must have overlays
+			return nil, fmt.Errorf("part %d (%s) is not selected and not cached - cannot build without overlays", partIdx+1, pa.PartTitle)
 		}
 	}
 
@@ -303,7 +282,10 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		return nil, fmt.Errorf("failed to write output: %w", err)
 	}
 
-	totalPages, _ := GetPageCount(opts.OutputPath)
+	totalPages, err := GetPageCount(opts.OutputPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get final page count: %w", err)
+	}
 	result.TotalPages = totalPages
 	result.WorkCount = len(opts.Manifest.AllWorks())
 	result.Success = true

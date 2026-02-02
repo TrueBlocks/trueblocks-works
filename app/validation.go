@@ -3,6 +3,8 @@ package app
 import (
 	"fmt"
 	"os"
+
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/bookbuild"
 )
 
 // ValidationResult holds the outcome of a validation check
@@ -67,12 +69,23 @@ func (a *App) ValidateContent(collID int64) (*ValidationResult, error) {
 		result.Passed = false
 	}
 
-	// Warning: galley not generated
-	if book != nil && (book.ExportPath == nil || *book.ExportPath == "") {
+	// Check galley PDF
+	galleyInfo, err := a.GetGalleyInfo(collID)
+	if err != nil {
+		result.Warnings = append(result.Warnings, fmt.Sprintf("Could not check galley: %v", err))
+	} else if !galleyInfo.Exists {
 		result.Warnings = append(result.Warnings, "Galley PDF not yet generated")
-	} else if book != nil && book.ExportPath != nil {
-		if _, err := os.Stat(*book.ExportPath); os.IsNotExist(err) {
-			result.Warnings = append(result.Warnings, "Galley PDF file not found on disk")
+	} else {
+		// Check font embedding in the galley PDF
+		fontIssues, err := bookbuild.CheckFontsEmbedded(galleyInfo.Path)
+		if err != nil {
+			result.Warnings = append(result.Warnings, fmt.Sprintf("Could not check font embedding: %v", err))
+		} else if len(fontIssues) > 0 {
+			for _, issue := range fontIssues {
+				result.Errors = append(result.Errors,
+					fmt.Sprintf("Non-embedded font: %s (%s) - will fail KDP print", issue.FontName, issue.FontType))
+			}
+			result.Passed = false
 		}
 	}
 

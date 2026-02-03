@@ -59,6 +59,7 @@ export function DataTable<T>({
   onMoveToPosition,
   onSortFilterStateChange,
   getRowStyle,
+  getMarkedCount,
   loadState,
   saveState,
 }: DataTableProps<T>) {
@@ -817,8 +818,16 @@ export function DataTable<T>({
       </Table>
 
       <Text size="sm" c="dimmed">
-        Showing {paginated.length} of {sorted.length} {(title || 'items').toLowerCase()}
+        Showing {(effectivePage - 1) * pageSize + 1}-
+        {Math.min(effectivePage * pageSize, sorted.length)} of {sorted.length}
         {sorted.length !== data.length && ` (${data.length} total)`}
+        {getMarkedCount &&
+          (() => {
+            const markedCount = getMarkedCount(sorted);
+            return markedCount > 0 && markedCount < sorted.length
+              ? ` (${markedCount} marked)`
+              : null;
+          })()}
       </Text>
     </Stack>
   );

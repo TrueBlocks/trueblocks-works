@@ -64,6 +64,8 @@ export interface DataTableProps<T> {
   onMoveToPosition?: (itemKey: string | number, currentIndex: number) => void;
   onSortFilterStateChange?: (state: { hasActiveFilters: boolean; hasActiveSort: boolean }) => void;
   getRowStyle?: (item: T) => React.CSSProperties | undefined;
+  // Optional function to count marked items for display in pagination
+  getMarkedCount?: (items: T[]) => number;
   // Persistence - optional. If not provided, state is ephemeral
   loadState?: (tableName: string) => Promise<TableState>;
   saveState?: (tableName: string, state: TableState) => Promise<void>;

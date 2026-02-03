@@ -1153,6 +1153,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                   onMoveToPosition={handleOpenMoveToPosition}
                   onFilteredSortedChange={setSortedFilteredWorks}
                   onSortFilterStateChange={setTableState}
+                  getMarkedCount={(items) => items.filter((w) => w.isMarked).length}
                   extraColumns={<Table.Th style={{ width: '50px' }} />}
                   renderExtraCells={(work) => (
                     <Table.Td>
@@ -1282,6 +1283,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
               onMoveToPosition={handleOpenMoveToPosition}
               onFilteredSortedChange={setSortedFilteredWorks}
               onSortFilterStateChange={setTableState}
+              getMarkedCount={(items) => items.filter((w) => w.isMarked).length}
               extraColumns={<Table.Th style={{ width: '50px' }} />}
               renderExtraCells={(work) => (
                 <Table.Td>

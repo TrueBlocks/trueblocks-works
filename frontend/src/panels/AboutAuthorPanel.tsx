@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useState } from 'react';
 import { Grid, Textarea, Stack, Text, Paper } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { models } from '@models';
@@ -11,15 +11,22 @@ interface AboutAuthorPanelProps {
 }
 
 export function AboutAuthorPanel({ book, onBookChange }: AboutAuthorPanelProps) {
-  const debouncedBookChange = useDebouncedCallback(onBookChange, 500);
+  const [localValue, setLocalValue] = useState(book.aboutAuthor || '');
+  const [trackedBookId, setTrackedBookId] = useState(book.bookID);
 
-  const handleFieldChange = useCallback(
-    (value: string) => {
-      const updated = { ...book, aboutAuthor: value };
-      debouncedBookChange(updated);
-    },
-    [book, debouncedBookChange]
-  );
+  if (book.bookID !== trackedBookId) {
+    setTrackedBookId(book.bookID);
+    setLocalValue(book.aboutAuthor || '');
+  }
+
+  const debouncedSave = useDebouncedCallback((value: string, currentBook: models.Book) => {
+    onBookChange({ ...currentBook, aboutAuthor: value });
+  }, 500);
+
+  const handleChange = (value: string) => {
+    setLocalValue(value);
+    debouncedSave(value, book);
+  };
 
   return (
     <Grid gutter="md">
@@ -32,8 +39,8 @@ export function AboutAuthorPanel({ book, onBookChange }: AboutAuthorPanelProps) 
               </Text>
               <Textarea
                 size="xs"
-                value={book.aboutAuthor || ''}
-                onChange={(e) => handleFieldChange(e.currentTarget.value)}
+                value={localValue}
+                onChange={(e) => handleChange(e.currentTarget.value)}
                 placeholder="Thomas Jay Rush is..."
                 minRows={8}
                 autosize

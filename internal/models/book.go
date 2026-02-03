@@ -31,6 +31,8 @@ type Book struct {
 	ShowPageNumbers         *bool   `json:"showPageNumbers,omitempty" db:"show_page_numbers"`
 	PageNumbersFlushOutside *bool   `json:"pageNumbersFlushOutside,omitempty" db:"page_numbers_flush_outside"`
 	SelectedParts           *string `json:"selectedParts,omitempty" db:"selected_parts"`
+	PaperType               string  `json:"paperType" db:"paper_type"`
+	TrimSize                string  `json:"trimSize" db:"trim_size"`
 	KdpUploaded             bool    `json:"kdpUploaded" db:"kdp_uploaded"`
 	KdpPreviewed            bool    `json:"kdpPreviewed" db:"kdp_previewed"`
 	KdpProofOrdered         bool    `json:"kdpProofOrdered" db:"kdp_proof_ordered"`

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useState } from 'react';
 import { Grid, Textarea, Stack, Text, Paper } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
 import { models } from '@models';
@@ -11,15 +11,22 @@ interface CopyrightPanelProps {
 }
 
 export function CopyrightPanel({ book, onBookChange }: CopyrightPanelProps) {
-  const debouncedBookChange = useDebouncedCallback(onBookChange, 500);
+  const [localValue, setLocalValue] = useState(book.copyright || '');
+  const [trackedBookId, setTrackedBookId] = useState(book.bookID);
 
-  const handleFieldChange = useCallback(
-    (value: string) => {
-      const updated = { ...book, copyright: value };
-      debouncedBookChange(updated);
-    },
-    [book, debouncedBookChange]
-  );
+  if (book.bookID !== trackedBookId) {
+    setTrackedBookId(book.bookID);
+    setLocalValue(book.copyright || '');
+  }
+
+  const debouncedSave = useDebouncedCallback((value: string, currentBook: models.Book) => {
+    onBookChange({ ...currentBook, copyright: value });
+  }, 500);
+
+  const handleChange = (value: string) => {
+    setLocalValue(value);
+    debouncedSave(value, book);
+  };
 
   return (
     <Grid gutter="md">
@@ -32,8 +39,8 @@ export function CopyrightPanel({ book, onBookChange }: CopyrightPanelProps) {
               </Text>
               <Textarea
                 size="xs"
-                value={book.copyright || ''}
-                onChange={(e) => handleFieldChange(e.currentTarget.value)}
+                value={localValue}
+                onChange={(e) => handleChange(e.currentTarget.value)}
                 placeholder="© 2026 Publisher Name&#10;All rights reserved.&#10;&#10;ISBN: 000-0-0000-0000-0"
                 minRows={8}
                 autosize

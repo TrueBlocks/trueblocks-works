@@ -1593,6 +1593,8 @@ export namespace models {
 	    showPageNumbers?: boolean;
 	    pageNumbersFlushOutside?: boolean;
 	    selectedParts?: string;
+	    paperType: string;
+	    trimSize: string;
 	    kdpUploaded: boolean;
 	    kdpPreviewed: boolean;
 	    kdpProofOrdered: boolean;
@@ -1637,6 +1639,8 @@ export namespace models {
 	        this.showPageNumbers = source["showPageNumbers"];
 	        this.pageNumbersFlushOutside = source["pageNumbersFlushOutside"];
 	        this.selectedParts = source["selectedParts"];
+	        this.paperType = source["paperType"];
+	        this.trimSize = source["trimSize"];
 	        this.kdpUploaded = source["kdpUploaded"];
 	        this.kdpPreviewed = source["kdpPreviewed"];
 	        this.kdpProofOrdered = source["kdpProofOrdered"];

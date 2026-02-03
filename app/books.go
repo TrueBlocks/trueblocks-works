@@ -165,12 +165,36 @@ type GalleyInfo struct {
 
 // KDP cover dimension constants
 const (
-	kdpFrontCoverWidthMM = 152.4  // 6 inches
-	kdpBackCoverWidthMM  = 152.4  // 6 inches
-	kdpCoverHeightMM     = 234.95 // 9.25 inches
-	kdpBleedMM           = 3.17   // 0.125 inches
-	kdpWhitePaperSpinePP = 0.0572 // mm per page for white paper
+	kdpBleedMM              = 3.17   // 0.125 inches - universal for all sizes
+	kdpPremiumColorSpinePP  = 0.0596 // mm per page for premium color paper
+	kdpWhitePaperSpinePP    = 0.0572 // mm per page for white paper (B&W)
+	kdpCreamPaperSpinePP    = 0.0635 // mm per page for cream paper (B&W)
+	kdpStandardColorSpinePP = 0.0572 // mm per page for standard color paper
 )
+
+// TrimSizeDimensions holds the dimensions for a specific trim size
+type TrimSizeDimensions struct {
+	WidthMM       float64 // trim width in mm
+	HeightMM      float64 // trim height in mm
+	CoverHeightMM float64 // cover height (trim + 2*bleed)
+}
+
+// kdpTrimSizes maps trim size codes to their dimensions
+var kdpTrimSizes = map[string]TrimSizeDimensions{
+	"5x8":     {WidthMM: 127.0, HeightMM: 203.2, CoverHeightMM: 209.55}, // 5" x 8"
+	"5.5x8.5": {WidthMM: 139.7, HeightMM: 215.9, CoverHeightMM: 222.25}, // 5.5" x 8.5"
+	"6x9":     {WidthMM: 152.4, HeightMM: 228.6, CoverHeightMM: 234.95}, // 6" x 9"
+	"7x10":    {WidthMM: 177.8, HeightMM: 254.0, CoverHeightMM: 260.35}, // 7" x 10"
+	"8.5x11":  {WidthMM: 215.9, HeightMM: 279.4, CoverHeightMM: 285.75}, // 8.5" x 11"
+}
+
+// getTrimSizeDimensions returns dimensions for a trim size, defaulting to 6x9
+func getTrimSizeDimensions(trimSize string) TrimSizeDimensions {
+	if dims, ok := kdpTrimSizes[trimSize]; ok {
+		return dims
+	}
+	return kdpTrimSizes["6x9"]
+}
 
 // GetGalleyInfo returns information about the galley PDF including page count and calculated cover dimensions
 func (a *App) GetGalleyInfo(collID int64) (*GalleyInfo, error) {
@@ -206,11 +230,25 @@ func (a *App) GetGalleyInfo(collID int64) (*GalleyInfo, error) {
 		return &GalleyInfo{Exists: true, Path: pdfPath, ModTime: info.ModTime().Unix()}, nil
 	}
 
-	// Calculate spine width: page count * mm per page
-	spineMM := float64(pageCount) * kdpWhitePaperSpinePP
+	// Calculate spine width based on paper type
+	spinePP := kdpPremiumColorSpinePP // default
+	switch book.PaperType {
+	case "premium-color":
+		spinePP = kdpPremiumColorSpinePP
+	case "standard-color":
+		spinePP = kdpStandardColorSpinePP
+	case "bw-white":
+		spinePP = kdpWhitePaperSpinePP
+	case "bw-cream":
+		spinePP = kdpCreamPaperSpinePP
+	}
+	spineMM := float64(pageCount) * spinePP
+
+	// Get trim size dimensions
+	trimDims := getTrimSizeDimensions(book.TrimSize)
 
 	// Calculate total cover width: back + spine + front + bleed on both sides
-	widthMM := kdpBackCoverWidthMM + spineMM + kdpFrontCoverWidthMM + (kdpBleedMM * 2)
+	widthMM := trimDims.WidthMM + spineMM + trimDims.WidthMM + (kdpBleedMM * 2)
 
 	return &GalleyInfo{
 		Exists:    true,
@@ -218,7 +256,7 @@ func (a *App) GetGalleyInfo(collID int64) (*GalleyInfo, error) {
 		PageCount: pageCount,
 		SpineMM:   spineMM,
 		WidthMM:   widthMM,
-		HeightMM:  kdpCoverHeightMM,
+		HeightMM:  trimDims.CoverHeightMM,
 		ModTime:   info.ModTime().Unix(),
 	}, nil
 }

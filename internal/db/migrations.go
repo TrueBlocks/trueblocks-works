@@ -147,6 +147,21 @@ var migrations = []Migration{
 		Name:    "add_page_numbers_flush_outside",
 		Up:      migrateAddPageNumbersFlushOutside,
 	},
+	{
+		Version: 36,
+		Name:    "add_show_headers_to_books",
+		Up:      migrateAddShowHeadersToBooks,
+	},
+	{
+		Version: 37,
+		Name:    "add_book_type_to_books",
+		Up:      migrateAddBookTypeToBooks,
+	},
+	{
+		Version: 38,
+		Name:    "add_page_numbers_on_opening_pages",
+		Up:      migrateAddPageNumbersOnOpeningPages,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1266,6 +1281,30 @@ func migrateAddPageNumbersFlushOutside(tx *sql.Tx) error {
 	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN page_numbers_flush_outside INTEGER DEFAULT 0`)
 	if err != nil {
 		return fmt.Errorf("add page_numbers_flush_outside column: %w", err)
+	}
+	return nil
+}
+
+func migrateAddShowHeadersToBooks(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN show_headers INTEGER DEFAULT 1`)
+	if err != nil {
+		return fmt.Errorf("add show_headers column: %w", err)
+	}
+	return nil
+}
+
+func migrateAddBookTypeToBooks(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN book_type TEXT DEFAULT 'prose'`)
+	if err != nil {
+		return fmt.Errorf("add book_type column: %w", err)
+	}
+	return nil
+}
+
+func migrateAddPageNumbersOnOpeningPages(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN page_numbers_on_opening_pages INTEGER DEFAULT 0`)
+	if err != nil {
+		return fmt.Errorf("add page_numbers_on_opening_pages column: %w", err)
 	}
 	return nil
 }

@@ -1,22 +1,24 @@
 import { Button, Checkbox, Group, Modal, Text, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
+  IconArchive,
   IconArrowsExchange,
   IconDownload,
   IconFileText,
-  IconPrinter,
   IconRefresh,
 } from '@tabler/icons-react';
 import {
+  BackupWork,
   CheckWorkPath,
+  CleanDocxStyles,
   ExportToSubmissions,
+  GetSupportingInfo,
   GetWorkBookAuditStatus,
   GetWorkMarked,
   GetWorkSkipAudits,
   GetWorkTemplatePath,
   MoveWorkFile,
   OpenDocument,
-  PrintWork,
   SetWorkMarked,
   SetWorkSkipAudits,
   SyncWorkTemplate,
@@ -52,6 +54,7 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   const [syncing, setSyncing] = useState(false);
   const [skipAuditModalOpen, setSkipAuditModalOpen] = useState(false);
   const [skipAudits, setSkipAudits] = useState(false);
+  const [hasSupporting, setHasSupporting] = useState(false);
 
   useEffect(() => {
     CheckWorkPath(workID).then((result) => {
@@ -71,6 +74,9 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     });
     GetWorkSkipAudits(workID).then((skip) => {
       setSkipAudits(skip);
+    });
+    GetSupportingInfo(workID).then((info) => {
+      setHasSupporting(info.exists);
     });
   }, [workID, refreshKey]);
 
@@ -114,13 +120,36 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     }
   };
 
-  const handlePrint = async () => {
+  const handleBackup = useCallback(async () => {
     try {
-      await PrintWork(workID);
+      await BackupWork(workID);
+      setHasSupporting(true);
+      notifications.show({
+        title: 'Backup Created',
+        message: 'Work backed up to Supporting folder',
+        color: 'green',
+      });
+      onMoved?.();
     } catch (err) {
-      LogErr('Failed to print:', err);
+      LogErr('Failed to backup:', err);
+      notifications.show({
+        title: 'Backup Failed',
+        message: String(err),
+        color: 'red',
+      });
     }
-  };
+  }, [workID, onMoved]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'b' && fileExists && !hasSupporting) {
+        e.preventDefault();
+        handleBackup();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [fileExists, hasSupporting, handleBackup]);
 
   const handleMarkChange = async (checked: boolean) => {
     try {
@@ -135,7 +164,6 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     setSyncing(true);
     try {
       await SyncWorkTemplate(workID);
-      setIsMarked(true);
       notifications.show({
         title: 'Template Synced',
         message: 'Styles, page setup, and images updated from template',
@@ -171,18 +199,63 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
     }
     if (status?.unknownStyleNames?.length) {
       parts.push(`Unknown styles: ${status.unknownStyleNames.join(', ')}`);
+      parts.push('⌘+click to clean unknown styles');
     }
     if (status?.directFormattingTypes?.length) {
       parts.push(`Direct formatting: ${status.directFormattingTypes.join(', ')}`);
     }
-    parts.push('Cmd+click to skip audit');
+    parts.push('⌘+Shift+click to skip audit');
     return parts.join('\n');
   };
 
-  const handleAuditClick = (e: React.MouseEvent) => {
-    if (e.metaKey) {
+  const handleAuditClick = async (e: React.MouseEvent) => {
+    if (e.metaKey && e.shiftKey) {
+      // Cmd+Shift+click: skip/unskip audits
       e.preventDefault();
       setSkipAuditModalOpen(true);
+    } else if (e.metaKey && !e.shiftKey) {
+      // Cmd+click: clean unknown styles
+      e.preventDefault();
+      if (!templatePath || !auditStatus?.unknownStyleNames?.length) {
+        notifications.show({
+          title: 'Nothing to clean',
+          message: 'No unknown styles found in this document',
+          color: 'blue',
+        });
+        return;
+      }
+      try {
+        const result = await CleanDocxStyles(workID, templatePath);
+        if (result.error) {
+          notifications.show({
+            title: 'Clean failed',
+            message: result.error,
+            color: 'red',
+          });
+        } else if (result.removedStyles?.length) {
+          notifications.show({
+            title: 'Styles cleaned',
+            message: `Removed: ${result.removedStyles.join(', ')}`,
+            color: 'green',
+          });
+          // Refresh audit status
+          const status = await GetWorkBookAuditStatus(workID);
+          setAuditStatus(status);
+        } else {
+          notifications.show({
+            title: 'No changes',
+            message: 'No styles were removed',
+            color: 'blue',
+          });
+        }
+      } catch (err) {
+        LogErr('Failed to clean styles:', err);
+        notifications.show({
+          title: 'Clean failed',
+          message: String(err),
+          color: 'red',
+        });
+      }
     }
   };
 
@@ -288,16 +361,24 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
           </Button>
         </Tooltip>
 
-        <Tooltip label="Print">
+        <Tooltip
+          label={
+            !fileExists
+              ? 'No file to backup'
+              : hasSupporting
+                ? 'Backup already exists'
+                : 'Backup to Supporting folder (⌘B)'
+          }
+        >
           <Button
             variant="light"
             color="grape"
             size="xs"
-            leftSection={<IconPrinter size={14} />}
-            onClick={handlePrint}
-            disabled={!fileExists}
+            leftSection={<IconArchive size={14} />}
+            onClick={handleBackup}
+            disabled={!fileExists || hasSupporting}
           >
-            Print
+            Backup
           </Button>
         </Tooltip>
       </Group>

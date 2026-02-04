@@ -170,11 +170,13 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 
 		result.FinalBodyNum = tracker.BodyNum
 
-		progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
-			fmt.Sprintf("Adding headers to part %d...", opts.PartIndex+1))
+		if opts.Manifest.ShowHeaders {
+			progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
+				fmt.Sprintf("Adding headers to part %d...", opts.PartIndex+1))
 
-		if err := addPartHeaders(mergedPath, adjustedMappings, opts.Config); err != nil {
-			return nil, fmt.Errorf("headers failed for part %d: %w", opts.PartIndex, err)
+			if err := addPartHeaders(mergedPath, adjustedMappings, opts.Config); err != nil {
+				return nil, fmt.Errorf("headers failed for part %d: %w", opts.PartIndex, err)
+			}
 		}
 
 		// Only cache when overlays were applied
@@ -206,7 +208,8 @@ func adjustMappingsForPartPDF(mappings []PageMapping, partStartPage int) []PageM
 
 func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig, tracker *PageNumberTracker) error {
 	for _, m := range mappings {
-		if !m.ShouldShowPageNumber() {
+		showPageNum := shouldShowPageNumberWithConfig(m, config.PageNumbersOnOpeningPages)
+		if !showPageNum {
 			if m.ContentItem != nil {
 				switch m.ContentItem.Type {
 				case ContentTypeFrontMatter, ContentTypeTOC:
@@ -397,4 +400,25 @@ func mergeFilesRaw(inFiles []string, outFile string) error {
 	}
 
 	return nil
+}
+
+// shouldShowPageNumberWithConfig determines if a page should show a page number,
+// considering the pageNumbersOnOpeningPages setting for poetry books.
+func shouldShowPageNumberWithConfig(m PageMapping, pageNumbersOnOpeningPages bool) bool {
+	if m.ContentItem == nil {
+		return false
+	}
+	if m.ContentItem.Type == ContentTypeBlank {
+		return false
+	}
+	if m.ContentItem.Type == ContentTypeFrontMatter {
+		return false
+	}
+	if m.ContentItem.Type == ContentTypePartDivider {
+		return false
+	}
+	if m.ContentItem.Type == ContentTypeWork && m.PageInItem == 1 {
+		return pageNumbersOnOpeningPages
+	}
+	return true
 }

@@ -77,6 +77,7 @@ func Build(opts BuildOptions) (*BuildResult, error) {
 		config.Typography = opts.Manifest.Typography
 	}
 	config.PageNumbersFlushOutside = opts.Manifest.PageNumbersFlushOutside
+	config.PageNumbersOnOpeningPages = opts.Manifest.PageNumbersOnOpeningPages
 
 	tocEntries, err := GenerateTOC(analysis, config)
 	if err != nil {
@@ -221,7 +222,7 @@ func reanalyzeWithTOC(m *Manifest, tocPages int) (*AnalysisResult, error) {
 		for partIdx, part := range m.Parts {
 			partStartPage := currentPage
 			itemStartIdx := len(result.Items)
-			currentPage, result = addPartContentReanalysis(currentPage, part, result)
+			currentPage, result = addPartContentReanalysis(currentPage, part, m.WorksStartRecto, result)
 			itemEndIdx := len(result.Items) - 1
 
 			result.PartAnalyses = append(result.PartAnalyses, PartAnalysis{
@@ -238,7 +239,7 @@ func reanalyzeWithTOC(m *Manifest, tocPages int) (*AnalysisResult, error) {
 		}
 	} else {
 		for _, work := range m.Works {
-			currentPage, result = addWorkContentReanalysis(currentPage, work, "", result)
+			currentPage, result = addWorkContentReanalysis(currentPage, work, "", m.WorksStartRecto, result)
 		}
 	}
 
@@ -279,7 +280,7 @@ func reanalyzeWithTOC(m *Manifest, tocPages int) (*AnalysisResult, error) {
 	return result, nil
 }
 
-func addPartContentReanalysis(currentPage int, part Part, result *AnalysisResult) (int, *AnalysisResult) {
+func addPartContentReanalysis(currentPage int, part Part, worksStartRecto bool, result *AnalysisResult) (int, *AnalysisResult) {
 	if needsBlankForRecto(currentPage) {
 		result.Items = append(result.Items, ContentItem{
 			Type:       ContentTypeBlank,
@@ -307,15 +308,16 @@ func addPartContentReanalysis(currentPage int, part Part, result *AnalysisResult
 		currentPage += pageCount
 	}
 
-	for _, work := range part.Works {
-		currentPage, result = addWorkContentReanalysis(currentPage, work, part.Title, result)
+	for i, work := range part.Works {
+		isFirstWork := (i == 0)
+		currentPage, result = addWorkContentReanalysis(currentPage, work, part.Title, worksStartRecto || isFirstWork, result)
 	}
 
 	return currentPage, result
 }
 
-func addWorkContentReanalysis(currentPage int, work Work, partTitle string, result *AnalysisResult) (int, *AnalysisResult) {
-	if needsBlankForRecto(currentPage) {
+func addWorkContentReanalysis(currentPage int, work Work, partTitle string, worksStartRecto bool, result *AnalysisResult) (int, *AnalysisResult) {
+	if worksStartRecto && needsBlankForRecto(currentPage) {
 		result.Items = append(result.Items, ContentItem{
 			Type:       ContentTypeBlank,
 			PageCount:  1,

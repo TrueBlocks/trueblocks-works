@@ -49,6 +49,48 @@ func (f *FileOps) GetSupportingPath(workPath string) (string, bool) {
 	return "", false
 }
 
+func (f *FileOps) BackupWork(workPath string) error {
+	sourcePath, err := FindFileWithExtension(f.GetFilename(workPath))
+	if err != nil {
+		return fmt.Errorf("source file not found: %w", err)
+	}
+
+	dir := filepath.Dir(sourcePath)
+	base := filepath.Base(sourcePath)
+	ext := filepath.Ext(base)
+	name := strings.TrimSuffix(base, ext)
+
+	supportingDir := filepath.Join(dir, "Supporting")
+	backupDir := filepath.Join(supportingDir, name)
+	destPath := filepath.Join(backupDir, base)
+
+	if _, err := os.Stat(destPath); err == nil {
+		return fmt.Errorf("backup already exists: %s", destPath)
+	}
+
+	if err := os.MkdirAll(backupDir, 0755); err != nil {
+		return fmt.Errorf("failed to create backup directory: %w", err)
+	}
+
+	sourceFile, err := os.Open(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer sourceFile.Close()
+
+	destFile, err := os.Create(destPath)
+	if err != nil {
+		return fmt.Errorf("failed to create backup file: %w", err)
+	}
+	defer destFile.Close()
+
+	if _, err := io.Copy(destFile, sourceFile); err != nil {
+		return fmt.Errorf("failed to copy file: %w", err)
+	}
+
+	return nil
+}
+
 func (f *FileOps) GetSupportingInfo(workPath string) SupportingInfo {
 	path, exists := f.GetSupportingPath(workPath)
 	if !exists {

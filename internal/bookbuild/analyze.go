@@ -135,7 +135,7 @@ func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
 		for partIdx, part := range m.Parts {
 			partStartPage := currentPage
 			itemStartIdx := len(result.Items)
-			currentPage, result = addPartContent(currentPage, part, result)
+			currentPage, result = addPartContent(currentPage, part, m.WorksStartRecto, result)
 			itemEndIdx := len(result.Items) - 1
 
 			result.PartAnalyses = append(result.PartAnalyses, PartAnalysis{
@@ -152,7 +152,7 @@ func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
 		}
 	} else {
 		for _, work := range m.Works {
-			currentPage, result = addWorkContent(currentPage, work, "", result)
+			currentPage, result = addWorkContent(currentPage, work, "", m.WorksStartRecto, result)
 		}
 	}
 
@@ -209,7 +209,7 @@ func (r *AnalysisResult) GetPartItems(partIdx int) []ContentItem {
 	return r.Items[pa.ItemStartIndex : pa.ItemEndIndex+1]
 }
 
-func addPartContent(currentPage int, part Part, result *AnalysisResult) (int, *AnalysisResult) {
+func addPartContent(currentPage int, part Part, worksStartRecto bool, result *AnalysisResult) (int, *AnalysisResult) {
 	if needsBlankForRecto(currentPage) {
 		result.Items = append(result.Items, ContentItem{
 			Type:       ContentTypeBlank,
@@ -237,15 +237,16 @@ func addPartContent(currentPage int, part Part, result *AnalysisResult) (int, *A
 		currentPage += pageCount
 	}
 
-	for _, work := range part.Works {
-		currentPage, result = addWorkContent(currentPage, work, part.Title, result)
+	for i, work := range part.Works {
+		isFirstWork := (i == 0)
+		currentPage, result = addWorkContent(currentPage, work, part.Title, worksStartRecto || isFirstWork, result)
 	}
 
 	return currentPage, result
 }
 
-func addWorkContent(currentPage int, work Work, partTitle string, result *AnalysisResult) (int, *AnalysisResult) {
-	if needsBlankForRecto(currentPage) {
+func addWorkContent(currentPage int, work Work, partTitle string, worksStartRecto bool, result *AnalysisResult) (int, *AnalysisResult) {
+	if worksStartRecto && needsBlankForRecto(currentPage) {
 		result.Items = append(result.Items, ContentItem{
 			Type:       ContentTypeBlank,
 			PageCount:  1,

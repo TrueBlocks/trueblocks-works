@@ -11,9 +11,12 @@ import {
   ActionIcon,
   Tooltip,
   Switch,
+  Select,
+  Collapse,
+  Box,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { SelectBookTemplate, ValidateTemplate, GetTitlePageStyles } from '@app';
+import { SelectBookTemplate, ValidateTemplate, GetTitlePageStyles, ClearPartCache } from '@app';
 import { models, app } from '@models';
 import { LogErr } from '@/utils';
 import { generateTitlePageHTML } from '@/utils/titlePageHTML';
@@ -77,6 +80,7 @@ interface TitlePagePanelProps {
 export function TitlePagePanel({
   book,
   collectionName,
+  collectionId,
   templateStyles,
   onBookChange,
   onTemplateStylesChange,
@@ -245,15 +249,134 @@ export function TitlePagePanel({
               <Text fw={600} size="sm">
                 Build Options
               </Text>
-              <Switch
+              <Select
                 size="xs"
-                label="Flush page numbers to outside edge"
-                description="Instead of centering, align to left (verso) and right (recto)"
-                checked={book.pageNumbersFlushOutside ?? false}
-                onChange={(e) => {
-                  const updated = { ...book, pageNumbersFlushOutside: e.currentTarget.checked };
+                label="Book Type"
+                description="Poetry and Prose set common defaults; Custom enables all options"
+                value={book.bookType || 'prose'}
+                onChange={(value) => {
+                  const newType = value || 'prose';
+                  let updated = { ...book, bookType: newType };
+                  if (newType === 'poetry') {
+                    updated = {
+                      ...updated,
+                      showHeaders: false,
+                      pageNumbersOnOpeningPages: true,
+                      worksStartRecto: false,
+                    };
+                  } else if (newType === 'prose') {
+                    updated = {
+                      ...updated,
+                      showHeaders: true,
+                      pageNumbersOnOpeningPages: false,
+                      worksStartRecto: true,
+                    };
+                  }
                   onBookChange(updated);
+                  ClearPartCache(collectionId, []);
                 }}
+                data={[
+                  { value: 'poetry', label: 'Poetry' },
+                  { value: 'prose', label: 'Prose' },
+                  { value: 'custom', label: 'Custom' },
+                ]}
+                allowDeselect={false}
+              />
+              <Collapse in={book.bookType === 'custom'}>
+                <Stack gap="xs">
+                  <Group grow gap="md">
+                    <Box>
+                      <Switch
+                        size="xs"
+                        label="Works start on recto"
+                        description="Insert blanks so works begin on right pages"
+                        checked={book.worksStartRecto ?? true}
+                        onChange={(e) => {
+                          const updated = { ...book, worksStartRecto: e.currentTarget.checked };
+                          onBookChange(updated);
+                          ClearPartCache(collectionId, []);
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Switch
+                        size="xs"
+                        label="Show running headers"
+                        description="Book title on verso, work title on recto"
+                        checked={book.showHeaders ?? true}
+                        onChange={(e) => {
+                          const updated = { ...book, showHeaders: e.currentTarget.checked };
+                          onBookChange(updated);
+                          ClearPartCache(collectionId, []);
+                        }}
+                      />
+                    </Box>
+                  </Group>
+                  <Group grow gap="md">
+                    <Box>
+                      <Switch
+                        size="xs"
+                        label="Numbers on opening pages"
+                        description="Page numbers on first page of works"
+                        checked={book.pageNumbersOnOpeningPages ?? false}
+                        onChange={(e) => {
+                          const updated = {
+                            ...book,
+                            pageNumbersOnOpeningPages: e.currentTarget.checked,
+                          };
+                          onBookChange(updated);
+                          ClearPartCache(collectionId, []);
+                        }}
+                      />
+                    </Box>
+                    <Box>
+                      <Switch
+                        size="xs"
+                        label="Flush numbers outside"
+                        description="Align to left (verso) and right (recto)"
+                        checked={book.pageNumbersFlushOutside ?? false}
+                        onChange={(e) => {
+                          const updated = {
+                            ...book,
+                            pageNumbersFlushOutside: e.currentTarget.checked,
+                          };
+                          onBookChange(updated);
+                          ClearPartCache(collectionId, []);
+                        }}
+                      />
+                    </Box>
+                  </Group>
+                </Stack>
+              </Collapse>
+              <Select
+                size="xs"
+                label="Paper Type"
+                value={book.paperType || 'premium-color'}
+                onChange={(value) => handleFieldChange('paperType', value || 'premium-color')}
+                data={[
+                  { value: 'premium-color', label: 'Premium Color (white)' },
+                  { value: 'standard-color', label: 'Standard Color (white)' },
+                  { value: 'bw-white', label: 'Black & White (white)' },
+                  { value: 'bw-cream', label: 'Black & White (cream)' },
+                ]}
+                allowDeselect={false}
+              />
+              <Select
+                size="xs"
+                label="Trim Size"
+                value={book.trimSize || '6x9'}
+                onChange={(value) => {
+                  handleFieldChange('trimSize', value || '6x9');
+                  ClearPartCache(collectionId, []);
+                }}
+                data={[
+                  { value: '5x8', label: '5" × 8"' },
+                  { value: '5.5x8.5', label: '5.5" × 8.5"' },
+                  { value: '6x9', label: '6" × 9"' },
+                  { value: '7x10', label: '7" × 10"' },
+                  { value: '8.5x11', label: '8.5" × 11"' },
+                ]}
+                allowDeselect={false}
               />
             </Stack>
           </Paper>

@@ -97,6 +97,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		config.Typography = opts.Manifest.Typography
 	}
 	config.PageNumbersFlushOutside = opts.Manifest.PageNumbersFlushOutside
+	config.PageNumbersOnOpeningPages = opts.Manifest.PageNumbersOnOpeningPages
 
 	progress("TOC", 2, 5, "Generating table of contents...")
 
@@ -105,7 +106,35 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		return nil, fmt.Errorf("TOC generation failed: %w", err)
 	}
 
+	// Generate TOC PDF first to get actual page count
 	var tocPDFPath string
+	if analysis.TOCIndex >= 0 && len(tocEntries) > 0 {
+		tocPDFPath = filepath.Join(opts.CacheDir, "toc.pdf")
+		if err := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config); err != nil {
+			return nil, fmt.Errorf("TOC PDF creation failed: %w", err)
+		}
+
+		// Reanalyze if actual TOC pages differ from estimate
+		actualTOCPages, err := GetPageCount(tocPDFPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get TOC page count: %w", err)
+		}
+		if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
+			analysis, err = reanalyzeWithTOC(opts.Manifest, actualTOCPages)
+			if err != nil {
+				return nil, fmt.Errorf("TOC re-analysis failed: %w", err)
+			}
+			// Regenerate TOC entries and PDF with correct page numbers
+			tocEntries, err = GenerateTOC(analysis, config)
+			if err != nil {
+				return nil, fmt.Errorf("TOC regeneration failed: %w", err)
+			}
+			if err := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config); err != nil {
+				return nil, fmt.Errorf("TOC PDF recreation failed: %w", err)
+			}
+		}
+	}
+
 	var frontMatterPDFs []string
 
 	// Process analysis.Items for front matter (includes blank pages for recto positioning)
@@ -120,38 +149,12 @@ frontMatterLoop:
 
 		switch item.Type {
 		case ContentTypeBlank:
-			// Insert blank page for recto positioning (only before TOC)
 			frontMatterPDFs = append(frontMatterPDFs, blankPagePath)
 
 		case ContentTypeTOC:
-			if len(tocEntries) > 0 {
-				tocPDFPath = filepath.Join(opts.CacheDir, "toc.pdf")
-				tocErr := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config)
-				if tocErr != nil {
-					return nil, fmt.Errorf("TOC PDF creation failed: %w", tocErr)
-				}
-				actualTOCPages, err := GetPageCount(tocPDFPath)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get TOC page count: %w", err)
-				}
-				if actualTOCPages > 0 && actualTOCPages != analysis.TOCPageEstimate {
-					analysis, err = reanalyzeWithTOC(opts.Manifest, actualTOCPages)
-					if err != nil {
-						return nil, fmt.Errorf("TOC re-analysis failed: %w", err)
-					}
-					// TOC page count changed - page positions shifted, must rebuild all parts
-					opts.RebuildAll = true
-					tocEntries, err = GenerateTOC(analysis, config)
-					if err != nil {
-						return nil, fmt.Errorf("TOC regeneration failed: %w", err)
-					}
-					if err := createTOCPDFWithTemplate(tocEntries, tocPDFPath, opts.Manifest.TemplatePath, config); err != nil {
-						return nil, fmt.Errorf("TOC PDF recreation failed: %w", err)
-					}
-				}
+			if tocPDFPath != "" {
 				frontMatterPDFs = append(frontMatterPDFs, tocPDFPath)
 			}
-			// TOC is always the last front matter item - blanks after it belong to the first part
 			break frontMatterLoop
 
 		case ContentTypeFrontMatter:

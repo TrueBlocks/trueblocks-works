@@ -22,6 +22,24 @@ export namespace app {
 	        this.duration = source["duration"];
 	    }
 	}
+	export class CleanDocxStylesResult {
+	    workID: number;
+	    title: string;
+	    removedStyles: string[];
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CleanDocxStylesResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workID = source["workID"];
+	        this.title = source["title"];
+	        this.removedStyles = source["removedStyles"];
+	        this.error = source["error"];
+	    }
+	}
 	export class StyleAuditResult {
 	    workID: number;
 	    title: string;
@@ -1592,6 +1610,9 @@ export namespace models {
 	    worksStartRecto?: boolean;
 	    showPageNumbers?: boolean;
 	    pageNumbersFlushOutside?: boolean;
+	    showHeaders?: boolean;
+	    bookType: string;
+	    pageNumbersOnOpeningPages?: boolean;
 	    selectedParts?: string;
 	    paperType: string;
 	    trimSize: string;
@@ -1638,6 +1659,9 @@ export namespace models {
 	        this.worksStartRecto = source["worksStartRecto"];
 	        this.showPageNumbers = source["showPageNumbers"];
 	        this.pageNumbersFlushOutside = source["pageNumbersFlushOutside"];
+	        this.showHeaders = source["showHeaders"];
+	        this.bookType = source["bookType"];
+	        this.pageNumbersOnOpeningPages = source["pageNumbersOnOpeningPages"];
 	        this.selectedParts = source["selectedParts"];
 	        this.paperType = source["paperType"];
 	        this.trimSize = source["trimSize"];

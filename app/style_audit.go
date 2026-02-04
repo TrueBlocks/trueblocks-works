@@ -2,15 +2,22 @@ package app
 
 import (
 	"archive/zip"
+	"bytes"
 	"encoding/xml"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 const wordDocumentXML = "word/document.xml"
 const wordSettingsXML = "word/settings.xml"
+const wordStylesXML = "word/styles.xml"
+const errNoFilePath = "No file path"
+const errFileNotFound = "File not found"
+const attrVal = "val"
 
 // StyleAuditResult represents the style audit for a single work
 type StyleAuditResult struct {
@@ -56,7 +63,7 @@ func (a *App) AuditWorkStyles(workID int64, templatePath string) (*StyleAuditRes
 	}
 
 	if work.Path == nil || *work.Path == "" {
-		result.Error = "No file path"
+		result.Error = errNoFilePath
 		return result, nil
 	}
 
@@ -64,7 +71,7 @@ func (a *App) AuditWorkStyles(workID int64, templatePath string) (*StyleAuditRes
 	fullPath := filepath.Join(basePath, *work.Path)
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		result.Error = "File not found"
+		result.Error = errFileNotFound
 		return result, nil
 	}
 
@@ -171,7 +178,7 @@ func checkCompatibilityMode(docxPath string) bool {
 					if attr.Name.Local == "name" {
 						name = attr.Value
 					}
-					if attr.Name.Local == "val" {
+					if attr.Name.Local == attrVal {
 						val = attr.Value
 					}
 				}
@@ -442,7 +449,7 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 				runText = ""
 			case "pStyle":
 				for _, attr := range t.Attr {
-					if attr.Name.Local == "val" {
+					if attr.Name.Local == attrVal {
 						styleCounts[attr.Value]++
 					}
 				}
@@ -561,4 +568,335 @@ func formatStyleCount(styleName string, counts map[string]int) string {
 		return fmt.Sprintf("%s (%d)", styleName, count)
 	}
 	return styleName
+}
+
+// CleanDocxStylesResult contains the result of cleaning unused styles
+type CleanDocxStylesResult struct {
+	WorkID        int64    `json:"workID"`
+	Title         string   `json:"title"`
+	RemovedStyles []string `json:"removedStyles"`
+	Error         string   `json:"error,omitempty"`
+}
+
+// builtInStyleIDs contains styles that must never be deleted
+var builtInStyleIDs = map[string]bool{
+	"Normal":               true,
+	"DefaultParagraphFont": true,
+	"TableNormal":          true,
+	"NoList":               true,
+}
+
+// CleanDocxStyles removes unused style definitions from a work's docx file
+// that are not in the template and not used in the document
+func (a *App) CleanDocxStyles(workID int64, templatePath string) (*CleanDocxStylesResult, error) {
+	work, err := a.db.GetWork(workID)
+	if err != nil || work == nil {
+		return nil, fmt.Errorf("work not found: %d", workID)
+	}
+
+	result := &CleanDocxStylesResult{
+		WorkID:        workID,
+		Title:         work.Title,
+		RemovedStyles: []string{},
+	}
+
+	if work.Path == nil || *work.Path == "" {
+		result.Error = errNoFilePath
+		return result, nil
+	}
+
+	basePath := a.settings.Get().BaseFolderPath
+	fullPath := filepath.Join(basePath, *work.Path)
+
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		result.Error = errFileNotFound
+		return result, nil
+	}
+
+	if !strings.HasSuffix(strings.ToLower(*work.Path), ".docx") {
+		result.Error = "Not a DOCX file"
+		return result, nil
+	}
+
+	// Get template styles
+	templateStyles := make(map[string]bool)
+	if templatePath != "" {
+		styles, err := extractDOCXStyles(templatePath)
+		if err == nil {
+			for _, s := range styles {
+				templateStyles[s.Name] = true
+				templateStyles[s.StyleID] = true
+			}
+		}
+	}
+
+	// Get used styles from document.xml
+	usedStyles, err := extractUsedStyles(fullPath)
+	if err != nil {
+		result.Error = fmt.Sprintf("Failed to scan document: %v", err)
+		return result, nil
+	}
+
+	// Clean the styles
+	removedStyles, err := removeUnusedStyles(fullPath, templateStyles, usedStyles)
+	if err != nil {
+		result.Error = fmt.Sprintf("Failed to clean styles: %v", err)
+		return result, nil
+	}
+
+	result.RemovedStyles = removedStyles
+	return result, nil
+}
+
+// extractUsedStyles scans document.xml for all style IDs actually used
+func extractUsedStyles(docxPath string) (map[string]bool, error) {
+	r, err := zip.OpenReader(docxPath)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	var documentFile *zip.File
+	for _, f := range r.File {
+		if f.Name == wordDocumentXML {
+			documentFile = f
+			break
+		}
+	}
+
+	if documentFile == nil {
+		return nil, fmt.Errorf("no document.xml found")
+	}
+
+	rc, err := documentFile.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+
+	usedStyles := make(map[string]bool)
+	decoder := xml.NewDecoder(rc)
+
+	for {
+		tok, err := decoder.Token()
+		if err != nil {
+			break
+		}
+
+		if se, ok := tok.(xml.StartElement); ok {
+			if se.Name.Local == "pStyle" || se.Name.Local == "rStyle" {
+				for _, attr := range se.Attr {
+					if attr.Name.Local == attrVal {
+						usedStyles[attr.Value] = true
+					}
+				}
+			}
+		}
+	}
+
+	return usedStyles, nil
+}
+
+// removeUnusedStyles removes style definitions from styles.xml that are unused
+func removeUnusedStyles(docxPath string, templateStyles, usedStyles map[string]bool) ([]string, error) {
+	// Read the entire zip file into memory
+	zipData, err := os.ReadFile(docxPath)
+	if err != nil {
+		return nil, err
+	}
+
+	zipReader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
+	if err != nil {
+		return nil, err
+	}
+
+	// First pass: find styles.xml and determine which styles to keep
+	var stylesFile *zip.File
+	for _, f := range zipReader.File {
+		if f.Name == wordStylesXML {
+			stylesFile = f
+			break
+		}
+	}
+
+	if stylesFile == nil {
+		return nil, fmt.Errorf("no styles.xml found")
+	}
+
+	// Parse styles.xml to find basedOn dependencies
+	rc, err := stylesFile.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	stylesContent, err := io.ReadAll(rc)
+	rc.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// Build dependency map: styleId -> basedOn styleId
+	basedOnMap := make(map[string]string)
+	styleIdRegex := regexp.MustCompile(`<w:style[^>]*w:styleId="([^"]*)"`)
+	basedOnRegex := regexp.MustCompile(`<w:basedOn w:val="([^"]*)"`)
+
+	// Find all style elements and their basedOn
+	styleStartRegex := regexp.MustCompile(`<w:style[^>]*>`)
+	styleEndRegex := regexp.MustCompile(`</w:style>`)
+
+	content := string(stylesContent)
+	styleStarts := styleStartRegex.FindAllStringIndex(content, -1)
+	styleEnds := styleEndRegex.FindAllStringIndex(content, -1)
+
+	for i, start := range styleStarts {
+		if i >= len(styleEnds) {
+			break
+		}
+		styleContent := content[start[0]:styleEnds[i][1]]
+
+		styleIdMatch := styleIdRegex.FindStringSubmatch(styleContent)
+		basedOnMatch := basedOnRegex.FindStringSubmatch(styleContent)
+
+		if len(styleIdMatch) > 1 && len(basedOnMatch) > 1 {
+			basedOnMap[styleIdMatch[1]] = basedOnMatch[1]
+		}
+	}
+
+	// Build set of styles to keep
+	keepStyles := make(map[string]bool)
+
+	// Always keep built-in styles
+	for id := range builtInStyleIDs {
+		keepStyles[id] = true
+	}
+
+	// Keep all template styles
+	for style := range templateStyles {
+		keepStyles[style] = true
+	}
+
+	// Keep all used styles
+	for style := range usedStyles {
+		keepStyles[style] = true
+	}
+
+	// Keep all base styles that kept styles depend on
+	changed := true
+	for changed {
+		changed = false
+		for styleId := range keepStyles {
+			if basedOn, ok := basedOnMap[styleId]; ok && !keepStyles[basedOn] {
+				keepStyles[basedOn] = true
+				changed = true
+			}
+		}
+	}
+
+	// Now filter styles.xml - remove <w:style>...</w:style> blocks for unwanted styles
+	// Use a regex to find complete style blocks
+	styleBlockRegex := regexp.MustCompile(`<w:style[^>]*>[\s\S]*?</w:style>`)
+	styleBlocks := styleBlockRegex.FindAllStringIndex(content, -1)
+
+	// First, collect all styles to remove with their positions
+	type styleToRemove struct {
+		start       int
+		end         int
+		displayName string
+	}
+	var stylesToRemove []styleToRemove
+
+	for _, block := range styleBlocks {
+		start := block[0]
+		end := block[1]
+		styleContent := content[start:end]
+
+		styleIdMatch := styleIdRegex.FindStringSubmatch(styleContent)
+		if len(styleIdMatch) < 2 {
+			continue
+		}
+		styleId := styleIdMatch[1]
+
+		// Extract human-readable name
+		nameRegex := regexp.MustCompile(`<w:name w:val="([^"]*)"`)
+		nameMatch := nameRegex.FindStringSubmatch(styleContent)
+		displayName := styleId
+		if len(nameMatch) > 1 {
+			displayName = nameMatch[1]
+		}
+
+		if !keepStyles[styleId] {
+			stylesToRemove = append(stylesToRemove, styleToRemove{start, end, displayName})
+		}
+	}
+
+	if len(stylesToRemove) == 0 {
+		return nil, nil
+	}
+
+	// Remove in reverse order to preserve indices
+	var removedStyles []string
+	newContent := content
+	for i := len(stylesToRemove) - 1; i >= 0; i-- {
+		s := stylesToRemove[i]
+		newContent = newContent[:s.start] + newContent[s.end:]
+		removedStyles = append([]string{s.displayName}, removedStyles...)
+	}
+
+	// Write new zip file
+	outFile, err := os.CreateTemp(filepath.Dir(docxPath), "docx-clean-*.docx")
+	if err != nil {
+		return nil, err
+	}
+	tempPath := outFile.Name()
+
+	zipWriter := zip.NewWriter(outFile)
+
+	for _, f := range zipReader.File {
+		fh := f.FileHeader
+		w, err := zipWriter.CreateHeader(&fh)
+		if err != nil {
+			outFile.Close()
+			os.Remove(tempPath)
+			return nil, err
+		}
+
+		if f.Name == wordStylesXML {
+			// Write cleaned styles
+			if _, werr := w.Write([]byte(newContent)); werr != nil {
+				outFile.Close()
+				os.Remove(tempPath)
+				return nil, werr
+			}
+		} else {
+			// Copy original content
+			rc, rerr := f.Open()
+			if rerr != nil {
+				outFile.Close()
+				os.Remove(tempPath)
+				return nil, rerr
+			}
+			if _, cerr := io.Copy(w, rc); cerr != nil {
+				rc.Close()
+				outFile.Close()
+				os.Remove(tempPath)
+				return nil, cerr
+			}
+			rc.Close()
+		}
+	}
+
+	if err := zipWriter.Close(); err != nil {
+		outFile.Close()
+		os.Remove(tempPath)
+		return nil, err
+	}
+	outFile.Close()
+
+	// Replace original file with cleaned version
+	if err := os.Rename(tempPath, docxPath); err != nil {
+		os.Remove(tempPath)
+		return nil, err
+	}
+
+	return removedStyles, nil
 }

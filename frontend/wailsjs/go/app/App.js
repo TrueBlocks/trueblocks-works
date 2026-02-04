@@ -38,6 +38,10 @@ export function AutoImportFilesWithEdits(arg1, arg2) {
   return window['go']['app']['App']['AutoImportFilesWithEdits'](arg1, arg2);
 }
 
+export function BackupWork(arg1) {
+  return window['go']['app']['App']['BackupWork'](arg1);
+}
+
 export function BrowseForFolder(arg1) {
   return window['go']['app']['App']['BrowseForFolder'](arg1);
 }
@@ -56,6 +60,10 @@ export function CheckLibreOffice() {
 
 export function CheckWorkPath(arg1) {
   return window['go']['app']['App']['CheckWorkPath'](arg1);
+}
+
+export function CleanDocxStyles(arg1, arg2) {
+  return window['go']['app']['App']['CleanDocxStyles'](arg1, arg2);
 }
 
 export function ClearPartCache(arg1, arg2) {

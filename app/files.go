@@ -114,6 +114,17 @@ func (a *App) OpenSupportingItem(workID int64) error {
 	return a.fileOps.OpenSupportingItem(*work.Path)
 }
 
+func (a *App) BackupWork(workID int64) error {
+	work, err := a.db.GetWork(workID)
+	if err != nil {
+		return err
+	}
+	if work.Path == nil || *work.Path == "" {
+		return fmt.Errorf("work has no path")
+	}
+	return a.fileOps.BackupWork(*work.Path)
+}
+
 func (a *App) ExportToSubmissions(workID int64) (string, error) {
 	work, err := a.db.GetWork(workID)
 	if err != nil {

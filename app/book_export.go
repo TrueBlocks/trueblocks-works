@@ -319,11 +319,14 @@ func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll 
 	}
 
 	manifest := &bookbuild.Manifest{
-		Title:        book.Title,
-		Author:       book.Author,
-		OutputPath:   outputPath,
-		TemplatePath: templatePath,
-		Typography:   typography,
+		Title:                     book.Title,
+		Author:                    book.Author,
+		OutputPath:                outputPath,
+		TemplatePath:              templatePath,
+		Typography:                typography,
+		WorksStartRecto:           book.WorksStartRecto == nil || *book.WorksStartRecto,
+		ShowHeaders:               book.ShowHeaders == nil || *book.ShowHeaders,
+		PageNumbersOnOpeningPages: book.PageNumbersOnOpeningPages != nil && *book.PageNumbersOnOpeningPages,
 	}
 
 	if book.PageNumbersFlushOutside != nil && *book.PageNumbersFlushOutside {
@@ -397,11 +400,14 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 	}
 
 	manifest := &bookbuild.Manifest{
-		Title:        book.Title,
-		Author:       book.Author,
-		OutputPath:   outputPath,
-		TemplatePath: templatePath,
-		Typography:   typography,
+		Title:                     book.Title,
+		Author:                    book.Author,
+		OutputPath:                outputPath,
+		TemplatePath:              templatePath,
+		Typography:                typography,
+		WorksStartRecto:           book.WorksStartRecto == nil || *book.WorksStartRecto,
+		ShowHeaders:               book.ShowHeaders == nil || *book.ShowHeaders,
+		PageNumbersOnOpeningPages: book.PageNumbersOnOpeningPages != nil && *book.PageNumbersOnOpeningPages,
 	}
 
 	if book.PageNumbersFlushOutside != nil && *book.PageNumbersFlushOutside {

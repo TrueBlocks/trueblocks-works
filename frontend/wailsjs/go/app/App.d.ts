@@ -28,6 +28,8 @@ export function AutoImportFiles(arg1:number):Promise<app.ImportResult>;
 
 export function AutoImportFilesWithEdits(arg1:number,arg2:Array<app.FileEdit>):Promise<app.ImportResult>;
 
+export function BackupWork(arg1:number):Promise<void>;
+
 export function BrowseForFolder(arg1:string):Promise<string>;
 
 export function CancelImport():Promise<void>;
@@ -37,6 +39,8 @@ export function CheckImportConflict(arg1:string):Promise<app.ImportConflict>;
 export function CheckLibreOffice():Promise<boolean>;
 
 export function CheckWorkPath(arg1:number):Promise<app.PathCheckResult>;
+
+export function CleanDocxStyles(arg1:number,arg2:string):Promise<app.CleanDocxStylesResult>;
 
 export function ClearPartCache(arg1:number,arg2:Array<number>):Promise<void>;
 

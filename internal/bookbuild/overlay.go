@@ -11,16 +11,17 @@ import (
 )
 
 type OverlayConfig struct {
-	Typography              Typography
-	BookTitle               string
-	PageWidth               float64
-	PageHeight              float64
-	MarginBottom            float64
-	MarginTop               float64
-	MarginInner             float64 // Binding side margin
-	MarginOuter             float64 // Outside edge margin
-	HeaderYPosition         float64
-	PageNumbersFlushOutside bool // When true, page numbers flush to outside edge instead of centered
+	Typography                Typography
+	BookTitle                 string
+	PageWidth                 float64
+	PageHeight                float64
+	MarginBottom              float64
+	MarginTop                 float64
+	MarginInner               float64 // Binding side margin
+	MarginOuter               float64 // Outside edge margin
+	HeaderYPosition           float64
+	PageNumbersFlushOutside   bool // When true, page numbers flush to outside edge instead of centered
+	PageNumbersOnOpeningPages bool // When true, show page numbers on first page of works (for poetry)
 }
 
 func DefaultOverlayConfig(bookTitle string) OverlayConfig {

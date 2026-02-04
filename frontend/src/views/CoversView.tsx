@@ -13,7 +13,6 @@ import {
   Grid,
   Badge,
   Box,
-  Select,
 } from '@mantine/core';
 import { IconFileTypePdf, IconExternalLink, IconPhoto, IconChecks } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
@@ -334,33 +333,6 @@ export function CoversView({ collectionId, onNavigateToAmazon }: CoversViewProps
                     '#2C2C2C',
                     '#1A1A2E',
                   ]}
-                />
-                <Select
-                  size="xs"
-                  label="Paper Type"
-                  value={book.paperType || 'premium-color'}
-                  onChange={(value) => handleBookChange('paperType', value || 'premium-color')}
-                  data={[
-                    { value: 'premium-color', label: 'Premium Color (white)' },
-                    { value: 'standard-color', label: 'Standard Color (white)' },
-                    { value: 'bw-white', label: 'Black & White (white)' },
-                    { value: 'bw-cream', label: 'Black & White (cream)' },
-                  ]}
-                  allowDeselect={false}
-                />
-                <Select
-                  size="xs"
-                  label="Trim Size"
-                  value={book.trimSize || '6x9'}
-                  onChange={(value) => handleBookChange('trimSize', value || '6x9')}
-                  data={[
-                    { value: '5x8', label: '5" × 8"' },
-                    { value: '5.5x8.5', label: '5.5" × 8.5"' },
-                    { value: '6x9', label: '6" × 9"' },
-                    { value: '7x10', label: '7" × 10"' },
-                    { value: '8.5x11', label: '8.5" × 11"' },
-                  ]}
-                  allowDeselect={false}
                 />
               </Stack>
             </Paper>

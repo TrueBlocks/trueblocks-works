@@ -1,5 +1,5 @@
 {
-    "chat.tools.terminal.autoApprove": {
-        "sqlite3": true
-    }
+  "chat.tools.terminal.autoApprove": {
+    "sqlite3": true
+  }
 }

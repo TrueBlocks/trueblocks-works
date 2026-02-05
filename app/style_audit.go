@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 )
 
 const wordDocumentXML = "word/document.xml"
@@ -212,7 +214,7 @@ func isPandocSyntaxStyle(name string) bool {
 	return false
 }
 
-// AuditCollectionStyles audits all works in a collection
+// AuditCollectionStyles audits all works in a collection (excluding suppressed works)
 func (a *App) AuditCollectionStyles(collID int64) (*CollectionAuditSummary, error) {
 	// Get book for template path
 	book, _ := a.db.GetBookByCollection(collID)
@@ -227,12 +229,20 @@ func (a *App) AuditCollectionStyles(collID int64) (*CollectionAuditSummary, erro
 		return nil, fmt.Errorf("failed to get collection works: %w", err)
 	}
 
+	// Filter out suppressed works - they are excluded from PDF export
+	var includedWorks []models.CollectionWork
+	for _, w := range works {
+		if !w.IsSuppressed {
+			includedWorks = append(includedWorks, w)
+		}
+	}
+
 	summary := &CollectionAuditSummary{
-		TotalWorks: len(works),
+		TotalWorks: len(includedWorks),
 		Results:    []StyleAuditResult{},
 	}
 
-	for _, w := range works {
+	for _, w := range includedWorks {
 		result, err := a.AuditWorkStyles(w.WorkID, templatePath)
 		if err != nil {
 			summary.MissingFiles++

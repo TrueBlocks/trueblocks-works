@@ -170,7 +170,7 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 
 		result.FinalBodyNum = tracker.BodyNum
 
-		if opts.Manifest.ShowHeaders {
+		if opts.Config.VersoHeader != HeaderNone || opts.Config.RectoHeader != HeaderNone {
 			progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
 				fmt.Sprintf("Adding headers to part %d...", opts.PartIndex+1))
 
@@ -208,7 +208,7 @@ func adjustMappingsForPartPDF(mappings []PageMapping, partStartPage int) []PageM
 
 func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig, tracker *PageNumberTracker) error {
 	for _, m := range mappings {
-		showPageNum := shouldShowPageNumberWithConfig(m, config.PageNumbersOnOpeningPages)
+		showPageNum := shouldShowPageNumberWithConfig(m, config.SuppressPageNumbers)
 		if !showPageNum {
 			if m.ContentItem != nil {
 				switch m.ContentItem.Type {
@@ -240,10 +240,15 @@ func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayCo
 			continue
 		}
 
+		// Skip if page numbers are disabled
+		if config.PageNumberPosition == PageNumberNone {
+			continue
+		}
+
 		// Calculate the original book page number from ContentItem.StartPage + page within item
 		origPhysical := m.ContentItem.StartPage + m.PageInItem - 1
 		var position string
-		if config.PageNumbersFlushOutside {
+		if config.PageNumberPosition == PageNumberOuter {
 			if origPhysical%2 == 0 { // even = verso
 				position = PositionBottomLeftVerso
 			} else { // odd = recto
@@ -279,14 +284,18 @@ func addPartHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig
 		isVerso := origPhysical%2 == 0
 
 		if isVerso {
-			// Left pages (verso): book title
-			headerText = config.BookTitle
+			// Left pages (verso)
+			if config.VersoHeader == HeaderNone {
+				continue
+			}
+			headerText = getHeaderText(config.VersoHeader, config.BookTitle, m.ContentItem)
 			position = PositionTopLeft
 		} else {
-			// Right pages (recto): essay/chapter title
-			if m.ContentItem != nil {
-				headerText = m.ContentItem.Title
+			// Right pages (recto)
+			if config.RectoHeader == HeaderNone {
+				continue
 			}
+			headerText = getHeaderText(config.RectoHeader, config.BookTitle, m.ContentItem)
 			position = PositionTopRight
 		}
 
@@ -300,6 +309,27 @@ func addPartHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig
 	}
 
 	return nil
+}
+
+// getHeaderText returns the appropriate header text based on the header type setting
+func getHeaderText(headerType, bookTitle string, item *ContentItem) string {
+	switch headerType {
+	case "book_title":
+		return bookTitle
+	case "section_title":
+		// TODO: Section title would need to be tracked from the part divider
+		if item != nil {
+			return item.PartTitle
+		}
+		return ""
+	case "essay_title":
+		if item != nil {
+			return item.Title
+		}
+		return ""
+	default:
+		return ""
+	}
 }
 
 func LoadCachedPart(cacheDir string, partID int64, partTitle string, partIndex int) (*PartBuildResult, error) {
@@ -403,8 +433,8 @@ func mergeFilesRaw(inFiles []string, outFile string) error {
 }
 
 // shouldShowPageNumberWithConfig determines if a page should show a page number,
-// considering the pageNumbersOnOpeningPages setting for poetry books.
-func shouldShowPageNumberWithConfig(m PageMapping, pageNumbersOnOpeningPages bool) bool {
+// considering the suppressPageNumbers setting.
+func shouldShowPageNumberWithConfig(m PageMapping, suppressPageNumbers string) bool {
 	if m.ContentItem == nil {
 		return false
 	}
@@ -414,11 +444,23 @@ func shouldShowPageNumberWithConfig(m PageMapping, pageNumbersOnOpeningPages boo
 	if m.ContentItem.Type == ContentTypeFrontMatter {
 		return false
 	}
+
+	// Check if this is a part divider (section start)
 	if m.ContentItem.Type == ContentTypePartDivider {
 		return false
 	}
+
+	// Check if this is the first page of a work (essay start)
 	if m.ContentItem.Type == ContentTypeWork && m.PageInItem == 1 {
-		return pageNumbersOnOpeningPages
+		switch suppressPageNumbers {
+		case SuppressNever:
+			return true // show on opening pages
+		case SuppressEssayStarts, SuppressBoth:
+			return false // suppress on essay opening pages
+		default:
+			return false // default to suppress
+		}
 	}
+
 	return true
 }

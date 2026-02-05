@@ -194,6 +194,8 @@ export function GetOrganizationsWithNotes():Promise<Array<models.OrganizationWit
 
 export function GetOrgsFilterOptions():Promise<app.OrgsFilterOptions>;
 
+export function GetPDFPageSize(arg1:number):Promise<string>;
+
 export function GetPartCacheStatus(arg1:number):Promise<Record<number, boolean>>;
 
 export function GetPreviewURL(arg1:number):Promise<string>;

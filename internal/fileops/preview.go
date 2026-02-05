@@ -63,6 +63,19 @@ func (f *FileOps) generatePDFWithWord(docPath string, pdfPath string) error {
 tell application "System Events"
 	set wasRunning to (name of processes) contains "Microsoft Word"
 end tell
+
+-- Wait for Word to be ready (handles race condition after template sync)
+repeat 3 times
+	try
+		tell application "Microsoft Word"
+			set docCount to count of documents
+		end tell
+		exit repeat
+	on error
+		delay 1
+	end try
+end repeat
+
 tell application "Microsoft Word"
 	-- Check if doc is already open
 	set docWasOpen to false

@@ -40,19 +40,20 @@ type Part struct {
 }
 
 type Manifest struct {
-	Title                     string            `json:"title"`
-	Author                    string            `json:"author"`
-	OutputPath                string            `json:"outputPath"`
-	TemplatePath              string            `json:"templatePath,omitempty"`
-	Typography                Typography        `json:"typography"`
-	PageNumbersFlushOutside   bool              `json:"pageNumbersFlushOutside,omitempty"`
-	WorksStartRecto           bool              `json:"worksStartRecto,omitempty"`
-	ShowHeaders               bool              `json:"showHeaders,omitempty"`
-	PageNumbersOnOpeningPages bool              `json:"pageNumbersOnOpeningPages,omitempty"`
-	FrontMatter               []FrontMatterItem `json:"frontMatter"`
-	Parts                     []Part            `json:"parts,omitempty"`
-	Works                     []Work            `json:"works,omitempty"`
-	BackMatter                []BackMatterItem  `json:"backMatter"`
+	Title               string            `json:"title"`
+	Author              string            `json:"author"`
+	OutputPath          string            `json:"outputPath"`
+	TemplatePath        string            `json:"templatePath,omitempty"`
+	Typography          Typography        `json:"typography"`
+	PageNumberPosition  string            `json:"pageNumberPosition,omitempty"`  // centered, outer, none
+	SuppressPageNumbers string            `json:"suppressPageNumbers,omitempty"` // never, section_starts, essay_starts, both
+	WorksStartRecto     bool              `json:"worksStartRecto,omitempty"`
+	VersoHeader         string            `json:"versoHeader,omitempty"` // book_title, section_title, essay_title, none
+	RectoHeader         string            `json:"rectoHeader,omitempty"` // book_title, section_title, essay_title, none
+	FrontMatter         []FrontMatterItem `json:"frontMatter"`
+	Parts               []Part            `json:"parts,omitempty"`
+	Works               []Work            `json:"works,omitempty"`
+	BackMatter          []BackMatterItem  `json:"backMatter"`
 }
 
 func DefaultTypography() Typography {

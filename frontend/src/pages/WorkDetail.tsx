@@ -29,6 +29,7 @@ import {
   GetEnumLists,
   GetWorkMarked,
   SetWorkMarked,
+  GetPDFPageSize,
 } from '@app';
 import { models, db } from '@models';
 import { FileActionsToolbar, PDFPreview, DebugPopover } from '@/components';
@@ -63,6 +64,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [isMarked, setIsMarked] = useState(false);
+  const [pageSize, setPageSize] = useState<string>('');
 
   const {
     notes,
@@ -324,16 +326,18 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
     if (!workId) return;
     setLoading(true);
     try {
-      const [workData, subsData, collsData, markedData] = await Promise.all([
+      const [workData, subsData, collsData, markedData, pageSizeData] = await Promise.all([
         GetWork(workId),
         GetSubmissionViewsByWork(workId),
         GetWorkCollections(workId),
         GetWorkMarked(workId),
+        GetPDFPageSize(workId).catch(() => ''),
       ]);
       setWork(workData);
       setSubmissions(subsData || []);
       setCollections(collsData || []);
       setIsMarked(markedData);
+      setPageSize(pageSizeData);
       SetLastWorkID(workId);
     } catch (err) {
       LogErr('Failed to load work data:', err);
@@ -361,6 +365,9 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
       if (updatedWorkId === workId) {
         Log(`[WorkDetail] Preview updated for workID ${workId}, refreshing`);
         setRefreshKey((k) => k + 1);
+        GetPDFPageSize(workId)
+          .then(setPageSize)
+          .catch(() => setPageSize(''));
       }
     });
     return () => {
@@ -658,7 +665,13 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
           </>
         }
         secondaryRow={
-          <PathDisplay path={work.path} docType={work.docType} nWords={work.nWords} noPaper />
+          <PathDisplay
+            path={work.path}
+            docType={work.docType}
+            nWords={work.nWords}
+            pageSize={pageSize}
+            noPaper
+          />
         }
         actionsRight={
           <FileActionsToolbar workID={work.workID} refreshKey={refreshKey} onMoved={loadData} />

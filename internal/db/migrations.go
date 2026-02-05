@@ -162,6 +162,11 @@ var migrations = []Migration{
 		Name:    "add_page_numbers_on_opening_pages",
 		Up:      migrateAddPageNumbersOnOpeningPages,
 	},
+	{
+		Version: 39,
+		Name:    "refactor_book_header_footer_options",
+		Up:      migrateRefactorBookHeaderFooterOptions,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1306,5 +1311,55 @@ func migrateAddPageNumbersOnOpeningPages(tx *sql.Tx) error {
 	if err != nil {
 		return fmt.Errorf("add page_numbers_on_opening_pages column: %w", err)
 	}
+	return nil
+}
+
+func migrateRefactorBookHeaderFooterOptions(tx *sql.Tx) error {
+	// Add new columns
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN verso_header TEXT DEFAULT 'book_title'`)
+	if err != nil {
+		return fmt.Errorf("add verso_header column: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN recto_header TEXT DEFAULT 'essay_title'`)
+	if err != nil {
+		return fmt.Errorf("add recto_header column: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN page_number_position TEXT DEFAULT 'centered'`)
+	if err != nil {
+		return fmt.Errorf("add page_number_position column: %w", err)
+	}
+
+	_, err = tx.Exec(`ALTER TABLE Books ADD COLUMN suppress_page_numbers TEXT DEFAULT 'never'`)
+	if err != nil {
+		return fmt.Errorf("add suppress_page_numbers column: %w", err)
+	}
+
+	// Migrate data from old columns to new:
+	// show_headers: true -> verso=book_title, recto=essay_title; false -> verso=none, recto=none
+	_, err = tx.Exec(`UPDATE Books SET verso_header = 'none', recto_header = 'none' WHERE show_headers = 0`)
+	if err != nil {
+		return fmt.Errorf("migrate show_headers to verso/recto: %w", err)
+	}
+
+	// page_numbers_flush_outside: true -> outer; false -> centered (already default)
+	_, err = tx.Exec(`UPDATE Books SET page_number_position = 'outer' WHERE page_numbers_flush_outside = 1`)
+	if err != nil {
+		return fmt.Errorf("migrate page_numbers_flush_outside: %w", err)
+	}
+
+	// show_page_numbers: false -> none
+	_, err = tx.Exec(`UPDATE Books SET page_number_position = 'none' WHERE show_page_numbers = 0`)
+	if err != nil {
+		return fmt.Errorf("migrate show_page_numbers: %w", err)
+	}
+
+	// page_numbers_on_opening_pages: false -> essay_starts; true -> never (already default)
+	_, err = tx.Exec(`UPDATE Books SET suppress_page_numbers = 'essay_starts' WHERE page_numbers_on_opening_pages = 0`)
+	if err != nil {
+		return fmt.Errorf("migrate page_numbers_on_opening_pages: %w", err)
+	}
+
 	return nil
 }

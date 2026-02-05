@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/fts"
+	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -194,8 +195,16 @@ type CollectionHeadingAnalysisResult struct {
 }
 
 func (a *App) AnalyzeCollectionHeadings(collID int64) (*CollectionHeadingAnalysisResult, error) {
-	homeDir, _ := os.UserHomeDir()
-	templatePath := filepath.Join(homeDir, ".works", "templates", "book-template.dotm")
+	// Get book for template path
+	book, _ := a.db.GetBookByCollection(collID)
+	templatePath := ""
+	if book != nil && book.TemplatePath != nil && *book.TemplatePath != "" {
+		templatePath = *book.TemplatePath
+	} else {
+		// Fallback to default template
+		homeDir, _ := os.UserHomeDir()
+		templatePath = filepath.Join(homeDir, ".works", "templates", "book-template.dotm")
+	}
 
 	validStyles, err := fts.LoadTemplateStyles(templatePath)
 	if err != nil {
@@ -207,6 +216,14 @@ func (a *App) AnalyzeCollectionHeadings(collID int64) (*CollectionHeadingAnalysi
 		return nil, err
 	}
 
+	// Filter out suppressed works - they are excluded from PDF export
+	var includedWorks []models.CollectionWork
+	for _, w := range works {
+		if !w.IsSuppressed {
+			includedWorks = append(includedWorks, w)
+		}
+	}
+
 	basePath := a.settings.Get().BaseFolderPath
 	ftsDB := a.getFTSDB()
 	if err := ftsDB.Open(); err != nil {
@@ -214,11 +231,11 @@ func (a *App) AnalyzeCollectionHeadings(collID int64) (*CollectionHeadingAnalysi
 	}
 
 	result := &CollectionHeadingAnalysisResult{
-		TotalWorks: len(works),
-		Results:    make([]HeadingAnalysisResult, 0, len(works)),
+		TotalWorks: len(includedWorks),
+		Results:    make([]HeadingAnalysisResult, 0, len(includedWorks)),
 	}
 
-	for _, w := range works {
+	for _, w := range includedWorks {
 		workResult := HeadingAnalysisResult{
 			WorkID: w.WorkID,
 			Title:  w.Title,

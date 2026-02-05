@@ -260,15 +260,17 @@ export function TitlePagePanel({
                   if (newType === 'poetry') {
                     updated = {
                       ...updated,
-                      showHeaders: false,
-                      pageNumbersOnOpeningPages: true,
+                      versoHeader: 'none',
+                      rectoHeader: 'essay_title',
+                      suppressPageNumbers: 'never',
                       worksStartRecto: false,
                     };
                   } else if (newType === 'prose') {
                     updated = {
                       ...updated,
-                      showHeaders: true,
-                      pageNumbersOnOpeningPages: false,
+                      versoHeader: 'book_title',
+                      rectoHeader: 'essay_title',
+                      suppressPageNumbers: 'essay_starts',
                       worksStartRecto: true,
                     };
                   }
@@ -282,9 +284,82 @@ export function TitlePagePanel({
                 ]}
                 allowDeselect={false}
               />
+              <Select
+                size="xs"
+                label="Page Number Position"
+                description="Where page numbers appear in footer"
+                value={book.pageNumberPosition || 'centered'}
+                onChange={(value) => {
+                  const updated = { ...book, pageNumberPosition: value || 'centered' };
+                  onBookChange(updated);
+                  ClearPartCache(collectionId, []);
+                }}
+                data={[
+                  { value: 'centered', label: 'Centered' },
+                  { value: 'outer', label: 'Outer Edge' },
+                  { value: 'none', label: 'None' },
+                ]}
+                allowDeselect={false}
+              />
               <Collapse in={book.bookType === 'custom'}>
                 <Stack gap="xs">
                   <Group grow gap="md">
+                    <Select
+                      size="xs"
+                      label="Verso Header"
+                      description="Left page header content"
+                      value={book.versoHeader || 'book_title'}
+                      onChange={(value) => {
+                        const updated = { ...book, versoHeader: value || 'book_title' };
+                        onBookChange(updated);
+                        ClearPartCache(collectionId, []);
+                      }}
+                      data={[
+                        { value: 'book_title', label: 'Book Title' },
+                        { value: 'section_title', label: 'Section Title' },
+                        { value: 'essay_title', label: 'Essay Title' },
+                        { value: 'none', label: 'None' },
+                      ]}
+                      allowDeselect={false}
+                    />
+                    <Select
+                      size="xs"
+                      label="Recto Header"
+                      description="Right page header content"
+                      value={book.rectoHeader || 'essay_title'}
+                      onChange={(value) => {
+                        const updated = { ...book, rectoHeader: value || 'essay_title' };
+                        onBookChange(updated);
+                        ClearPartCache(collectionId, []);
+                      }}
+                      data={[
+                        { value: 'book_title', label: 'Book Title' },
+                        { value: 'section_title', label: 'Section Title' },
+                        { value: 'essay_title', label: 'Essay Title' },
+                        { value: 'none', label: 'None' },
+                      ]}
+                      allowDeselect={false}
+                    />
+                  </Group>
+                  <Group grow gap="md">
+                    <Select
+                      size="xs"
+                      label="Suppress Page Numbers"
+                      description="When to hide page numbers"
+                      value={book.suppressPageNumbers || 'never'}
+                      onChange={(value) => {
+                        const updated = { ...book, suppressPageNumbers: value || 'never' };
+                        onBookChange(updated);
+                        ClearPartCache(collectionId, []);
+                      }}
+                      data={[
+                        { value: 'never', label: 'Never' },
+                        { value: 'section_starts', label: 'Section Starts' },
+                        { value: 'essay_starts', label: 'Essay Starts' },
+                        { value: 'both', label: 'Both' },
+                      ]}
+                      allowDeselect={false}
+                    />
                     <Box>
                       <Switch
                         size="xs"
@@ -293,53 +368,6 @@ export function TitlePagePanel({
                         checked={book.worksStartRecto ?? true}
                         onChange={(e) => {
                           const updated = { ...book, worksStartRecto: e.currentTarget.checked };
-                          onBookChange(updated);
-                          ClearPartCache(collectionId, []);
-                        }}
-                      />
-                    </Box>
-                    <Box>
-                      <Switch
-                        size="xs"
-                        label="Show running headers"
-                        description="Book title on verso, work title on recto"
-                        checked={book.showHeaders ?? true}
-                        onChange={(e) => {
-                          const updated = { ...book, showHeaders: e.currentTarget.checked };
-                          onBookChange(updated);
-                          ClearPartCache(collectionId, []);
-                        }}
-                      />
-                    </Box>
-                  </Group>
-                  <Group grow gap="md">
-                    <Box>
-                      <Switch
-                        size="xs"
-                        label="Numbers on opening pages"
-                        description="Page numbers on first page of works"
-                        checked={book.pageNumbersOnOpeningPages ?? false}
-                        onChange={(e) => {
-                          const updated = {
-                            ...book,
-                            pageNumbersOnOpeningPages: e.currentTarget.checked,
-                          };
-                          onBookChange(updated);
-                          ClearPartCache(collectionId, []);
-                        }}
-                      />
-                    </Box>
-                    <Box>
-                      <Switch
-                        size="xs"
-                        label="Flush numbers outside"
-                        description="Align to left (verso) and right (recto)"
-                        checked={book.pageNumbersFlushOutside ?? false}
-                        onChange={(e) => {
-                          const updated = {
-                            ...book,
-                            pageNumbersFlushOutside: e.currentTarget.checked,
-                          };
                           onBookChange(updated);
                           ClearPartCache(collectionId, []);
                         }}

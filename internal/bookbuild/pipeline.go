@@ -96,8 +96,10 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 	if opts.Manifest.Typography.HeaderFont != "" {
 		config.Typography = opts.Manifest.Typography
 	}
-	config.PageNumbersFlushOutside = opts.Manifest.PageNumbersFlushOutside
-	config.PageNumbersOnOpeningPages = opts.Manifest.PageNumbersOnOpeningPages
+	config.VersoHeader = opts.Manifest.VersoHeader
+	config.RectoHeader = opts.Manifest.RectoHeader
+	config.PageNumberPosition = opts.Manifest.PageNumberPosition
+	config.SuppressPageNumbers = opts.Manifest.SuppressPageNumbers
 
 	progress("TOC", 2, 5, "Generating table of contents...")
 

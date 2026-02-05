@@ -370,6 +370,10 @@ export function GetOrgsFilterOptions() {
   return window['go']['app']['App']['GetOrgsFilterOptions']();
 }
 
+export function GetPDFPageSize(arg1) {
+  return window['go']['app']['App']['GetPDFPageSize'](arg1);
+}
+
 export function GetPartCacheStatus(arg1) {
   return window['go']['app']['App']['GetPartCacheStatus'](arg1);
 }

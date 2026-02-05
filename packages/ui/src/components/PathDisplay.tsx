@@ -6,9 +6,10 @@ export interface PathDisplayProps {
   docType?: string;
   nWords?: number;
   noPaper?: boolean;
+  pageSize?: string;
 }
 
-export function PathDisplay({ path, docType, nWords, noPaper }: PathDisplayProps) {
+export function PathDisplay({ path, docType, nWords, noPaper, pageSize }: PathDisplayProps) {
   const content = !path ? (
     <Text c="dimmed" fs="italic">
       No file path set
@@ -31,6 +32,11 @@ export function PathDisplay({ path, docType, nWords, noPaper }: PathDisplayProps
           <Badge variant="light" size="sm">
             {nWords.toLocaleString()} words
           </Badge>
+        )}
+        {pageSize && (
+          <Text size="sm" c="dimmed">
+            {pageSize}
+          </Text>
         )}
         <CopyButton value={path}>
           {({ copied, copy }) => (

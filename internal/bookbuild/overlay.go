@@ -10,18 +10,43 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
+// Header content constants
+const (
+	HeaderNone         = "none"
+	HeaderBookTitle    = "book_title"
+	HeaderSectionTitle = "section_title"
+	HeaderEssayTitle   = "essay_title"
+)
+
+// Page number position constants
+const (
+	PageNumberCentered = "centered"
+	PageNumberOuter    = "outer"
+	PageNumberNone     = "none"
+)
+
+// Suppress page numbers constants
+const (
+	SuppressNever         = "never"
+	SuppressSectionStarts = "section_starts"
+	SuppressEssayStarts   = "essay_starts"
+	SuppressBoth          = "both"
+)
+
 type OverlayConfig struct {
-	Typography                Typography
-	BookTitle                 string
-	PageWidth                 float64
-	PageHeight                float64
-	MarginBottom              float64
-	MarginTop                 float64
-	MarginInner               float64 // Binding side margin
-	MarginOuter               float64 // Outside edge margin
-	HeaderYPosition           float64
-	PageNumbersFlushOutside   bool // When true, page numbers flush to outside edge instead of centered
-	PageNumbersOnOpeningPages bool // When true, show page numbers on first page of works (for poetry)
+	Typography          Typography
+	BookTitle           string
+	PageWidth           float64
+	PageHeight          float64
+	MarginBottom        float64
+	MarginTop           float64
+	MarginInner         float64 // Binding side margin
+	MarginOuter         float64 // Outside edge margin
+	HeaderYPosition     float64
+	VersoHeader         string // book_title, section_title, essay_title, none
+	RectoHeader         string // book_title, section_title, essay_title, none
+	PageNumberPosition  string // centered, outer, none
+	SuppressPageNumbers string // never, section_starts, essay_starts, both
 }
 
 func DefaultOverlayConfig(bookTitle string) OverlayConfig {
@@ -75,9 +100,14 @@ func AddPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig
 			continue
 		}
 
+		// Skip if page numbers are disabled
+		if config.PageNumberPosition == PageNumberNone {
+			continue
+		}
+
 		// fmt.Printf("  [%d/%d] Adding page number '%s' to page %d\n", i+1, len(mappings), pageNumStr, m.PhysicalPage)
 		var position string
-		if config.PageNumbersFlushOutside {
+		if config.PageNumberPosition == PageNumberOuter {
 			if m.IsVerso() {
 				position = PositionBottomLeftVerso
 			} else {
@@ -108,14 +138,18 @@ func AddRunningHeaders(pdfPath string, mappings []PageMapping, config OverlayCon
 		var position string
 
 		if m.IsVerso() {
-			// Left pages (verso): book title
-			headerText = config.BookTitle
+			// Left pages (verso)
+			if config.VersoHeader == HeaderNone {
+				continue
+			}
+			headerText = getOverlayHeaderText(config.VersoHeader, config.BookTitle, m.ContentItem)
 			position = PositionTopLeft
 		} else {
-			// Right pages (recto): essay/chapter title
-			if m.ContentItem != nil {
-				headerText = m.ContentItem.Title
+			// Right pages (recto)
+			if config.RectoHeader == HeaderNone {
+				continue
 			}
+			headerText = getOverlayHeaderText(config.RectoHeader, config.BookTitle, m.ContentItem)
 			position = PositionTopRight
 		}
 
@@ -130,6 +164,26 @@ func AddRunningHeaders(pdfPath string, mappings []PageMapping, config OverlayCon
 	}
 
 	return nil
+}
+
+// getOverlayHeaderText returns the appropriate header text based on the header type setting
+func getOverlayHeaderText(headerType, bookTitle string, item *ContentItem) string {
+	switch headerType {
+	case "book_title":
+		return bookTitle
+	case "section_title":
+		if item != nil {
+			return item.PartTitle
+		}
+		return ""
+	case "essay_title":
+		if item != nil {
+			return item.Title
+		}
+		return ""
+	default:
+		return ""
+	}
 }
 
 func addTextToPage(pdfPath string, pageNum int, text string, config OverlayConfig, position string) error {

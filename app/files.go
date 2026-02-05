@@ -8,6 +8,8 @@ import (
 
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/fileops"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
+	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -343,4 +345,43 @@ func (a *App) GetFileModTimes(workID int64) (FileModTimes, error) {
 	}
 
 	return result, nil
+}
+
+func (a *App) GetPDFPageSize(workID int64) (string, error) {
+	pdfFilename := fmt.Sprintf("%d.pdf", workID)
+	pdfPath := filepath.Join(a.fileOps.Config.PDFPreviewPath, pdfFilename)
+
+	if !fileops.FileExists(pdfPath) {
+		return "", nil
+	}
+
+	f, err := os.Open(pdfPath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	conf := model.NewDefaultConfiguration()
+	info, err := api.PDFInfo(f, pdfPath, nil, false, conf)
+	if err != nil {
+		return "", err
+	}
+
+	if len(info.PageDimensions) == 0 {
+		return "", nil
+	}
+
+	for dim := range info.PageDimensions {
+		inches := dim.ToInches()
+		return fmt.Sprintf("%sx%s", formatInches(inches.Width), formatInches(inches.Height)), nil
+	}
+
+	return "", nil
+}
+
+func formatInches(v float64) string {
+	if v == float64(int(v)) {
+		return fmt.Sprintf("%.0f", v)
+	}
+	return fmt.Sprintf("%.1f", v)
 }

@@ -104,8 +104,6 @@ export function ExportAllCSV():Promise<Array<app.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<app.ExportResult>>;
 
-export function ExportBookPDF(arg1:number,arg2:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
-
 export function ExportBookPDFWithParts(arg1:number,arg2:boolean,arg3:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
 
 export function ExportCollectionFolder(arg1:number):Promise<number>;
@@ -257,8 +255,6 @@ export function GetWorkTemplatePath(arg1:number):Promise<string>;
 export function GetWorks():Promise<Array<models.WorkView>>;
 
 export function GetWorksFilterOptions():Promise<app.WorksFilterOptions>;
-
-export function HasCollectionParts(arg1:number):Promise<boolean>;
 
 export function ImportWork(arg1:string,arg2:fileops.ParsedFilename):Promise<models.Work>;
 

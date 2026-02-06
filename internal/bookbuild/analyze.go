@@ -78,10 +78,14 @@ type PartAnalysis struct {
 }
 
 func AnalyzeManifest(m *Manifest) (*AnalysisResult, error) {
+	return AnalyzeManifestWithTOCEstimate(m, 2)
+}
+
+func AnalyzeManifestWithTOCEstimate(m *Manifest, tocPageEstimate int) (*AnalysisResult, error) {
 	result := &AnalysisResult{
 		Items:           []ContentItem{},
 		TOCIndex:        -1,
-		TOCPageEstimate: 2,
+		TOCPageEstimate: tocPageEstimate,
 	}
 
 	currentPage := 1
@@ -210,7 +214,8 @@ func (r *AnalysisResult) GetPartItems(partIdx int) []ContentItem {
 }
 
 func addPartContent(currentPage int, part Part, worksStartRecto bool, result *AnalysisResult) (int, *AnalysisResult) {
-	if needsBlankForRecto(currentPage) {
+	// Only add blank for recto if this part has a divider page
+	if !part.NoDivider && needsBlankForRecto(currentPage) {
 		result.Items = append(result.Items, ContentItem{
 			Type:       ContentTypeBlank,
 			PageCount:  1,
@@ -221,7 +226,7 @@ func addPartContent(currentPage int, part Part, worksStartRecto bool, result *An
 		currentPage++
 	}
 
-	if part.PDF != "" {
+	if part.PDF != "" && !part.NoDivider {
 		pageCount, err := GetPageCount(part.PDF)
 		if err != nil {
 			pageCount = 1

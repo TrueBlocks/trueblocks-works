@@ -14,9 +14,7 @@ import {
 import {
   GetBookByCollection,
   UpdateBook,
-  ExportBookPDF,
   ExportBookPDFWithParts,
-  HasCollectionParts,
   OpenBookPDF,
   GetTitlePageStyles,
   ValidateTemplate,
@@ -137,10 +135,7 @@ export function MatterView({
 
     setExporting(true);
     try {
-      const hasParts = await HasCollectionParts(collectionId);
-      const result = hasParts
-        ? await ExportBookPDFWithParts(collectionId, false, htmlContent)
-        : await ExportBookPDF(collectionId, htmlContent);
+      const result = await ExportBookPDFWithParts(collectionId, false, htmlContent);
 
       if (result?.success) {
         Log(`PDF exported to: ${result.outputPath}`);
@@ -172,18 +167,9 @@ export function MatterView({
   }, [buildHtmlContent, collectionId]);
 
   const handleExportPDF = useCallback(async () => {
-    try {
-      const hasParts = await HasCollectionParts(collectionId);
-      if (hasParts) {
-        setPartModalOpen(true);
-      } else {
-        await doExportPDF();
-      }
-    } catch (err) {
-      LogErr('PDF export check failed:', err);
-      await doExportPDF();
-    }
-  }, [collectionId, doExportPDF]);
+    // Always show part modal - required for cache invalidation on any build
+    setPartModalOpen(true);
+  }, []);
 
   const handleOpenPDF = useCallback(async () => {
     try {

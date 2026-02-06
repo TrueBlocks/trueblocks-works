@@ -33,10 +33,11 @@ type Work struct {
 }
 
 type Part struct {
-	ID    int64  `json:"id"`
-	Title string `json:"title"`
-	PDF   string `json:"pdf"`
-	Works []Work `json:"works"`
+	ID        int64  `json:"id"`
+	Title     string `json:"title"`
+	PDF       string `json:"pdf"`
+	Works     []Work `json:"works"`
+	NoDivider bool   `json:"noDivider,omitempty"`
 }
 
 type Manifest struct {

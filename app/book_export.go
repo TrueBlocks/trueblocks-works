@@ -190,187 +190,6 @@ func (a *App) OpenBookPDF(collID int64) (*OpenBookPDFResult, error) {
 	}, nil
 }
 
-// ExportBookPDF exports a collection as a PDF using the bookbuild pipeline.
-// Takes FrontBackMatterHTML struct with all page HTML content from frontend.
-func (a *App) ExportBookPDF(collID int64, htmlContent FrontBackMatterHTML) (*BookExportResult, error) {
-	startTime := time.Now()
-
-	a.OpenStatusBar()
-	defer a.CloseStatusBar()
-	a.EmitStatus("progress", "Making galley...")
-
-	book, err := a.db.GetBookByCollection(collID)
-	if err != nil || book == nil {
-		a.EmitStatus("error", "No book configuration found for collection")
-		return nil, fmt.Errorf("no book configuration found for collection")
-	}
-
-	coll, err := a.db.GetCollection(collID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get collection: %w", err)
-	}
-
-	bookTitle := book.Title
-	if bookTitle == "" {
-		bookTitle = coll.CollectionName
-	}
-	defaultFilename := sanitizeFilename(bookTitle) + ".pdf"
-
-	// TEMPORARY: Skip save dialog, use Desktop directly
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get home directory: %w", err)
-	}
-	outputPath := filepath.Join(homeDir, "Desktop", defaultFilename)
-
-	/*
-		defaultDir := ""
-		if book.ExportPath != nil && *book.ExportPath != "" {
-			defaultDir = *book.ExportPath
-		} else {
-			homeDir, _ := os.UserHomeDir()
-			defaultDir = filepath.Join(homeDir, "Desktop")
-		}
-
-		outputPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-			Title:            "Export Book as PDF",
-			DefaultDirectory: defaultDir,
-			DefaultFilename:  defaultFilename,
-			Filters: []runtime.FileFilter{
-				{DisplayName: "PDF Files", Pattern: "*.pdf"},
-			},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to open save dialog: %w", err)
-		}
-		if outputPath == "" {
-			return nil, nil
-		}
-	*/
-
-	newExportDir := filepath.Dir(outputPath)
-	if book.ExportPath == nil || *book.ExportPath != newExportDir {
-		book.ExportPath = &newExportDir
-		_ = a.db.UpdateBook(book)
-	}
-
-	buildDir := filepath.Join(homeDir, ".works", "book-builds", fmt.Sprintf("coll-%d", collID))
-
-	a.emitExportProgress("Preparing", 1, 6, "Generating front/back matter...")
-
-	if err := a.generateFrontBackMatterPDFs(buildDir, htmlContent); err != nil {
-		a.EmitStatus("error", fmt.Sprintf("Front/back matter generation failed: %v", err))
-		return nil, fmt.Errorf("front/back matter generation failed: %w", err)
-	}
-
-	manifest, err := a.buildManifestFromCollection(collID, book, coll, buildDir, outputPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build manifest: %w", err)
-	}
-
-	buildResult, err := bookbuild.Build(bookbuild.BuildOptions{
-		Manifest:   manifest,
-		BuildDir:   buildDir,
-		OutputPath: outputPath,
-		MaxEssays:  10, // Limit overlays to first 10 essays for testing
-		OnProgress: func(stage string, current, total int, message string) {
-			a.emitExportProgress(stage, current, total, message)
-			a.EmitStatus("progress", message)
-		},
-	})
-
-	if err != nil {
-		a.EmitStatus("error", fmt.Sprintf("Build failed: %v", err))
-		return nil, fmt.Errorf("build failed: %w", err)
-	}
-
-	a.EmitStatus("success", "Galley created")
-
-	_ = exec.Command("open", outputPath).Start()
-
-	return &BookExportResult{
-		Success:    buildResult.Success,
-		OutputPath: buildResult.OutputPath,
-		WorkCount:  buildResult.WorkCount,
-		Warnings:   buildResult.Warnings,
-		Duration:   time.Since(startTime).Round(time.Millisecond).String(),
-	}, nil
-}
-
-func (a *App) buildManifestFromCollection(collID int64, book *models.Book, coll *models.Collection, buildDir, outputPath string) (*bookbuild.Manifest, error) {
-	works, err := a.db.GetCollectionWorks(collID, false)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get collection works: %w", err)
-	}
-
-	if len(works) == 0 {
-		return nil, fmt.Errorf("collection has no works")
-	}
-
-	pdfPreviewPath := a.fileOps.Config.PDFPreviewPath
-
-	typography := bookbuild.DefaultTypography()
-
-	templatePath := ""
-	if book.TemplatePath != nil && *book.TemplatePath != "" {
-		templatePath = *book.TemplatePath
-	} else {
-		templatePath = a.fileOps.GetBookTemplatePath()
-	}
-
-	manifest := &bookbuild.Manifest{
-		Title:               book.Title,
-		Author:              book.Author,
-		OutputPath:          outputPath,
-		TemplatePath:        templatePath,
-		Typography:          typography,
-		WorksStartRecto:     book.WorksStartRecto == nil || *book.WorksStartRecto,
-		VersoHeader:         book.VersoHeader,
-		RectoHeader:         book.RectoHeader,
-		PageNumberPosition:  book.PageNumberPosition,
-		SuppressPageNumbers: book.SuppressPageNumbers,
-	}
-
-	if manifest.Title == "" {
-		manifest.Title = coll.CollectionName
-	}
-
-	// Add individual front matter PDFs in order: titlepage, copyright, dedication
-	if fileExists(filepath.Join(buildDir, "titlepage.pdf")) {
-		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "titlepage", PDF: filepath.Join(buildDir, "titlepage.pdf")})
-	}
-	if fileExists(filepath.Join(buildDir, "copyright.pdf")) {
-		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "copyright", PDF: filepath.Join(buildDir, "copyright.pdf")})
-	}
-	if fileExists(filepath.Join(buildDir, "dedication.pdf")) {
-		manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "dedication", PDF: filepath.Join(buildDir, "dedication.pdf")})
-	}
-
-	manifest.FrontMatter = append(manifest.FrontMatter, bookbuild.FrontMatterItem{Type: "toc", Placeholder: true})
-
-	for _, w := range works {
-		if w.IsSuppressed {
-			continue
-		}
-		pdfPath := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
-		manifest.Works = append(manifest.Works, bookbuild.Work{
-			ID:    w.WorkID,
-			Title: w.Title,
-			PDF:   pdfPath,
-		})
-	}
-
-	// Add individual back matter PDFs in order: ack, about
-	if fileExists(filepath.Join(buildDir, "ack.pdf")) {
-		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "ack", PDF: filepath.Join(buildDir, "ack.pdf")})
-	}
-	if fileExists(filepath.Join(buildDir, "about.pdf")) {
-		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "about", PDF: filepath.Join(buildDir, "about.pdf")})
-	}
-
-	return manifest, nil
-}
-
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
@@ -468,19 +287,21 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 		manifest.Parts = append(manifest.Parts, *currentPart)
 	}
 
-	if len(prologueWorks) > 0 && hasParts {
+	// Always create a part for prologue works - use NoDivider for section-less books
+	if len(prologueWorks) > 0 {
 		prologuePart := bookbuild.Part{
-			ID:    0, // Prologue has ID 0
-			Title: "Prologue",
-			Works: prologueWorks,
+			ID:        0,
+			Works:     prologueWorks,
+			NoDivider: !hasParts, // Skip divider page for section-less books
+		}
+		if hasParts {
+			prologuePart.Title = "Prologue"
 		}
 		manifest.Parts = append([]bookbuild.Part{prologuePart}, manifest.Parts...)
-	} else if len(prologueWorks) > 0 {
-		manifest.Works = prologueWorks
 	}
 
-	if !hasParts && len(manifest.Works) == 0 {
-		return nil, fmt.Errorf("collection has no parts (no Section type works)")
+	if len(manifest.Parts) == 0 {
+		return nil, fmt.Errorf("collection has no works")
 	}
 
 	// Add individual back matter PDFs in order: ack, about
@@ -621,21 +442,6 @@ func (a *App) ClearPartCache(collID int64, partIDs []int64) error {
 		_ = bookbuild.ClearPartCache(cacheDir, partID)
 	}
 	return nil
-}
-
-// HasCollectionParts returns whether the collection has parts (Section works)
-func (a *App) HasCollectionParts(collID int64) (bool, error) {
-	works, err := a.db.GetCollectionWorks(collID, false)
-	if err != nil {
-		return false, err
-	}
-
-	for _, w := range works {
-		if w.Type == workTypeSection {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 // emitExportProgress sends progress updates to the frontend

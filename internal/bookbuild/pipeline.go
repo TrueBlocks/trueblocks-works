@@ -3,9 +3,36 @@ package bookbuild
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 )
+
+// ProgressFunc is the signature for progress callback functions
+type ProgressFunc func(stage string, current, total int, message string)
+
+// copyFile copies a file from src to dst
+func copyFile(src, dst string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
+}
+
+// reanalyzeWithTOC re-runs analysis with the actual TOC page count
+func reanalyzeWithTOC(m *Manifest, tocPages int) (*AnalysisResult, error) {
+	return AnalyzeManifestWithTOCEstimate(m, tocPages)
+}
 
 // createTOCPDFWithTemplate uses the template-based DOCX approach if a template
 // exists, otherwise falls back to the raw PDF generator.
@@ -103,7 +130,7 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 	}
 
 	if len(analysis.PartAnalyses) == 0 {
-		return nil, fmt.Errorf("manifest has no parts - use standard Build() instead")
+		return nil, fmt.Errorf("manifest has no parts")
 	}
 
 	config := DefaultOverlayConfig(opts.Manifest.Title)

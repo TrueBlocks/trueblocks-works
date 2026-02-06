@@ -190,10 +190,6 @@ export function ExportAllTables() {
   return window['go']['app']['App']['ExportAllTables']();
 }
 
-export function ExportBookPDF(arg1, arg2) {
-  return window['go']['app']['App']['ExportBookPDF'](arg1, arg2);
-}
-
 export function ExportBookPDFWithParts(arg1, arg2, arg3) {
   return window['go']['app']['App']['ExportBookPDFWithParts'](arg1, arg2, arg3);
 }
@@ -496,10 +492,6 @@ export function GetWorks() {
 
 export function GetWorksFilterOptions() {
   return window['go']['app']['App']['GetWorksFilterOptions']();
-}
-
-export function HasCollectionParts(arg1) {
-  return window['go']['app']['App']['HasCollectionParts'](arg1);
 }
 
 export function ImportWork(arg1, arg2) {

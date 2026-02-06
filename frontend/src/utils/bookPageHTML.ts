@@ -77,7 +77,7 @@ export function generateCopyrightHTML({ book }: BookPageParams): string {
 
   const styles = `
 .topSection {
-  padding-top: 10%;
+  padding-top: 33%;
 }
 .copyrightText {
   font-family: '${DEFAULT_FONT}', serif;

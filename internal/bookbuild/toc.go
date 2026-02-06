@@ -17,52 +17,39 @@ type TOCEntry struct {
 func GenerateTOC(analysis *AnalysisResult, _ OverlayConfig) ([]TOCEntry, error) {
 	var entries []TOCEntry
 
-	bodyPageNum := 1
-	backMatterPageNum := 1
-	inBackMatter := false
 	seenPartDivider := false
+	backMatterStartPage := 0
 
 	for _, item := range analysis.Items {
 		switch item.Type {
-		case ContentTypeFrontMatter, ContentTypeTOC:
+		case ContentTypeFrontMatter, ContentTypeTOC, ContentTypeBlank:
 			continue
-
-		case ContentTypeBlank:
-			if !inBackMatter {
-				bodyPageNum++
-			} else {
-				backMatterPageNum++
-			}
 
 		case ContentTypePartDivider:
 			seenPartDivider = true
 			entries = append(entries, TOCEntry{
 				Title:      item.Title,
-				PageNumber: bodyPageNum,
+				PageNumber: item.StartPage - analysis.FrontMatterPages,
 				IsPart:     true,
 			})
-			bodyPageNum += item.PageCount
 
 		case ContentTypeWork:
 			entries = append(entries, TOCEntry{
 				Title:      item.Title,
-				PageNumber: bodyPageNum,
+				PageNumber: item.StartPage - analysis.FrontMatterPages,
 				IsPart:     false,
 				IsPrologue: !seenPartDivider,
 			})
-			bodyPageNum += item.PageCount
 
 		case ContentTypeBackMatter:
-			if !inBackMatter {
-				inBackMatter = true
-				backMatterPageNum = 1
+			if backMatterStartPage == 0 {
+				backMatterStartPage = item.StartPage
 			}
 			entries = append(entries, TOCEntry{
 				Title:        item.Title,
-				PageNumber:   backMatterPageNum,
+				PageNumber:   item.StartPage - backMatterStartPage + 1,
 				IsBackMatter: true,
 			})
-			backMatterPageNum += item.PageCount
 		}
 	}
 

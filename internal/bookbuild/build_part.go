@@ -486,18 +486,21 @@ func shouldShowPageNumberWithConfig(m PageMapping, suppressPageNumbers string) b
 
 	// Check if this is a part divider (section start)
 	if m.ContentItem.Type == ContentTypePartDivider {
-		return false
+		switch suppressPageNumbers {
+		case SuppressSectionStarts, SuppressBoth:
+			return false
+		default:
+			return true
+		}
 	}
 
 	// Check if this is the first page of a work (essay start)
 	if m.ContentItem.Type == ContentTypeWork && m.PageInItem == 1 {
 		switch suppressPageNumbers {
-		case SuppressNever:
-			return true // show on opening pages
 		case SuppressEssayStarts, SuppressBoth:
-			return false // suppress on essay opening pages
+			return false
 		default:
-			return false // default to suppress
+			return true
 		}
 	}
 

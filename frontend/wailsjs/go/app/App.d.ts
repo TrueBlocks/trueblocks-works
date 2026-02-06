@@ -32,6 +32,8 @@ export function BackupWork(arg1:number):Promise<void>;
 
 export function BrowseForFolder(arg1:string):Promise<string>;
 
+export function CancelBuild():Promise<void>;
+
 export function CancelImport():Promise<void>;
 
 export function CheckImportConflict(arg1:string):Promise<app.ImportConflict>;

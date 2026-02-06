@@ -21,6 +21,8 @@ import {
   GetTitlePageStyles,
   ValidateTemplate,
   ValidateMatter,
+  CancelBuild,
+  EmitStatus,
 } from '@app';
 import { models, app } from '@models';
 import { LogErr, Log, generateTitlePageHTML } from '@/utils';
@@ -83,6 +85,22 @@ export function MatterView({
   useEffect(() => {
     loadBook();
   }, [loadBook]);
+
+  // ESC key handler to cancel build process
+  useEffect(() => {
+    if (!exporting) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        CancelBuild();
+        EmitStatus('progress', 'Cancelling build...');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [exporting]);
 
   const handleBookChange = useCallback(async (updated: models.Book) => {
     setBook(updated);

@@ -1683,6 +1683,7 @@ export namespace models {
 	    createdAt: string;
 	    modifiedAt: string;
 	    isBook: boolean;
+	    smartQuery?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Collection(source);
@@ -1697,6 +1698,7 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.isBook = source["isBook"];
+	        this.smartQuery = source["smartQuery"];
 	    }
 	}
 	export class CollectionDetail {
@@ -1729,6 +1731,7 @@ export namespace models {
 	    createdAt: string;
 	    modifiedAt: string;
 	    isBook: boolean;
+	    smartQuery?: string;
 	    isDeleted: boolean;
 	    nItems: number;
 	
@@ -1745,6 +1748,7 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	        this.isBook = source["isBook"];
+	        this.smartQuery = source["smartQuery"];
 	        this.isDeleted = source["isDeleted"];
 	        this.nItems = source["nItems"];
 	    }

@@ -27,6 +27,7 @@ import {
   IconChecks,
   IconRocket,
   IconPhoto,
+  IconFilter,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -919,6 +920,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   }
 
   const isUneditable = collection.attributes?.includes('uneditable') ?? false;
+  const isSmartCollection = !!collection.smartQuery;
 
   return (
     <Stack gap="md">
@@ -933,6 +935,11 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         icon={<IconFolder size={24} />}
         title={
           <Group gap="md" align="center">
+            {isSmartCollection && (
+              <Tooltip label="Smart Collection (dynamic membership)">
+                <IconFilter size={20} color="var(--mantine-color-blue-6)" />
+              </Tooltip>
+            )}
             {isUneditable ? (
               <Text size="xl">{collection.collectionName}</Text>
             ) : (
@@ -987,7 +994,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 <IconChecks size={18} />
               </ActionIcon>
             </Tooltip>
-            {isBook && (
+            {isBook && !isSmartCollection && (
               <Tooltip label={hasSuppressedWorks ? 'Include All in PDF' : 'Exclude All from PDF'}>
                 <ActionIcon
                   size="lg"
@@ -1000,26 +1007,28 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 </ActionIcon>
               </Tooltip>
             )}
-            <Tooltip
-              label={
-                tableState.hasActiveFilters
-                  ? 'Clear filters to number works'
-                  : !tableState.hasActiveSort
-                    ? 'Sort by a column first'
-                    : 'Set positions to match current sort'
-              }
-            >
-              <ActionIcon
-                size="lg"
-                variant="light"
-                color="blue"
-                onClick={() => setNumberAsSortedModalOpen(true)}
-                disabled={tableState.hasActiveFilters || !tableState.hasActiveSort}
-                aria-label="Number as sorted"
+            {!isSmartCollection && (
+              <Tooltip
+                label={
+                  tableState.hasActiveFilters
+                    ? 'Clear filters to number works'
+                    : !tableState.hasActiveSort
+                      ? 'Sort by a column first'
+                      : 'Set positions to match current sort'
+                }
               >
-                <IconReorder size={18} />
-              </ActionIcon>
-            </Tooltip>
+                <ActionIcon
+                  size="lg"
+                  variant="light"
+                  color="blue"
+                  onClick={() => setNumberAsSortedModalOpen(true)}
+                  disabled={tableState.hasActiveFilters || !tableState.hasActiveSort}
+                  aria-label="Number as sorted"
+                >
+                  <IconReorder size={18} />
+                </ActionIcon>
+              </Tooltip>
+            )}
             <Tooltip label="Export folder">
               <ActionIcon
                 size="lg"
@@ -1149,31 +1158,39 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                   searchFn={searchFn}
                   valueGetter={valueGetter}
                   getRowStyle={getRowStyle}
-                  onReorder={handleReorderWork}
-                  onMoveToPosition={handleOpenMoveToPosition}
+                  onReorder={isSmartCollection ? undefined : handleReorderWork}
+                  onMoveToPosition={isSmartCollection ? undefined : handleOpenMoveToPosition}
                   onFilteredSortedChange={setSortedFilteredWorks}
                   onSortFilterStateChange={setTableState}
                   getMarkedCount={(items) => items.filter((w) => w.isMarked).length}
-                  extraColumns={<Table.Th style={{ width: '50px' }} />}
-                  renderExtraCells={(work) => (
-                    <Table.Td>
-                      <ActionIcon
-                        variant="subtle"
-                        color="red"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemoveWork(work.workID);
-                        }}
-                      >
-                        <IconX size={14} />
-                      </ActionIcon>
-                    </Table.Td>
-                  )}
+                  extraColumns={
+                    !isSmartCollection ? <Table.Th style={{ width: '50px' }} /> : undefined
+                  }
+                  renderExtraCells={
+                    !isSmartCollection
+                      ? (work) => (
+                          <Table.Td>
+                            <ActionIcon
+                              variant="subtle"
+                              color="red"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveWork(work.workID);
+                              }}
+                            >
+                              <IconX size={14} />
+                            </ActionIcon>
+                          </Table.Td>
+                        )
+                      : undefined
+                  }
                   headerActions={
-                    <ActionIcon variant="light" onClick={() => setWorkPickerOpen(true)}>
-                      <IconPlus size={16} />
-                    </ActionIcon>
+                    !isSmartCollection ? (
+                      <ActionIcon variant="light" onClick={() => setWorkPickerOpen(true)}>
+                        <IconPlus size={16} />
+                      </ActionIcon>
+                    ) : undefined
                   }
                 />
                 <WorkPickerModal

@@ -9,6 +9,8 @@ import (
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/validation"
 )
 
+const excludeDeletedFilter = ` AND (w.attributes IS NULL OR w.attributes NOT LIKE '%deleted%')`
+
 func (db *DB) CreateCollection(c *models.Collection) (*validation.ValidationResult, error) {
 	// Validate the collection
 	result := db.validateCollection(c)
@@ -40,13 +42,13 @@ func (db *DB) CreateCollection(c *models.Collection) (*validation.ValidationResu
 
 func (db *DB) GetCollection(id int64) (*models.Collection, error) {
 	query := `SELECT collID, collection_name, type, attributes,
-		created_at, modified_at
+		created_at, modified_at, is_book, smart_query
 		FROM Collections WHERE collID = ?`
 
 	c := &models.Collection{}
 	err := db.conn.QueryRow(query, id).Scan(
 		&c.CollID, &c.CollectionName, &c.Type, &c.Attributes,
-		&c.CreatedAt, &c.ModifiedAt,
+		&c.CreatedAt, &c.ModifiedAt, &c.IsBook, &c.SmartQuery,
 	)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -55,6 +57,26 @@ func (db *DB) GetCollection(id int64) (*models.Collection, error) {
 		return nil, fmt.Errorf("query collection: %w", err)
 	}
 	return c, nil
+}
+
+func (db *DB) GetSmartQuery(collID int64) (*string, error) {
+	var smartQuery *string
+	err := db.conn.QueryRow(`SELECT smart_query FROM Collections WHERE collID = ?`, collID).Scan(&smartQuery)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get smart query: %w", err)
+	}
+	return smartQuery, nil
+}
+
+func (db *DB) IsSmartCollection(collID int64) (bool, error) {
+	sq, err := db.GetSmartQuery(collID)
+	if err != nil {
+		return false, err
+	}
+	return sq != nil && *sq != "", nil
 }
 
 func (db *DB) UpdateCollection(c *models.Collection) (*validation.ValidationResult, error) {
@@ -87,7 +109,7 @@ func (db *DB) UpdateCollection(c *models.Collection) (*validation.ValidationResu
 
 func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error) {
 	query := `SELECT c.collID, c.collection_name, c.type, c.attributes,
-		c.created_at, c.modified_at, c.is_book,
+		c.created_at, c.modified_at, c.is_book, c.smart_query,
 		COALESCE((SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID), 0) as n_items
 		FROM Collections c`
 
@@ -108,7 +130,7 @@ func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error)
 		var c models.CollectionView
 		err := rows.Scan(
 			&c.CollID, &c.CollectionName, &c.Type, &c.Attributes,
-			&c.CreatedAt, &c.ModifiedAt, &c.IsBook, &c.NItems,
+			&c.CreatedAt, &c.ModifiedAt, &c.IsBook, &c.SmartQuery, &c.NItems,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan collection: %w", err)
@@ -116,7 +138,24 @@ func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error)
 		c.IsDeleted = c.Collection.IsDeleted()
 		cols = append(cols, c)
 	}
-	return cols, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range cols {
+		if cols[i].SmartQuery != nil && *cols[i].SmartQuery != "" {
+			var count int
+			countQuery := `SELECT COUNT(*) FROM Works w WHERE ` + *cols[i].SmartQuery
+			if !showDeleted {
+				countQuery += excludeDeletedFilter
+			}
+			if err := db.conn.QueryRow(countQuery).Scan(&count); err == nil {
+				cols[i].NItems = count
+			}
+		}
+	}
+
+	return cols, nil
 }
 
 func (db *DB) AddWorkToCollection(collID, workID int64) error {
@@ -209,6 +248,15 @@ func (db *DB) GetWorkCollections(workID int64) ([]models.CollectionDetail, error
 }
 
 func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.CollectionWork, error) {
+	smartQuery, err := db.GetSmartQuery(collID)
+	if err != nil {
+		return nil, fmt.Errorf("check smart collection: %w", err)
+	}
+
+	if smartQuery != nil && *smartQuery != "" {
+		return db.getSmartCollectionWorks(*smartQuery, showDeleted)
+	}
+
 	query := `SELECT w.workID, w.title, w.type, w.year, w.status, w.quality, w.doc_type,
 		w.path, w.draft, w.n_words, w.course_name, w.attributes, w.access_date, w.created_at, w.modified_at,
 		cd.position, COALESCE(w.is_marked, 0), COALESCE(cd.is_suppressed, 0), COALESCE(w.skip_audits, 0)
@@ -217,7 +265,7 @@ func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.Colle
 		WHERE cd.collID = ?`
 
 	if !showDeleted {
-		query += ` AND (w.attributes IS NULL OR w.attributes NOT LIKE '%deleted%')`
+		query += excludeDeletedFilter
 	}
 
 	query += ` ORDER BY cd.position, w.title`
@@ -239,6 +287,42 @@ func (db *DB) GetCollectionWorks(collID int64, showDeleted bool) ([]models.Colle
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan work: %w", err)
+		}
+		works = append(works, w)
+	}
+	return works, rows.Err()
+}
+
+func (db *DB) getSmartCollectionWorks(smartQuery string, showDeleted bool) ([]models.CollectionWork, error) {
+	query := `SELECT w.workID, w.title, w.type, w.year, w.status, w.quality, w.doc_type,
+		w.path, w.draft, w.n_words, w.course_name, w.attributes, w.access_date, w.created_at, w.modified_at,
+		0, COALESCE(w.is_marked, 0), 0, COALESCE(w.skip_audits, 0)
+		FROM Works w
+		WHERE ` + smartQuery
+
+	if !showDeleted {
+		query += excludeDeletedFilter
+	}
+
+	query += ` ORDER BY w.title`
+
+	rows, err := db.conn.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("query smart collection works: %w", err)
+	}
+	defer rows.Close()
+
+	var works []models.CollectionWork
+	for rows.Next() {
+		var w models.CollectionWork
+		err := rows.Scan(
+			&w.WorkID, &w.Title, &w.Type, &w.Year, &w.Status, &w.Quality,
+			&w.DocType, &w.Path, &w.Draft, &w.NWords, &w.CourseName,
+			&w.Attributes, &w.AccessDate, &w.CreatedAt, &w.ModifiedAt,
+			&w.Position, &w.IsMarked, &w.IsSuppressed, &w.SkipAudits,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan smart collection work: %w", err)
 		}
 		works = append(works, w)
 	}

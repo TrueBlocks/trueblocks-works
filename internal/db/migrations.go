@@ -167,6 +167,11 @@ var migrations = []Migration{
 		Name:    "refactor_book_header_footer_options",
 		Up:      migrateRefactorBookHeaderFooterOptions,
 	},
+	{
+		Version: 40,
+		Name:    "add_smart_query_to_collections",
+		Up:      migrateAddSmartQueryToCollections,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1359,6 +1364,21 @@ func migrateRefactorBookHeaderFooterOptions(tx *sql.Tx) error {
 	_, err = tx.Exec(`UPDATE Books SET suppress_page_numbers = 'essay_starts' WHERE page_numbers_on_opening_pages = 0`)
 	if err != nil {
 		return fmt.Errorf("migrate page_numbers_on_opening_pages: %w", err)
+	}
+
+	return nil
+}
+
+func migrateAddSmartQueryToCollections(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Collections ADD COLUMN smart_query TEXT DEFAULT NULL`)
+	if err != nil {
+		return fmt.Errorf("add smart_query column: %w", err)
+	}
+
+	_, err = tx.Exec(`INSERT INTO Collections (collection_name, type, smart_query)
+		VALUES ('Not Collected', 'System', 'workID NOT IN (SELECT DISTINCT workID FROM CollectionDetails)')`)
+	if err != nil {
+		return fmt.Errorf("insert Not Collected collection: %w", err)
 	}
 
 	return nil

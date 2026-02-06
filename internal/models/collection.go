@@ -9,6 +9,7 @@ type Collection struct {
 	CreatedAt      string  `json:"createdAt" db:"created_at"`
 	ModifiedAt     string  `json:"modifiedAt" db:"modified_at"`
 	IsBook         bool    `json:"isBook" db:"is_book"`
+	SmartQuery     *string `json:"smartQuery,omitempty" db:"smart_query"`
 }
 
 // CollectionView extends Collection with computed fields

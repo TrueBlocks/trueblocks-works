@@ -1,6 +1,7 @@
 package bookbuild
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,6 +19,7 @@ func createTOCPDFWithTemplate(entries []TOCEntry, outputPath, templatePath strin
 }
 
 type PipelineOptions struct {
+	Ctx          context.Context
 	Manifest     *Manifest
 	CollectionID int64
 	CacheDir     string
@@ -50,6 +52,14 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		Warnings: []string{},
 	}
 
+	// Helper to check for cancellation
+	checkCancelled := func() error {
+		if opts.Ctx != nil && opts.Ctx.Err() != nil {
+			return opts.Ctx.Err()
+		}
+		return nil
+	}
+
 	if opts.Manifest == nil {
 		return nil, fmt.Errorf("manifest is required")
 	}
@@ -79,6 +89,10 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		if opts.OnProgress != nil {
 			opts.OnProgress(stage, current, total, message)
 		}
+	}
+
+	if err := checkCancelled(); err != nil {
+		return nil, err
 	}
 
 	progress("Analyzing", 1, 5, "Analyzing manifest...")
@@ -173,6 +187,11 @@ frontMatterLoop:
 	tracker.BodyNum = 1
 
 	for partIdx := range analysis.PartAnalyses {
+		// Check for cancellation before each part
+		if err := checkCancelled(); err != nil {
+			return nil, err
+		}
+
 		pa := analysis.PartAnalyses[partIdx]
 		isCached := IsPartCached(opts.CacheDir, pa.PartID)
 		shouldRebuild := opts.RebuildAll || !isCached
@@ -182,6 +201,7 @@ frontMatterLoop:
 		if shouldRebuild {
 			// Not cached or rebuild requested: build with overlays and cache
 			partResult, err := BuildPart(PartBuildOptions{
+				Ctx:            opts.Ctx,
 				Manifest:       opts.Manifest,
 				Analysis:       analysis,
 				PartIndex:      partIdx,

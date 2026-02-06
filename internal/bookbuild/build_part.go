@@ -1,6 +1,7 @@
 package bookbuild
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,7 @@ import (
 )
 
 type PartBuildOptions struct {
+	Ctx            context.Context
 	Manifest       *Manifest
 	Analysis       *AnalysisResult
 	PartIndex      int
@@ -67,6 +69,14 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 		Warnings:  []string{},
 	}
 
+	// Helper to check for cancellation
+	checkCancelled := func() error {
+		if opts.Ctx != nil && opts.Ctx.Err() != nil {
+			return opts.Ctx.Err()
+		}
+		return nil
+	}
+
 	if opts.PartIndex < 0 || opts.PartIndex >= len(opts.Analysis.PartAnalyses) {
 		return nil, fmt.Errorf("invalid part index %d", opts.PartIndex)
 	}
@@ -104,6 +114,11 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 
 	workIndex := 0
 	for i := range partItems {
+		// Check for cancellation in work loop
+		if err := checkCancelled(); err != nil {
+			return nil, err
+		}
+
 		item := &partItems[i]
 
 		if item.Type == ContentTypeBlank {
@@ -164,7 +179,11 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 			tracker.BodyNum = pa.StartPage - opts.Analysis.FrontMatterPages
 		}
 
-		if err := addPartPageNumbers(mergedPath, adjustedMappings, opts.Config, tracker); err != nil {
+		pageNumProgress := func(workTitle string) {
+			progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
+				fmt.Sprintf("Adding page numbers to part %d - %s", opts.PartIndex+1, workTitle))
+		}
+		if err := addPartPageNumbers(mergedPath, adjustedMappings, opts.Config, tracker, pageNumProgress); err != nil {
 			return nil, fmt.Errorf("page numbers failed for part %d: %w", opts.PartIndex, err)
 		}
 
@@ -174,7 +193,11 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 			progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
 				fmt.Sprintf("Adding headers to part %d...", opts.PartIndex+1))
 
-			if err := addPartHeaders(mergedPath, adjustedMappings, opts.Config); err != nil {
+			headerProgress := func(workTitle string) {
+				progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
+					fmt.Sprintf("Adding headers to part %d - %s", opts.PartIndex+1, workTitle))
+			}
+			if err := addPartHeaders(mergedPath, adjustedMappings, opts.Config, headerProgress); err != nil {
 				return nil, fmt.Errorf("headers failed for part %d: %w", opts.PartIndex, err)
 			}
 		}
@@ -206,8 +229,16 @@ func adjustMappingsForPartPDF(mappings []PageMapping, partStartPage int) []PageM
 	return adjusted
 }
 
-func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig, tracker *PageNumberTracker) error {
+func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig, tracker *PageNumberTracker, onWork func(string)) error {
+	var lastTitle string
 	for _, m := range mappings {
+		if m.ContentItem != nil && m.ContentItem.Title != "" && m.ContentItem.Title != lastTitle {
+			lastTitle = m.ContentItem.Title
+			if onWork != nil {
+				onWork(lastTitle)
+			}
+		}
+
 		showPageNum := shouldShowPageNumberWithConfig(m, config.SuppressPageNumbers)
 		if !showPageNum {
 			if m.ContentItem != nil {
@@ -270,8 +301,16 @@ func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayCo
 	return nil
 }
 
-func addPartHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig) error {
+func addPartHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig, onWork func(string)) error {
+	var lastTitle string
 	for _, m := range mappings {
+		if m.ContentItem != nil && m.ContentItem.Title != "" && m.ContentItem.Title != lastTitle {
+			lastTitle = m.ContentItem.Title
+			if onWork != nil {
+				onWork(lastTitle)
+			}
+		}
+
 		if !m.ShouldShowHeader() {
 			continue
 		}

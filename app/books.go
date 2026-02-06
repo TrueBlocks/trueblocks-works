@@ -34,6 +34,15 @@ func (a *App) DeleteBook(id int64) error {
 }
 
 func (a *App) SetCollectionIsBook(collID int64, isBook bool) error {
+	if isBook {
+		isSmart, err := a.db.IsSmartCollection(collID)
+		if err != nil {
+			return fmt.Errorf("check smart collection: %w", err)
+		}
+		if isSmart {
+			return fmt.Errorf("cannot make a smart collection into a book")
+		}
+	}
 	return a.db.SetCollectionIsBook(collID, isBook)
 }
 

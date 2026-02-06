@@ -571,7 +571,11 @@ func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent 
 		return nil, fmt.Errorf("manifest has no parts - check that works are not all suppressed")
 	}
 
+	buildCtx := a.createBuildContext()
+	defer func() { a.buildCancel = nil }()
+
 	pipelineResult, err := bookbuild.BuildWithParts(bookbuild.PipelineOptions{
+		Ctx:          buildCtx,
 		Manifest:     manifest,
 		CollectionID: collID,
 		CacheDir:     cacheDir,
@@ -584,6 +588,10 @@ func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent 
 	})
 
 	if err != nil {
+		if buildCtx.Err() != nil {
+			a.EmitStatus("cancelled", "Build cancelled")
+			return nil, fmt.Errorf("build cancelled")
+		}
 		a.EmitStatus("error", fmt.Sprintf("Build failed: %v", err))
 		return nil, fmt.Errorf("build failed: %w", err)
 	}

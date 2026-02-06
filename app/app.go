@@ -29,6 +29,7 @@ type App struct {
 	fileServer    *server.FileServer
 	importSession *ImportSession
 	watcher       *watcher.Watcher
+	buildCancel   context.CancelFunc
 }
 
 func NewApp() *App {
@@ -201,5 +202,21 @@ func (a *App) processStaleFiles() {
 		fullPath := a.fileOps.GetFilename(*work.Path)
 		go a.handlePDFRegeneration(int64(workID), fullPath)
 		go a.handleFTSExtraction(int64(workID), fullPath)
+	}
+}
+
+// createBuildContext creates a cancellable context for build operations.
+// Call CancelBuild() to cancel any in-progress build.
+func (a *App) createBuildContext() context.Context {
+	ctx, cancel := context.WithCancel(a.ctx)
+	a.buildCancel = cancel
+	return ctx
+}
+
+// CancelBuild cancels any in-progress book build operation.
+func (a *App) CancelBuild() {
+	if a.buildCancel != nil {
+		a.buildCancel()
+		a.buildCancel = nil
 	}
 }

@@ -29,10 +29,24 @@ func (a *App) UpdateCollection(coll *models.Collection) (*validation.ValidationR
 }
 
 func (a *App) AddWorkToCollection(collID, workID int64) error {
+	isSmart, err := a.db.IsSmartCollection(collID)
+	if err != nil {
+		return fmt.Errorf("check smart collection: %w", err)
+	}
+	if isSmart {
+		return fmt.Errorf("cannot add works to a smart collection")
+	}
 	return a.db.AddWorkToCollection(collID, workID)
 }
 
 func (a *App) RemoveWorkFromCollection(collID, workID int64) error {
+	isSmart, err := a.db.IsSmartCollection(collID)
+	if err != nil {
+		return fmt.Errorf("check smart collection: %w", err)
+	}
+	if isSmart {
+		return fmt.Errorf("cannot remove works from a smart collection")
+	}
 	return a.db.RemoveWorkFromCollection(collID, workID)
 }
 
@@ -45,6 +59,13 @@ func (a *App) GetCollectionWorks(collID int64) ([]models.CollectionWork, error) 
 }
 
 func (a *App) ReorderCollectionWorks(collID int64, workIDs []int64) error {
+	isSmart, err := a.db.IsSmartCollection(collID)
+	if err != nil {
+		return fmt.Errorf("check smart collection: %w", err)
+	}
+	if isSmart {
+		return fmt.Errorf("cannot reorder works in a smart collection")
+	}
 	return a.db.ReorderCollectionWorks(collID, workIDs)
 }
 
@@ -167,31 +188,34 @@ func copyFile(src, dst string) error {
 // If no works are marked, all works are marked.
 // Returns true if works are now marked, false if unmarked.
 func (a *App) ToggleCollectionMarks(collID int64) (bool, error) {
-	// Check if any works in the collection are marked
-	var markedCount int
-	err := a.db.Conn().QueryRow(`
-		SELECT COUNT(*) FROM Works w
-		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
-		WHERE cd.collID = ? AND COALESCE(w.is_marked, 0) = 1
-	`, collID).Scan(&markedCount)
+	works, err := a.db.GetCollectionWorks(collID, a.state.GetShowDeleted())
 	if err != nil {
-		return false, fmt.Errorf("count marked works: %w", err)
+		return false, fmt.Errorf("get collection works: %w", err)
 	}
 
-	// Toggle: if any marked, unmark all; if none marked, mark all
+	if len(works) == 0 {
+		return false, nil
+	}
+
+	var markedCount int
+	workIDs := make([]int64, 0, len(works))
+	for _, w := range works {
+		workIDs = append(workIDs, w.WorkID)
+		if w.IsMarked {
+			markedCount++
+		}
+	}
+
 	newMarkedValue := 1
 	if markedCount > 0 {
 		newMarkedValue = 0
 	}
 
-	_, err = a.db.Conn().Exec(`
-		UPDATE Works SET is_marked = ?
-		WHERE workID IN (
-			SELECT workID FROM CollectionDetails WHERE collID = ?
-		)
-	`, newMarkedValue, collID)
-	if err != nil {
-		return false, fmt.Errorf("update marks: %w", err)
+	for _, workID := range workIDs {
+		_, err = a.db.Conn().Exec(`UPDATE Works SET is_marked = ? WHERE workID = ?`, newMarkedValue, workID)
+		if err != nil {
+			return false, fmt.Errorf("update mark for work %d: %w", workID, err)
+		}
 	}
 
 	return newMarkedValue == 1, nil
@@ -199,26 +223,34 @@ func (a *App) ToggleCollectionMarks(collID int64) (bool, error) {
 
 // GetCollectionHasMarkedWorks checks if any works in the collection are marked.
 func (a *App) GetCollectionHasMarkedWorks(collID int64) (bool, error) {
-	var markedCount int
-	err := a.db.Conn().QueryRow(`
-		SELECT COUNT(*) FROM Works w
-		INNER JOIN CollectionDetails cd ON w.workID = cd.workID
-		WHERE cd.collID = ? AND COALESCE(w.is_marked, 0) = 1
-	`, collID).Scan(&markedCount)
+	works, err := a.db.GetCollectionWorks(collID, a.state.GetShowDeleted())
 	if err != nil {
-		return false, fmt.Errorf("count marked works: %w", err)
+		return false, fmt.Errorf("get collection works: %w", err)
 	}
-	return markedCount > 0, nil
+	for _, w := range works {
+		if w.IsMarked {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // ToggleCollectionSuppressed toggles the suppressed state of all works in a collection.
 // If any works are suppressed, all works are unsuppressed.
 // If no works are suppressed, all works are suppressed.
 // Returns true if works are now suppressed, false if unsuppressed.
+// Smart collections do not support suppression.
 func (a *App) ToggleCollectionSuppressed(collID int64) (bool, error) {
-	// Check if any works in the collection are suppressed
+	isSmart, err := a.db.IsSmartCollection(collID)
+	if err != nil {
+		return false, fmt.Errorf("check smart collection: %w", err)
+	}
+	if isSmart {
+		return false, fmt.Errorf("cannot toggle suppression in a smart collection")
+	}
+
 	var suppressedCount int
-	err := a.db.Conn().QueryRow(`
+	err = a.db.Conn().QueryRow(`
 		SELECT COUNT(*) FROM CollectionDetails
 		WHERE collID = ? AND COALESCE(is_suppressed, 0) = 1
 	`, collID).Scan(&suppressedCount)
@@ -226,7 +258,6 @@ func (a *App) ToggleCollectionSuppressed(collID int64) (bool, error) {
 		return false, fmt.Errorf("count suppressed works: %w", err)
 	}
 
-	// Toggle: if any suppressed, unsuppress all; if none suppressed, suppress all
 	newSuppressedValue := 1
 	if suppressedCount > 0 {
 		newSuppressedValue = 0
@@ -244,9 +275,18 @@ func (a *App) ToggleCollectionSuppressed(collID int64) (bool, error) {
 }
 
 // GetCollectionHasSuppressedWorks checks if any works in the collection are suppressed.
+// Smart collections always return false.
 func (a *App) GetCollectionHasSuppressedWorks(collID int64) (bool, error) {
+	isSmart, err := a.db.IsSmartCollection(collID)
+	if err != nil {
+		return false, fmt.Errorf("check smart collection: %w", err)
+	}
+	if isSmart {
+		return false, nil
+	}
+
 	var suppressedCount int
-	err := a.db.Conn().QueryRow(`
+	err = a.db.Conn().QueryRow(`
 		SELECT COUNT(*) FROM CollectionDetails
 		WHERE collID = ? AND COALESCE(is_suppressed, 0) = 1
 	`, collID).Scan(&suppressedCount)

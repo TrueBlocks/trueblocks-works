@@ -46,6 +46,10 @@ export function BrowseForFolder(arg1) {
   return window['go']['app']['App']['BrowseForFolder'](arg1);
 }
 
+export function CancelBuild() {
+  return window['go']['app']['App']['CancelBuild']();
+}
+
 export function CancelImport() {
   return window['go']['app']['App']['CancelImport']();
 }

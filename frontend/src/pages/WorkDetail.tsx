@@ -674,7 +674,12 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
           />
         }
         actionsRight={
-          <FileActionsToolbar workID={work.workID} refreshKey={refreshKey} onMoved={loadData} />
+          <FileActionsToolbar
+            workID={work.workID}
+            refreshKey={refreshKey}
+            onMoved={loadData}
+            onDuplicate={(newWorkID) => navigate(`/works/${newWorkID}`)}
+          />
         }
         isDeleted={work.attributes?.includes('deleted')}
         onDelete={handleDelete}

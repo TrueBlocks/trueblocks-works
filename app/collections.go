@@ -295,3 +295,33 @@ func (a *App) GetCollectionHasSuppressedWorks(collID int64) (bool, error) {
 	}
 	return suppressedCount > 0, nil
 }
+
+// GetMarkedWorksInCollection returns work IDs and titles for all marked works in a collection.
+type MarkedWorkInfo struct {
+	WorkID int64  `json:"workID"`
+	Title  string `json:"title"`
+	Path   string `json:"path"`
+}
+
+func (a *App) GetMarkedWorksInCollection(collID int64) ([]MarkedWorkInfo, error) {
+	works, err := a.db.GetCollectionWorks(collID, a.state.GetShowDeleted())
+	if err != nil {
+		return nil, fmt.Errorf("get collection works: %w", err)
+	}
+	var marked []MarkedWorkInfo
+	for _, w := range works {
+		if w.IsMarked {
+			// Get full path using fileOps
+			fullPath := ""
+			if w.Path != nil && *w.Path != "" {
+				fullPath = a.fileOps.GetFilename(*w.Path)
+			}
+			marked = append(marked, MarkedWorkInfo{
+				WorkID: w.WorkID,
+				Title:  w.Title,
+				Path:   fullPath,
+			})
+		}
+	}
+	return marked, nil
+}

@@ -9,18 +9,20 @@ import (
 )
 
 type Settings struct {
-	BaseFolderPath       string   `json:"baseFolderPath"`
-	PDFPreviewPath       string   `json:"pdfPreviewPath"`
-	SubmissionExportPath string   `json:"submissionExportPath"`
-	TemplateFolderPath   string   `json:"templateFolderPath"`
-	LibreOfficePath      string   `json:"libreOfficePath,omitempty"`
-	ExportFolderPath     string   `json:"exportFolderPath,omitempty"`
-	CollectionExportPath string   `json:"collectionExportPath,omitempty"`
-	SetupCompleted       bool     `json:"setupCompleted"`
-	Theme                string   `json:"theme"`
-	DarkMode             bool     `json:"darkMode"`
-	ArchiveOnDelete      bool     `json:"archiveOnDelete"`
-	ValidExtensions      []string `json:"validExtensions,omitempty"`
+	BaseFolderPath            string   `json:"baseFolderPath"`
+	PDFPreviewPath            string   `json:"pdfPreviewPath"`
+	SubmissionExportPath      string   `json:"submissionExportPath"`
+	TemplateFolderPath        string   `json:"templateFolderPath"`
+	LibreOfficePath           string   `json:"libreOfficePath,omitempty"`
+	ExportFolderPath          string   `json:"exportFolderPath,omitempty"`
+	CollectionExportPath      string   `json:"collectionExportPath,omitempty"`
+	SetupCompleted            bool     `json:"setupCompleted"`
+	Theme                     string   `json:"theme"`
+	DarkMode                  bool     `json:"darkMode"`
+	ArchiveOnDelete           bool     `json:"archiveOnDelete"`
+	ValidExtensions           []string `json:"validExtensions,omitempty"`
+	SkipDeleteBackupConfirm   bool     `json:"skipDeleteBackupConfirm,omitempty"`
+	SkipNumberAsSortedConfirm bool     `json:"skipNumberAsSortedConfirm,omitempty"`
 }
 
 type Manager struct {

@@ -78,8 +78,8 @@ export function useKeyboardShortcuts() {
         return;
       }
 
-      // Cmd+D: Toggle debug mode
-      if (!e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+      // Option+Shift+D: Toggle debug mode
+      if (e.altKey && e.shiftKey && !e.metaKey && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();
         toggleDebugMode();
         return;

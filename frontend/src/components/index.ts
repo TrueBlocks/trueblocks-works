@@ -21,3 +21,4 @@ export { DarkModeSwitch } from './DarkModeSwitch';
 export { DebugPopover } from './DebugPopover';
 export { FTSStatus } from './FTSStatus';
 export { StatusBar } from './StatusBar';
+export { CommandPalette } from './CommandPalette';

@@ -108,9 +108,9 @@ tell application "Microsoft Word"
 	
 	save as theDoc file name POSIX file "%s" file format format PDF
 	
-	-- Only close if we opened it
+	-- Only close if we opened it (never save - we only needed the PDF)
 	if not docWasOpen then
-		close theDoc saving ask
+		close theDoc saving no
 	end if
 end tell
 

@@ -30,6 +30,14 @@ export function AutoImportFilesWithEdits(arg1:number,arg2:Array<app.FileEdit>):P
 
 export function BackupWork(arg1:number):Promise<void>;
 
+export function BatchBackupWorks(arg1:Array<number>):Promise<number>;
+
+export function BatchMoveMarkedFiles(arg1:Array<number>):Promise<app.BatchMoveResult>;
+
+export function BatchRevealInFinder(arg1:Array<string>):Promise<number>;
+
+export function BatchUpdateWorkField(arg1:Array<number>,arg2:string,arg3:string):Promise<number>;
+
 export function BrowseForFolder(arg1:string):Promise<string>;
 
 export function CancelBuild():Promise<void>;
@@ -95,6 +103,8 @@ export function DeleteWork(arg1:number):Promise<void>;
 export function DeleteWorkPermanent(arg1:number,arg2:boolean):Promise<void>;
 
 export function DetectLibreOffice():Promise<string>;
+
+export function DuplicateWork(arg1:number):Promise<number>;
 
 export function EmitStatus(arg1:string,arg2:string):Promise<void>;
 
@@ -181,6 +191,8 @@ export function GetFileModTimes(arg1:number):Promise<app.FileModTimes>;
 export function GetFileServerPort():Promise<number>;
 
 export function GetGalleyInfo(arg1:number):Promise<app.GalleyInfo>;
+
+export function GetMarkedWorksInCollection(arg1:number):Promise<Array<app.MarkedWorkInfo>>;
 
 export function GetNotes(arg1:string,arg2:number):Promise<Array<models.Note>>;
 
@@ -312,6 +324,8 @@ export function ReportFileSystemChecks():Promise<app.ReportCategory>;
 
 export function RestoreBackup(arg1:string):Promise<void>;
 
+export function RestoreBackupAndQuit(arg1:string):Promise<void>;
+
 export function SaveCoverFromBytes(arg1:number,arg2:string,arg3:string,arg4:string):Promise<string>;
 
 export function SaveWindowGeometry(arg1:number,arg2:number,arg3:number,arg4:number):Promise<void>;
@@ -355,6 +369,8 @@ export function SetWorkMarked(arg1:number,arg2:boolean):Promise<void>;
 export function SetWorkSkipAudits(arg1:number,arg2:boolean):Promise<void>;
 
 export function SetWorkSuppressed(arg1:number,arg2:number,arg3:boolean):Promise<void>;
+
+export function SetWorksMarked(arg1:Array<number>,arg2:boolean):Promise<void>;
 
 export function StartReportGeneration():Promise<void>;
 

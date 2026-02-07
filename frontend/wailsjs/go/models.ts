@@ -1,5 +1,21 @@
 export namespace app {
 	
+	export class BatchMoveResult {
+	    moved: number;
+	    skipped: number;
+	    failed: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new BatchMoveResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.moved = source["moved"];
+	        this.skipped = source["skipped"];
+	        this.failed = source["failed"];
+	    }
+	}
 	export class BookExportResult {
 	    success: boolean;
 	    outputPath?: string;
@@ -466,6 +482,7 @@ export namespace app {
 	    statusList: string[];
 	    qualityList: string[];
 	    workTypeList: string[];
+	    docTypeList: string[];
 	    yearList: string[];
 	
 	    static createFrom(source: any = {}) {
@@ -477,6 +494,7 @@ export namespace app {
 	        this.statusList = source["statusList"];
 	        this.qualityList = source["qualityList"];
 	        this.workTypeList = source["workTypeList"];
+	        this.docTypeList = source["docTypeList"];
 	        this.yearList = source["yearList"];
 	    }
 	}
@@ -740,6 +758,22 @@ export namespace app {
 		}
 	}
 	
+	export class MarkedWorkInfo {
+	    workID: number;
+	    title: string;
+	    path: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new MarkedWorkInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workID = source["workID"];
+	        this.title = source["title"];
+	        this.path = source["path"];
+	    }
+	}
 	export class OpenBookPDFResult {
 	    success: boolean;
 	    error?: string;
@@ -2260,6 +2294,8 @@ export namespace settings {
 	    darkMode: boolean;
 	    archiveOnDelete: boolean;
 	    validExtensions?: string[];
+	    skipDeleteBackupConfirm?: boolean;
+	    skipNumberAsSortedConfirm?: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -2279,6 +2315,8 @@ export namespace settings {
 	        this.darkMode = source["darkMode"];
 	        this.archiveOnDelete = source["archiveOnDelete"];
 	        this.validExtensions = source["validExtensions"];
+	        this.skipDeleteBackupConfirm = source["skipDeleteBackupConfirm"];
+	        this.skipNumberAsSortedConfirm = source["skipNumberAsSortedConfirm"];
 	    }
 	}
 

@@ -42,6 +42,22 @@ export function BackupWork(arg1) {
   return window['go']['app']['App']['BackupWork'](arg1);
 }
 
+export function BatchBackupWorks(arg1) {
+  return window['go']['app']['App']['BatchBackupWorks'](arg1);
+}
+
+export function BatchMoveMarkedFiles(arg1) {
+  return window['go']['app']['App']['BatchMoveMarkedFiles'](arg1);
+}
+
+export function BatchRevealInFinder(arg1) {
+  return window['go']['app']['App']['BatchRevealInFinder'](arg1);
+}
+
+export function BatchUpdateWorkField(arg1, arg2, arg3) {
+  return window['go']['app']['App']['BatchUpdateWorkField'](arg1, arg2, arg3);
+}
+
 export function BrowseForFolder(arg1) {
   return window['go']['app']['App']['BrowseForFolder'](arg1);
 }
@@ -172,6 +188,10 @@ export function DeleteWorkPermanent(arg1, arg2) {
 
 export function DetectLibreOffice() {
   return window['go']['app']['App']['DetectLibreOffice']();
+}
+
+export function DuplicateWork(arg1) {
+  return window['go']['app']['App']['DuplicateWork'](arg1);
 }
 
 export function EmitStatus(arg1, arg2) {
@@ -344,6 +364,10 @@ export function GetFileServerPort() {
 
 export function GetGalleyInfo(arg1) {
   return window['go']['app']['App']['GetGalleyInfo'](arg1);
+}
+
+export function GetMarkedWorksInCollection(arg1) {
+  return window['go']['app']['App']['GetMarkedWorksInCollection'](arg1);
 }
 
 export function GetNotes(arg1, arg2) {
@@ -606,6 +630,10 @@ export function RestoreBackup(arg1) {
   return window['go']['app']['App']['RestoreBackup'](arg1);
 }
 
+export function RestoreBackupAndQuit(arg1) {
+  return window['go']['app']['App']['RestoreBackupAndQuit'](arg1);
+}
+
 export function SaveCoverFromBytes(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['SaveCoverFromBytes'](arg1, arg2, arg3, arg4);
 }
@@ -692,6 +720,10 @@ export function SetWorkSkipAudits(arg1, arg2) {
 
 export function SetWorkSuppressed(arg1, arg2, arg3) {
   return window['go']['app']['App']['SetWorkSuppressed'](arg1, arg2, arg3);
+}
+
+export function SetWorksMarked(arg1, arg2) {
+  return window['go']['app']['App']['SetWorksMarked'](arg1, arg2);
 }
 
 export function StartReportGeneration() {

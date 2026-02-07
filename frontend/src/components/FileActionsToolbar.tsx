@@ -1,8 +1,9 @@
-import { Button, Checkbox, Group, Modal, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Button, Checkbox, Group, Modal, Text, Tooltip } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconArchive,
   IconArrowsExchange,
+  IconCopy,
   IconDownload,
   IconFileText,
   IconRefresh,
@@ -22,6 +23,7 @@ import {
   SetWorkMarked,
   SetWorkSkipAudits,
   SyncWorkTemplate,
+  DuplicateWork,
 } from '@app';
 import { Log, LogErr } from '@/utils';
 import { useCallback, useEffect, useState } from 'react';
@@ -31,9 +33,15 @@ interface FileActionsToolbarProps {
   workID: number;
   refreshKey?: number;
   onMoved?: () => void;
+  onDuplicate?: (newWorkID: number) => void;
 }
 
-export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsToolbarProps) {
+export function FileActionsToolbar({
+  workID,
+  refreshKey,
+  onMoved,
+  onDuplicate,
+}: FileActionsToolbarProps) {
   const [pathStatus, setPathStatus] = useState<string>('');
   const [fileExists, setFileExists] = useState(true);
   const [currentPath, setCurrentPath] = useState('');
@@ -102,7 +110,7 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
   // Cmd+M hotkey to move file directly
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && e.key === 'm' && pathStatus === 'name changed') {
+      if (e.metaKey && !e.shiftKey && e.key === 'm' && pathStatus === 'name changed') {
         e.preventDefault();
         handleMove();
       }
@@ -139,6 +147,37 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
       });
     }
   }, [workID, onMoved]);
+
+  const handleDuplicate = useCallback(async () => {
+    try {
+      const newWorkID = await DuplicateWork(workID);
+      notifications.show({
+        message: 'Work duplicated',
+        color: 'green',
+        autoClose: 2000,
+      });
+      onDuplicate?.(newWorkID);
+    } catch (err) {
+      LogErr('Failed to duplicate work:', err);
+      notifications.show({
+        message: 'Duplicate failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [workID, onDuplicate]);
+
+  // Cmd+D hotkey to duplicate
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey && e.key === 'd') {
+        e.preventDefault();
+        handleDuplicate();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleDuplicate]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -335,30 +374,10 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
           </Tooltip>
         )}
 
-        <Tooltip label="Open document">
-          <Button
-            variant="light"
-            color="grape"
-            size="xs"
-            leftSection={<IconFileText size={14} />}
-            onClick={handleOpen}
-            disabled={!fileExists}
-          >
-            Open
-          </Button>
-        </Tooltip>
-
         <Tooltip label="Export to submissions folder">
-          <Button
-            variant="light"
-            color="grape"
-            size="xs"
-            leftSection={<IconDownload size={14} />}
-            onClick={handleExport}
-            disabled={!fileExists}
-          >
-            Download
-          </Button>
+          <ActionIcon variant="light" color="grape" onClick={handleExport} disabled={!fileExists}>
+            <IconDownload size={18} />
+          </ActionIcon>
         </Tooltip>
 
         <Tooltip
@@ -370,16 +389,26 @@ export function FileActionsToolbar({ workID, refreshKey, onMoved }: FileActionsT
                 : 'Backup to Supporting folder (⌘B)'
           }
         >
-          <Button
+          <ActionIcon
             variant="light"
             color="grape"
-            size="xs"
-            leftSection={<IconArchive size={14} />}
             onClick={handleBackup}
             disabled={!fileExists || hasSupporting}
           >
-            Backup
-          </Button>
+            <IconArchive size={18} />
+          </ActionIcon>
+        </Tooltip>
+
+        <Tooltip label="Open document">
+          <ActionIcon variant="light" color="grape" onClick={handleOpen} disabled={!fileExists}>
+            <IconFileText size={18} />
+          </ActionIcon>
+        </Tooltip>
+
+        <Tooltip label="Duplicate work (⌘D)">
+          <ActionIcon variant="light" color="grape" onClick={handleDuplicate}>
+            <IconCopy size={18} />
+          </ActionIcon>
         </Tooltip>
       </Group>
 

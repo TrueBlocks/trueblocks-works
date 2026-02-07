@@ -1,6 +1,13 @@
 package app
 
 import (
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/db"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/validation"
@@ -152,4 +159,179 @@ func (a *App) recalculatePartIDsForWork(workID int64) {
 	for _, coll := range collections {
 		_ = a.db.RecalculatePartIDs(coll.CollID)
 	}
+}
+
+// BatchUpdateWorkField updates a single field for multiple works.
+// Only whitelisted fields are allowed to prevent SQL injection.
+func (a *App) BatchUpdateWorkField(workIDs []int64, field string, value string) (int, error) {
+	allowedFields := map[string]string{
+		"status":  "status",
+		"type":    "type",
+		"quality": "quality",
+		"docType": "doc_type",
+	}
+	dbField, ok := allowedFields[field]
+	if !ok {
+		return 0, fmt.Errorf("field %q is not allowed for batch update", field)
+	}
+	if len(workIDs) == 0 {
+		return 0, nil
+	}
+
+	updated := 0
+	for _, id := range workIDs {
+		query := fmt.Sprintf("UPDATE Works SET %s = ? WHERE workID = ?", dbField)
+		_, err := a.db.Conn().Exec(query, value, id)
+		if err != nil {
+			return updated, fmt.Errorf("update work %d: %w", id, err)
+		}
+		updated++
+	}
+	return updated, nil
+}
+
+// DuplicateWork creates a copy of a work with a unique title.
+// It copies all fields, the underlying file, and collection memberships.
+// Returns the new work ID.
+func (a *App) DuplicateWork(workID int64) (int64, error) {
+	// Get the original work
+	original, err := a.db.GetWork(workID)
+	if err != nil {
+		return 0, fmt.Errorf("get original work: %w", err)
+	}
+	if original == nil {
+		return 0, fmt.Errorf("work %d not found", workID)
+	}
+
+	// Generate a unique title
+	newTitle := a.generateUniqueCopyTitle(original.Title)
+
+	// Create the new work (copy all fields except system ones)
+	newWork := &models.Work{
+		Title:            newTitle,
+		Type:             original.Type,
+		Year:             original.Year,
+		Status:           original.Status,
+		Quality:          original.Quality,
+		QualityAtPublish: original.QualityAtPublish,
+		DocType:          original.DocType,
+		Draft:            original.Draft,
+		NWords:           original.NWords,
+		CourseName:       original.CourseName,
+		Attributes:       "", // Reset attributes (not deleted)
+		// Path will be set after we know the generated path
+	}
+
+	// Create the work record first to get the ID
+	_, err = a.db.CreateWork(newWork)
+	if err != nil {
+		return 0, fmt.Errorf("create duplicate work: %w", err)
+	}
+
+	// Get the generated path for the new work
+	newGenPath := a.fileOps.GeneratePath(newWork)
+	newWork.Path = &newGenPath
+
+	// Update the work with the path
+	_, err = a.db.UpdateWork(newWork)
+	if err != nil {
+		return 0, fmt.Errorf("update duplicate work path: %w", err)
+	}
+
+	// Copy the underlying file if it exists
+	if original.Path != nil && *original.Path != "" {
+		srcFile, findErr := a.fileOps.FindWorkFile(original)
+		if findErr == nil && srcFile != "" {
+			destPath := a.fileOps.GetFullPath(newWork)
+			if copyErr := a.copyFile(srcFile, destPath); copyErr != nil {
+				// Log but don't fail - the work was created, file copy is optional
+				// The user can manually copy or create the file
+				_ = copyErr
+			}
+		}
+	}
+
+	// Get the original work's collections and add the duplicate to them
+	collections, err := a.db.GetWorkCollections(workID)
+	if err == nil {
+		for _, coll := range collections {
+			_ = a.db.AddWorkToCollection(coll.CollID, newWork.WorkID)
+		}
+	}
+
+	return newWork.WorkID, nil
+}
+
+// generateUniqueCopyTitle generates a unique copy title.
+// "My Work" -> "My Work copy" -> "My Work copy 2" -> "My Work copy 3"
+func (a *App) generateUniqueCopyTitle(originalTitle string) string {
+	// Check if the title already ends with " copy" or " copy N"
+	copyPattern := regexp.MustCompile(`^(.+?) copy( \d+)?$`)
+	matches := copyPattern.FindStringSubmatch(originalTitle)
+
+	var baseTitle string
+	if matches != nil {
+		baseTitle = matches[1]
+	} else {
+		baseTitle = originalTitle
+	}
+
+	// Try "baseTitle copy" first
+	candidate := baseTitle + " copy"
+	if !a.titleExists(candidate) {
+		return candidate
+	}
+
+	// Try "baseTitle copy 2", "baseTitle copy 3", etc.
+	for n := 2; n < 1000; n++ {
+		candidate = fmt.Sprintf("%s copy %d", baseTitle, n)
+		if !a.titleExists(candidate) {
+			return candidate
+		}
+	}
+
+	// Fallback - shouldn't happen in practice
+	return baseTitle + " copy"
+}
+
+// titleExists checks if a work with the given title exists (non-deleted)
+func (a *App) titleExists(title string) bool {
+	title = strings.TrimSpace(title)
+	works, err := a.db.ListWorks(false)
+	if err != nil {
+		return false
+	}
+	for _, w := range works {
+		if strings.TrimSpace(w.Title) == title {
+			return true
+		}
+	}
+	return false
+}
+
+// copyFile copies a file from src to dest, creating directories as needed
+func (a *App) copyFile(src, dest string) error {
+	// Create destination directory if it doesn't exist
+	destDir := filepath.Dir(dest)
+	if err := os.MkdirAll(destDir, 0755); err != nil {
+		return fmt.Errorf("create directory: %w", err)
+	}
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("open source: %w", err)
+	}
+	defer srcFile.Close()
+
+	destFile, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("create destination: %w", err)
+	}
+	defer destFile.Close()
+
+	if _, err := io.Copy(destFile, srcFile); err != nil {
+		return fmt.Errorf("copy content: %w", err)
+	}
+
+	return destFile.Sync()
 }

@@ -7,3 +7,4 @@ export { BackupRestoreModal } from './BackupRestoreModal';
 export { ImportConfirmModal } from './ImportConfirmModal';
 export { ImportReviewModal } from './ImportReviewModal';
 export { PartSelectionModal } from './PartSelectionModal';
+export { BatchUpdateModal } from './BatchUpdateModal';

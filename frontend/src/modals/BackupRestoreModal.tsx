@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   Stack,
@@ -9,10 +9,19 @@ import {
   ActionIcon,
   TextInput,
   Loader,
+  Checkbox,
 } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { IconTrash, IconDownload, IconPlus } from '@tabler/icons-react';
-import { ListBackups, CreateBackup, RestoreBackup, DeleteBackup } from '@app';
-import { backup } from '@models';
+import {
+  ListBackups,
+  CreateBackup,
+  RestoreBackupAndQuit,
+  DeleteBackup,
+  GetSettings,
+  UpdateSettings,
+} from '@app';
+import { backup, settings } from '@models';
 import { LogErr } from '@/utils';
 
 interface BackupRestoreModalProps {
@@ -37,6 +46,11 @@ export function BackupRestoreModal({ opened, onClose }: BackupRestoreModalProps)
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [showCreate, setShowCreate] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmRestore, setConfirmRestore] = useState<string | null>(null);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+  const settingsRef = useRef<settings.Settings | null>(null);
+  const skipDeleteConfirmRef = useRef(false);
 
   const loadBackups = useCallback(async () => {
     setLoading(true);
@@ -53,6 +67,13 @@ export function BackupRestoreModal({ opened, onClose }: BackupRestoreModalProps)
   useEffect(() => {
     if (opened) {
       loadBackups();
+      // Load settings to check skip preference
+      GetSettings()
+        .then((s) => {
+          settingsRef.current = s;
+          skipDeleteConfirmRef.current = s.skipDeleteBackupConfirm || false;
+        })
+        .catch((err) => LogErr('Failed to load settings:', err));
     }
   }, [opened, loadBackups]);
 
@@ -70,26 +91,57 @@ export function BackupRestoreModal({ opened, onClose }: BackupRestoreModalProps)
     }
   };
 
-  const handleRestore = async (backupPath: string) => {
-    if (!confirm('Restore this backup? Current data will be replaced.')) return;
+  const handleRestore = async () => {
+    if (!confirmRestore) return;
     try {
-      await RestoreBackup(backupPath);
-      alert('Backup restored. Please restart the app.');
-      onClose();
+      // This will close the database and quit the app
+      await RestoreBackupAndQuit(confirmRestore);
+      // App will quit, so this code won't run
     } catch (err) {
       LogErr('Failed to restore backup:', err);
-      alert('Failed to restore backup');
+      setConfirmRestore(null);
+      notifications.show({
+        title: 'Restore failed',
+        message: 'Could not restore backup. Check logs for details.',
+        color: 'red',
+      });
     }
   };
 
-  const handleDelete = async (backupPath: string) => {
-    if (!confirm('Delete this backup?')) return;
+  const handleDeleteClick = (path: string) => {
+    if (skipDeleteConfirmRef.current) {
+      // Skip confirmation, delete directly
+      doDelete(path);
+    } else {
+      setConfirmDelete(path);
+      setDontShowAgain(false);
+    }
+  };
+
+  const doDelete = async (path: string) => {
     try {
-      await DeleteBackup(backupPath);
+      await DeleteBackup(path);
       await loadBackups();
     } catch (err) {
       LogErr('Failed to delete backup:', err);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+
+    // Save preference if checkbox is checked
+    if (dontShowAgain && settingsRef.current) {
+      try {
+        await UpdateSettings({ ...settingsRef.current, skipDeleteBackupConfirm: true });
+        skipDeleteConfirmRef.current = true;
+      } catch (err) {
+        LogErr('Failed to save settings:', err);
+      }
+    }
+
+    await doDelete(confirmDelete);
+    setConfirmDelete(null);
   };
 
   return (
@@ -164,7 +216,7 @@ export function BackupRestoreModal({ opened, onClose }: BackupRestoreModalProps)
                         size="sm"
                         variant="subtle"
                         color="blue"
-                        onClick={() => handleRestore(b.path)}
+                        onClick={() => setConfirmRestore(b.path)}
                         title="Restore"
                       >
                         <IconDownload size={14} />
@@ -173,7 +225,7 @@ export function BackupRestoreModal({ opened, onClose }: BackupRestoreModalProps)
                         size="sm"
                         variant="subtle"
                         color="red"
-                        onClick={() => handleDelete(b.path)}
+                        onClick={() => handleDeleteClick(b.path)}
                         title="Delete"
                       >
                         <IconTrash size={14} />
@@ -190,6 +242,57 @@ export function BackupRestoreModal({ opened, onClose }: BackupRestoreModalProps)
           Backups are created automatically daily and kept for 30 days (max 10).
         </Text>
       </Stack>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        opened={confirmDelete !== null}
+        onClose={() => setConfirmDelete(null)}
+        title="Delete Backup"
+        size="sm"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm">Are you sure you want to delete this backup?</Text>
+          <Checkbox
+            label="Do not show this confirmation in the future"
+            checked={dontShowAgain}
+            onChange={(e) => setDontShowAgain(e.currentTarget.checked)}
+            size="sm"
+          />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setConfirmDelete(null)}>
+              Cancel
+            </Button>
+            <Button color="red" onClick={handleDelete}>
+              Delete
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* Restore Confirmation Modal */}
+      <Modal
+        opened={confirmRestore !== null}
+        onClose={() => setConfirmRestore(null)}
+        title="Restore Backup"
+        size="sm"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            Restore this backup? Current data will be replaced and the app will quit. You will need
+            to reopen the app after restore.
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => setConfirmRestore(null)}>
+              Cancel
+            </Button>
+            <Button color="blue" onClick={handleRestore}>
+              Restore &amp; Quit
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Modal>
   );
 }

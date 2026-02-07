@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Box, Text, Stack, Checkbox } from '@mantine/core';
+import { Box, Text, Stack, Checkbox, ActionIcon, Group } from '@mantine/core';
+import { IconX } from '@tabler/icons-react';
 import { GetFileModTimes, CheckWorkPath } from '@app';
 import { LogErr } from '@/utils';
 
@@ -27,6 +28,7 @@ interface PathCheckResult {
 export function DebugPopover({ workId }: DebugPopoverProps) {
   const [modTimes, setModTimes] = useState<FileModTimes | null>(null);
   const [pathCheck, setPathCheck] = useState<PathCheckResult | null>(null);
+  const [dismissedWorkId, setDismissedWorkId] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadDebugInfo() {
@@ -43,7 +45,9 @@ export function DebugPopover({ workId }: DebugPopoverProps) {
     loadDebugInfo();
   }, [workId]);
 
-  if (!modTimes || !pathCheck) {
+  const isDismissed = dismissedWorkId === workId;
+
+  if (!modTimes || !pathCheck || isDismissed) {
     return null;
   }
 
@@ -62,13 +66,22 @@ export function DebugPopover({ workId }: DebugPopoverProps) {
         borderRadius: '8px',
         zIndex: 1000,
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        pointerEvents: 'none',
       }}
     >
       <Stack gap="xs">
-        <Text size="sm" fw={600}>
-          Debug Info (Work #{workId})
-        </Text>
+        <Group justify="space-between" align="center">
+          <Text size="sm" fw={600}>
+            Debug Info (Work #{workId})
+          </Text>
+          <ActionIcon
+            size="xs"
+            variant="subtle"
+            color="dark"
+            onClick={() => setDismissedWorkId(workId)}
+          >
+            <IconX size={14} />
+          </ActionIcon>
+        </Group>
         <Text size="xs">
           <strong>Generated Path:</strong> {pathCheck.generatedPath || '(none)'}
         </Text>

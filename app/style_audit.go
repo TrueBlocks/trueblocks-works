@@ -271,6 +271,24 @@ func (a *App) SetWorkMarked(workID int64, marked bool) error {
 	return err
 }
 
+// SetWorksMarked marks or unmarks multiple works at once
+func (a *App) SetWorksMarked(workIDs []int64, marked bool) error {
+	if len(workIDs) == 0 {
+		return nil
+	}
+	markedVal := 0
+	if marked {
+		markedVal = 1
+	}
+	for _, workID := range workIDs {
+		_, err := a.db.Conn().Exec("UPDATE Works SET is_marked = ? WHERE workID = ?", markedVal, workID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // GetWorkMarked checks if a work is marked
 func (a *App) GetWorkMarked(workID int64) (bool, error) {
 	var isMarked int

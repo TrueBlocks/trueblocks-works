@@ -18,6 +18,7 @@ import {
   Paper,
   Center,
   Box,
+  Checkbox,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -32,6 +33,7 @@ import {
   IconRocket,
   IconPhoto,
   IconFilter,
+  IconCopy,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -66,18 +68,26 @@ import {
   SetTab,
   SetWorkSuppressed,
   SetWorkMarked,
-  ToggleCollectionMarks,
+  SetWorksMarked,
   GetCollectionHasMarkedWorks,
   ToggleCollectionSuppressed,
   GetCollectionHasSuppressedWorks,
   GetDistinctValues,
   GetCoverImageData,
+  GetMarkedWorksInCollection,
+  BatchUpdateWorkField,
+  BatchRevealInFinder,
+  BatchBackupWorks,
+  BatchMoveMarkedFiles,
+  GetSettings,
+  UpdateSettings,
+  DuplicateWork,
 } from '@app';
-import { models, db, state } from '@models';
+import { models, db, state, settings } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
-import { DataTable, Column, StatusBadge, QualityBadge } from '@/components';
+import { DataTable, Column, StatusBadge, QualityBadge, CommandPalette } from '@/components';
 import { NotesPortal, SubmissionsPortal } from '@/portals';
-import { WorkPickerModal, NewWorkModal, ConfirmDeleteModal } from '@/modals';
+import { WorkPickerModal, NewWorkModal, ConfirmDeleteModal, BatchUpdateModal } from '@/modals';
 import { MatterView, CoversView, AmazonView } from '@/views';
 import {
   DetailHeader,
@@ -86,7 +96,8 @@ import {
   MoveToPositionModal,
   EntityFieldSelect,
 } from '@trueblocks/ui';
-import { useNotes } from '@/hooks';
+import { useNotes, useCommandPalette } from '@/hooks';
+import type { Command } from '@/commands';
 
 interface CollectionDetailProps {
   collectionId: number;
@@ -123,12 +134,16 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   });
   const [tableState, setTableState] = useState({ hasActiveFilters: false, hasActiveSort: false });
   const [numberAsSortedModalOpen, setNumberAsSortedModalOpen] = useState(false);
+  const [dontShowNumberAsSorted, setDontShowNumberAsSorted] = useState(false);
+  const settingsRef = useRef<settings.Settings | null>(null);
+  const skipNumberAsSortedRef = useRef(false);
   const [isBook, setIsBook] = useState(false);
   const [frontCoverData, setFrontCoverData] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string | null>('contents');
   const [matterSubTab, setMatterSubTab] = useState<string>('titlepage');
   const [hasMarkedWorks, setHasMarkedWorks] = useState(false);
   const [hasSuppressedWorks, setHasSuppressedWorks] = useState(false);
+  const [tableKey, setTableKey] = useState(0);
   const hasInitialized = useRef(false);
   const prevCollectionIdRef = useRef<number | undefined>(undefined);
   const selectedWorkRef = useRef<models.CollectionWork | null>(null);
@@ -141,6 +156,19 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     handleUndelete: handleUndeleteNote,
     handlePermanentDelete: handlePermanentDeleteNote,
   } = useNotes('collection', collectionId);
+
+  // Command palette state
+  const [selectedCommand, setSelectedCommand] = useState<Command | null>(null);
+  const [batchModalOpen, setBatchModalOpen] = useState(false);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [markedWorksInfo, setMarkedWorksInfo] = useState<
+    { workID: number; title: string; path: string }[]
+  >([]);
+
+  const commandPalette = useCommandPalette({
+    scope: 'works',
+    enabled: hasMarkedWorks && activeTab === 'contents',
+  });
 
   // Use navigation context for prev/next (populated by CollectionsList)
   const hasPrev = navigation.hasPrev;
@@ -283,6 +311,14 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       loadData();
     }
   }, [loadData, collectionId]);
+
+  // Load skip confirmation settings on mount
+  useEffect(() => {
+    GetSettings().then((s) => {
+      settingsRef.current = s;
+      skipNumberAsSortedRef.current = s.skipNumberAsSortedConfirm ?? false;
+    });
+  }, []);
 
   // Handle selection and reload when returning from detail view
   useEffect(() => {
@@ -451,6 +487,12 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const handleNumberAsSorted = useCallback(async () => {
     if (!collectionId || sortedFilteredWorks.length === 0) return;
     try {
+      // Save skip preference if checkbox was checked
+      if (dontShowNumberAsSorted && settingsRef.current) {
+        settingsRef.current.skipNumberAsSortedConfirm = true;
+        skipNumberAsSortedRef.current = true;
+        await UpdateSettings(settingsRef.current);
+      }
       const workIDs = sortedFilteredWorks.map((w) => w.workID);
       await ReorderCollectionWorks(collectionId, workIDs);
       // Clear sort to show position-based order (which now matches the sort)
@@ -481,8 +523,9 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       });
     } finally {
       setNumberAsSortedModalOpen(false);
+      setDontShowNumberAsSorted(false);
     }
-  }, [collectionId, sortedFilteredWorks, loadData]);
+  }, [collectionId, sortedFilteredWorks, dontShowNumberAsSorted, loadData]);
 
   const handleDeleteSubmission = useCallback(
     async (subId: number) => {
@@ -593,11 +636,25 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   );
 
   const handleToggleAllMarks = useCallback(async () => {
-    if (!collectionId) return;
+    if (sortedFilteredWorks.length === 0) return;
+
+    // Check if any filtered works are marked
+    const anyMarked = sortedFilteredWorks.some((w) => w.isMarked);
+    const workIDs = sortedFilteredWorks.map((w) => w.workID);
+
     try {
-      const nowMarked = await ToggleCollectionMarks(collectionId);
-      setHasMarkedWorks(nowMarked);
-      loadData();
+      // If any are marked, unmark all filtered; otherwise mark all filtered
+      await SetWorksMarked(workIDs, !anyMarked);
+
+      // Update local state
+      setWorks((prev) => {
+        const filteredSet = new Set(workIDs);
+        const newWorks = prev.map((w) =>
+          filteredSet.has(w.workID) ? { ...w, isMarked: !anyMarked } : w
+        );
+        setHasMarkedWorks(newWorks.some((w) => w.isMarked));
+        return newWorks;
+      });
     } catch (err) {
       LogErr('Failed to toggle marks:', err);
       notifications.show({
@@ -606,7 +663,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         autoClose: 5000,
       });
     }
-  }, [collectionId, loadData]);
+  }, [sortedFilteredWorks]);
 
   const handleToggleAllSuppressed = useCallback(async () => {
     if (!collectionId) return;
@@ -629,9 +686,14 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     if (!work) return;
     try {
       await SetWorkMarked(work.workID, !work.isMarked);
-      setWorks((prev) =>
-        prev.map((w) => (w.workID === work.workID ? { ...w, isMarked: !work.isMarked } : w))
-      );
+      setWorks((prev) => {
+        const newWorks = prev.map((w) =>
+          w.workID === work.workID ? { ...w, isMarked: !work.isMarked } : w
+        );
+        // Update hasMarkedWorks based on the new state
+        setHasMarkedWorks(newWorks.some((w) => w.isMarked));
+        return newWorks;
+      });
       selectedWorkRef.current = { ...work, isMarked: !work.isMarked };
     } catch (err) {
       LogErr('Failed to toggle mark:', err);
@@ -652,9 +714,59 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     }
   }, [collectionId]);
 
+  const handleDuplicateSelected = useCallback(async () => {
+    const work = selectedWorkRef.current;
+    if (!work || !collectionId) {
+      notifications.show({
+        message: 'No work selected',
+        color: 'yellow',
+        autoClose: 2000,
+      });
+      return;
+    }
+    try {
+      const newWorkID = await DuplicateWork(work.workID);
+
+      // Get current work order (new work is already added at the end by DuplicateWork)
+      const currentWorks = await GetCollectionWorks(collectionId);
+      const workIDs = currentWorks.map((w) => w.workID);
+
+      // Find original work position and remove new work from its current position (end)
+      const originalIndex = workIDs.indexOf(work.workID);
+      const newWorkIndex = workIDs.indexOf(newWorkID);
+
+      if (originalIndex !== -1 && newWorkIndex !== -1) {
+        // Remove new work from its current position (end of list)
+        workIDs.splice(newWorkIndex, 1);
+        // Insert new work right after the original
+        workIDs.splice(originalIndex + 1, 0, newWorkID);
+        await ReorderCollectionWorks(collectionId, workIDs);
+      }
+
+      // Reload and select the new work
+      await loadData();
+      setInitialSelectID(newWorkID);
+      setTableKey((k) => k + 1);
+
+      notifications.show({
+        message: 'Work duplicated',
+        color: 'green',
+        autoClose: 2000,
+      });
+    } catch (err) {
+      LogErr('Failed to duplicate work:', err);
+      notifications.show({
+        message: 'Duplicate failed',
+        color: 'red',
+        autoClose: 5000,
+      });
+    }
+  }, [collectionId, loadData]);
+
   useHotkeys([
     ['mod+shift+M', handleToggleSelectedMark],
     ['mod+shift+S', handleToggleSelectedSuppressed],
+    ['mod+D', handleDuplicateSelected],
   ]);
 
   const expandFiltersForWorks = useCallback(
@@ -927,6 +1039,101 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     return undefined;
   }, []);
 
+  // Command palette handlers
+  const handleSelectCommand = useCallback(
+    async (cmd: Command) => {
+      commandPalette.close();
+      try {
+        const marked = await GetMarkedWorksInCollection(collectionId);
+        if (marked.length === 0) {
+          notifications.show({
+            title: 'No works marked',
+            message: 'Mark some works first to use batch commands',
+            color: 'yellow',
+          });
+          return;
+        }
+        setMarkedWorksInfo(marked);
+        setSelectedCommand(cmd);
+        setBatchModalOpen(true);
+      } catch (err) {
+        LogErr('Failed to get marked works:', err);
+      }
+    },
+    [collectionId, commandPalette]
+  );
+
+  const handleBatchConfirm = useCallback(
+    async (value?: string) => {
+      if (!selectedCommand) return;
+      setBatchLoading(true);
+      try {
+        const workIDs = markedWorksInfo.map((w) => w.workID);
+
+        if (selectedCommand.type === 'field' && selectedCommand.field && value) {
+          const updated = await BatchUpdateWorkField(workIDs, selectedCommand.field, value);
+          notifications.show({
+            title: 'Success',
+            message: `Updated ${updated} work${updated === 1 ? '' : 's'}`,
+            color: 'green',
+          });
+          loadData();
+        } else if (selectedCommand.action === 'backupFiles') {
+          const backed = await BatchBackupWorks(workIDs);
+          notifications.show({
+            title: 'Backup Complete',
+            message: `Backed up ${backed} file${backed === 1 ? '' : 's'}`,
+            color: 'green',
+          });
+        } else if (selectedCommand.action === 'revealInFinder') {
+          const paths = markedWorksInfo.map((w) => w.path).filter((p) => p);
+          const opened = await BatchRevealInFinder(paths);
+          notifications.show({
+            title: 'Finder',
+            message: `Opened ${opened} folder${opened === 1 ? '' : 's'}`,
+            color: 'green',
+          });
+        } else if (selectedCommand.action === 'moveFiles') {
+          const workIDs = markedWorksInfo.map((w) => w.workID);
+          const result = await BatchMoveMarkedFiles(workIDs);
+          if (result.moved > 0) {
+            notifications.show({
+              title: 'Files Moved',
+              message: `Moved ${result.moved}, skipped ${result.skipped}, failed ${result.failed}`,
+              color: 'green',
+            });
+            loadData();
+          } else if (result.skipped > 0) {
+            notifications.show({
+              title: 'No Changes',
+              message: `All ${result.skipped} file${result.skipped === 1 ? ' is' : 's are'} already at correct path`,
+              color: 'blue',
+            });
+          } else {
+            notifications.show({
+              title: 'Move Failed',
+              message: `Failed to move ${result.failed} file${result.failed === 1 ? '' : 's'}`,
+              color: 'red',
+            });
+          }
+        }
+      } catch (err) {
+        LogErr('Batch operation failed:', err);
+        notifications.show({
+          title: 'Error',
+          message: 'Batch operation failed',
+          color: 'red',
+        });
+      } finally {
+        setBatchLoading(false);
+        setBatchModalOpen(false);
+        setSelectedCommand(null);
+        setMarkedWorksInfo([]);
+      }
+    },
+    [selectedCommand, markedWorksInfo, loadData]
+  );
+
   if (loading) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -1007,13 +1214,21 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         }
         actionsRight={
           <Group gap="xs">
-            <Tooltip label={hasMarkedWorks ? 'Unmark All' : 'Mark All'}>
+            <Tooltip
+              label={
+                sortedFilteredWorks.some((w) => w.isMarked) ? 'Unmark Visible' : 'Mark Visible'
+              }
+            >
               <ActionIcon
                 size="lg"
                 variant="light"
-                color={hasMarkedWorks ? 'green' : 'gray'}
+                color={sortedFilteredWorks.some((w) => w.isMarked) ? 'green' : 'gray'}
                 onClick={handleToggleAllMarks}
-                aria-label={hasMarkedWorks ? 'Unmark all works' : 'Mark all works'}
+                aria-label={
+                  sortedFilteredWorks.some((w) => w.isMarked)
+                    ? 'Unmark visible works'
+                    : 'Mark visible works'
+                }
               >
                 <IconChecks size={18} />
               </ActionIcon>
@@ -1036,23 +1251,38 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 label={
                   tableState.hasActiveFilters
                     ? 'Clear filters to number works'
-                    : !tableState.hasActiveSort
-                      ? 'Sort by a column first'
-                      : 'Set positions to match current sort'
+                    : 'Set positions to match current sort'
                 }
               >
                 <ActionIcon
                   size="lg"
                   variant="light"
                   color="blue"
-                  onClick={() => setNumberAsSortedModalOpen(true)}
-                  disabled={tableState.hasActiveFilters || !tableState.hasActiveSort}
+                  onClick={() => {
+                    if (skipNumberAsSortedRef.current) {
+                      handleNumberAsSorted();
+                    } else {
+                      setNumberAsSortedModalOpen(true);
+                    }
+                  }}
+                  disabled={tableState.hasActiveFilters}
                   aria-label="Number as sorted"
                 >
                   <IconReorder size={18} />
                 </ActionIcon>
               </Tooltip>
             )}
+            <Tooltip label="Duplicate selected work (Cmd+D)">
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color="blue"
+                onClick={handleDuplicateSelected}
+                aria-label="Duplicate work"
+              >
+                <IconCopy size={18} />
+              </ActionIcon>
+            </Tooltip>
             <Tooltip label="Export folder">
               <ActionIcon
                 size="lg"
@@ -1160,6 +1390,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             <Grid>
               <Grid.Col span={{ base: 12, md: 9 }}>
                 <DataTable<models.CollectionWork>
+                  key={tableKey}
                   tableName={`collection-${collectionId}`}
                   data={works}
                   columns={columns}
@@ -1315,6 +1546,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         <Grid>
           <Grid.Col span={{ base: 12, md: 9 }}>
             <DataTable<models.CollectionWork>
+              key={tableKey}
               tableName={`collection-${collectionId}`}
               data={works}
               columns={columns}
@@ -1443,6 +1675,12 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
             {sortedFilteredWorks.length === 1 ? 'work' : 'works'} to match the current sort order.
             The works will retain this order when sorting is cleared.
           </Text>
+          <Checkbox
+            label="Don't show this confirmation again"
+            checked={dontShowNumberAsSorted}
+            onChange={(e) => setDontShowNumberAsSorted(e.currentTarget.checked)}
+            mt="md"
+          />
           <Group justify="flex-end" mt="md">
             <Button variant="default" onClick={() => setNumberAsSortedModalOpen(false)}>
               Cancel
@@ -1451,6 +1689,29 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           </Group>
         </Stack>
       </Modal>
+      <CommandPalette
+        opened={commandPalette.isOpen}
+        onClose={commandPalette.close}
+        commands={commandPalette.filteredCommands}
+        query={commandPalette.query}
+        onQueryChange={commandPalette.setQuery}
+        selectedIndex={commandPalette.selectedIndex}
+        onSelectedIndexChange={commandPalette.setSelectedIndex}
+        onSelectCommand={handleSelectCommand}
+        markedCount={markedWorksInfo.length || works.filter((w) => w.isMarked).length}
+      />
+      <BatchUpdateModal
+        opened={batchModalOpen}
+        onClose={() => {
+          setBatchModalOpen(false);
+          setSelectedCommand(null);
+          setMarkedWorksInfo([]);
+        }}
+        command={selectedCommand}
+        markedWorks={markedWorksInfo}
+        onConfirm={handleBatchConfirm}
+        loading={batchLoading}
+      />
     </Stack>
   );
 }

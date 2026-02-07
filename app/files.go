@@ -3,6 +3,7 @@ package app
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -384,4 +385,109 @@ func formatInches(v float64) string {
 		return fmt.Sprintf("%.0f", v)
 	}
 	return fmt.Sprintf("%.1f", v)
+}
+
+// BatchRevealInFinder opens the parent folder containing the work files.
+// If files are in multiple folders, opens each unique parent folder.
+func (a *App) BatchRevealInFinder(paths []string) (int, error) {
+	if len(paths) == 0 {
+		return 0, nil
+	}
+
+	// Collect unique parent directories
+	parents := make(map[string]bool)
+	for _, p := range paths {
+		if p == "" {
+			continue
+		}
+		parent := filepath.Dir(p)
+		parents[parent] = true
+	}
+
+	opened := 0
+	for parent := range parents {
+		if err := exec.Command("open", parent).Run(); err != nil {
+			continue
+		}
+		opened++
+	}
+	return opened, nil
+}
+
+// BatchBackupWorks backs up multiple works and returns the count of successful backups.
+func (a *App) BatchBackupWorks(workIDs []int64) (int, error) {
+	backed := 0
+	for _, id := range workIDs {
+		work, err := a.db.GetWork(id)
+		if err != nil {
+			continue
+		}
+		if work.Path == nil || *work.Path == "" {
+			continue
+		}
+		if err := a.fileOps.BackupWork(*work.Path); err != nil {
+			continue
+		}
+		backed++
+	}
+	return backed, nil
+}
+
+// BatchMoveResult contains the counts from a batch move operation.
+type BatchMoveResult struct {
+	Moved   int `json:"moved"`
+	Skipped int `json:"skipped"`
+	Failed  int `json:"failed"`
+}
+
+// BatchMoveMarkedFiles moves files for all marked works that have path mismatches.
+// Works already at their generated path are skipped.
+func (a *App) BatchMoveMarkedFiles(workIDs []int64) (*BatchMoveResult, error) {
+	result := &BatchMoveResult{}
+
+	for _, id := range workIDs {
+		work, err := a.db.GetWork(id)
+		if err != nil {
+			result.Failed++
+			continue
+		}
+
+		// Skip if no path
+		if work.Path == nil || *work.Path == "" {
+			result.Skipped++
+			continue
+		}
+
+		// Check if path matches generated path
+		generatedPath := a.fileOps.GeneratePath(work)
+		if *work.Path == generatedPath {
+			result.Skipped++
+			continue
+		}
+
+		// Check if source file exists
+		fullPath := a.fileOps.GetFilename(*work.Path)
+		if _, err := fileops.FindFileWithExtension(fullPath); err != nil {
+			result.Skipped++ // File doesn't exist, nothing to move
+			continue
+		}
+
+		// Move the file
+		newPath, err := a.fileOps.MoveFile(work)
+		if err != nil {
+			result.Failed++
+			continue
+		}
+
+		// Update the database
+		work.Path = &newPath
+		if _, err := a.db.UpdateWork(work); err != nil {
+			result.Failed++
+			continue
+		}
+
+		result.Moved++
+	}
+
+	return result, nil
 }

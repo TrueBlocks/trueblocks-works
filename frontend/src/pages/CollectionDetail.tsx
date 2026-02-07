@@ -14,6 +14,10 @@ import {
   Button,
   Switch,
   Tabs,
+  Image,
+  Paper,
+  Center,
+  Box,
 } from '@mantine/core';
 import {
   IconPlus,
@@ -67,6 +71,7 @@ import {
   ToggleCollectionSuppressed,
   GetCollectionHasSuppressedWorks,
   GetDistinctValues,
+  GetCoverImageData,
 } from '@app';
 import { models, db, state } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
@@ -119,6 +124,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [tableState, setTableState] = useState({ hasActiveFilters: false, hasActiveSort: false });
   const [numberAsSortedModalOpen, setNumberAsSortedModalOpen] = useState(false);
   const [isBook, setIsBook] = useState(false);
+  const [frontCoverData, setFrontCoverData] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string | null>('contents');
   const [matterSubTab, setMatterSubTab] = useState<string>('titlepage');
   const [hasMarkedWorks, setHasMarkedWorks] = useState(false);
@@ -213,6 +219,24 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       setIsBook(isBookResult);
       setHasMarkedWorks(hasMarked);
       setHasSuppressedWorks(hasSuppressed);
+
+      // Load front cover data if this is a book
+      if (isBookResult) {
+        try {
+          const bookData = await GetBookByCollection(collectionId);
+          if (bookData?.frontCoverPath) {
+            const coverData = await GetCoverImageData(bookData.frontCoverPath);
+            setFrontCoverData(coverData);
+          } else {
+            setFrontCoverData('');
+          }
+        } catch {
+          setFrontCoverData('');
+        }
+      } else {
+        setFrontCoverData('');
+      }
+
       if (isBookResult && savedSubTab) {
         setActiveTab(savedSubTab);
       } else {
@@ -1238,6 +1262,23 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                     onUndelete={handleUndeleteNote}
                     onPermanentDelete={handlePermanentDeleteNote}
                   />
+                  {isBook && frontCoverData && (
+                    <Paper p="md" withBorder>
+                      <Text size="sm" fw={500} mb="xs">
+                        Cover
+                      </Text>
+                      <Center>
+                        <Box style={{ width: '50%' }}>
+                          <Image
+                            src={frontCoverData}
+                            alt="Book cover"
+                            fit="contain"
+                            style={{ borderRadius: 4 }}
+                          />
+                        </Box>
+                      </Center>
+                    </Paper>
+                  )}
                 </Stack>
               </Grid.Col>
             </Grid>

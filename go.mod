@@ -8,6 +8,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/pdfcpu/pdfcpu v0.11.1
 	github.com/wailsapp/wails/v2 v2.10.2
+	golang.org/x/sync v0.19.0
 	modernc.org/sqlite v1.42.2
 )
 

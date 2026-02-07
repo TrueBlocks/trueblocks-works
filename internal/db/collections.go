@@ -110,8 +110,10 @@ func (db *DB) UpdateCollection(c *models.Collection) (*validation.ValidationResu
 func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error) {
 	query := `SELECT c.collID, c.collection_name, c.type, c.attributes,
 		c.created_at, c.modified_at, c.is_book, c.smart_query,
-		COALESCE((SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID), 0) as n_items
-		FROM Collections c`
+		COALESCE((SELECT COUNT(*) FROM CollectionDetails cd WHERE cd.collID = c.collID), 0) as n_items,
+		b.front_cover_path
+		FROM Collections c
+		LEFT JOIN Books b ON c.collID = b.collID`
 
 	if !showDeleted {
 		query += ` WHERE (c.attributes IS NULL OR c.attributes NOT LIKE '%deleted%')`
@@ -130,7 +132,7 @@ func (db *DB) ListCollections(showDeleted bool) ([]models.CollectionView, error)
 		var c models.CollectionView
 		err := rows.Scan(
 			&c.CollID, &c.CollectionName, &c.Type, &c.Attributes,
-			&c.CreatedAt, &c.ModifiedAt, &c.IsBook, &c.SmartQuery, &c.NItems,
+			&c.CreatedAt, &c.ModifiedAt, &c.IsBook, &c.SmartQuery, &c.NItems, &c.FrontCoverPath,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan collection: %w", err)

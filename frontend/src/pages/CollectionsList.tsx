@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Image } from '@mantine/core';
 import { LogErr } from '@/utils';
 import {
   GetCollections,
@@ -9,6 +10,7 @@ import {
   UndeleteCollection,
   GetCollectionDeleteConfirmation,
   DeleteCollectionPermanent,
+  GetCoverImageData,
 } from '@app';
 import { models, db } from '@models';
 import { DataTable, Column } from '@/components';
@@ -33,6 +35,7 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deletingCollectionID, setDeletingCollectionID] = useState<number | null>(null);
+  const [coverImages, setCoverImages] = useState<Record<number, string>>({});
 
   const loadCollections = useCallback(() => {
     setLoading(true);
@@ -85,6 +88,33 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
     window.addEventListener('reloadCurrentView', handleReload);
     return () => window.removeEventListener('reloadCurrentView', handleReload);
   }, [loadCollections]);
+
+  // Load cover images for books
+  useEffect(() => {
+    const loadCovers = async () => {
+      const booksWithCovers = collections.filter((c) => c.isBook && c.frontCoverPath);
+      const newCovers: Record<number, string> = {};
+
+      for (const coll of booksWithCovers) {
+        if (!coverImages[coll.collID] && coll.frontCoverPath) {
+          try {
+            const data = await GetCoverImageData(coll.frontCoverPath);
+            if (data) {
+              newCovers[coll.collID] = data;
+            }
+          } catch {
+            // Ignore failed cover loads
+          }
+        }
+      }
+
+      if (Object.keys(newCovers).length > 0) {
+        setCoverImages((prev) => ({ ...prev, ...newCovers }));
+      }
+    };
+
+    loadCovers();
+  }, [collections, coverImages]);
 
   const searchFn = useCallback((coll: models.CollectionView, search: string) => {
     return coll.collectionName.toLowerCase().includes(search.toLowerCase());
@@ -181,7 +211,23 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
         key: 'isBook',
         label: 'Book',
         width: '4%',
-        render: (c) => (c.isBook ? '📖' : ''),
+        render: (c) => {
+          if (!c.isBook) return '';
+          const coverData = coverImages[c.collID];
+          if (coverData) {
+            return (
+              <Image
+                src={coverData}
+                alt="cover"
+                w={16}
+                h={24}
+                fit="cover"
+                style={{ borderRadius: 2 }}
+              />
+            );
+          }
+          return '📖';
+        },
       },
       {
         key: 'collectionName',
@@ -210,7 +256,7 @@ export function CollectionsList({ onCollectionClick, onFilteredDataChange }: Col
         render: (c) => (c.modifiedAt ? new Date(c.modifiedAt + 'Z').toLocaleDateString() : '-'),
       },
     ],
-    [availableTypes]
+    [availableTypes, coverImages]
   );
 
   const handleFilteredSortedChange = useCallback(

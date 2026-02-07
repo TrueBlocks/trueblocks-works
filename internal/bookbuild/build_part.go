@@ -12,16 +12,16 @@ import (
 )
 
 type PartBuildOptions struct {
-	Ctx            context.Context
-	Manifest       *Manifest
-	Analysis       *AnalysisResult
-	PartIndex      int
-	CacheDir       string
-	BlankPagePath  string
-	Config         OverlayConfig
-	OnProgress     ProgressFunc
-	SkipOverlays   bool
-	PageNumTracker *PageNumberTracker
+	Ctx           context.Context
+	Manifest      *Manifest
+	Analysis      *AnalysisResult
+	PartIndex     int
+	CacheDir      string
+	BlankPagePath string
+	Config        OverlayConfig
+	OnProgress    ProgressFunc
+	SkipOverlays  bool
+	StartBodyNum  int
 }
 
 type PartBuildResult struct {
@@ -173,9 +173,10 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 		progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
 			fmt.Sprintf("Adding page numbers to part %d...", opts.PartIndex+1))
 
-		tracker := opts.PageNumTracker
-		if tracker == nil {
-			tracker = NewPageNumberTracker()
+		tracker := NewPageNumberTracker()
+		if opts.StartBodyNum > 0 {
+			tracker.BodyNum = opts.StartBodyNum
+		} else {
 			tracker.BodyNum = pa.StartPage - opts.Analysis.FrontMatterPages
 		}
 

@@ -6,6 +6,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
+	"sync"
+	"sync/atomic"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // ProgressFunc is the signature for progress callback functions
@@ -210,56 +215,70 @@ frontMatterLoop:
 	progress("Parts", 3, 5, fmt.Sprintf("Building %d parts...", len(analysis.PartAnalyses)))
 
 	partPDFs := make([]string, len(analysis.PartAnalyses))
-	tracker := NewPageNumberTracker()
-	tracker.BodyNum = 1
+	var partsBuilt, partsCached atomic.Int32
+	var progressMu sync.Mutex
+
+	safeProgress := func(stage string, current, total int, message string) {
+		progressMu.Lock()
+		defer progressMu.Unlock()
+		progress(stage, current, total, message)
+	}
+
+	g, gCtx := errgroup.WithContext(opts.Ctx)
+	g.SetLimit(runtime.NumCPU())
 
 	for partIdx := range analysis.PartAnalyses {
-		// Check for cancellation before each part
-		if err := checkCancelled(); err != nil {
-			return nil, err
-		}
-
+		partIdx := partIdx
 		pa := analysis.PartAnalyses[partIdx]
-		isCached := IsPartCached(opts.CacheDir, pa.PartID)
-		shouldRebuild := opts.RebuildAll || !isCached
+		startBodyNum := pa.StartPage - analysis.FrontMatterPages
 
-		progress("Parts", 3, 5, fmt.Sprintf("Part %d (%s): cached=%v", partIdx, pa.PartTitle, isCached))
+		g.Go(func() error {
+			isCached := IsPartCached(opts.CacheDir, pa.PartID)
+			shouldRebuild := opts.RebuildAll || !isCached
 
-		if shouldRebuild {
-			// Not cached or rebuild requested: build with overlays and cache
-			partResult, err := BuildPart(PartBuildOptions{
-				Ctx:            opts.Ctx,
-				Manifest:       opts.Manifest,
-				Analysis:       analysis,
-				PartIndex:      partIdx,
-				CacheDir:       opts.CacheDir,
-				BlankPagePath:  blankPagePath,
-				Config:         config,
-				OnProgress:     opts.OnProgress,
-				SkipOverlays:   false,
-				PageNumTracker: tracker,
-			})
-			if err != nil {
-				return nil, fmt.Errorf("failed to build part %d: %w", partIdx, err)
-			}
-			partPDFs[partIdx] = partResult.OutputPath
-			result.PartsBuilt++
-		} else {
-			// Cached: use cached version (already has overlays)
-			cached, err := LoadCachedPart(opts.CacheDir, pa.PartID, pa.PartTitle, partIdx)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load cached part %d: %w", partIdx, err)
-			}
-			partPDFs[partIdx] = cached.OutputPath
-			result.PartsCached++
-			// Advance tracker to keep page numbers in sync
-			for _, item := range analysis.GetPartItems(partIdx) {
-				if item.Type == ContentTypePartDivider || item.Type == ContentTypeWork {
-					tracker.BodyNum += item.PageCount
+			safeProgress("Parts", 3, 5, fmt.Sprintf("Part %d (%s): cached=%v", partIdx, pa.PartTitle, isCached))
+
+			if shouldRebuild {
+				partResult, err := BuildPart(PartBuildOptions{
+					Ctx:           gCtx,
+					Manifest:      opts.Manifest,
+					Analysis:      analysis,
+					PartIndex:     partIdx,
+					CacheDir:      opts.CacheDir,
+					BlankPagePath: blankPagePath,
+					Config:        config,
+					OnProgress: func(stage string, current, total int, message string) {
+						safeProgress(stage, current, total, message)
+					},
+					SkipOverlays: false,
+					StartBodyNum: startBodyNum,
+				})
+				if err != nil {
+					return fmt.Errorf("failed to build part %d: %w", partIdx, err)
 				}
+				partPDFs[partIdx] = partResult.OutputPath
+				partsBuilt.Add(1)
+			} else {
+				cached, err := LoadCachedPart(opts.CacheDir, pa.PartID, pa.PartTitle, partIdx)
+				if err != nil {
+					return fmt.Errorf("failed to load cached part %d: %w", partIdx, err)
+				}
+				partPDFs[partIdx] = cached.OutputPath
+				partsCached.Add(1)
 			}
-		}
+
+			completed := partsBuilt.Load() + partsCached.Load()
+			safeProgress("Parts", 3, 5, fmt.Sprintf("%d of %d parts complete", completed, len(analysis.PartAnalyses)))
+			return nil
+		})
 	}
+
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	result.PartsBuilt = int(partsBuilt.Load())
+	result.PartsCached = int(partsCached.Load())
 
 	var backMatterPDFs []string
 	for _, bm := range opts.Manifest.BackMatter {

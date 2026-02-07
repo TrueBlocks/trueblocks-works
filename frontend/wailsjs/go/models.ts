@@ -1734,6 +1734,7 @@ export namespace models {
 	    smartQuery?: string;
 	    isDeleted: boolean;
 	    nItems: number;
+	    frontCoverPath?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new CollectionView(source);
@@ -1751,6 +1752,7 @@ export namespace models {
 	        this.smartQuery = source["smartQuery"];
 	        this.isDeleted = source["isDeleted"];
 	        this.nItems = source["nItems"];
+	        this.frontCoverPath = source["frontCoverPath"];
 	    }
 	}
 	export class CollectionWork {

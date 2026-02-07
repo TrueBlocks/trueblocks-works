@@ -15,8 +15,9 @@ type Collection struct {
 // CollectionView extends Collection with computed fields
 type CollectionView struct {
 	Collection
-	IsDeleted bool `json:"isDeleted"`
-	NItems    int  `json:"nItems" db:"n_items"`
+	IsDeleted      bool    `json:"isDeleted"`
+	NItems         int     `json:"nItems" db:"n_items"`
+	FrontCoverPath *string `json:"frontCoverPath,omitempty" db:"front_cover_path"`
 }
 
 // CollectionDetail is the join table between Collections and Works

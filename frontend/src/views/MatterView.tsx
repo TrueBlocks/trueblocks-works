@@ -10,12 +10,14 @@ import {
   IconFileTypePdf,
   IconExternalLink,
   IconChecks,
+  IconCopy,
 } from '@tabler/icons-react';
 import {
   GetBookByCollection,
   UpdateBook,
   ExportBookPDFWithParts,
   OpenBookPDF,
+  CopyBookPDFText,
   GetTitlePageStyles,
   ValidateTemplate,
   ValidateMatter,
@@ -187,6 +189,29 @@ export function MatterView({
     }
   }, [collectionId]);
 
+  const handleCopyRawText = useCallback(async () => {
+    try {
+      const result = await CopyBookPDFText(collectionId);
+      if (result.success) {
+        notifications.show({
+          title: 'Text Copied',
+          message: 'PDF text copied to clipboard',
+          color: 'green',
+          autoClose: 3000,
+        });
+      } else {
+        notifications.show({
+          title: 'Copy Failed',
+          message: result.error || 'Could not extract text',
+          color: 'red',
+          autoClose: 5000,
+        });
+      }
+    } catch (err) {
+      LogErr('Copy raw text failed:', err);
+    }
+  }, [collectionId]);
+
   const handleValidateAll = useCallback(async () => {
     setValidating(true);
     setValidationResult(null);
@@ -327,6 +352,14 @@ export function MatterView({
             )}
           </Group>
           <Group gap="xs">
+            <Button
+              size="xs"
+              variant="light"
+              leftSection={<IconCopy size={12} />}
+              onClick={handleCopyRawText}
+            >
+              Copy Raw Text
+            </Button>
             <Button
               size="xs"
               variant="light"

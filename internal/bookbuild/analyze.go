@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
 func GetPageCount(pdfPath string) (int, error) {
@@ -310,6 +311,10 @@ func GetPDFPageSize(pdfPath string) (float64, float64, error) {
 
 	getFloat := func(v any) float64 {
 		switch n := v.(type) {
+		case types.Float:
+			return float64(n)
+		case types.Integer:
+			return float64(n)
 		case float64:
 			return n
 		case int:

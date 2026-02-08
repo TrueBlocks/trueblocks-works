@@ -98,6 +98,10 @@ export function CompleteSetup() {
   return window['go']['app']['App']['CompleteSetup']();
 }
 
+export function CopyBookPDFText(arg1) {
+  return window['go']['app']['App']['CopyBookPDFText'](arg1);
+}
+
 export function CopyCoverToClipboard(arg1) {
   return window['go']['app']['App']['CopyCoverToClipboard'](arg1);
 }

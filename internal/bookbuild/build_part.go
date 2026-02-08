@@ -145,8 +145,11 @@ func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
 				fmt.Sprintf("Processing: %s", item.Title))
 		}
 
-		expanded := ExpandPath(item.PDF)
-		pdfPaths = append(pdfPaths, expanded)
+		rotResult, err := PrepareRotatedPDF(item.PDF, opts.CacheDir, physicalPage, i)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare PDF for %s: %w", item.Title, err)
+		}
+		pdfPaths = append(pdfPaths, rotResult.OutputPath)
 
 		for p := 1; p <= item.PageCount; p++ {
 			partMappings = append(partMappings, PageMapping{

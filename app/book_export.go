@@ -190,6 +190,75 @@ func (a *App) OpenBookPDF(collID int64) (*OpenBookPDFResult, error) {
 	}, nil
 }
 
+// CopyBookPDFTextResult contains the result of copying PDF text to clipboard
+type CopyBookPDFTextResult struct {
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}
+
+// CopyBookPDFText extracts text from the merged part PDFs (body content only) and copies to clipboard
+func (a *App) CopyBookPDFText(collID int64) (*CopyBookPDFTextResult, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get home directory: %w", err)
+	}
+
+	buildDir := filepath.Join(homeDir, ".works", "book-builds", fmt.Sprintf("coll-%d", collID))
+
+	// Get section works in order to process parts in correct sequence
+	works, err := a.db.GetCollectionWorks(collID, false)
+	if err != nil {
+		return &CopyBookPDFTextResult{
+			Success: false,
+			Error:   "Failed to get collection works",
+		}, nil
+	}
+
+	// Find section workIDs (they have part-{workID}-merged.pdf files)
+	var partPaths []string
+	for _, w := range works {
+		if w.Type == workTypeSection {
+			partPath := filepath.Join(buildDir, fmt.Sprintf("part-%d-merged.pdf", w.WorkID))
+			if fileExists(partPath) {
+				partPaths = append(partPaths, partPath)
+			}
+		}
+	}
+
+	if len(partPaths) == 0 {
+		return &CopyBookPDFTextResult{
+			Success: false,
+			Error:   "No cached parts found. Build the galley first.",
+		}, nil
+	}
+
+	// Extract text from each part and concatenate
+	var allText strings.Builder
+	for _, pdfPath := range partPaths {
+		cmd := exec.Command("pdftotext", pdfPath, "-")
+		output, err := cmd.Output()
+		if err != nil {
+			continue // Skip failed extractions
+		}
+		allText.Write(output)
+		allText.WriteString("\n")
+	}
+
+	// Copy concatenated text to clipboard
+	cmd := exec.Command("pbcopy")
+	cmd.Stdin = strings.NewReader(allText.String())
+	if err := cmd.Run(); err != nil {
+		return &CopyBookPDFTextResult{
+			Success: false,
+			Error:   fmt.Sprintf("Failed to copy to clipboard: %v", err),
+		}, nil
+	}
+
+	return &CopyBookPDFTextResult{
+		Success: true,
+	}, nil
+}
+
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil

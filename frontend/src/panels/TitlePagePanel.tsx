@@ -283,9 +283,9 @@ export function TitlePagePanel({
                       size="xs"
                       label="Verso Header"
                       description="Left page header content"
-                      value={book.versoHeader || 'book_title'}
+                      value={book.versoHeader || 'none'}
                       onChange={(value) => {
-                        const updated = { ...book, versoHeader: value || 'book_title' };
+                        const updated = { ...book, versoHeader: value || 'none' };
                         onBookChange(updated);
                         ClearPartCache(collectionId, []);
                       }}
@@ -301,9 +301,9 @@ export function TitlePagePanel({
                       size="xs"
                       label="Recto Header"
                       description="Right page header content"
-                      value={book.rectoHeader || 'essay_title'}
+                      value={book.rectoHeader || 'none'}
                       onChange={(value) => {
-                        const updated = { ...book, rectoHeader: value || 'essay_title' };
+                        const updated = { ...book, rectoHeader: value || 'none' };
                         onBookChange(updated);
                         ClearPartCache(collectionId, []);
                       }}

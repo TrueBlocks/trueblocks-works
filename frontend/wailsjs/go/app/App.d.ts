@@ -58,6 +58,8 @@ export function CloseStatusBar():Promise<void>;
 
 export function CompleteSetup():Promise<void>;
 
+export function CopyBookPDFText(arg1:number):Promise<app.CopyBookPDFTextResult>;
+
 export function CopyCoverToClipboard(arg1:string):Promise<void>;
 
 export function CopyTemplateToLibrary(arg1:string,arg2:string):Promise<string>;

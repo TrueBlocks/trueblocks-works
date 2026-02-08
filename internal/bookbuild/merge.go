@@ -106,6 +106,13 @@ type MergeResult struct {
 	OutputPath   string
 	TotalPages   int
 	PageMappings []PageMapping
+	RotationLog  []RotationLogEntry
+}
+
+type RotationLogEntry struct {
+	ItemTitle    string
+	ItemType     ContentType
+	RotatedPages []int
 }
 
 type PageMapping struct {
@@ -121,6 +128,7 @@ func MergePDFsWithTracking(analysis *AnalysisResult, buildDir, outputPath, templ
 
 	pdfPaths := make([]string, 0, len(analysis.Items))
 	var mappings []PageMapping
+	var rotationLog []RotationLogEntry
 	physicalPage := 1
 
 	blankPagePath := filepath.Join(buildDir, "blank.pdf")
@@ -173,8 +181,20 @@ func MergePDFsWithTracking(analysis *AnalysisResult, buildDir, outputPath, templ
 			continue
 		}
 
-		expanded := ExpandPath(item.PDF)
-		pdfPaths = append(pdfPaths, expanded)
+		rotResult, err := PrepareRotatedPDF(item.PDF, buildDir, physicalPage, i)
+		if err != nil {
+			return nil, fmt.Errorf("failed to prepare PDF for %s: %w", item.Title, err)
+		}
+
+		pdfPaths = append(pdfPaths, rotResult.OutputPath)
+
+		if rotResult.WasRotated {
+			rotationLog = append(rotationLog, RotationLogEntry{
+				ItemTitle:    item.Title,
+				ItemType:     item.Type,
+				RotatedPages: rotResult.RotatedPages,
+			})
+		}
 
 		for p := 1; p <= item.PageCount; p++ {
 			mappings = append(mappings, PageMapping{
@@ -200,6 +220,7 @@ func MergePDFsWithTracking(analysis *AnalysisResult, buildDir, outputPath, templ
 		OutputPath:   outputPath,
 		TotalPages:   physicalPage - 1,
 		PageMappings: mappings,
+		RotationLog:  rotationLog,
 	}, nil
 }
 

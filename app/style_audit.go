@@ -69,8 +69,14 @@ func (a *App) AuditWorkStyles(workID int64, templatePath string) (*StyleAuditRes
 		return result, nil
 	}
 
-	basePath := a.settings.Get().BaseFolderPath
-	fullPath := filepath.Join(basePath, *work.Path)
+	// Handle both absolute and relative paths
+	var fullPath string
+	if filepath.IsAbs(*work.Path) {
+		fullPath = *work.Path
+	} else {
+		basePath := a.settings.Get().BaseFolderPath
+		fullPath = filepath.Join(basePath, *work.Path)
+	}
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		result.Error = errFileNotFound
@@ -449,6 +455,7 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 	runHasDirectFormat := false
 	runDirectTypes := make(map[string]bool)
 	runText := ""
+	paragraphTextBeforeRun := "" // Text in paragraph before current run, for context
 	paragraphHasRealDirectFormat := false
 
 	for {
@@ -469,6 +476,7 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 			case "p":
 				inParagraph = true
 				paragraphHasRealDirectFormat = false
+				paragraphTextBeforeRun = ""
 			case "r":
 				inRun = true
 				inRunProps = false
@@ -494,6 +502,7 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 				}
 			case "rFonts":
 				// Only count rFonts as direct formatting if it has non-theme font attributes
+				// Ignore eastAsia - it's legacy cruft that Apply Template strips
 				if inRun && inRunProps && !inMath {
 					hasRealFont := false
 					for _, attr := range t.Attr {
@@ -501,9 +510,10 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 						if strings.HasSuffix(attr.Name.Local, "Theme") {
 							continue
 						}
-						// ascii, hAnsi, eastAsia, cs with actual font names = real formatting
+						// ascii, hAnsi, cs with actual font names = real formatting
+						// eastAsia is ignored (legacy cruft, stripped by Apply Template)
 						if attr.Name.Local == "ascii" || attr.Name.Local == "hAnsi" ||
-							attr.Name.Local == "eastAsia" || attr.Name.Local == "cs" {
+							attr.Name.Local == "cs" {
 							hasRealFont = true
 							break
 						}
@@ -538,8 +548,16 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 					for k := range runDirectTypes {
 						if _, exists := directFormattingExamples[k]; !exists {
 							sample := strings.TrimSpace(runText)
-							if len(sample) > 30 {
-								sample = sample[:30] + "..."
+							// If sample is short, add preceding context
+							if len(sample) < 10 && len(paragraphTextBeforeRun) > 0 {
+								context := paragraphTextBeforeRun
+								if len(context) > 10 {
+									context = context[len(context)-10:]
+								}
+								sample = "..." + strings.TrimSpace(context) + " [" + sample + "]"
+							}
+							if len(sample) > 40 {
+								sample = sample[:40] + "..."
 							}
 							if sample != "" {
 								directFormattingExamples[k] = sample
@@ -547,6 +565,8 @@ func countStyleUsage(docxPath string) (map[string]int, int, []string, error) {
 						}
 					}
 				}
+				// Accumulate text for context before next run
+				paragraphTextBeforeRun += runText
 				inRun = false
 				runText = ""
 				runHasDirectFormat = false
@@ -633,8 +653,14 @@ func (a *App) CleanDocxStyles(workID int64, templatePath string) (*CleanDocxStyl
 		return result, nil
 	}
 
-	basePath := a.settings.Get().BaseFolderPath
-	fullPath := filepath.Join(basePath, *work.Path)
+	// Handle both absolute and relative paths
+	var fullPath string
+	if filepath.IsAbs(*work.Path) {
+		fullPath = *work.Path
+	} else {
+		basePath := a.settings.Get().BaseFolderPath
+		fullPath = filepath.Join(basePath, *work.Path)
+	}
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		result.Error = errFileNotFound

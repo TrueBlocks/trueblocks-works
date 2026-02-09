@@ -16,6 +16,22 @@ export namespace app {
 	        this.failed = source["failed"];
 	    }
 	}
+	export class BatchSyncWorkTemplateResult {
+	    succeeded: number;
+	    failed: number;
+	    errors: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new BatchSyncWorkTemplateResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.succeeded = source["succeeded"];
+	        this.failed = source["failed"];
+	        this.errors = source["errors"];
+	    }
+	}
 	export class BookExportResult {
 	    success: boolean;
 	    outputPath?: string;
@@ -602,6 +618,7 @@ export namespace app {
 	    titlePage: string;
 	    copyright: string;
 	    dedication: string;
+	    afterword: string;
 	    acknowledgements: string;
 	    aboutAuthor: string;
 	
@@ -614,6 +631,7 @@ export namespace app {
 	        this.titlePage = source["titlePage"];
 	        this.copyright = source["copyright"];
 	        this.dedication = source["dedication"];
+	        this.afterword = source["afterword"];
 	        this.acknowledgements = source["acknowledgements"];
 	        this.aboutAuthor = source["aboutAuthor"];
 	    }
@@ -1637,6 +1655,7 @@ export namespace models {
 	    author: string;
 	    copyright?: string;
 	    dedication?: string;
+	    afterword?: string;
 	    acknowledgements?: string;
 	    aboutAuthor?: string;
 	    coverPath?: string;
@@ -1686,6 +1705,7 @@ export namespace models {
 	        this.author = source["author"];
 	        this.copyright = source["copyright"];
 	        this.dedication = source["dedication"];
+	        this.afterword = source["afterword"];
 	        this.acknowledgements = source["acknowledgements"];
 	        this.aboutAuthor = source["aboutAuthor"];
 	        this.coverPath = source["coverPath"];

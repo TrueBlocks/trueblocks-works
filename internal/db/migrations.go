@@ -172,6 +172,11 @@ var migrations = []Migration{
 		Name:    "add_smart_query_to_collections",
 		Up:      migrateAddSmartQueryToCollections,
 	},
+	{
+		Version: 41,
+		Name:    "add_afterword_to_books",
+		Up:      migrateAddAfterwordToBooks,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1381,5 +1386,13 @@ func migrateAddSmartQueryToCollections(tx *sql.Tx) error {
 		return fmt.Errorf("insert Not Collected collection: %w", err)
 	}
 
+	return nil
+}
+
+func migrateAddAfterwordToBooks(tx *sql.Tx) error {
+	_, err := tx.Exec(`ALTER TABLE Books ADD COLUMN afterword TEXT`)
+	if err != nil {
+		return fmt.Errorf("add afterword column: %w", err)
+	}
 	return nil
 }

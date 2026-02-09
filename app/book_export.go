@@ -39,6 +39,7 @@ type FrontBackMatterHTML struct {
 	TitlePage        string `json:"titlePage"`
 	Copyright        string `json:"copyright"`
 	Dedication       string `json:"dedication"`
+	Afterword        string `json:"afterword"`
 	Acknowledgements string `json:"acknowledgements"`
 	AboutAuthor      string `json:"aboutAuthor"`
 }
@@ -373,7 +374,10 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 		return nil, fmt.Errorf("collection has no works")
 	}
 
-	// Add individual back matter PDFs in order: ack, about
+	// Add individual back matter PDFs in order: afterword, ack, about
+	if fileExists(filepath.Join(buildDir, "afterword.pdf")) {
+		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "afterword", PDF: filepath.Join(buildDir, "afterword.pdf")})
+	}
 	if fileExists(filepath.Join(buildDir, "ack.pdf")) {
 		manifest.BackMatter = append(manifest.BackMatter, bookbuild.BackMatterItem{Type: "ack", PDF: filepath.Join(buildDir, "ack.pdf")})
 	}
@@ -569,6 +573,11 @@ func (a *App) generateFrontBackMatterPDFs(buildDir string, html FrontBackMatterH
 	if html.Dedication != "" {
 		if err := bookbuild.HTMLToPDFFile(html.Dedication, filepath.Join(buildDir, "dedication.pdf")); err != nil {
 			return fmt.Errorf("create dedication pdf: %w", err)
+		}
+	}
+	if html.Afterword != "" {
+		if err := bookbuild.HTMLToPDFFile(html.Afterword, filepath.Join(buildDir, "afterword.pdf")); err != nil {
+			return fmt.Errorf("create afterword pdf: %w", err)
 		}
 	}
 	if html.Acknowledgements != "" {

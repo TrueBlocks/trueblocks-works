@@ -5,6 +5,7 @@ import {
   IconCategory,
   IconStars,
   IconArrowMoveRight,
+  // IconTemplate, // Commented out with apply-template batch
 } from '@tabler/icons-react';
 import type { TablerIcon } from '@tabler/icons-react';
 
@@ -19,7 +20,7 @@ export interface Command {
   // For field updates - the field name to update
   field?: 'status' | 'type' | 'quality' | 'docType';
   // For actions - a unique action identifier
-  action?: 'revealInFinder' | 'backupFiles' | 'moveFiles';
+  action?: 'revealInFinder' | 'backupFiles' | 'moveFiles' | 'applyTemplate';
   icon?: TablerIcon;
   description?: string;
 }
@@ -87,6 +88,15 @@ export const commands: Command[] = [
     icon: IconArrowMoveRight,
     description: 'Move marked files to their generated paths',
   },
+  // {
+  //   id: 'apply-template',
+  //   label: 'Apply Template',
+  //   scope: 'works',
+  //   type: 'action',
+  //   action: 'applyTemplate',
+  //   icon: IconTemplate,
+  //   description: 'Sync styles, theme, and clean formatting for marked works',
+  // },
 ];
 
 export function getCommandsForScope(scope: CommandScope): Command[] {

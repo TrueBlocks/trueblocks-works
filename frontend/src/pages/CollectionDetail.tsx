@@ -79,6 +79,7 @@ import {
   BatchRevealInFinder,
   BatchBackupWorks,
   BatchMoveMarkedFiles,
+  BatchSyncWorkTemplate,
   GetSettings,
   UpdateSettings,
   DuplicateWork,
@@ -1116,6 +1117,29 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
               color: 'red',
             });
           }
+        } else if (selectedCommand.action === 'applyTemplate') {
+          const workIDs = markedWorksInfo.map((w) => w.workID);
+          const result = await BatchSyncWorkTemplate(workIDs);
+          if (result.failed === 0) {
+            notifications.show({
+              title: 'Template Applied',
+              message: `Applied template to ${result.succeeded} work${result.succeeded === 1 ? '' : 's'}`,
+              color: 'green',
+            });
+          } else if (result.succeeded > 0) {
+            notifications.show({
+              title: 'Partial Success',
+              message: `Applied: ${result.succeeded}, Failed: ${result.failed}`,
+              color: 'yellow',
+            });
+          } else {
+            notifications.show({
+              title: 'Apply Template Failed',
+              message: result.errors.slice(0, 3).join('\n'),
+              color: 'red',
+            });
+          }
+          loadData();
         }
       } catch (err) {
         LogErr('Batch operation failed:', err);

@@ -168,6 +168,29 @@ func (f *FileOps) moveSupportingItem(sourcePath, destPath string) error {
 	return nil
 }
 
+func (f *FileOps) removeSupportingItem(sourcePath string) error {
+	sourceDir := filepath.Dir(sourcePath)
+	sourceBase := filepath.Base(sourcePath)
+	sourceExt := filepath.Ext(sourceBase)
+	sourceName := strings.TrimSuffix(sourceBase, sourceExt)
+
+	sourceSupportDir := filepath.Join(sourceDir, "Supporting")
+
+	// Try to remove supporting folder
+	sourceFolderPath := filepath.Join(sourceSupportDir, sourceName)
+	if info, err := os.Stat(sourceFolderPath); err == nil && info.IsDir() {
+		return os.RemoveAll(sourceFolderPath)
+	}
+
+	// Try to remove supporting file
+	sourceFilePath := filepath.Join(sourceSupportDir, sourceBase)
+	if _, err := os.Stat(sourceFilePath); err == nil {
+		return os.Remove(sourceFilePath)
+	}
+
+	return nil
+}
+
 func (f *FileOps) archiveSupportingItem(sourcePath string) error {
 	sourceDir := filepath.Dir(sourcePath)
 	sourceBase := filepath.Base(sourcePath)
@@ -275,6 +298,23 @@ func (f *FileOps) MoveFile(w *models.Work) (string, error) {
 	currentPath := f.GetFilename(derefStringOps(w.Path))
 	newPath := f.GetFullPath(w)
 
+	// Check if file already exists at destination
+	existsAtDest := FileExists(newPath)
+	existsAtSource := FileExists(currentPath)
+
+	// Case: File already at destination, just update DB and remove orphan
+	if existsAtDest {
+		// Remove orphaned file at old location if it exists and is different
+		if existsAtSource && currentPath != newPath {
+			_ = os.Remove(currentPath)
+			// Also try to remove supporting folder
+			_ = f.removeSupportingItem(currentPath)
+		}
+		relativePath, _ := filepath.Rel(f.Config.BaseFolderPath, newPath)
+		return relativePath, nil
+	}
+
+	// Case: File needs to be moved
 	sourcePath, err := FindFileWithExtension(currentPath)
 	if err != nil {
 		return "", fmt.Errorf("source file not found: %w", err)

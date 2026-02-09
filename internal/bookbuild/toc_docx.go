@@ -3,12 +3,14 @@ package bookbuild
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // CreateTOCDocx creates a Table of Contents DOTM file from TOC entries.
@@ -246,8 +248,15 @@ func ConvertDocxToPDF(docxPath, pdfPath string) error {
 	close theDoc saving no
 end tell`, absDocx, absPDF)
 
-	cmd := exec.Command("osascript", "-e", script)
+	// 30 second timeout to prevent indefinite hangs
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("word conversion timed out - Word may have a dialog open")
+	}
 	if err != nil {
 		return fmt.Errorf("word conversion failed: %w: %s", err, string(output))
 	}

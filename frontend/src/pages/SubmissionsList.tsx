@@ -194,6 +194,16 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
     return state.lastSubmissionID;
   }, []);
 
+  const handleFilteredSortedChange = useCallback(
+    (filteredSubs: models.SubmissionView[]) => {
+      onFilteredDataChange?.(filteredSubs);
+      const items = filteredSubs.map((s) => ({ id: s.submissionID }));
+      const navCurrentId = currentId ?? filteredSubs[0]?.submissionID ?? 0;
+      setItems('submission', items, navCurrentId);
+    },
+    [onFilteredDataChange, currentId, setItems]
+  );
+
   const columns: Column<models.SubmissionView>[] = useMemo(
     () => [
       {
@@ -264,12 +274,7 @@ export function SubmissionsList({ onSubmissionClick, onFilteredDataChange }: Sub
         onRowClick={onSubmissionClick}
         onSelectedChange={handleSelectedChange}
         getLastSelectedID={getLastSelectedID}
-        onFilteredSortedChange={(subs) => {
-          onFilteredDataChange?.(subs);
-          const items = subs.map((s) => ({ id: s.submissionID }));
-          const navCurrentId = currentId ?? subs[0]?.submissionID ?? 0;
-          setItems('submission', items, navCurrentId);
-        }}
+        onFilteredSortedChange={handleFilteredSortedChange}
         searchFn={searchFn}
         valueGetter={getSubmissionValue}
         onDelete={handleDelete}

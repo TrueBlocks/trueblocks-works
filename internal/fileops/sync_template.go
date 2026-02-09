@@ -1,10 +1,12 @@
 package fileops
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 )
 
 func SyncTemplateToDocument(templatePath, docxPath string) error {
@@ -34,9 +36,16 @@ func SyncTemplateToDocument(templatePath, docxPath string) error {
 	}
 	tmpFile.Close()
 
-	cmd := exec.Command("osascript", scriptPath)
+	// 60 second timeout - template sync can take a while but shouldn't hang forever
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "osascript", scriptPath)
 	output, err := cmd.CombinedOutput()
 	os.Remove(scriptPath)
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("template sync timed out - Word may have a dialog open")
+	}
 	if err != nil {
 		return fmt.Errorf("applescript failed: %w: %s", err, string(output))
 	}

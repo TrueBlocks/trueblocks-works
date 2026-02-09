@@ -127,6 +127,44 @@ export function generateDedicationHTML({ book }: BookPageParams): string {
   return wrapPage(styles, body);
 }
 
+export function generateAfterwordHTML({ book }: BookPageParams): string {
+  const afterword = book.afterword || '';
+  const lines = afterword.split('\n').filter((line) => line.trim());
+
+  const linesHTML = lines.map((line) => `<p class="bodyText">${line}</p>`).join('\n      ');
+
+  const styles = `
+.headingSection {
+  padding-top: 10%;
+  margin-bottom: 1.5em;
+}
+.headingText {
+  text-align: center;
+  font-family: '${DEFAULT_FONT}', serif;
+  font-size: ${HEADING_SIZE}pt;
+  font-weight: normal;
+  color: #000;
+}
+.bodyText {
+  font-family: '${DEFAULT_FONT}', serif;
+  font-size: ${NORMAL_SIZE}pt;
+  font-weight: normal;
+  line-height: 1.6;
+  color: #000;
+  margin-bottom: 0.5em;
+}`;
+
+  const body = `
+    <div class="headingSection">
+      <p class="headingText">Afterword</p>
+    </div>
+    <div class="bodySection">
+      ${linesHTML || '<p class="bodyText"></p>'}
+    </div>`;
+
+  return wrapPage(styles, body);
+}
+
 export function generateAcknowledgementsHTML({ book }: BookPageParams): string {
   const acknowledgements = book.acknowledgements || '';
   const lines = acknowledgements.split('\n').filter((line) => line.trim());

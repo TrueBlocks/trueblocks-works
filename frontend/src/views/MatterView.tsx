@@ -5,6 +5,7 @@ import {
   IconTypography,
   IconCopyright,
   IconHeart,
+  IconBookmark,
   IconUsers,
   IconUser,
   IconFileTypePdf,
@@ -29,6 +30,7 @@ import { LogErr, Log, generateTitlePageHTML } from '@/utils';
 import {
   generateCopyrightHTML,
   generateDedicationHTML,
+  generateAfterwordHTML,
   generateAcknowledgementsHTML,
   generateAboutAuthorHTML,
 } from '@/utils/bookPageHTML';
@@ -37,6 +39,7 @@ import {
   TitlePagePanel,
   CopyrightPanel,
   DedicationPanel,
+  AfterwordPanel,
   AcknowledgementsPanel,
   AboutAuthorPanel,
 } from '@/panels';
@@ -126,6 +129,7 @@ export function MatterView({
       titlePage: generateTitlePageHTML({ book, collectionName, templateStyles }),
       copyright: book.copyright ? generateCopyrightHTML({ book }) : '',
       dedication: book.dedication ? generateDedicationHTML({ book }) : '',
+      afterword: book.afterword ? generateAfterwordHTML({ book }) : '',
       acknowledgements: book.acknowledgements ? generateAcknowledgementsHTML({ book }) : '',
       aboutAuthor: book.aboutAuthor ? generateAboutAuthorHTML({ book }) : '',
     };
@@ -278,6 +282,9 @@ export function MatterView({
           <Tabs.Tab value="dedication" leftSection={<IconHeart size={16} />}>
             Dedication
           </Tabs.Tab>
+          <Tabs.Tab value="afterword" leftSection={<IconBookmark size={16} />}>
+            Afterword
+          </Tabs.Tab>
           <Tabs.Tab value="ack" leftSection={<IconUsers size={16} />}>
             Acknowledgements
           </Tabs.Tab>
@@ -303,6 +310,10 @@ export function MatterView({
 
         <Tabs.Panel value="dedication">
           <DedicationPanel book={book} onBookChange={handleBookChange} />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="afterword">
+          <AfterwordPanel book={book} onBookChange={handleBookChange} />
         </Tabs.Panel>
 
         <Tabs.Panel value="ack">

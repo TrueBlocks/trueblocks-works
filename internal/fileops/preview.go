@@ -1,11 +1,13 @@
 package fileops
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func (f *FileOps) CheckWord() bool {
@@ -120,8 +122,15 @@ if not wasRunning then
 end if
 `, docPath, docPath, docPath, pdfPath)
 
-	cmd := exec.Command("osascript", "-e", script)
+	// 30 second timeout to prevent indefinite hangs when Word has dialogs open
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("PDF conversion timed out - Word may have a dialog open")
+	}
 	if err != nil {
 		return fmt.Errorf("PDF conversion failed: %w (output: %s)", err, strings.TrimSpace(string(output)))
 	}
@@ -211,8 +220,15 @@ if not wasRunning then
 end if
 `, docPath, docPath, docPath, pdfPath)
 
-	cmd := exec.Command("osascript", "-e", script)
+	// 30 second timeout to prevent indefinite hangs when Excel has dialogs open
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "osascript", "-e", script)
 	output, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		return fmt.Errorf("excel PDF conversion timed out - Excel may have a dialog open")
+	}
 	if err != nil {
 		return fmt.Errorf("excel PDF conversion failed: %w (output: %s)", err, strings.TrimSpace(string(output)))
 	}

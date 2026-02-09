@@ -36,6 +36,8 @@ export function BatchMoveMarkedFiles(arg1:Array<number>):Promise<app.BatchMoveRe
 
 export function BatchRevealInFinder(arg1:Array<string>):Promise<number>;
 
+export function BatchSyncWorkTemplate(arg1:Array<number>):Promise<app.BatchSyncWorkTemplateResult>;
+
 export function BatchUpdateWorkField(arg1:Array<number>,arg2:string,arg3:string):Promise<number>;
 
 export function BrowseForFolder(arg1:string):Promise<string>;

@@ -12,6 +12,7 @@ export { generateTitlePageHTML } from './titlePageHTML';
 export {
   generateCopyrightHTML,
   generateDedicationHTML,
+  generateAfterwordHTML,
   generateAcknowledgementsHTML,
   generateAboutAuthorHTML,
 } from './bookPageHTML';

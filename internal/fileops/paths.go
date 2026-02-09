@@ -167,6 +167,7 @@ func (f *FileOps) CheckPath(w *models.Work) string {
 	generatedPath := f.GeneratePath(w)
 	storedPath := derefString(w.Path)
 
+	// Paths match - no action needed
 	if generatedPath == storedPath {
 		return ""
 	}
@@ -174,11 +175,16 @@ func (f *FileOps) CheckPath(w *models.Work) string {
 	fullGeneratedPath := f.GetFullPath(w)
 	fullStoredPath := f.GetFilename(storedPath)
 
-	if _, err := FindFileWithExtension(fullGeneratedPath); err == nil {
-		return ""
+	existsAtGenerated := FileExists(fullGeneratedPath)
+	existsAtStored := FileExists(fullStoredPath)
+
+	// File already at correct location - just need to update DB
+	if existsAtGenerated {
+		return "path outdated"
 	}
 
-	if _, err := FindFileWithExtension(fullStoredPath); err == nil {
+	// File exists at stored path but not generated - needs move
+	if existsAtStored {
 		return "name changed"
 	}
 

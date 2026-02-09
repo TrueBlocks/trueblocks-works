@@ -189,6 +189,16 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
     return state.lastOrgID;
   }, []);
 
+  const handleFilteredSortedChange = useCallback(
+    (filteredOrgs: models.OrganizationWithNotes[]) => {
+      onFilteredDataChange?.(filteredOrgs);
+      const items = filteredOrgs.map((o) => ({ id: o.orgID }));
+      const navCurrentId = currentId ?? filteredOrgs[0]?.orgID ?? 0;
+      setItems('organization', items, navCurrentId);
+    },
+    [onFilteredDataChange, currentId, setItems]
+  );
+
   const columns: Column<models.OrganizationWithNotes>[] = useMemo(
     () => [
       { key: 'orgID', label: 'ID', width: '5%', render: (o) => o.orgID },
@@ -305,12 +315,7 @@ export function OrganizationsList({ onOrgClick, onFilteredDataChange }: Organiza
         onRowClick={onOrgClick}
         onSelectedChange={handleSelectedChange}
         getLastSelectedID={getLastSelectedID}
-        onFilteredSortedChange={(filteredOrgs) => {
-          onFilteredDataChange?.(filteredOrgs);
-          const items = filteredOrgs.map((o) => ({ id: o.orgID }));
-          const navCurrentId = currentId ?? filteredOrgs[0]?.orgID ?? 0;
-          setItems('organization', items, navCurrentId);
-        }}
+        onFilteredSortedChange={handleFilteredSortedChange}
         searchFn={searchFn}
         valueGetter={getOrgValue}
         onDelete={handleDelete}

@@ -9,6 +9,7 @@ type Book struct {
 	Author              string  `json:"author" db:"author"`
 	Copyright           *string `json:"copyright,omitempty" db:"copyright"`
 	Dedication          *string `json:"dedication,omitempty" db:"dedication"`
+	Afterword           *string `json:"afterword,omitempty" db:"afterword"`
 	Acknowledgements    *string `json:"acknowledgements,omitempty" db:"acknowledgements"`
 	AboutAuthor         *string `json:"aboutAuthor,omitempty" db:"about_author"`
 	CoverPath           *string `json:"coverPath,omitempty" db:"cover_path"`

@@ -56,6 +56,7 @@ export function FileActionsToolbar({
     directFormatting: number;
     directFormattingTypes: string[];
     isCompatibilityMode: boolean;
+    error?: string;
   } | null>(null);
   const [templatePath, setTemplatePath] = useState<string>('');
   const [isMarked, setIsMarked] = useState(false);
@@ -110,7 +111,12 @@ export function FileActionsToolbar({
   // Cmd+M hotkey to move file directly
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && !e.shiftKey && e.key === 'm' && pathStatus === 'name changed') {
+      if (
+        e.metaKey &&
+        !e.shiftKey &&
+        e.key === 'm' &&
+        (pathStatus === 'name changed' || pathStatus === 'path outdated')
+      ) {
         e.preventDefault();
         handleMove();
       }
@@ -123,8 +129,18 @@ export function FileActionsToolbar({
     try {
       const destPath = await ExportToSubmissions(workID);
       Log('Exported to:', destPath);
+      notifications.show({
+        message: 'Exported to Submissions folder',
+        color: 'green',
+        autoClose: 3000,
+      });
     } catch (err) {
       LogErr('Failed to export:', err);
+      notifications.show({
+        message: 'Export failed',
+        color: 'red',
+        autoClose: 5000,
+      });
     }
   };
 
@@ -311,13 +327,15 @@ export function FileActionsToolbar({
   };
 
   const auditStatusText = auditStatus?.isInBook
-    ? auditStatus?.isSkipped
-      ? 'Audit Skipped'
-      : !auditStatus?.isClean
-        ? auditStatus?.isCompatibilityMode
-          ? 'Compatibility Mode'
-          : `${auditStatus.unknownStyles} unknown styles, ${auditStatus.directFormatting} direct`
-        : ''
+    ? auditStatus?.error
+      ? auditStatus.error
+      : auditStatus?.isSkipped
+        ? 'Audit Skipped'
+        : !auditStatus?.isClean
+          ? auditStatus?.isCompatibilityMode
+            ? 'Compatibility Mode'
+            : `${auditStatus.unknownStyles} unknown styles, ${auditStatus.directFormatting} direct`
+          : ''
     : '';
 
   return (
@@ -342,6 +360,19 @@ export function FileActionsToolbar({
             styles={{ root: { color: 'black' } }}
           >
             Move File
+          </Button>
+        )}
+
+        {pathStatus === 'path outdated' && (
+          <Button
+            variant="filled"
+            color="teal"
+            size="xs"
+            leftSection={<IconArrowsExchange size={16} />}
+            onClick={handleMove}
+            styles={{ root: { color: 'white' } }}
+          >
+            Update Path
           </Button>
         )}
 

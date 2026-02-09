@@ -304,7 +304,17 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         width: '12%',
         scrollOnSelect: true,
         render: (w) => {
-          const list = w.collectionList || '';
+          const raw = w.collectionList || '';
+          const collections = raw
+            .split(',')
+            .map((c) => c.trim())
+            .filter(Boolean);
+          const visible = collections.filter((c) => !c.startsWith('z'));
+          const hasHidden = collections.some((c) => c.startsWith('z'));
+          if (hasHidden) {
+            visible.push('z');
+          }
+          const list = visible.join(', ');
           return list.length > 30 ? list.substring(0, 30) + '…' : list || '-';
         },
       },

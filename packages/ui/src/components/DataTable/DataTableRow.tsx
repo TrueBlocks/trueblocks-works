@@ -59,9 +59,9 @@ function DataTableRowInner<T>(
   return (
     <Table.Tr
       ref={ref}
+      className={isSelected ? 'data-table-row-selected' : ''}
       style={{
         cursor: hasClickHandler ? 'pointer' : 'default',
-        backgroundColor: isSelected ? 'var(--mantine-color-blue-light)' : undefined,
         opacity: isDeleted ? 0.6 : 1,
         textDecoration: isDeleted ? 'line-through' : 'none',
         ...customStyle,

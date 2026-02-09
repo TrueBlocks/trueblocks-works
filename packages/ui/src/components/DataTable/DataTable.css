@@ -4,3 +4,12 @@
   text-overflow: ellipsis;
   max-width: 0;
 }
+
+/* Row selection styling - more visible in light mode */
+.data-table-row-selected {
+  background-color: #d0ebff !important;
+}
+
+[data-mantine-color-scheme='dark'] .data-table-row-selected {
+  background-color: var(--mantine-color-blue-light) !important;
+}

@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Grid, Textarea, Stack, Text, Paper } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
-import { models } from '@models';
+import { models, app } from '@models';
 import { generateAfterwordHTML } from '@/utils/bookPageHTML';
 import { PagePreview } from '@trueblocks/ui';
 
 interface AfterwordPanelProps {
   book: models.Book;
   onBookChange: (book: models.Book) => void;
+  templateStyles: app.TitlePageStyleInfo | null;
 }
 
-export function AfterwordPanel({ book, onBookChange }: AfterwordPanelProps) {
+export function AfterwordPanel({ book, onBookChange, templateStyles }: AfterwordPanelProps) {
   const [localValue, setLocalValue] = useState(book.afterword || '');
   const [trackedBookId, setTrackedBookId] = useState(book.bookID);
 
@@ -52,7 +53,7 @@ export function AfterwordPanel({ book, onBookChange }: AfterwordPanelProps) {
       </Grid.Col>
       <Grid.Col span={6}>
         <PagePreview
-          html={generateAfterwordHTML({ book })}
+          html={generateAfterwordHTML({ book, templateStyles })}
           canvasWidthMM={152.4}
           canvasHeightMM={228.6}
         />

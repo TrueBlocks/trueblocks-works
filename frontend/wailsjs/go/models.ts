@@ -1034,6 +1034,9 @@ export namespace app {
 	    fontName?: string;
 	    fontSize?: number;
 	    fontColor?: string;
+	    alignment?: string;
+	    spacingBefore?: number;
+	    firstLineIndent?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new TemplateStyle(source);
@@ -1049,6 +1052,9 @@ export namespace app {
 	        this.fontName = source["fontName"];
 	        this.fontSize = source["fontSize"];
 	        this.fontColor = source["fontColor"];
+	        this.alignment = source["alignment"];
+	        this.spacingBefore = source["spacingBefore"];
+	        this.firstLineIndent = source["firstLineIndent"];
 	    }
 	}
 	export class TemplateValidation {
@@ -1101,6 +1107,15 @@ export namespace app {
 	    authorFont: string;
 	    authorSize: number;
 	    authorColor: string;
+	    headingFont: string;
+	    headingSize: number;
+	    headingColor: string;
+	    headingAlign: string;
+	    headingSpacingBefore: number;
+	    normalFont: string;
+	    normalSize: number;
+	    normalColor: string;
+	    normalFirstLineIndent: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new TitlePageStyleInfo(source);
@@ -1117,6 +1132,15 @@ export namespace app {
 	        this.authorFont = source["authorFont"];
 	        this.authorSize = source["authorSize"];
 	        this.authorColor = source["authorColor"];
+	        this.headingFont = source["headingFont"];
+	        this.headingSize = source["headingSize"];
+	        this.headingColor = source["headingColor"];
+	        this.headingAlign = source["headingAlign"];
+	        this.headingSpacingBefore = source["headingSpacingBefore"];
+	        this.normalFont = source["normalFont"];
+	        this.normalSize = source["normalSize"];
+	        this.normalColor = source["normalColor"];
+	        this.normalFirstLineIndent = source["normalFirstLineIndent"];
 	    }
 	}
 	

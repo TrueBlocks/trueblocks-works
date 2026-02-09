@@ -1,4 +1,4 @@
-import { models } from '@models';
+import { models, app } from '@models';
 
 const PAGE_WIDTH_IN = 6.0;
 const PAGE_HEIGHT_IN = 9.0;
@@ -67,6 +67,11 @@ interface BookPageParams {
   book: models.Book;
 }
 
+interface StyledBookPageParams {
+  book: models.Book;
+  templateStyles: app.TitlePageStyleInfo | null;
+}
+
 export function generateCopyrightHTML({ book }: BookPageParams): string {
   const copyright = book.copyright || '';
   const copyrightLines = copyright.split('\n').filter((line) => line.trim());
@@ -127,31 +132,42 @@ export function generateDedicationHTML({ book }: BookPageParams): string {
   return wrapPage(styles, body);
 }
 
-export function generateAfterwordHTML({ book }: BookPageParams): string {
+export function generateAfterwordHTML({ book, templateStyles }: StyledBookPageParams): string {
   const afterword = book.afterword || '';
   const lines = afterword.split('\n').filter((line) => line.trim());
+
+  const headingFont = templateStyles?.headingFont || DEFAULT_FONT;
+  const headingSize = templateStyles?.headingSize || HEADING_SIZE;
+  const headingColor = templateStyles?.headingColor || '000000';
+  const headingAlign = templateStyles?.headingAlign || 'left';
+  const headingSpacingBefore = templateStyles?.headingSpacingBefore || 72;
+  const normalFont = templateStyles?.normalFont || DEFAULT_FONT;
+  const normalSize = templateStyles?.normalSize || NORMAL_SIZE;
+  const normalColor = templateStyles?.normalColor || '000000';
+  const normalFirstLineIndent = templateStyles?.normalFirstLineIndent || 0;
 
   const linesHTML = lines.map((line) => `<p class="bodyText">${line}</p>`).join('\n      ');
 
   const styles = `
 .headingSection {
-  padding-top: 10%;
+  padding-top: ${headingSpacingBefore}pt;
   margin-bottom: 1.5em;
 }
 .headingText {
-  text-align: center;
-  font-family: '${DEFAULT_FONT}', serif;
-  font-size: ${HEADING_SIZE}pt;
+  text-align: ${headingAlign};
+  font-family: '${headingFont}', serif;
+  font-size: ${headingSize}pt;
   font-weight: normal;
-  color: #000;
+  color: #${headingColor};
 }
 .bodyText {
-  font-family: '${DEFAULT_FONT}', serif;
-  font-size: ${NORMAL_SIZE}pt;
+  font-family: '${normalFont}', serif;
+  font-size: ${normalSize}pt;
   font-weight: normal;
   line-height: 1.6;
-  color: #000;
+  color: #${normalColor};
   margin-bottom: 0.5em;
+  text-indent: ${normalFirstLineIndent}pt;
 }`;
 
   const body = `
@@ -165,31 +181,45 @@ export function generateAfterwordHTML({ book }: BookPageParams): string {
   return wrapPage(styles, body);
 }
 
-export function generateAcknowledgementsHTML({ book }: BookPageParams): string {
+export function generateAcknowledgementsHTML({
+  book,
+  templateStyles,
+}: StyledBookPageParams): string {
   const acknowledgements = book.acknowledgements || '';
   const lines = acknowledgements.split('\n').filter((line) => line.trim());
+
+  const headingFont = templateStyles?.headingFont || DEFAULT_FONT;
+  const headingSize = templateStyles?.headingSize || HEADING_SIZE;
+  const headingColor = templateStyles?.headingColor || '000000';
+  const headingAlign = templateStyles?.headingAlign || 'left';
+  const headingSpacingBefore = templateStyles?.headingSpacingBefore || 72;
+  const normalFont = templateStyles?.normalFont || DEFAULT_FONT;
+  const normalSize = templateStyles?.normalSize || NORMAL_SIZE;
+  const normalColor = templateStyles?.normalColor || '000000';
+  const normalFirstLineIndent = templateStyles?.normalFirstLineIndent || 0;
 
   const linesHTML = lines.map((line) => `<p class="bodyText">${line}</p>`).join('\n      ');
 
   const styles = `
 .headingSection {
-  padding-top: 10%;
+  padding-top: ${headingSpacingBefore}pt;
   margin-bottom: 1.5em;
 }
 .headingText {
-  text-align: center;
-  font-family: '${DEFAULT_FONT}', serif;
-  font-size: ${HEADING_SIZE}pt;
+  text-align: ${headingAlign};
+  font-family: '${headingFont}', serif;
+  font-size: ${headingSize}pt;
   font-weight: normal;
-  color: #000;
+  color: #${headingColor};
 }
 .bodyText {
-  font-family: '${DEFAULT_FONT}', serif;
-  font-size: ${NORMAL_SIZE}pt;
+  font-family: '${normalFont}', serif;
+  font-size: ${normalSize}pt;
   font-weight: normal;
   line-height: 1.6;
-  color: #000;
+  color: #${normalColor};
   margin-bottom: 0.5em;
+  text-indent: ${normalFirstLineIndent}pt;
 }`;
 
   const body = `
@@ -203,31 +233,42 @@ export function generateAcknowledgementsHTML({ book }: BookPageParams): string {
   return wrapPage(styles, body);
 }
 
-export function generateAboutAuthorHTML({ book }: BookPageParams): string {
+export function generateAboutAuthorHTML({ book, templateStyles }: StyledBookPageParams): string {
   const aboutAuthor = book.aboutAuthor || '';
   const lines = aboutAuthor.split('\n').filter((line) => line.trim());
+
+  const headingFont = templateStyles?.headingFont || DEFAULT_FONT;
+  const headingSize = templateStyles?.headingSize || HEADING_SIZE;
+  const headingColor = templateStyles?.headingColor || '000000';
+  const headingAlign = templateStyles?.headingAlign || 'left';
+  const headingSpacingBefore = templateStyles?.headingSpacingBefore || 72;
+  const normalFont = templateStyles?.normalFont || DEFAULT_FONT;
+  const normalSize = templateStyles?.normalSize || NORMAL_SIZE;
+  const normalColor = templateStyles?.normalColor || '000000';
+  const normalFirstLineIndent = templateStyles?.normalFirstLineIndent || 0;
 
   const linesHTML = lines.map((line) => `<p class="bodyText">${line}</p>`).join('\n      ');
 
   const styles = `
 .headingSection {
-  padding-top: 10%;
+  padding-top: ${headingSpacingBefore}pt;
   margin-bottom: 1.5em;
 }
 .headingText {
-  text-align: center;
-  font-family: '${DEFAULT_FONT}', serif;
-  font-size: ${HEADING_SIZE}pt;
+  text-align: ${headingAlign};
+  font-family: '${headingFont}', serif;
+  font-size: ${headingSize}pt;
   font-weight: normal;
-  color: #000;
+  color: #${headingColor};
 }
 .bodyText {
-  font-family: '${DEFAULT_FONT}', serif;
-  font-size: ${NORMAL_SIZE}pt;
+  font-family: '${normalFont}', serif;
+  font-size: ${normalSize}pt;
   font-weight: normal;
   line-height: 1.6;
-  color: #000;
+  color: #${normalColor};
   margin-bottom: 0.5em;
+  text-indent: ${normalFirstLineIndent}pt;
 }`;
 
   const body = `

@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Grid, Textarea, Stack, Text, Paper } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
-import { models } from '@models';
+import { models, app } from '@models';
 import { generateAboutAuthorHTML } from '@/utils/bookPageHTML';
 import { PagePreview } from '@trueblocks/ui';
 
 interface AboutAuthorPanelProps {
   book: models.Book;
   onBookChange: (book: models.Book) => void;
+  templateStyles: app.TitlePageStyleInfo | null;
 }
 
-export function AboutAuthorPanel({ book, onBookChange }: AboutAuthorPanelProps) {
+export function AboutAuthorPanel({ book, onBookChange, templateStyles }: AboutAuthorPanelProps) {
   const [localValue, setLocalValue] = useState(book.aboutAuthor || '');
   const [trackedBookId, setTrackedBookId] = useState(book.bookID);
 
@@ -52,7 +53,7 @@ export function AboutAuthorPanel({ book, onBookChange }: AboutAuthorPanelProps) 
       </Grid.Col>
       <Grid.Col span={6}>
         <PagePreview
-          html={generateAboutAuthorHTML({ book })}
+          html={generateAboutAuthorHTML({ book, templateStyles })}
           canvasWidthMM={152.4}
           canvasHeightMM={228.6}
         />

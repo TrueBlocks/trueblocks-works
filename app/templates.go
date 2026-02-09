@@ -15,14 +15,17 @@ import (
 
 // TemplateStyle represents a style found in a DOCX template
 type TemplateStyle struct {
-	StyleID   string  `json:"styleId"`
-	Name      string  `json:"name"`
-	Type      string  `json:"type"` // paragraph, character, table
-	IsCustom  bool    `json:"isCustom"`
-	IsBuiltIn bool    `json:"isBuiltIn"`
-	FontName  *string `json:"fontName,omitempty"`
-	FontSize  *int    `json:"fontSize,omitempty"`  // in points
-	FontColor *string `json:"fontColor,omitempty"` // hex color without #
+	StyleID         string  `json:"styleId"`
+	Name            string  `json:"name"`
+	Type            string  `json:"type"` // paragraph, character, table
+	IsCustom        bool    `json:"isCustom"`
+	IsBuiltIn       bool    `json:"isBuiltIn"`
+	FontName        *string `json:"fontName,omitempty"`
+	FontSize        *int    `json:"fontSize,omitempty"`        // in points
+	FontColor       *string `json:"fontColor,omitempty"`       // hex color without #
+	Alignment       *string `json:"alignment,omitempty"`       // left, center, right, both
+	SpacingBefore   *int    `json:"spacingBefore,omitempty"`   // in points
+	FirstLineIndent *int    `json:"firstLineIndent,omitempty"` // in points
 }
 
 // TemplateValidation represents the result of validating a DOCX template
@@ -217,13 +220,26 @@ func extractDOCXStyles(path string) ([]TemplateStyle, error) {
 	type ColorAttr struct {
 		Val string `xml:"val,attr"`
 	}
+	type JcAttr struct {
+		Val string `xml:"val,attr"`
+	}
+	type SpacingAttr struct {
+		Before string `xml:"before,attr"`
+		After  string `xml:"after,attr"`
+	}
+	type IndAttr struct {
+		FirstLine string `xml:"firstLine,attr"`
+	}
 	type RunProps struct {
 		Fonts *FontAttr  `xml:"rFonts"`
 		Size  *SizeAttr  `xml:"sz"`
 		Color *ColorAttr `xml:"color"`
 	}
 	type ParaProps struct {
-		RunProps *RunProps `xml:"rPr"`
+		RunProps *RunProps    `xml:"rPr"`
+		Jc       *JcAttr      `xml:"jc"`
+		Spacing  *SpacingAttr `xml:"spacing"`
+		Ind      *IndAttr     `xml:"ind"`
 	}
 	type StyleName struct {
 		Val string `xml:"val,attr"`
@@ -287,6 +303,28 @@ func extractDOCXStyles(path string) ([]TemplateStyle, error) {
 			ts.FontColor = &color
 		}
 
+		// Extract alignment (jc = justification)
+		if s.ParaProps != nil && s.ParaProps.Jc != nil && s.ParaProps.Jc.Val != "" {
+			alignment := s.ParaProps.Jc.Val
+			ts.Alignment = &alignment
+		}
+
+		// Extract spacing before (in twips, convert to points: 1 point = 20 twips)
+		if s.ParaProps != nil && s.ParaProps.Spacing != nil && s.ParaProps.Spacing.Before != "" {
+			if twips, err := strconv.Atoi(s.ParaProps.Spacing.Before); err == nil {
+				pts := twips / 20
+				ts.SpacingBefore = &pts
+			}
+		}
+
+		// Extract first line indent (in twips, convert to points)
+		if s.ParaProps != nil && s.ParaProps.Ind != nil && s.ParaProps.Ind.FirstLine != "" {
+			if twips, err := strconv.Atoi(s.ParaProps.Ind.FirstLine); err == nil {
+				pts := twips / 20
+				ts.FirstLineIndent = &pts
+			}
+		}
+
 		result = append(result, ts)
 	}
 
@@ -326,29 +364,47 @@ func (a *App) GetWorkTemplatePath(workID int64) (string, error) {
 
 // TitlePageStyleInfo contains style information for rendering the title page
 type TitlePageStyleInfo struct {
-	TitleFont     string `json:"titleFont"`
-	TitleSize     int    `json:"titleSize"`
-	TitleColor    string `json:"titleColor"`
-	SubtitleFont  string `json:"subtitleFont"`
-	SubtitleSize  int    `json:"subtitleSize"`
-	SubtitleColor string `json:"subtitleColor"`
-	AuthorFont    string `json:"authorFont"`
-	AuthorSize    int    `json:"authorSize"`
-	AuthorColor   string `json:"authorColor"`
+	TitleFont             string `json:"titleFont"`
+	TitleSize             int    `json:"titleSize"`
+	TitleColor            string `json:"titleColor"`
+	SubtitleFont          string `json:"subtitleFont"`
+	SubtitleSize          int    `json:"subtitleSize"`
+	SubtitleColor         string `json:"subtitleColor"`
+	AuthorFont            string `json:"authorFont"`
+	AuthorSize            int    `json:"authorSize"`
+	AuthorColor           string `json:"authorColor"`
+	HeadingFont           string `json:"headingFont"`
+	HeadingSize           int    `json:"headingSize"`
+	HeadingColor          string `json:"headingColor"`
+	HeadingAlign          string `json:"headingAlign"`
+	HeadingSpacingBefore  int    `json:"headingSpacingBefore"`
+	NormalFont            string `json:"normalFont"`
+	NormalSize            int    `json:"normalSize"`
+	NormalColor           string `json:"normalColor"`
+	NormalFirstLineIndent int    `json:"normalFirstLineIndent"`
 }
 
 // GetTitlePageStyles extracts style info from a template for rendering the title page preview
 func (a *App) GetTitlePageStyles(templatePath string) (*TitlePageStyleInfo, error) {
 	result := &TitlePageStyleInfo{
-		TitleFont:     "Garamond",
-		TitleSize:     36,
-		TitleColor:    "000000",
-		SubtitleFont:  "Garamond",
-		SubtitleSize:  24,
-		SubtitleColor: "000000",
-		AuthorFont:    "Garamond",
-		AuthorSize:    18,
-		AuthorColor:   "000000",
+		TitleFont:             "Garamond",
+		TitleSize:             36,
+		TitleColor:            "000000",
+		SubtitleFont:          "Garamond",
+		SubtitleSize:          24,
+		SubtitleColor:         "000000",
+		AuthorFont:            "Garamond",
+		AuthorSize:            18,
+		AuthorColor:           "000000",
+		HeadingFont:           "Garamond",
+		HeadingSize:           18,
+		HeadingColor:          "000000",
+		HeadingAlign:          "left",
+		HeadingSpacingBefore:  72,
+		NormalFont:            "Garamond",
+		NormalSize:            11,
+		NormalColor:           "000000",
+		NormalFirstLineIndent: 0,
 	}
 
 	if templatePath == "" {
@@ -391,6 +447,35 @@ func (a *App) GetTitlePageStyles(templatePath string) (*TitlePageStyleInfo, erro
 			}
 			if s.FontColor != nil {
 				result.AuthorColor = *s.FontColor
+			}
+		case "Title":
+			if s.FontName != nil {
+				result.HeadingFont = *s.FontName
+			}
+			if s.FontSize != nil {
+				result.HeadingSize = *s.FontSize
+			}
+			if s.FontColor != nil {
+				result.HeadingColor = *s.FontColor
+			}
+			if s.Alignment != nil {
+				result.HeadingAlign = *s.Alignment
+			}
+			if s.SpacingBefore != nil {
+				result.HeadingSpacingBefore = *s.SpacingBefore
+			}
+		case "Normal":
+			if s.FontName != nil {
+				result.NormalFont = *s.FontName
+			}
+			if s.FontSize != nil {
+				result.NormalSize = *s.FontSize
+			}
+			if s.FontColor != nil {
+				result.NormalColor = *s.FontColor
+			}
+			if s.FirstLineIndent != nil {
+				result.NormalFirstLineIndent = *s.FirstLineIndent
 			}
 		}
 	}

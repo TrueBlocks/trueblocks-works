@@ -11,7 +11,7 @@ import (
 func (db *DB) CreateBook(b *models.Book) error {
 	now := time.Now().Format(time.RFC3339)
 	query := `INSERT INTO Books (
-		collID, title, subtitle, author, copyright, dedication,
+		collID, title, subtitle, author, copyright, dedication, afterword,
 		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path, spine_text,
 		description_short, description_long,
 		isbn, published_date, template_path, export_path, status,
@@ -21,10 +21,10 @@ func (db *DB) CreateBook(b *models.Book) error {
 		book_type, selected_parts,
 		kdp_uploaded, kdp_previewed, kdp_proof_ordered, kdp_published, amazon_url, last_published,
 		created_at, updated_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, err := db.conn.Exec(query,
-		b.CollID, b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
+		b.CollID, b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication, b.Afterword,
 		b.Acknowledgements, b.AboutAuthor, b.CoverPath, b.FrontCoverPath, b.BackCoverPath, b.SpineText,
 		b.DescriptionShort, b.DescriptionLong,
 		b.ISBN, b.PublishedDate, b.TemplatePath, b.ExportPath, b.Status,
@@ -50,7 +50,7 @@ func (db *DB) CreateBook(b *models.Book) error {
 }
 
 func (db *DB) GetBook(id int64) (*models.Book, error) {
-	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication,
+	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication, afterword,
 		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path, spine_text,
 		description_short, description_long,
 		isbn, published_date, template_path, export_path, status,
@@ -68,7 +68,7 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 	b := &models.Book{}
 	err := db.conn.QueryRow(query, id).Scan(
 		&b.BookID, &b.CollID, &b.Title, &b.Subtitle, &b.Author, &b.Copyright,
-		&b.Dedication, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
+		&b.Dedication, &b.Afterword, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
 		&b.FrontCoverPath, &b.BackCoverPath, &b.SpineText,
 		&b.DescriptionShort, &b.DescriptionLong,
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
@@ -90,7 +90,7 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 }
 
 func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
-	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication,
+	query := `SELECT bookID, collID, title, subtitle, author, copyright, dedication, afterword,
 		acknowledgements, about_author, cover_path, front_cover_path, back_cover_path, spine_text,
 		description_short, description_long,
 		isbn, published_date, template_path, export_path, status,
@@ -108,7 +108,7 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 	b := &models.Book{}
 	err := db.conn.QueryRow(query, collID).Scan(
 		&b.BookID, &b.CollID, &b.Title, &b.Subtitle, &b.Author, &b.Copyright,
-		&b.Dedication, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
+		&b.Dedication, &b.Afterword, &b.Acknowledgements, &b.AboutAuthor, &b.CoverPath,
 		&b.FrontCoverPath, &b.BackCoverPath, &b.SpineText,
 		&b.DescriptionShort, &b.DescriptionLong,
 		&b.ISBN, &b.PublishedDate, &b.TemplatePath, &b.ExportPath,
@@ -131,7 +131,7 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 
 func (db *DB) UpdateBook(b *models.Book) error {
 	query := `UPDATE Books SET
-		title = ?, subtitle = ?, author = ?, copyright = ?, dedication = ?,
+		title = ?, subtitle = ?, author = ?, copyright = ?, dedication = ?, afterword = ?,
 		acknowledgements = ?, about_author = ?, cover_path = ?,
 		front_cover_path = ?, back_cover_path = ?, spine_text = ?,
 		description_short = ?, description_long = ?,
@@ -146,7 +146,7 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		WHERE bookID = ?`
 
 	_, err := db.conn.Exec(query,
-		b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication,
+		b.Title, b.Subtitle, b.Author, b.Copyright, b.Dedication, b.Afterword,
 		b.Acknowledgements, b.AboutAuthor, b.CoverPath,
 		b.FrontCoverPath, b.BackCoverPath, b.SpineText,
 		b.DescriptionShort, b.DescriptionLong,

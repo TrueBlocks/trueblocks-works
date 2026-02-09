@@ -1,16 +1,21 @@
 import { useState } from 'react';
 import { Grid, Textarea, Stack, Text, Paper } from '@mantine/core';
 import { useDebouncedCallback } from '@mantine/hooks';
-import { models } from '@models';
+import { models, app } from '@models';
 import { generateAcknowledgementsHTML } from '@/utils/bookPageHTML';
 import { PagePreview } from '@trueblocks/ui';
 
 interface AcknowledgementsPanelProps {
   book: models.Book;
   onBookChange: (book: models.Book) => void;
+  templateStyles: app.TitlePageStyleInfo | null;
 }
 
-export function AcknowledgementsPanel({ book, onBookChange }: AcknowledgementsPanelProps) {
+export function AcknowledgementsPanel({
+  book,
+  onBookChange,
+  templateStyles,
+}: AcknowledgementsPanelProps) {
   const [localValue, setLocalValue] = useState(book.acknowledgements || '');
   const [trackedBookId, setTrackedBookId] = useState(book.bookID);
 
@@ -52,7 +57,7 @@ export function AcknowledgementsPanel({ book, onBookChange }: AcknowledgementsPa
       </Grid.Col>
       <Grid.Col span={6}>
         <PagePreview
-          html={generateAcknowledgementsHTML({ book })}
+          html={generateAcknowledgementsHTML({ book, templateStyles })}
           canvasWidthMM={152.4}
           canvasHeightMM={228.6}
         />

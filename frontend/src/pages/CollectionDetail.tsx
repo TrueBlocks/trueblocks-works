@@ -373,7 +373,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
 
   // Option+Shift+2: Cycle matter sub-tabs (only when on matter tab)
   useEffect(() => {
-    const MATTER_TAB_CYCLE = ['titlepage', 'copyright', 'dedication', 'ack', 'about'];
+    const MATTER_TAB_CYCLE = ['titlepage', 'copyright', 'dedication', 'afterword', 'ack', 'about'];
 
     function handleCycleMatterTab() {
       if (!isBook) return;

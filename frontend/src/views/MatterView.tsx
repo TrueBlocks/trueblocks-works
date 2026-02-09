@@ -129,9 +129,11 @@ export function MatterView({
       titlePage: generateTitlePageHTML({ book, collectionName, templateStyles }),
       copyright: book.copyright ? generateCopyrightHTML({ book }) : '',
       dedication: book.dedication ? generateDedicationHTML({ book }) : '',
-      afterword: book.afterword ? generateAfterwordHTML({ book }) : '',
-      acknowledgements: book.acknowledgements ? generateAcknowledgementsHTML({ book }) : '',
-      aboutAuthor: book.aboutAuthor ? generateAboutAuthorHTML({ book }) : '',
+      afterword: book.afterword ? generateAfterwordHTML({ book, templateStyles }) : '',
+      acknowledgements: book.acknowledgements
+        ? generateAcknowledgementsHTML({ book, templateStyles })
+        : '',
+      aboutAuthor: book.aboutAuthor ? generateAboutAuthorHTML({ book, templateStyles }) : '',
     };
   }, [book, collectionName, templateStyles]);
 
@@ -313,15 +315,27 @@ export function MatterView({
         </Tabs.Panel>
 
         <Tabs.Panel value="afterword">
-          <AfterwordPanel book={book} onBookChange={handleBookChange} />
+          <AfterwordPanel
+            book={book}
+            onBookChange={handleBookChange}
+            templateStyles={templateStyles}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="ack">
-          <AcknowledgementsPanel book={book} onBookChange={handleBookChange} />
+          <AcknowledgementsPanel
+            book={book}
+            onBookChange={handleBookChange}
+            templateStyles={templateStyles}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="about">
-          <AboutAuthorPanel book={book} onBookChange={handleBookChange} />
+          <AboutAuthorPanel
+            book={book}
+            onBookChange={handleBookChange}
+            templateStyles={templateStyles}
+          />
         </Tabs.Panel>
       </Tabs>
 

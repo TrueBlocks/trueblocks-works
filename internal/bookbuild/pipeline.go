@@ -212,10 +212,46 @@ frontMatterLoop:
 		}
 	}
 
-	progress("Parts", 3, 5, fmt.Sprintf("Building %d parts...", len(analysis.PartAnalyses)))
+	progress("Parts", 3, 5, fmt.Sprintf("Building %d parts (%d works)...",
+		len(analysis.PartAnalyses), len(analysis.Items)))
 
-	partPDFs := make([]string, len(analysis.PartAnalyses))
-	var partsBuilt, partsCached atomic.Int32
+	type workItem struct {
+		partIdx int
+		itemIdx int
+		item    *ContentItem
+		bodyNum int
+	}
+
+	var workItems []workItem
+	for partIdx, pa := range analysis.PartAnalyses {
+		partItems := analysis.GetPartItems(partIdx)
+		bodyNum := pa.StartPage - analysis.FrontMatterPages
+		for itemIdx, item := range partItems {
+			if item.Type == ContentTypeBlank {
+				bodyNum++
+				continue
+			}
+			if item.PDF == "" {
+				continue
+			}
+			workItems = append(workItems, workItem{
+				partIdx: partIdx,
+				itemIdx: itemIdx,
+				item:    &partItems[itemIdx],
+				bodyNum: bodyNum,
+			})
+			bodyNum += item.PageCount
+		}
+	}
+
+	type workResult struct {
+		partIdx int
+		itemIdx int
+		pdfPath string
+	}
+
+	results := make([]workResult, len(workItems))
+	var worksCompleted atomic.Int32
 	var progressMu sync.Mutex
 
 	safeProgress := func(stage string, current, total int, message string) {
@@ -227,48 +263,37 @@ frontMatterLoop:
 	g, gCtx := errgroup.WithContext(opts.Ctx)
 	g.SetLimit(runtime.NumCPU())
 
-	for partIdx := range analysis.PartAnalyses {
-		partIdx := partIdx
-		pa := analysis.PartAnalyses[partIdx]
-		startBodyNum := pa.StartPage - analysis.FrontMatterPages
+	for wi := range workItems {
+		wi := wi
+		w := workItems[wi]
 
 		g.Go(func() error {
-			isCached := IsPartCached(opts.CacheDir, pa.PartID)
-			shouldRebuild := opts.RebuildAll || !isCached
-
-			safeProgress("Parts", 3, 5, fmt.Sprintf("Part %d (%s): cached=%v", partIdx, pa.PartTitle, isCached))
-
-			if shouldRebuild {
-				partResult, err := BuildPart(PartBuildOptions{
-					Ctx:           gCtx,
-					Manifest:      opts.Manifest,
-					Analysis:      analysis,
-					PartIndex:     partIdx,
-					CacheDir:      opts.CacheDir,
-					BlankPagePath: blankPagePath,
-					Config:        config,
-					OnProgress: func(stage string, current, total int, message string) {
-						safeProgress(stage, current, total, message)
-					},
-					SkipOverlays: false,
-					StartBodyNum: startBodyNum,
-				})
-				if err != nil {
-					return fmt.Errorf("failed to build part %d: %w", partIdx, err)
-				}
-				partPDFs[partIdx] = partResult.OutputPath
-				partsBuilt.Add(1)
-			} else {
-				cached, err := LoadCachedPart(opts.CacheDir, pa.PartID, pa.PartTitle, partIdx)
-				if err != nil {
-					return fmt.Errorf("failed to load cached part %d: %w", partIdx, err)
-				}
-				partPDFs[partIdx] = cached.OutputPath
-				partsCached.Add(1)
+			if gCtx.Err() != nil {
+				return gCtx.Err()
 			}
 
-			completed := partsBuilt.Load() + partsCached.Load()
-			safeProgress("Parts", 3, 5, fmt.Sprintf("%d of %d parts complete", completed, len(analysis.PartAnalyses)))
+			safeProgress("Parts", 3, 5, fmt.Sprintf("Processing: %s", w.item.Title))
+
+			outputPath, err := PrepareAndOverlayWork(WorkOverlayOptions{
+				CacheDir:            opts.CacheDir,
+				Item:                w.item,
+				Config:              config,
+				SuppressPageNumbers: config.SuppressPageNumbers,
+				StartBodyNum:        w.bodyNum,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to process %s: %w", w.item.Title, err)
+			}
+
+			results[wi] = workResult{
+				partIdx: w.partIdx,
+				itemIdx: w.itemIdx,
+				pdfPath: outputPath,
+			}
+
+			completed := worksCompleted.Add(1)
+			safeProgress("Parts", 3, 5,
+				fmt.Sprintf("%d of %d works complete", completed, len(workItems)))
 			return nil
 		})
 	}
@@ -277,8 +302,51 @@ frontMatterLoop:
 		return nil, err
 	}
 
-	result.PartsBuilt = int(partsBuilt.Load())
-	result.PartsCached = int(partsCached.Load())
+	resultsByPart := make(map[int]map[int]string)
+	for _, r := range results {
+		if resultsByPart[r.partIdx] == nil {
+			resultsByPart[r.partIdx] = make(map[int]string)
+		}
+		resultsByPart[r.partIdx][r.itemIdx] = r.pdfPath
+	}
+
+	partPDFs := make([]string, len(analysis.PartAnalyses))
+	for partIdx := range analysis.PartAnalyses {
+		pa := analysis.PartAnalyses[partIdx]
+		partItems := analysis.GetPartItems(partIdx)
+
+		var partFiles []string
+		for itemIdx, item := range partItems {
+			if item.Type == ContentTypeBlank {
+				partFiles = append(partFiles, blankPagePath)
+				continue
+			}
+			if pdfPath, ok := resultsByPart[partIdx][itemIdx]; ok {
+				partFiles = append(partFiles, pdfPath)
+			}
+		}
+
+		if len(partFiles) == 0 {
+			continue
+		}
+
+		if len(partFiles) == 1 {
+			cachePath := PartCachePath(opts.CacheDir, pa.PartID)
+			if err := copyFile(partFiles[0], cachePath); err != nil {
+				return nil, fmt.Errorf("failed to cache part %d: %w", partIdx, err)
+			}
+			partPDFs[partIdx] = cachePath
+		} else {
+			cachePath := PartCachePath(opts.CacheDir, pa.PartID)
+			if err := mergeFilesRaw(partFiles, cachePath); err != nil {
+				return nil, fmt.Errorf("failed to merge part %d: %w", partIdx, err)
+			}
+			partPDFs[partIdx] = cachePath
+		}
+	}
+
+	result.PartsBuilt = int(worksCompleted.Load())
+	result.PartsCached = 0
 
 	var backMatterPDFs []string
 	for _, bm := range opts.Manifest.BackMatter {

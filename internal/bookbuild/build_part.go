@@ -1,7 +1,6 @@
 package bookbuild
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -10,44 +9,6 @@ import (
 	"github.com/pdfcpu/pdfcpu/pkg/api"
 	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
 )
-
-type PartBuildOptions struct {
-	Ctx           context.Context
-	Manifest      *Manifest
-	Analysis      *AnalysisResult
-	PartIndex     int
-	CacheDir      string
-	BlankPagePath string
-	Config        OverlayConfig
-	OnProgress    ProgressFunc
-	SkipOverlays  bool
-	StartBodyNum  int
-}
-
-type PartBuildResult struct {
-	PartIndex    int
-	PartTitle    string
-	OutputPath   string
-	TotalPages   int
-	WorkCount    int
-	FromCache    bool
-	Warnings     []string
-	FinalBodyNum int
-}
-
-type PageNumberTracker struct {
-	FrontMatterNum int
-	BodyNum        int
-	BackMatterNum  int
-}
-
-func NewPageNumberTracker() *PageNumberTracker {
-	return &PageNumberTracker{
-		FrontMatterNum: 1,
-		BodyNum:        1,
-		BackMatterNum:  1,
-	}
-}
 
 func PartCachePath(cacheDir string, partID int64) string {
 	return filepath.Join(cacheDir, fmt.Sprintf("part-%d-overlaid.pdf", partID))
@@ -61,340 +22,6 @@ func IsPartCached(cacheDir string, partID int64) bool {
 	cachePath := PartCachePath(cacheDir, partID)
 	_, err := os.Stat(cachePath)
 	return err == nil
-}
-
-func BuildPart(opts PartBuildOptions) (*PartBuildResult, error) {
-	result := &PartBuildResult{
-		PartIndex: opts.PartIndex,
-		Warnings:  []string{},
-	}
-
-	// Helper to check for cancellation
-	checkCancelled := func() error {
-		if opts.Ctx != nil && opts.Ctx.Err() != nil {
-			return opts.Ctx.Err()
-		}
-		return nil
-	}
-
-	if opts.PartIndex < 0 || opts.PartIndex >= len(opts.Analysis.PartAnalyses) {
-		return nil, fmt.Errorf("invalid part index %d", opts.PartIndex)
-	}
-
-	pa := opts.Analysis.PartAnalyses[opts.PartIndex]
-	result.PartTitle = pa.PartTitle
-	result.WorkCount = pa.WorkCount
-	result.TotalPages = pa.PageCount
-
-	if err := os.MkdirAll(opts.CacheDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create cache directory: %w", err)
-	}
-
-	cachePath := PartCachePath(opts.CacheDir, pa.PartID)
-	mergedPath := PartMergedPath(opts.CacheDir, pa.PartID)
-
-	progress := func(stage string, current, total int, message string) {
-		if opts.OnProgress != nil {
-			opts.OnProgress(stage, current, total, message)
-		}
-	}
-
-	progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
-		fmt.Sprintf("Building part %d: %s", opts.PartIndex+1, pa.PartTitle))
-
-	partItems := opts.Analysis.GetPartItems(opts.PartIndex)
-	if len(partItems) == 0 {
-		return nil, fmt.Errorf("no items in part %d", opts.PartIndex)
-	}
-
-	pdfPaths := make([]string, 0, len(partItems))
-	var partMappings []PageMapping
-
-	physicalPage := pa.StartPage
-
-	workIndex := 0
-	for i := range partItems {
-		// Check for cancellation in work loop
-		if err := checkCancelled(); err != nil {
-			return nil, err
-		}
-
-		item := &partItems[i]
-
-		if item.Type == ContentTypeBlank {
-			if opts.BlankPagePath == "" {
-				return nil, fmt.Errorf("blank page required but BlankPagePath not set")
-			}
-			pdfPaths = append(pdfPaths, opts.BlankPagePath)
-			partMappings = append(partMappings, PageMapping{
-				PhysicalPage: physicalPage,
-				ContentItem:  item,
-				PageInItem:   1,
-			})
-			physicalPage++
-			continue
-		}
-
-		if item.PDF == "" {
-			continue
-		}
-
-		if item.Type == ContentTypeWork {
-			workIndex++
-			progress("Work", workIndex, pa.WorkCount,
-				fmt.Sprintf("Processing: %s", item.Title))
-		}
-
-		rotResult, err := PrepareRotatedPDF(item.PDF, opts.CacheDir, physicalPage, i)
-		if err != nil {
-			return nil, fmt.Errorf("failed to prepare PDF for %s: %w", item.Title, err)
-		}
-		pdfPaths = append(pdfPaths, rotResult.OutputPath)
-
-		for p := 1; p <= item.PageCount; p++ {
-			partMappings = append(partMappings, PageMapping{
-				PhysicalPage: physicalPage,
-				ContentItem:  item,
-				PageInItem:   p,
-			})
-			physicalPage++
-		}
-	}
-
-	if len(pdfPaths) == 0 {
-		return nil, fmt.Errorf("no PDFs in part %d", opts.PartIndex)
-	}
-
-	// Use MergeRaw to avoid filename tracking issues
-	if err := mergeFilesRaw(pdfPaths, mergedPath); err != nil {
-		return nil, fmt.Errorf("failed to merge part %d PDFs: %w", opts.PartIndex, err)
-	}
-
-	if !opts.SkipOverlays {
-		adjustedMappings := adjustMappingsForPartPDF(partMappings, pa.StartPage)
-
-		progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
-			fmt.Sprintf("Adding page numbers to part %d...", opts.PartIndex+1))
-
-		tracker := NewPageNumberTracker()
-		if opts.StartBodyNum > 0 {
-			tracker.BodyNum = opts.StartBodyNum
-		} else {
-			tracker.BodyNum = pa.StartPage - opts.Analysis.FrontMatterPages
-		}
-
-		pageNumProgress := func(workTitle string) {
-			progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
-				fmt.Sprintf("Adding page numbers to part %d - %s", opts.PartIndex+1, workTitle))
-		}
-		if err := addPartPageNumbers(mergedPath, adjustedMappings, opts.Config, tracker, pageNumProgress); err != nil {
-			return nil, fmt.Errorf("page numbers failed for part %d: %w", opts.PartIndex, err)
-		}
-
-		result.FinalBodyNum = tracker.BodyNum
-
-		if opts.Config.VersoHeader != HeaderNone || opts.Config.RectoHeader != HeaderNone {
-			progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
-				fmt.Sprintf("Adding headers to part %d...", opts.PartIndex+1))
-
-			headerProgress := func(workTitle string) {
-				progress("Part", opts.PartIndex+1, len(opts.Analysis.PartAnalyses),
-					fmt.Sprintf("Adding headers to part %d - %s", opts.PartIndex+1, workTitle))
-			}
-			if err := addPartHeaders(mergedPath, adjustedMappings, opts.Config, headerProgress); err != nil {
-				return nil, fmt.Errorf("headers failed for part %d: %w", opts.PartIndex, err)
-			}
-		}
-
-		// Only cache when overlays were applied
-		if err := copyFile(mergedPath, cachePath); err != nil {
-			return nil, fmt.Errorf("failed to save part to cache: %w", err)
-		}
-		result.OutputPath = cachePath
-	} else {
-		// SkipOverlays: use merged path directly, don't cache as overlaid
-		result.OutputPath = mergedPath
-	}
-
-	result.FromCache = false
-
-	return result, nil
-}
-
-func adjustMappingsForPartPDF(mappings []PageMapping, partStartPage int) []PageMapping {
-	adjusted := make([]PageMapping, len(mappings))
-	for i, m := range mappings {
-		adjusted[i] = PageMapping{
-			PhysicalPage: m.PhysicalPage - partStartPage + 1,
-			ContentItem:  m.ContentItem,
-			PageInItem:   m.PageInItem,
-		}
-	}
-	return adjusted
-}
-
-func addPartPageNumbers(pdfPath string, mappings []PageMapping, config OverlayConfig, tracker *PageNumberTracker, onWork func(string)) error {
-	var lastTitle string
-	for _, m := range mappings {
-		if m.ContentItem != nil && m.ContentItem.Title != "" && m.ContentItem.Title != lastTitle {
-			lastTitle = m.ContentItem.Title
-			if onWork != nil {
-				onWork(lastTitle)
-			}
-		}
-
-		showPageNum := shouldShowPageNumberWithConfig(m, config.SuppressPageNumbers)
-		if !showPageNum {
-			if m.ContentItem != nil {
-				switch m.ContentItem.Type {
-				case ContentTypeFrontMatter, ContentTypeTOC:
-					tracker.FrontMatterNum++
-				case ContentTypeBlank, ContentTypePartDivider, ContentTypeWork:
-					tracker.BodyNum++
-				case ContentTypeBackMatter:
-					tracker.BackMatterNum++
-				}
-			}
-			continue
-		}
-
-		var pageNumStr string
-		switch m.GetNumberStyle() {
-		case NumberStyleRoman:
-			pageNumStr = ToRoman(tracker.FrontMatterNum)
-			tracker.FrontMatterNum++
-		case NumberStyleArabic:
-			if m.ContentItem != nil && m.ContentItem.Type == ContentTypeBackMatter {
-				pageNumStr = fmt.Sprintf("%d", tracker.BackMatterNum)
-				tracker.BackMatterNum++
-			} else {
-				pageNumStr = fmt.Sprintf("%d", tracker.BodyNum)
-				tracker.BodyNum++
-			}
-		default:
-			continue
-		}
-
-		// Skip if page numbers are disabled
-		if config.PageNumberPosition == PageNumberNone {
-			continue
-		}
-
-		// Calculate the original book page number from ContentItem.StartPage + page within item
-		origPhysical := m.ContentItem.StartPage + m.PageInItem - 1
-		var position string
-		if config.PageNumberPosition == PageNumberOuter {
-			if origPhysical%2 == 0 { // even = verso
-				position = PositionBottomLeftVerso
-			} else { // odd = recto
-				position = PositionBottomRightRecto
-			}
-		} else {
-			if origPhysical%2 == 0 { // even = verso
-				position = PositionBottomCenterVerso
-			} else { // odd = recto
-				position = PositionBottomCenterRecto
-			}
-		}
-
-		if err := addTextToPage(pdfPath, m.PhysicalPage, pageNumStr, config, position); err != nil {
-			return fmt.Errorf("failed to add page number to page %d: %w", m.PhysicalPage, err)
-		}
-	}
-
-	return nil
-}
-
-func addPartHeaders(pdfPath string, mappings []PageMapping, config OverlayConfig, onWork func(string)) error {
-	var lastTitle string
-	for _, m := range mappings {
-		if m.ContentItem != nil && m.ContentItem.Title != "" && m.ContentItem.Title != lastTitle {
-			lastTitle = m.ContentItem.Title
-			if onWork != nil {
-				onWork(lastTitle)
-			}
-		}
-
-		if !m.ShouldShowHeader() {
-			continue
-		}
-
-		var headerText string
-		var position string
-
-		// Calculate the original book page number from ContentItem.StartPage + page within item
-		origPhysical := m.ContentItem.StartPage + m.PageInItem - 1
-		isVerso := origPhysical%2 == 0
-
-		if isVerso {
-			// Left pages (verso)
-			if config.VersoHeader == HeaderNone {
-				continue
-			}
-			headerText = getHeaderText(config.VersoHeader, config.BookTitle, m.ContentItem)
-			position = PositionTopLeft
-		} else {
-			// Right pages (recto)
-			if config.RectoHeader == HeaderNone {
-				continue
-			}
-			headerText = getHeaderText(config.RectoHeader, config.BookTitle, m.ContentItem)
-			position = PositionTopRight
-		}
-
-		if headerText == "" {
-			continue
-		}
-
-		if err := addTextToPage(pdfPath, m.PhysicalPage, headerText, config, position); err != nil {
-			return fmt.Errorf("failed to add header to page %d: %w", m.PhysicalPage, err)
-		}
-	}
-
-	return nil
-}
-
-// getHeaderText returns the appropriate header text based on the header type setting
-func getHeaderText(headerType, bookTitle string, item *ContentItem) string {
-	switch headerType {
-	case "book_title":
-		return bookTitle
-	case "section_title":
-		// TODO: Section title would need to be tracked from the part divider
-		if item != nil {
-			return item.PartTitle
-		}
-		return ""
-	case "essay_title":
-		if item != nil {
-			return item.Title
-		}
-		return ""
-	default:
-		return ""
-	}
-}
-
-func LoadCachedPart(cacheDir string, partID int64, partTitle string, partIndex int) (*PartBuildResult, error) {
-	cachePath := PartCachePath(cacheDir, partID)
-
-	if _, err := os.Stat(cachePath); err != nil {
-		return nil, fmt.Errorf("cached part %s not found: %w", partTitle, err)
-	}
-
-	pageCount, err := GetPageCount(cachePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read cached part: %w", err)
-	}
-
-	return &PartBuildResult{
-		PartIndex:  partIndex,
-		PartTitle:  partTitle,
-		OutputPath: cachePath,
-		TotalPages: pageCount,
-		FromCache:  true,
-		Warnings:   []string{},
-	}, nil
 }
 
 func ClearPartCache(cacheDir string, partID int64) error {
@@ -419,7 +46,6 @@ func ClearAllPartsCache(cacheDir string) error {
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			name := entry.Name()
-			// Remove part caches and stitched.pdf (which depends on parts)
 			if (len(name) > 5 && name[:5] == "part-") || name == "stitched.pdf" {
 				_ = os.Remove(filepath.Join(cacheDir, name))
 			}
@@ -429,19 +55,16 @@ func ClearAllPartsCache(cacheDir string) error {
 	return nil
 }
 
-// mergeFilesRaw merges PDFs using stream-based API to avoid filename tracking
 func mergeFilesRaw(inFiles []string, outFile string) error {
 	if len(inFiles) == 0 {
 		return fmt.Errorf("no files to merge")
 	}
 
-	// Open all input files
 	readers := make([]io.ReadSeeker, len(inFiles))
 	files := make([]*os.File, len(inFiles))
 	for i, path := range inFiles {
 		f, err := os.Open(path)
 		if err != nil {
-			// Close any already opened files
 			for j := 0; j < i; j++ {
 				files[j].Close()
 			}
@@ -458,14 +81,12 @@ func mergeFilesRaw(inFiles []string, outFile string) error {
 		}
 	}()
 
-	// Create output file
 	out, err := os.Create(outFile)
 	if err != nil {
 		return fmt.Errorf("failed to create output: %w", err)
 	}
 	defer out.Close()
 
-	// Merge using stream API (uses numeric indices instead of filenames)
 	conf := model.NewDefaultConfiguration()
 	conf.ValidationMode = model.ValidationRelaxed
 	if err := api.MergeRaw(readers, out, false, conf); err != nil {
@@ -475,8 +96,6 @@ func mergeFilesRaw(inFiles []string, outFile string) error {
 	return nil
 }
 
-// shouldShowPageNumberWithConfig determines if a page should show a page number,
-// considering the suppressPageNumbers setting.
 func shouldShowPageNumberWithConfig(m PageMapping, suppressPageNumbers string) bool {
 	if m.ContentItem == nil {
 		return false
@@ -488,7 +107,6 @@ func shouldShowPageNumberWithConfig(m PageMapping, suppressPageNumbers string) b
 		return false
 	}
 
-	// Check if this is a part divider (section start)
 	if m.ContentItem.Type == ContentTypePartDivider {
 		switch suppressPageNumbers {
 		case SuppressSectionStarts, SuppressBoth:
@@ -498,7 +116,6 @@ func shouldShowPageNumberWithConfig(m PageMapping, suppressPageNumbers string) b
 		}
 	}
 
-	// Check if this is the first page of a work (essay start)
 	if m.ContentItem.Type == ContentTypeWork && m.PageInItem == 1 {
 		switch suppressPageNumbers {
 		case SuppressEssayStarts, SuppressBoth:
@@ -509,4 +126,23 @@ func shouldShowPageNumberWithConfig(m PageMapping, suppressPageNumbers string) b
 	}
 
 	return true
+}
+
+func getHeaderText(headerType, bookTitle string, item *ContentItem) string {
+	switch headerType {
+	case "book_title":
+		return bookTitle
+	case "section_title":
+		if item != nil {
+			return item.PartTitle
+		}
+		return ""
+	case "essay_title":
+		if item != nil {
+			return item.Title
+		}
+		return ""
+	default:
+		return ""
+	}
 }

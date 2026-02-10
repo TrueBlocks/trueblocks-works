@@ -2,17 +2,47 @@ package app
 
 import (
 	"os"
+	"strings"
 
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/settings"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+// maskAPIKey masks all but the last 4 characters of an API key
+func maskAPIKey(key string) string {
+	if len(key) <= 4 {
+		if len(key) > 0 {
+			return "****"
+		}
+		return ""
+	}
+	return strings.Repeat("*", len(key)-4) + key[len(key)-4:]
+}
+
+// isMasked checks if a key appears to be masked (contains asterisks)
+func isMasked(key string) bool {
+	return strings.Contains(key, "*")
+}
+
 func (a *App) GetSettings() settings.Settings {
-	return a.settings.Get()
+	s := a.settings.Get()
+	// Mask API keys before sending to frontend
+	s.OpenAIAPIKey = maskAPIKey(s.OpenAIAPIKey)
+	s.AnthropicAPIKey = maskAPIKey(s.AnthropicAPIKey)
+	return s
 }
 
 func (a *App) UpdateSettings(s settings.Settings) error {
+	// Preserve real API keys if frontend sends masked values
+	current := a.settings.Get()
+	if isMasked(s.OpenAIAPIKey) {
+		s.OpenAIAPIKey = current.OpenAIAPIKey
+	}
+	if isMasked(s.AnthropicAPIKey) {
+		s.AnthropicAPIKey = current.AnthropicAPIKey
+	}
+
 	if err := a.settings.Update(s); err != nil {
 		return err
 	}

@@ -1,3 +1,227 @@
+export namespace analysis {
+	
+	export class Annotation {
+	    id: number;
+	    analysisID: number;
+	    paragraphNum: number;
+	    textSnippet: string;
+	    issueType: string;
+	    message: string;
+	    scoreImpact: number;
+	    dismissed: boolean;
+	    dismissedReason?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Annotation(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.analysisID = source["analysisID"];
+	        this.paragraphNum = source["paragraphNum"];
+	        this.textSnippet = source["textSnippet"];
+	        this.issueType = source["issueType"];
+	        this.message = source["message"];
+	        this.scoreImpact = source["scoreImpact"];
+	        this.dismissed = source["dismissed"];
+	        this.dismissedReason = source["dismissedReason"];
+	    }
+	}
+	export class ReorderSuggestion {
+	    workID: number;
+	    workTitle: string;
+	    currentPos: number;
+	    suggestedPos: number;
+	    rationale: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ReorderSuggestion(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.workID = source["workID"];
+	        this.workTitle = source["workTitle"];
+	        this.currentPos = source["currentPos"];
+	        this.suggestedPos = source["suggestedPos"];
+	        this.rationale = source["rationale"];
+	    }
+	}
+	export class CollectionResult {
+	    id: number;
+	    collID: number;
+	    // Go type: time
+	    analyzedAt: any;
+	    provider: string;
+	    model: string;
+	    sequenceSummary: string;
+	    sequenceSuggestions: ReorderSuggestion[];
+	    themesSummary: string;
+	    pacingSummary: string;
+	    balanceSummary: string;
+	    gapsSummary: string;
+	    overallSummary: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CollectionResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.collID = source["collID"];
+	        this.analyzedAt = this.convertValues(source["analyzedAt"], null);
+	        this.provider = source["provider"];
+	        this.model = source["model"];
+	        this.sequenceSummary = source["sequenceSummary"];
+	        this.sequenceSuggestions = this.convertValues(source["sequenceSuggestions"], ReorderSuggestion);
+	        this.themesSummary = source["themesSummary"];
+	        this.pacingSummary = source["pacingSummary"];
+	        this.balanceSummary = source["balanceSummary"];
+	        this.gapsSummary = source["gapsSummary"];
+	        this.overallSummary = source["overallSummary"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class Model {
+	    provider: string;
+	    name: string;
+	    displayName: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Model(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.provider = source["provider"];
+	        this.name = source["name"];
+	        this.displayName = source["displayName"];
+	    }
+	}
+	export class ProviderInfo {
+	    name: string;
+	    displayName: string;
+	    models: Model[];
+	    configured: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProviderInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.displayName = source["displayName"];
+	        this.models = this.convertValues(source["models"], Model);
+	        this.configured = source["configured"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class WorkResult {
+	    id: number;
+	    workID: number;
+	    // Go type: time
+	    analyzedAt: any;
+	    provider: string;
+	    model: string;
+	    genreMode: string;
+	    technicalScore: number;
+	    technicalSummary: string;
+	    styleScore: number;
+	    styleSummary: string;
+	    structureScore: number;
+	    structureSummary: string;
+	    contentScore: number;
+	    contentSummary: string;
+	    genreScore: number;
+	    genreSummary: string;
+	    overallSummary: string;
+	    annotations: Annotation[];
+	
+	    static createFrom(source: any = {}) {
+	        return new WorkResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.workID = source["workID"];
+	        this.analyzedAt = this.convertValues(source["analyzedAt"], null);
+	        this.provider = source["provider"];
+	        this.model = source["model"];
+	        this.genreMode = source["genreMode"];
+	        this.technicalScore = source["technicalScore"];
+	        this.technicalSummary = source["technicalSummary"];
+	        this.styleScore = source["styleScore"];
+	        this.styleSummary = source["styleSummary"];
+	        this.structureScore = source["structureScore"];
+	        this.structureSummary = source["structureSummary"];
+	        this.contentScore = source["contentScore"];
+	        this.contentSummary = source["contentSummary"];
+	        this.genreScore = source["genreScore"];
+	        this.genreSummary = source["genreSummary"];
+	        this.overallSummary = source["overallSummary"];
+	        this.annotations = this.convertValues(source["annotations"], Annotation);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace app {
 	
 	export class BatchMoveResult {
@@ -2354,6 +2578,12 @@ export namespace settings {
 	    validExtensions?: string[];
 	    skipDeleteBackupConfirm?: boolean;
 	    skipNumberAsSortedConfirm?: boolean;
+	    analysisEnabled?: boolean;
+	    analysisProvider?: string;
+	    analysisModel?: string;
+	    openAIAPIKey?: string;
+	    anthropicAPIKey?: string;
+	    ollamaEndpoint?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Settings(source);
@@ -2375,6 +2605,12 @@ export namespace settings {
 	        this.validExtensions = source["validExtensions"];
 	        this.skipDeleteBackupConfirm = source["skipDeleteBackupConfirm"];
 	        this.skipNumberAsSortedConfirm = source["skipNumberAsSortedConfirm"];
+	        this.analysisEnabled = source["analysisEnabled"];
+	        this.analysisProvider = source["analysisProvider"];
+	        this.analysisModel = source["analysisModel"];
+	        this.openAIAPIKey = source["openAIAPIKey"];
+	        this.anthropicAPIKey = source["anthropicAPIKey"];
+	        this.ollamaEndpoint = source["ollamaEndpoint"];
 	    }
 	}
 

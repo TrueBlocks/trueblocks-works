@@ -23,6 +23,14 @@ type Settings struct {
 	ValidExtensions           []string `json:"validExtensions,omitempty"`
 	SkipDeleteBackupConfirm   bool     `json:"skipDeleteBackupConfirm,omitempty"`
 	SkipNumberAsSortedConfirm bool     `json:"skipNumberAsSortedConfirm,omitempty"`
+
+	// Analysis feature
+	AnalysisEnabled  bool   `json:"analysisEnabled,omitempty"`
+	AnalysisProvider string `json:"analysisProvider,omitempty"` // 'openai', 'anthropic', 'ollama'
+	AnalysisModel    string `json:"analysisModel,omitempty"`    // model name (gpt-4o, claude-3-5-sonnet, etc)
+	OpenAIAPIKey     string `json:"openAIAPIKey,omitempty"`
+	AnthropicAPIKey  string `json:"anthropicAPIKey,omitempty"`
+	OllamaEndpoint   string `json:"ollamaEndpoint,omitempty"` // default: http://localhost:11434
 }
 
 type Manager struct {

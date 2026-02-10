@@ -21,7 +21,7 @@ const defaultTabs: Record<TabbedPage, string[]> = {
   collections: ['list', 'detail'],
   organizations: ['list', 'detail'],
   submissions: ['list', 'detail'],
-  settings: ['paths', 'field-values'],
+  settings: ['paths', 'field-values', 'search'],
   reports: ['recently-changed'],
 };
 

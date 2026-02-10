@@ -741,12 +741,13 @@ func (a *App) reportCollectionsIntegrity() ReportCategory {
 		"CollectionDetails referencing non-existent collections",
 	}
 
-	// Empty collections (no works assigned)
+	// Empty collections (no works assigned) - exclude system "Not Collected" collection
 	rows, err := a.db.Conn().Query(`
 		SELECT c.collID, c.collection_name
 		FROM Collections c
 		LEFT JOIN CollectionDetails cd ON c.collID = cd.collID
 		WHERE cd.id IS NULL
+		AND c.collection_name != 'Not Collected'
 	`)
 	if err == nil {
 		defer rows.Close()
@@ -885,18 +886,19 @@ func (a *App) reportOrganizationsIntegrity() ReportCategory {
 func (a *App) reportDataQuality() ReportCategory {
 	issues := make([]ReportIssue, 0)
 	checks := []string{
-		"Works with very low word count (< 10 words, excludes Cartoons)",
+		"Works with very low word count (< 10 words, excludes Cartoons and Sections)",
 		"Works with very high word count (> 50,000 words, excludes Books)",
 		"Submissions with future dates",
 	}
 
-	// Works with very low word count (< 10 words) - exclude Cartoons
+	// Works with very low word count (< 10 words) - exclude Cartoons and Sections
 	rows, err := a.db.Conn().Query(`
 		SELECT workID, title, n_words FROM Works 
 		WHERE n_words IS NOT NULL AND n_words < 10 AND n_words > 0
 		AND title NOT LIKE '%Needed'
 		AND type NOT LIKE '%Chapter%'
 		AND type != 'Cartoon'
+		AND type != 'Section'
 	`)
 	if err == nil {
 		defer rows.Close()

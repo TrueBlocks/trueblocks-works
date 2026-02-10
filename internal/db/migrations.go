@@ -177,6 +177,11 @@ var migrations = []Migration{
 		Name:    "add_afterword_to_books",
 		Up:      migrateAddAfterwordToBooks,
 	},
+	{
+		Version: 42,
+		Name:    "add_analysis_tables",
+		Up:      migrateAddAnalysisTables,
+	},
 }
 
 // RunMigrations applies any pending migrations to the database.
@@ -1394,5 +1399,81 @@ func migrateAddAfterwordToBooks(tx *sql.Tx) error {
 	if err != nil {
 		return fmt.Errorf("add afterword column: %w", err)
 	}
+	return nil
+}
+
+func migrateAddAnalysisTables(tx *sql.Tx) error {
+	// Create WorkAnalyses table
+	_, err := tx.Exec(`CREATE TABLE IF NOT EXISTS WorkAnalyses (
+		id INTEGER PRIMARY KEY,
+		workID INTEGER NOT NULL REFERENCES Works(workID),
+		analyzed_at TEXT NOT NULL,
+		provider TEXT,
+		model TEXT,
+		genre_mode TEXT,
+		technical_score INTEGER,
+		technical_summary TEXT,
+		style_score INTEGER,
+		style_summary TEXT,
+		structure_score INTEGER,
+		structure_summary TEXT,
+		content_score INTEGER,
+		content_summary TEXT,
+		genre_score INTEGER,
+		genre_summary TEXT,
+		overall_summary TEXT,
+		raw_response TEXT
+	)`)
+	if err != nil {
+		return fmt.Errorf("create WorkAnalyses table: %w", err)
+	}
+
+	// Create AnalysisAnnotations table
+	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS AnalysisAnnotations (
+		id INTEGER PRIMARY KEY,
+		analysisID INTEGER NOT NULL REFERENCES WorkAnalyses(id) ON DELETE CASCADE,
+		paragraph_num INTEGER,
+		text_snippet TEXT,
+		issue_type TEXT,
+		message TEXT,
+		score_impact INTEGER,
+		dismissed INTEGER DEFAULT 0,
+		dismissed_reason TEXT
+	)`)
+	if err != nil {
+		return fmt.Errorf("create AnalysisAnnotations table: %w", err)
+	}
+
+	// Create CollectionAnalyses table
+	_, err = tx.Exec(`CREATE TABLE IF NOT EXISTS CollectionAnalyses (
+		id INTEGER PRIMARY KEY,
+		collID INTEGER NOT NULL REFERENCES Collections(collID),
+		analyzed_at TEXT NOT NULL,
+		provider TEXT,
+		model TEXT,
+		sequence_summary TEXT,
+		sequence_suggestions TEXT,
+		themes_summary TEXT,
+		pacing_summary TEXT,
+		balance_summary TEXT,
+		gaps_summary TEXT,
+		overall_summary TEXT,
+		raw_response TEXT
+	)`)
+	if err != nil {
+		return fmt.Errorf("create CollectionAnalyses table: %w", err)
+	}
+
+	// Create indexes for faster lookups
+	_, err = tx.Exec(`CREATE INDEX IF NOT EXISTS idx_work_analyses_workID ON WorkAnalyses(workID)`)
+	if err != nil {
+		return fmt.Errorf("create idx_work_analyses_workID: %w", err)
+	}
+
+	_, err = tx.Exec(`CREATE INDEX IF NOT EXISTS idx_collection_analyses_collID ON CollectionAnalyses(collID)`)
+	if err != nil {
+		return fmt.Errorf("create idx_collection_analyses_collID: %w", err)
+	}
+
 	return nil
 }

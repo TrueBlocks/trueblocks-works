@@ -380,6 +380,19 @@ func (a *App) GetPDFPageSize(workID int64) (string, error) {
 	return "", nil
 }
 
+// GetBatchPDFPageSizes returns page sizes for multiple works as a map.
+// Works without PDFs or with errors are omitted from the result.
+func (a *App) GetBatchPDFPageSizes(workIDs []int64) map[int64]string {
+	result := make(map[int64]string)
+	for _, id := range workIDs {
+		size, err := a.GetPDFPageSize(id)
+		if err == nil && size != "" {
+			result[id] = size
+		}
+	}
+	return result
+}
+
 func formatInches(v float64) string {
 	if v == float64(int(v)) {
 		return fmt.Sprintf("%.0f", v)

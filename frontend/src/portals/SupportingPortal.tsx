@@ -8,6 +8,7 @@ import { LogErr } from '@/utils';
 interface SupportingPortalProps {
   workId: number;
   workPath?: string;
+  refreshKey?: number;
 }
 
 function formatBytes(bytes: number): string {
@@ -18,7 +19,7 @@ function formatBytes(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
-export function SupportingPortal({ workId, workPath }: SupportingPortalProps) {
+export function SupportingPortal({ workId, workPath, refreshKey }: SupportingPortalProps) {
   const [info, setInfo] = useState<fileops.SupportingInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +42,7 @@ export function SupportingPortal({ workId, workPath }: SupportingPortalProps) {
 
   useEffect(() => {
     loadInfo();
-  }, [loadInfo]);
+  }, [loadInfo, refreshKey]);
 
   const handleOpen = async () => {
     try {

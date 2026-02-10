@@ -18,8 +18,16 @@ export function AddWorkToCollection(arg1, arg2) {
   return window['go']['app']['App']['AddWorkToCollection'](arg1, arg2);
 }
 
+export function AnalyzeCollection(arg1) {
+  return window['go']['app']['App']['AnalyzeCollection'](arg1);
+}
+
 export function AnalyzeCollectionHeadings(arg1) {
   return window['go']['app']['App']['AnalyzeCollectionHeadings'](arg1);
+}
+
+export function AnalyzeWork(arg1) {
+  return window['go']['app']['App']['AnalyzeWork'](arg1);
 }
 
 export function AuditCollectionStyles(arg1) {
@@ -198,6 +206,10 @@ export function DetectLibreOffice() {
   return window['go']['app']['App']['DetectLibreOffice']();
 }
 
+export function DismissAnnotation(arg1, arg2) {
+  return window['go']['app']['App']['DismissAnnotation'](arg1, arg2);
+}
+
 export function DuplicateWork(arg1) {
   return window['go']['app']['App']['DuplicateWork'](arg1);
 }
@@ -274,8 +286,20 @@ export function GetAllSubmissionViews() {
   return window['go']['app']['App']['GetAllSubmissionViews']();
 }
 
+export function GetAnalysisEnabled() {
+  return window['go']['app']['App']['GetAnalysisEnabled']();
+}
+
 export function GetAppState() {
   return window['go']['app']['App']['GetAppState']();
+}
+
+export function GetAvailableProviders() {
+  return window['go']['app']['App']['GetAvailableProviders']();
+}
+
+export function GetBatchPDFPageSizes(arg1) {
+  return window['go']['app']['App']['GetBatchPDFPageSizes'](arg1);
 }
 
 export function GetBook(arg1) {
@@ -292,6 +316,14 @@ export function GetBookParts(arg1) {
 
 export function GetCollection(arg1) {
   return window['go']['app']['App']['GetCollection'](arg1);
+}
+
+export function GetCollectionAnalysis(arg1) {
+  return window['go']['app']['App']['GetCollectionAnalysis'](arg1);
+}
+
+export function GetCollectionAnalysisHistory(arg1) {
+  return window['go']['app']['App']['GetCollectionAnalysisHistory'](arg1);
 }
 
 export function GetCollectionDeleteConfirmation(arg1) {
@@ -488,6 +520,14 @@ export function GetValidExtensions() {
 
 export function GetWork(arg1) {
   return window['go']['app']['App']['GetWork'](arg1);
+}
+
+export function GetWorkAnalysis(arg1) {
+  return window['go']['app']['App']['GetWorkAnalysis'](arg1);
+}
+
+export function GetWorkAnalysisHistory(arg1) {
+  return window['go']['app']['App']['GetWorkAnalysisHistory'](arg1);
 }
 
 export function GetWorkBookAuditStatus(arg1) {
@@ -742,6 +782,10 @@ export function SyncWorkTemplate(arg1) {
   return window['go']['app']['App']['SyncWorkTemplate'](arg1);
 }
 
+export function TestProviderConnection(arg1, arg2) {
+  return window['go']['app']['App']['TestProviderConnection'](arg1, arg2);
+}
+
 export function ToggleCollectionMarks(arg1) {
   return window['go']['app']['App']['ToggleCollectionMarks'](arg1);
 }
@@ -776,6 +820,10 @@ export function UndeleteSubmission(arg1) {
 
 export function UndeleteWork(arg1) {
   return window['go']['app']['App']['UndeleteWork'](arg1);
+}
+
+export function UndismissAnnotation(arg1) {
+  return window['go']['app']['App']['UndismissAnnotation'](arg1);
 }
 
 export function UpdateBook(arg1) {

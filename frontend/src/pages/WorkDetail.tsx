@@ -677,7 +677,10 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
           <FileActionsToolbar
             workID={work.workID}
             refreshKey={refreshKey}
-            onMoved={loadData}
+            onMoved={() => {
+              loadData();
+              setRefreshKey((k) => k + 1);
+            }}
             onDuplicate={(newWorkID) => navigate(`/works/${newWorkID}`)}
           />
         }
@@ -734,7 +737,11 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
               onUndelete={handleUndeleteNote}
               onPermanentDelete={handlePermanentDeleteNote}
             />
-            <SupportingPortal workId={workId} workPath={work.path || undefined} />
+            <SupportingPortal
+              workId={workId}
+              workPath={work.path || undefined}
+              refreshKey={refreshKey}
+            />
           </Stack>
         </Grid.Col>
       </Grid>

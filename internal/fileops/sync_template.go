@@ -89,6 +89,23 @@ tell application "Microsoft Word"
 	set docPageWidth to page width of docPageSetup
 	set docPageHeight to page height of docPageSetup
 	
+	-- Check if target document is landscape (width > height)
+	set docIsLandscape to (docPageWidth > docPageHeight)
+	
+	-- If target is landscape, swap template dimensions to match orientation
+	if docIsLandscape then
+		set tempWidth to templatePageWidth
+		set templatePageWidth to templatePageHeight
+		set templatePageHeight to tempWidth
+		-- Also swap margins to match rotated orientation
+		set tempTopMargin to templateTopMargin
+		set tempBottomMargin to templateBottomMargin
+		set templateTopMargin to templateLeftMargin
+		set templateBottomMargin to templateRightMargin
+		set templateLeftMargin to tempTopMargin
+		set templateRightMargin to tempBottomMargin
+	end if
+	
 	-- Calculate scale factor (minimum of width and height ratios)
 	set widthRatio to templatePageWidth / docPageWidth
 	set heightRatio to templatePageHeight / docPageHeight

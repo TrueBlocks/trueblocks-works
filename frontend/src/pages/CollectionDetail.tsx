@@ -34,6 +34,7 @@ import {
   IconPhoto,
   IconFilter,
   IconCopy,
+  IconBrain,
 } from '@tabler/icons-react';
 import { useHotkeys } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -83,6 +84,7 @@ import {
   GetSettings,
   UpdateSettings,
   DuplicateWork,
+  GetBatchPDFPageSizes,
 } from '@app';
 import { models, db, state, settings } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
@@ -90,6 +92,7 @@ import { DataTable, Column, StatusBadge, QualityBadge, CommandPalette } from '@/
 import { NotesPortal, SubmissionsPortal } from '@/portals';
 import { WorkPickerModal, NewWorkModal, ConfirmDeleteModal, BatchUpdateModal } from '@/modals';
 import { MatterView, CoversView, AmazonView } from '@/views';
+import { AnalysisView } from '@/features/analysis';
 import {
   DetailHeader,
   TypeBadge,
@@ -113,6 +116,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [collection, setCollection] = useState<models.CollectionView | null>(null);
   const [works, setWorks] = useState<models.CollectionWork[]>([]);
   const [sortedFilteredWorks, setSortedFilteredWorks] = useState<models.CollectionWork[]>([]);
+  const [pageSizes, setPageSizes] = useState<Record<number, string>>({});
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
   const [loading, setLoading] = useState(true);
   const [initialSelectID, setInitialSelectID] = useState<number | undefined>(undefined);
@@ -139,6 +143,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const settingsRef = useRef<settings.Settings | null>(null);
   const skipNumberAsSortedRef = useRef(false);
   const [isBook, setIsBook] = useState(false);
+  const [analysisEnabled, setAnalysisEnabled] = useState(false);
   const [frontCoverData, setFrontCoverData] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string | null>('contents');
   const [matterSubTab, setMatterSubTab] = useState<string>('titlepage');
@@ -277,6 +282,16 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       const data = worksData || [];
       setWorks(data);
       setSubmissions(subsData || []);
+
+      // Fetch page sizes for all works in background
+      if (data.length > 0) {
+        const workIDs = data.map((w) => w.workID);
+        GetBatchPDFPageSizes(workIDs)
+          .then(setPageSizes)
+          .catch(() => {});
+      } else {
+        setPageSizes({});
+      }
       SetLastCollectionID(collectionId);
 
       const years = [...new Set(data.map((w) => w.year).filter(Boolean))].sort() as string[];
@@ -318,6 +333,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     GetSettings().then((s) => {
       settingsRef.current = s;
       skipNumberAsSortedRef.current = s.skipNumberAsSortedConfirm ?? false;
+      setAnalysisEnabled(s.analysisEnabled ?? false);
     });
   }, []);
 
@@ -353,9 +369,11 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     return () => window.removeEventListener('showDeletedChanged', handleShowDeletedChanged);
   }, [loadData]);
 
-  // Cmd+Shift+2: Cycle main tabs (contents -> matter -> covers -> amazon)
+  // Cmd+Shift+2: Cycle main tabs (contents -> matter -> covers -> amazon -> [analysis if enabled])
   useEffect(() => {
-    const MAIN_TAB_CYCLE = ['contents', 'matter', 'covers', 'amazon'];
+    const MAIN_TAB_CYCLE = analysisEnabled
+      ? ['contents', 'matter', 'covers', 'amazon', 'analysis']
+      : ['contents', 'matter', 'covers', 'amazon'];
 
     function handleCycleMainTab() {
       if (!isBook) return;
@@ -369,7 +387,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
     }
     window.addEventListener('cycleCollectionSubTab', handleCycleMainTab);
     return () => window.removeEventListener('cycleCollectionSubTab', handleCycleMainTab);
-  }, [isBook, activeTab, collectionId]);
+  }, [isBook, activeTab, collectionId, analysisEnabled]);
 
   // Option+Shift+2: Cycle matter sub-tabs (only when on matter tab)
   useEffect(() => {
@@ -995,27 +1013,37 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
       {
         key: 'status',
         label: 'Status',
-        width: '15%',
+        width: '13%',
         render: (work) => <StatusBadge status={work.status} />,
         filterOptions: filterOptions.statuses,
       },
       {
         key: 'quality',
         label: 'Quality',
-        width: '12%',
+        width: '10%',
         render: (work) => <QualityBadge quality={work.quality} />,
         sortValue: (work) => qualitySortOrder[(work.quality || '') as Quality] ?? 9,
         filterOptions: filterOptions.qualities,
       },
       {
+        key: 'pageSize',
+        label: 'Page',
+        width: '8%',
+        render: (work) => (
+          <Text size="xs" c="dimmed">
+            {pageSizes[work.workID] || '-'}
+          </Text>
+        ),
+      },
+      {
         key: 'modifiedAt',
-        label: 'Last Modified',
+        label: 'Modified',
         width: '10%',
         render: (work) =>
           work.modifiedAt ? new Date(work.modifiedAt + 'Z').toLocaleDateString() : '-',
       },
     ],
-    [filterOptions, isBook, handleToggleSuppressed]
+    [filterOptions, isBook, handleToggleSuppressed, pageSizes]
   );
 
   const searchFn = useCallback((work: models.CollectionWork, search: string) => {
@@ -1408,6 +1436,22 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                 <IconRocket size={20} />
               </Tabs.Tab>
             </Tooltip>
+            {analysisEnabled && (
+              <Tooltip label="AI Analysis" position="right">
+                <Tabs.Tab
+                  value="analysis"
+                  style={{
+                    backgroundColor:
+                      activeTab === 'analysis' ? 'var(--mantine-color-blue-light)' : 'transparent',
+                    color: activeTab === 'analysis' ? 'var(--mantine-color-blue-6)' : undefined,
+                    borderRadius: '6px',
+                    padding: '10px',
+                  }}
+                >
+                  <IconBrain size={20} />
+                </Tabs.Tab>
+              </Tooltip>
+            )}
           </Tabs.List>
 
           <Tabs.Panel value="contents" pl="md" style={{ flex: 1 }}>
@@ -1565,6 +1609,15 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
           <Tabs.Panel value="amazon" pl="md" style={{ flex: 1 }}>
             <AmazonView collectionId={collectionId} collectionName={collection.collectionName} />
           </Tabs.Panel>
+
+          {analysisEnabled && (
+            <Tabs.Panel value="analysis" pl="md" style={{ flex: 1 }}>
+              <AnalysisView
+                collectionId={collectionId}
+                collectionName={collection.collectionName}
+              />
+            </Tabs.Panel>
+          )}
         </Tabs>
       ) : (
         <Grid>

@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Stack, TextInput, Button, Group, Text, Paper, Loader, Flex } from '@mantine/core';
+import {
+  Stack,
+  TextInput,
+  Button,
+  Group,
+  Text,
+  Paper,
+  Loader,
+  Flex,
+  Switch,
+  Select,
+  PasswordInput,
+} from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconFolder,
@@ -8,6 +20,7 @@ import {
   IconList,
   IconPlayerPlay,
   IconSearch,
+  IconBrain,
 } from '@tabler/icons-react';
 import { GetSettings, UpdateSettings, BrowseForFolder } from '@app';
 import { settings } from '@models';
@@ -15,6 +28,7 @@ import { TabView, Tab, EnumManagement, FTSStatus } from '@/components';
 import { SplashScreen } from '@trueblocks/ui';
 import { ThemeSelector } from '@/components/ThemeSelector';
 import { DarkModeSwitch } from '@/components/DarkModeSwitch';
+import { useTabContext } from '@/stores/tabStore';
 
 export function SettingsPage() {
   const [config, setConfig] = useState<settings.Settings | null>(null);
@@ -22,6 +36,7 @@ export function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showSplashPreview, setShowSplashPreview] = useState(false);
+  const { setPageTabs } = useTabContext();
 
   const loadData = () => {
     setLoading(true);
@@ -33,6 +48,18 @@ export function SettingsPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Update tab cycle based on analysis feature
+  useEffect(() => {
+    if (config) {
+      const baseTabs = ['paths', 'field-values', 'search'];
+      if (config.analysisEnabled) {
+        setPageTabs('settings', [...baseTabs, 'analysis']);
+      } else {
+        setPageTabs('settings', baseTabs);
+      }
+    }
+  }, [config, setPageTabs]);
 
   // Reload on Cmd+R
   useEffect(() => {
@@ -208,6 +235,109 @@ export function SettingsPage() {
       content: (
         <Stack gap="lg" maw={700}>
           <FTSStatus />
+        </Stack>
+      ),
+    },
+    {
+      value: 'analysis',
+      label: 'AI Analysis',
+      icon: <IconBrain size={16} />,
+      content: (
+        <Stack gap="lg" maw={700}>
+          <Paper p="md" withBorder>
+            <Stack gap="md">
+              <Switch
+                label="Enable AI Analysis"
+                description="Allow AI-powered analysis of works and collections"
+                checked={config.analysisEnabled ?? false}
+                onChange={(e) => {
+                  setConfig({ ...config, analysisEnabled: e.currentTarget.checked });
+                  setSaved(false);
+                }}
+              />
+
+              <Select
+                label="AI Provider"
+                description="Select which AI service to use for analysis"
+                value={config.analysisProvider ?? 'openai'}
+                onChange={(value) => {
+                  setConfig({ ...config, analysisProvider: value ?? 'openai' });
+                  setSaved(false);
+                }}
+                data={[
+                  { value: 'openai', label: 'OpenAI (GPT-4o)' },
+                  { value: 'anthropic', label: 'Anthropic (Claude)' },
+                  { value: 'ollama', label: 'Ollama (Local)' },
+                ]}
+              />
+
+              <TextInput
+                label="Model"
+                description="Specific model to use (e.g., gpt-4o, claude-sonnet-4-20250514, llama3)"
+                value={config.analysisModel ?? ''}
+                onChange={(e) => {
+                  setConfig({ ...config, analysisModel: e.currentTarget.value });
+                  setSaved(false);
+                }}
+                placeholder={
+                  config.analysisProvider === 'anthropic'
+                    ? 'claude-sonnet-4-20250514'
+                    : config.analysisProvider === 'ollama'
+                      ? 'llama3'
+                      : 'gpt-4o'
+                }
+              />
+
+              {(config.analysisProvider === 'openai' || !config.analysisProvider) && (
+                <PasswordInput
+                  label="OpenAI API Key"
+                  description="Your OpenAI API key (starts with sk-)"
+                  value={config.openAIAPIKey ?? ''}
+                  onChange={(e) => {
+                    setConfig({ ...config, openAIAPIKey: e.currentTarget.value });
+                    setSaved(false);
+                  }}
+                  placeholder="sk-..."
+                />
+              )}
+
+              {config.analysisProvider === 'anthropic' && (
+                <PasswordInput
+                  label="Anthropic API Key"
+                  description="Your Anthropic API key"
+                  value={config.anthropicAPIKey ?? ''}
+                  onChange={(e) => {
+                    setConfig({ ...config, anthropicAPIKey: e.currentTarget.value });
+                    setSaved(false);
+                  }}
+                  placeholder="sk-ant-..."
+                />
+              )}
+
+              {config.analysisProvider === 'ollama' && (
+                <TextInput
+                  label="Ollama Endpoint"
+                  description="URL of your local Ollama server"
+                  value={config.ollamaEndpoint ?? ''}
+                  onChange={(e) => {
+                    setConfig({ ...config, ollamaEndpoint: e.currentTarget.value });
+                    setSaved(false);
+                  }}
+                  placeholder="http://localhost:11434"
+                />
+              )}
+            </Stack>
+          </Paper>
+
+          <Group>
+            <Button
+              onClick={handleSave}
+              loading={saving}
+              leftSection={saved ? <IconCheck size={16} /> : undefined}
+            >
+              {saved ? 'Saved' : 'Save Settings'}
+            </Button>
+          </Group>
         </Stack>
       ),
     },

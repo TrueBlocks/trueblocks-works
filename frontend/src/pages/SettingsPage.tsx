@@ -97,6 +97,20 @@ export function SettingsPage() {
     }
   };
 
+  const autoSave = (updates: Partial<settings.Settings>) => {
+    if (!config) return;
+    const updated = { ...config, ...updates };
+    setConfig(updated);
+    UpdateSettings(updated).catch(() => {
+      notifications.show({
+        title: 'Save Failed',
+        message: 'Failed to save settings',
+        color: 'red',
+        autoClose: 5000,
+      });
+    });
+  };
+
   if (loading || !config) {
     return (
       <Flex justify="center" align="center" h="100%">
@@ -250,20 +264,14 @@ export function SettingsPage() {
                 label="Enable AI Analysis"
                 description="Allow AI-powered analysis of works and collections"
                 checked={config.analysisEnabled ?? false}
-                onChange={(e) => {
-                  setConfig({ ...config, analysisEnabled: e.currentTarget.checked });
-                  setSaved(false);
-                }}
+                onChange={(e) => autoSave({ analysisEnabled: e.currentTarget.checked })}
               />
 
               <Select
                 label="AI Provider"
                 description="Select which AI service to use for analysis"
                 value={config.analysisProvider ?? 'openai'}
-                onChange={(value) => {
-                  setConfig({ ...config, analysisProvider: value ?? 'openai' });
-                  setSaved(false);
-                }}
+                onChange={(value) => autoSave({ analysisProvider: value ?? 'openai' })}
                 data={[
                   { value: 'openai', label: 'OpenAI (GPT-4o)' },
                   { value: 'anthropic', label: 'Anthropic (Claude)' },
@@ -275,10 +283,7 @@ export function SettingsPage() {
                 label="Model"
                 description="Specific model to use (e.g., gpt-4o, claude-sonnet-4-20250514, llama3)"
                 value={config.analysisModel ?? ''}
-                onChange={(e) => {
-                  setConfig({ ...config, analysisModel: e.currentTarget.value });
-                  setSaved(false);
-                }}
+                onChange={(e) => autoSave({ analysisModel: e.currentTarget.value })}
                 placeholder={
                   config.analysisProvider === 'anthropic'
                     ? 'claude-sonnet-4-20250514'
@@ -293,10 +298,7 @@ export function SettingsPage() {
                   label="OpenAI API Key"
                   description="Your OpenAI API key (starts with sk-)"
                   value={config.openAIAPIKey ?? ''}
-                  onChange={(e) => {
-                    setConfig({ ...config, openAIAPIKey: e.currentTarget.value });
-                    setSaved(false);
-                  }}
+                  onChange={(e) => autoSave({ openAIAPIKey: e.currentTarget.value })}
                   placeholder="sk-..."
                 />
               )}
@@ -306,10 +308,7 @@ export function SettingsPage() {
                   label="Anthropic API Key"
                   description="Your Anthropic API key"
                   value={config.anthropicAPIKey ?? ''}
-                  onChange={(e) => {
-                    setConfig({ ...config, anthropicAPIKey: e.currentTarget.value });
-                    setSaved(false);
-                  }}
+                  onChange={(e) => autoSave({ anthropicAPIKey: e.currentTarget.value })}
                   placeholder="sk-ant-..."
                 />
               )}
@@ -319,25 +318,12 @@ export function SettingsPage() {
                   label="Ollama Endpoint"
                   description="URL of your local Ollama server"
                   value={config.ollamaEndpoint ?? ''}
-                  onChange={(e) => {
-                    setConfig({ ...config, ollamaEndpoint: e.currentTarget.value });
-                    setSaved(false);
-                  }}
+                  onChange={(e) => autoSave({ ollamaEndpoint: e.currentTarget.value })}
                   placeholder="http://localhost:11434"
                 />
               )}
             </Stack>
           </Paper>
-
-          <Group>
-            <Button
-              onClick={handleSave}
-              loading={saving}
-              leftSection={saved ? <IconCheck size={16} /> : undefined}
-            >
-              {saved ? 'Saved' : 'Save Settings'}
-            </Button>
-          </Group>
         </Stack>
       ),
     },

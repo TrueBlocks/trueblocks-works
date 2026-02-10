@@ -226,10 +226,24 @@ func (a *App) CopyBookPDFText(collID int64) (*CopyBookPDFTextResult, error) {
 		}
 	}
 
+	// If no parts found, fall back to individual work preview PDFs
+	if len(partPaths) == 0 {
+		pdfPreviewPath := a.fileOps.Config.PDFPreviewPath
+		for _, w := range works {
+			if w.Type == workTypeSection {
+				continue
+			}
+			pdfPath := filepath.Join(pdfPreviewPath, fmt.Sprintf("%d.pdf", w.WorkID))
+			if fileExists(pdfPath) {
+				partPaths = append(partPaths, pdfPath)
+			}
+		}
+	}
+
 	if len(partPaths) == 0 {
 		return &CopyBookPDFTextResult{
 			Success: false,
-			Error:   "No cached parts found. Build the galley first.",
+			Error:   "No PDF files found. Generate previews first.",
 		}, nil
 	}
 

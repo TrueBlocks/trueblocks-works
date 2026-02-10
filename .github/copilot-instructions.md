@@ -512,7 +512,20 @@ When in doubt:
 
 ---
 
-## 22. ToDoList Workflow
+## 22. Runtime Paths
+
+| Path | Purpose |
+| --- | --- |
+| `~/.works/config.json` | App configuration (base folder, preview path, etc.) |
+| `~/.works/works.db` | SQLite database |
+| `~/.works/previews/` | PDF preview cache |
+| `~/.works/backups/` | Database backups |
+
+The documents base folder is stored in `config.json` as `baseFolderPath`. Work paths in the database (`Works.path`) are relative to this base folder.
+
+---
+
+## 23. ToDoList Workflow
 
 For structured implementation tasks, see:
 

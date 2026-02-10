@@ -22,7 +22,7 @@ import {
   IconSearch,
   IconBrain,
 } from '@tabler/icons-react';
-import { GetSettings, UpdateSettings, BrowseForFolder } from '@app';
+import { GetSettings, UpdateSettings, BrowseForFolder, ClearAnalysisTabs } from '@app';
 import { settings } from '@models';
 import { TabView, Tab, EnumManagement, FTSStatus } from '@/components';
 import { SplashScreen } from '@trueblocks/ui';
@@ -264,7 +264,13 @@ export function SettingsPage() {
                 label="Enable AI Analysis"
                 description="Allow AI-powered analysis of works and collections"
                 checked={config.analysisEnabled ?? false}
-                onChange={(e) => autoSave({ analysisEnabled: e.currentTarget.checked })}
+                onChange={(e) => {
+                  const enabled = e.currentTarget.checked;
+                  autoSave({ analysisEnabled: enabled });
+                  if (!enabled) {
+                    ClearAnalysisTabs();
+                  }
+                }}
               />
 
               <Select

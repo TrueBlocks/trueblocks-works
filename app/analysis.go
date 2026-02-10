@@ -163,9 +163,12 @@ func (a *App) AnalyzeCollection(collID int64) (*analysis.CollectionResult, error
 		return nil, fmt.Errorf("get collection works: %w", err)
 	}
 
-	// Build work summaries with previews
+	// Build work summaries with previews, skipping suppressed works
 	summaries := make([]analysis.WorkSummary, 0, len(works))
 	for i, w := range works {
+		if w.IsSuppressed {
+			continue
+		}
 		filePath := a.fileOps.GetFullPath(&w.Work)
 		preview := ""
 

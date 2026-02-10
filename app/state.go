@@ -58,6 +58,10 @@ func (a *App) SetTab(pageName string, tab string) {
 	a.state.SetTab(pageName, tab)
 }
 
+func (a *App) ClearAnalysisTabs() {
+	a.state.ClearAnalysisTabs()
+}
+
 func (a *App) ToggleShowDeleted() bool {
 	return a.state.ToggleShowDeleted()
 }

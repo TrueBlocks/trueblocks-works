@@ -285,6 +285,19 @@ func (m *Manager) SetTab(pageName string, tab string) {
 	_ = m.Save()
 }
 
+func (m *Manager) ClearAnalysisTabs() {
+	m.mu.Lock()
+	if m.state.Tabs != nil {
+		for key, val := range m.state.Tabs {
+			if val == "analysis" && len(key) > len("collection--subtab") {
+				m.state.Tabs[key] = "contents"
+			}
+		}
+	}
+	m.mu.Unlock()
+	_ = m.Save()
+}
+
 func (m *Manager) GetShowDeleted() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()

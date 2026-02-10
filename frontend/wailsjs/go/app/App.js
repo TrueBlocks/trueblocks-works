@@ -98,6 +98,10 @@ export function CleanDocxStyles(arg1, arg2) {
   return window['go']['app']['App']['CleanDocxStyles'](arg1, arg2);
 }
 
+export function ClearAnalysisTabs() {
+  return window['go']['app']['App']['ClearAnalysisTabs']();
+}
+
 export function ClearPartCache(arg1, arg2) {
   return window['go']['app']['App']['ClearPartCache'](arg1, arg2);
 }

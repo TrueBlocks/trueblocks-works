@@ -104,17 +104,16 @@ func BuildWithParts(opts PipelineOptions) (*PipelineResult, error) {
 		return nil, fmt.Errorf("failed to create cache directory: %w", err)
 	}
 
-	// Create blank.pdf once at the start using the book template
+	// Create blank.pdf once at the start, matching the template page size
 	blankPagePath := filepath.Join(opts.CacheDir, "blank.pdf")
+	width, height := 432.0, 648.0 // default 6x9 inches in points
 	if opts.Manifest.TemplatePath != "" {
-		if err := CreateBlankPageFromTemplate(opts.Manifest.TemplatePath, blankPagePath); err != nil {
-			return nil, fmt.Errorf("failed to create blank page: %w", err)
+		if w, h, err := ExtractTemplatePageSize(opts.Manifest.TemplatePath); err == nil {
+			width, height = w, h
 		}
-	} else {
-		width, height := 432.0, 648.0 // 6x9 inches in points
-		if err := CreateBlankPage(blankPagePath, width, height); err != nil {
-			return nil, fmt.Errorf("failed to create blank page: %w", err)
-		}
+	}
+	if err := CreateBlankPage(blankPagePath, width, height); err != nil {
+		return nil, fmt.Errorf("failed to create blank page: %w", err)
 	}
 
 	progress := func(stage string, current, total int, message string) {

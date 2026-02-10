@@ -237,16 +237,28 @@ func ConvertDocxToPDF(docxPath, pdfPath string) error {
 		return fmt.Errorf("abs pdf path: %w", err)
 	}
 
-	script := fmt.Sprintf(`tell application "Microsoft Word"
-	activate
-	delay 1
+	script := fmt.Sprintf(`tell application "System Events"
+	set wasRunning to (name of processes) contains "Microsoft Word"
+end tell
+
+tell application "Microsoft Word"
+	set docsBefore to count of documents
 	open POSIX file "%s"
-	delay 0.5
+	
+	-- Wait for the new document to appear
+	repeat 20 times
+		if (count of documents) > docsBefore then exit repeat
+		delay 0.25
+	end repeat
+	
 	set theDoc to active document
-	set theFile to POSIX file "%s"
-	save as theDoc file name (theFile as text) file format format PDF
+	save as theDoc file name (POSIX file "%s" as text) file format format PDF
 	close theDoc saving no
-end tell`, absDocx, absPDF)
+end tell
+
+if not wasRunning then
+	tell application "Microsoft Word" to quit
+end if`, absDocx, absPDF)
 
 	// 30 second timeout to prevent indefinite hangs
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

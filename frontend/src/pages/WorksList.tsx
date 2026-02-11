@@ -303,13 +303,24 @@ export function WorksList({ onWorkClick, onFilteredDataChange }: WorksListProps)
         label: 'Collections',
         width: '12%',
         scrollOnSelect: true,
+        sortValue: (w) => {
+          const raw = w.collectionList || '';
+          const sorted = raw
+            .split(',')
+            .map((c) => c.trim())
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+          return sorted.length > 0 ? sorted.join(', ').toLowerCase() : 'zzz';
+        },
         render: (w) => {
           const raw = w.collectionList || '';
           const collections = raw
             .split(',')
             .map((c) => c.trim())
             .filter(Boolean);
-          const visible = collections.filter((c) => !c.startsWith('z'));
+          const visible = collections
+            .filter((c) => !c.startsWith('z'))
+            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
           const hasHidden = collections.some((c) => c.startsWith('z'));
           if (hasHidden) {
             visible.push('z');

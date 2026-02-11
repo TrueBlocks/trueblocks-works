@@ -187,6 +187,7 @@ If caught: "I cannot implement code changes while in design mode."
 - **No comments in production code** — only for TODO items
 - **No commented-out code** — delete it
 - Only comment _why_, never _what_
+- **Verify with examples**: Before submitting any UI or data change, mentally walk through 3 realistic data examples and verify the output is correct. If you can't convince yourself it works, it doesn't.
 
 ---
 

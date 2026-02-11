@@ -34,7 +34,7 @@ import {
 import { models, db } from '@models';
 import { FileActionsToolbar, PDFPreview, DebugPopover } from '@/components';
 import { NotesPortal, SupportingPortal, SubmissionsPortal, CollectionsPortal } from '@/portals';
-import { CollectionPickerModal, ConfirmDeleteModal } from '@/modals';
+import { CollectionPickerModal, ConfirmDeleteModal, CreateSubmissionModal } from '@/modals';
 import { DetailHeader, PathDisplay, EditableField, EntityFieldSelect } from '@trueblocks/ui';
 import { workStatusColors, qualityColors } from '@/types';
 
@@ -53,6 +53,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
   const [collections, setCollections] = useState<models.CollectionDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
 
   // Store collection context in a ref so it persists across prev/next navigation
@@ -715,6 +716,7 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
             />
             <SubmissionsPortal
               submissions={submissions}
+              onAdd={() => setSubmissionModalOpen(true)}
               onRowClick={(sub) =>
                 navigate(`/submissions/${sub.submissionID}`, {
                   state: { returnTo: `/works/${workId}` },
@@ -725,9 +727,23 @@ export function WorkDetail({ workId, filteredWorks }: WorkDetailProps) {
                   state: { returnTo: `/works/${workId}` },
                 })
               }
+              onCollectionClick={(collId) =>
+                navigate(`/collections/${collId}`, {
+                  state: { returnTo: `/works/${workId}` },
+                })
+              }
               onDelete={handleDeleteSubmission}
               onUndelete={handleUndeleteSubmission}
               onPermanentDelete={handlePermanentDeleteSubmissionDirect}
+            />
+            <CreateSubmissionModal
+              opened={submissionModalOpen}
+              onClose={() => setSubmissionModalOpen(false)}
+              workID={work.workID}
+              onCreated={async () => {
+                const updated = await GetSubmissionViewsByWork(workId);
+                setSubmissions(updated || []);
+              }}
             />
             <NotesPortal
               notes={notes}

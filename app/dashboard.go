@@ -409,12 +409,14 @@ func (a *App) getSubmissionsStats(year int) SubmissionsStats {
 		Sparkline:  make([]int, 30),
 	}
 
+	const since2020 = " AND submission_date >= '2020-01-01'"
+
 	// Total
-	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
+	row := a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')" + since2020)
 	_ = row.Scan(&stats.Total)
 
 	// Pending (no response)
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE (response_type IS NULL OR response_type = '' OR response_type = 'Waiting') AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE (response_type IS NULL OR response_type = '' OR response_type = 'Waiting') AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')" + since2020)
 	_ = row.Scan(&stats.Pending)
 
 	// This year
@@ -422,7 +424,7 @@ func (a *App) getSubmissionsStats(year int) SubmissionsStats {
 	_ = row.Scan(&stats.ThisYear)
 
 	// By response
-	rows, _ := a.db.Conn().Query("SELECT COALESCE(response_type, 'Pending'), COUNT(*) FROM Submissions WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%') GROUP BY response_type")
+	rows, _ := a.db.Conn().Query("SELECT COALESCE(response_type, 'Pending'), COUNT(*) FROM Submissions WHERE (attributes IS NULL OR attributes NOT LIKE '%deleted%')" + since2020 + " GROUP BY response_type")
 	if rows != nil {
 		defer rows.Close()
 		for rows.Next() {
@@ -455,11 +457,11 @@ func (a *App) getSubmissionsStats(year int) SubmissionsStats {
 		}
 	}
 
-	// Accept rate (all time)
+	// Accept rate (since 2020)
 	var accepted, total int
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type = 'Accepted' AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type = 'Accepted' AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')" + since2020)
 	_ = row.Scan(&accepted)
-	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type IS NOT NULL AND response_type != '' AND response_type != 'Waiting' AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')")
+	row = a.db.Conn().QueryRow("SELECT COUNT(*) FROM Submissions WHERE response_type IS NOT NULL AND response_type != '' AND response_type != 'Waiting' AND (attributes IS NULL OR attributes NOT LIKE '%deleted%')" + since2020)
 	_ = row.Scan(&total)
 	if total > 0 {
 		stats.AcceptRate = float64(accepted) / float64(total) * 100
@@ -672,16 +674,18 @@ func (a *App) getPendingAlerts(daysThreshold int) []PendingAlert {
 
 	cutoffDate := time.Now().AddDate(0, 0, -daysThreshold).Format("2006-01-02")
 	rows, _ := a.db.Conn().Query(`
-		SELECT s.submissionID, w.title, o.name, 
+		SELECT s.submissionID,
+			CASE WHEN s.is_collection = 1 THEN COALESCE(c.collection_name, '') ELSE COALESCE(w.title, '') END,
+			COALESCE(o.name, ''),
 			julianday('now') - julianday(s.submission_date) as days_waiting
 		FROM Submissions s
-		JOIN Works w ON s.workID = w.workID
-		JOIN Organizations o ON s.orgID = o.orgID
+		LEFT JOIN Works w ON s.is_collection = 0 AND s.workID = w.workID
+		LEFT JOIN Collections c ON s.is_collection = 1 AND s.workID = c.collID
+		LEFT JOIN Organizations o ON s.orgID = o.orgID
 		WHERE (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting')
 		AND s.submission_date <= ?
+		AND s.submission_date >= '2020-01-01'
 		AND (s.attributes IS NULL OR s.attributes NOT LIKE '%deleted%')
-		AND (w.attributes IS NULL OR w.attributes NOT LIKE '%deleted%')
-		AND (o.attributes IS NULL OR o.attributes NOT LIKE '%deleted%')
 		ORDER BY s.submission_date ASC
 	`, cutoffDate)
 	if rows != nil {

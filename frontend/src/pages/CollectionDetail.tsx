@@ -90,7 +90,13 @@ import { models, db, state, settings } from '@models';
 import { qualitySortOrder, Quality } from '@/types';
 import { DataTable, Column, StatusBadge, QualityBadge, CommandPalette } from '@/components';
 import { NotesPortal, SubmissionsPortal } from '@/portals';
-import { WorkPickerModal, NewWorkModal, ConfirmDeleteModal, BatchUpdateModal } from '@/modals';
+import {
+  WorkPickerModal,
+  NewWorkModal,
+  ConfirmDeleteModal,
+  BatchUpdateModal,
+  CreateSubmissionModal,
+} from '@/modals';
 import { MatterView, CoversView, AmazonView } from '@/views';
 import { AnalysisView } from '@/features/analysis';
 import {
@@ -118,6 +124,7 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
   const [sortedFilteredWorks, setSortedFilteredWorks] = useState<models.CollectionWork[]>([]);
   const [pageSizes, setPageSizes] = useState<Record<number, string>>({});
   const [submissions, setSubmissions] = useState<models.SubmissionView[]>([]);
+  const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialSelectID, setInitialSelectID] = useState<number | undefined>(undefined);
   const [workPickerOpen, setWorkPickerOpen] = useState(false);
@@ -1548,6 +1555,12 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                         state: { returnTo: `/collections/${collectionId}` },
                       })
                     }
+                    onCollectionClick={(collId) =>
+                      navigate(`/collections/${collId}`, {
+                        state: { returnTo: `/collections/${collectionId}` },
+                      })
+                    }
+                    onAdd={() => setSubmissionModalOpen(true)}
                     onDelete={handleDeleteSubmission}
                     onUndelete={handleUndeleteSubmission}
                     onPermanentDelete={handlePermanentDeleteSubmissionDirect}
@@ -1705,6 +1718,12 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
                     state: { returnTo: `/collections/${collectionId}` },
                   })
                 }
+                onCollectionClick={(collId) =>
+                  navigate(`/collections/${collId}`, {
+                    state: { returnTo: `/collections/${collectionId}` },
+                  })
+                }
+                onAdd={() => setSubmissionModalOpen(true)}
                 onDelete={handleDeleteSubmission}
                 onUndelete={handleUndeleteSubmission}
                 onPermanentDelete={handlePermanentDeleteSubmissionDirect}
@@ -1788,6 +1807,15 @@ export function CollectionDetail({ collectionId, filteredCollections }: Collecti
         markedWorks={markedWorksInfo}
         onConfirm={handleBatchConfirm}
         loading={batchLoading}
+      />
+      <CreateSubmissionModal
+        opened={submissionModalOpen}
+        onClose={() => setSubmissionModalOpen(false)}
+        collID={collectionId}
+        onCreated={async () => {
+          const updated = await GetSubmissionViewsByCollection(collectionId);
+          setSubmissions(updated || []);
+        }}
       />
     </Stack>
   );

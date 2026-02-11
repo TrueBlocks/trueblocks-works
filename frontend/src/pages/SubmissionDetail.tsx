@@ -19,6 +19,7 @@ import { LogErr, showValidationResult } from '@/utils';
 import {
   GetSubmission,
   GetWork,
+  GetCollection,
   GetOrganization,
   DeleteSubmission,
   UndeleteSubmission,
@@ -64,6 +65,7 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
   const { hasPrev, hasNext, currentIndex, currentLevel } = navigation;
   const [submission, setSubmission] = useState<models.Submission | null>(null);
   const [work, setWork] = useState<models.Work | null>(null);
+  const [collection, setCollection] = useState<models.Collection | null>(null);
   const [org, setOrg] = useState<models.Organization | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -110,12 +112,21 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
       setSubmission(subData);
       SetLastSubmissionID(submissionId);
       if (subData) {
-        const [workData, orgData] = await Promise.all([
-          GetWork(subData.workID),
-          GetOrganization(subData.orgID),
-        ]);
-        setWork(workData);
-        setOrg(orgData);
+        const orgPromise = GetOrganization(subData.orgID);
+        if (subData.isCollection) {
+          const [collData, orgData] = await Promise.all([
+            GetCollection(subData.workID),
+            orgPromise,
+          ]);
+          setCollection(collData);
+          setWork(null);
+          setOrg(orgData);
+        } else {
+          const [workData, orgData] = await Promise.all([GetWork(subData.workID), orgPromise]);
+          setWork(workData);
+          setCollection(null);
+          setOrg(orgData);
+        }
       }
     } catch (err) {
       LogErr('Failed to load submission data:', err);
@@ -397,9 +408,28 @@ export function SubmissionDetail({ submissionId, filteredSubmissions }: Submissi
               <Grid.Col span={{ base: 12, md: 6 }}>
                 <Paper p="md" withBorder>
                   <Text size="sm" fw={600} mb="md">
-                    Work
+                    {submission.isCollection ? 'Collection' : 'Work'}
                   </Text>
-                  {work ? (
+                  {submission.isCollection ? (
+                    collection ? (
+                      <Group justify="space-between">
+                        <div>
+                          <Text fw={500}>{collection.collectionName}</Text>
+                          <Text size="sm" c="dimmed">
+                            {collection.type || 'Collection'}
+                          </Text>
+                        </div>
+                        <ActionIcon
+                          variant="light"
+                          onClick={() => navigate(`/collections/${collection.collID}`)}
+                        >
+                          <IconExternalLink size={16} />
+                        </ActionIcon>
+                      </Group>
+                    ) : (
+                      <Text c="dimmed">Collection #{submission.workID}</Text>
+                    )
+                  ) : work ? (
                     <Group justify="space-between">
                       <div>
                         <Text fw={500}>{work.title}</Text>

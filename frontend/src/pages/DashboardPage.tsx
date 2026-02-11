@@ -409,6 +409,10 @@ export function DashboardPage() {
                 <Text fw={600} c="blue">
                   {stats.yearProgress.successRate?.toFixed(1) || 0}% success rate
                 </Text>
+                <Text c="dimmed">|</Text>
+                <Text fw={600} c="orange">
+                  {stats.submissions.pending} outstanding
+                </Text>
               </Group>
             </div>
           </Group>

@@ -62,6 +62,7 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 		COALESCE(suppress_page_numbers, 'never') as suppress_page_numbers,
 		COALESCE(book_type, 'prose') as book_type, selected_parts,
 		kdp_uploaded, kdp_previewed, kdp_proof_ordered, kdp_published, amazon_url, last_published,
+		COALESCE(identity_hidden, 0) as identity_hidden,
 		created_at, updated_at
 		FROM Books WHERE bookID = ?`
 
@@ -78,6 +79,7 @@ func (db *DB) GetBook(id int64) (*models.Book, error) {
 		&b.PageNumberPosition, &b.SuppressPageNumbers,
 		&b.BookType, &b.SelectedParts,
 		&b.KdpUploaded, &b.KdpPreviewed, &b.KdpProofOrdered, &b.KdpPublished, &b.AmazonUrl, &b.LastPublished,
+		&b.IdentityHidden,
 		&b.CreatedAt, &b.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
@@ -102,6 +104,7 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 		COALESCE(suppress_page_numbers, 'never') as suppress_page_numbers,
 		COALESCE(book_type, 'prose') as book_type, selected_parts,
 		kdp_uploaded, kdp_previewed, kdp_proof_ordered, kdp_published, amazon_url, last_published,
+		COALESCE(identity_hidden, 0) as identity_hidden,
 		created_at, updated_at
 		FROM Books WHERE collID = ?`
 
@@ -118,6 +121,7 @@ func (db *DB) GetBookByCollection(collID int64) (*models.Book, error) {
 		&b.PageNumberPosition, &b.SuppressPageNumbers,
 		&b.BookType, &b.SelectedParts,
 		&b.KdpUploaded, &b.KdpPreviewed, &b.KdpProofOrdered, &b.KdpPublished, &b.AmazonUrl, &b.LastPublished,
+		&b.IdentityHidden,
 		&b.CreatedAt, &b.ModifiedAt,
 	)
 	if err == sql.ErrNoRows {
@@ -142,6 +146,7 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		page_number_position = ?, suppress_page_numbers = ?,
 		book_type = ?, selected_parts = ?,
 		kdp_uploaded = ?, kdp_previewed = ?, kdp_proof_ordered = ?, kdp_published = ?, amazon_url = ?, last_published = ?,
+		identity_hidden = ?,
 		updated_at = CURRENT_TIMESTAMP
 		WHERE bookID = ?`
 
@@ -150,13 +155,14 @@ func (db *DB) UpdateBook(b *models.Book) error {
 		b.Acknowledgements, b.AboutAuthor, b.CoverPath,
 		b.FrontCoverPath, b.BackCoverPath, b.SpineText,
 		b.DescriptionShort, b.DescriptionLong,
-		b.ISBN, b.PublishedDate, b.TemplatePath, b.ExportPath, b.Status,
-		b.TitleOffsetY, b.SubtitleOffsetY, b.AuthorOffsetY,
+		b.ISBN, b.PublishedDate, b.TemplatePath, b.ExportPath,
+		b.Status, b.TitleOffsetY, b.SubtitleOffsetY, b.AuthorOffsetY,
 		b.Publisher, b.BackgroundColor,
 		b.WorksStartRecto, b.VersoHeader, b.RectoHeader,
 		b.PageNumberPosition, b.SuppressPageNumbers,
 		b.BookType, b.SelectedParts,
 		b.KdpUploaded, b.KdpPreviewed, b.KdpProofOrdered, b.KdpPublished, b.AmazonUrl, b.LastPublished,
+		b.IdentityHidden,
 		b.BookID,
 	)
 	if err != nil {

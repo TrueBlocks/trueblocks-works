@@ -5,6 +5,7 @@ type Submission struct {
 	SubmissionID   int64    `json:"submissionID" db:"submissionID"`
 	WorkID         int64    `json:"workID" db:"workID"`
 	OrgID          int64    `json:"orgID" db:"orgID"`
+	IsCollection   bool     `json:"isCollection" db:"is_collection"`
 	Draft          string   `json:"draft" db:"draft"`
 	SubmissionDate *string  `json:"submissionDate,omitempty" db:"submission_date"`
 	SubmissionType *string  `json:"submissionType,omitempty" db:"submission_type"`

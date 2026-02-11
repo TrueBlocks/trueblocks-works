@@ -9,6 +9,7 @@ interface SubmissionsPortalProps {
   onAdd?: () => void;
   onRowClick?: (sub: models.SubmissionView) => void;
   onWorkClick?: (workId: number) => void;
+  onCollectionClick?: (collId: number) => void;
   onOrgClick?: (orgId: number) => void;
   onDelete?: (subId: number) => void;
   onUndelete?: (subId: number) => void;
@@ -25,6 +26,7 @@ export function SubmissionsPortal({
   onAdd,
   onRowClick,
   onWorkClick,
+  onCollectionClick,
   onOrgClick,
   onDelete,
   onUndelete,
@@ -66,7 +68,8 @@ export function SubmissionsPortal({
                     lineClamp={1}
                     td={sub.isDeleted ? 'line-through' : undefined}
                     c={
-                      displayField === 'work' && onWorkClick
+                      displayField === 'work' &&
+                      (sub.isCollection ? onCollectionClick : onWorkClick)
                         ? 'blue'
                         : displayField === 'journal' && onOrgClick
                           ? 'blue'
@@ -74,24 +77,35 @@ export function SubmissionsPortal({
                     }
                     style={{
                       cursor:
-                        (displayField === 'work' && onWorkClick) ||
+                        (displayField === 'work' &&
+                          (sub.isCollection ? onCollectionClick : onWorkClick)) ||
                         (displayField === 'journal' && onOrgClick)
                           ? 'pointer'
                           : 'default',
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (displayField === 'work' && onWorkClick) {
-                        onWorkClick(sub.workID);
+                      if (displayField === 'work') {
+                        if (sub.isCollection && onCollectionClick) {
+                          onCollectionClick(sub.workID);
+                        } else if (onWorkClick) {
+                          onWorkClick(sub.workID);
+                        }
                       } else if (displayField === 'journal' && onOrgClick) {
                         onOrgClick(sub.orgID);
                       }
                     }}
                   >
                     {displayField === 'work'
-                      ? sub.titleOfWork || `Work #${sub.workID}`
+                      ? sub.titleOfWork ||
+                        (sub.isCollection ? `Collection #${sub.workID}` : `Work #${sub.workID}`)
                       : sub.journalName || `Org #${sub.orgID}`}
                   </Text>
+                  {displayField === 'work' && sub.isCollection && (
+                    <Badge color="violet" variant="light" size="xs">
+                      collection
+                    </Badge>
+                  )}
                   {displayField === 'journal' &&
                     sub.journalStatus &&
                     sub.journalStatus !== 'Open' && (

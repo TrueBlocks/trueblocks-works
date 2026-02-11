@@ -9,29 +9,39 @@ import {
   Badge,
   ScrollArea,
   Tooltip,
+  Switch,
 } from '@mantine/core';
-import { IconCheck, IconTrash } from '@tabler/icons-react';
-import { GetBookParts, ClearPartCache } from '@app';
+import { IconCheck, IconTrash, IconEyeOff } from '@tabler/icons-react';
+import { GetBookParts, ClearPartCache, UpdateBook } from '@app';
 import { LogErr } from '@/utils';
-import { app } from '@models';
+import { app, models } from '@models';
 
 interface PartSelectionModalProps {
   opened: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (isBlind: boolean) => void;
+  onBookChange: (updated: models.Book) => void;
   collectionId: number;
+  book: models.Book;
 }
 
 export function PartSelectionModal({
   opened,
   onClose,
   onConfirm,
+  onBookChange,
   collectionId,
+  book,
 }: PartSelectionModalProps) {
   const [parts, setParts] = useState<app.PartInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [clearingAll, setClearingAll] = useState(false);
   const [clearingPart, setClearingPart] = useState<number | null>(null);
+  const [isBlind, setIsBlind] = useState(book.identityHidden);
+
+  useEffect(() => {
+    setIsBlind(book.identityHidden);
+  }, [book.identityHidden]);
 
   useEffect(() => {
     if (!opened) return;
@@ -154,14 +164,37 @@ export function PartSelectionModal({
               headers. Click a cached badge to force rebuild.
             </Text>
 
+            <Switch
+              label="Identity-hidden (blind submission)"
+              description="Removes copyright, afterword, acknowledgements, about author. Title page excludes author name. PDF metadata stripped."
+              checked={isBlind}
+              onChange={(event) => {
+                const val = event.currentTarget.checked;
+                setIsBlind(val);
+                const updated = { ...book, identityHidden: val };
+                onBookChange(updated);
+                UpdateBook(updated).catch((err) =>
+                  LogErr('Failed to save identity-hidden setting:', err)
+                );
+              }}
+              mt="xs"
+              color="violet"
+            />
+
             <Group justify="flex-end" gap="sm">
               <Button variant="default" onClick={onClose}>
                 Cancel
               </Button>
-              <Button onClick={onConfirm}>
-                {needsBuildCount > 0
-                  ? `Build Galley (${needsBuildCount} part${needsBuildCount !== 1 ? 's' : ''} to process)`
-                  : 'Build Galley (all cached)'}
+              <Button
+                onClick={() => onConfirm(isBlind)}
+                leftSection={isBlind ? <IconEyeOff size={16} /> : undefined}
+                color={isBlind ? 'violet' : undefined}
+              >
+                {isBlind
+                  ? 'Build Blind Copy'
+                  : needsBuildCount > 0
+                    ? `Build Galley (${needsBuildCount} part${needsBuildCount !== 1 ? 's' : ''} to process)`
+                    : 'Build Galley (all cached)'}
               </Button>
             </Group>
           </>

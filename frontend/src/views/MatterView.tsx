@@ -123,56 +123,66 @@ export function MatterView({
     setTemplateStyles(styles);
   }, []);
 
-  const buildHtmlContent = useCallback(() => {
-    if (!book) return null;
-    return {
-      titlePage: generateTitlePageHTML({ book, collectionName, templateStyles }),
-      copyright: book.copyright ? generateCopyrightHTML({ book }) : '',
-      dedication: book.dedication ? generateDedicationHTML({ book }) : '',
-      afterword: book.afterword ? generateAfterwordHTML({ book, templateStyles }) : '',
-      acknowledgements: book.acknowledgements
-        ? generateAcknowledgementsHTML({ book, templateStyles })
-        : '',
-      aboutAuthor: book.aboutAuthor ? generateAboutAuthorHTML({ book, templateStyles }) : '',
-    };
-  }, [book, collectionName, templateStyles]);
+  const buildHtmlContent = useCallback(
+    (isBlind: boolean) => {
+      if (!book) return null;
+      const blindBook = isBlind ? { ...book, author: '' } : book;
+      return {
+        titlePage: generateTitlePageHTML({ book: blindBook, collectionName, templateStyles }),
+        copyright: !isBlind && book.copyright ? generateCopyrightHTML({ book }) : '',
+        dedication: book.dedication ? generateDedicationHTML({ book }) : '',
+        afterword:
+          !isBlind && book.afterword ? generateAfterwordHTML({ book, templateStyles }) : '',
+        acknowledgements:
+          !isBlind && book.acknowledgements
+            ? generateAcknowledgementsHTML({ book, templateStyles })
+            : '',
+        aboutAuthor:
+          !isBlind && book.aboutAuthor ? generateAboutAuthorHTML({ book, templateStyles }) : '',
+      };
+    },
+    [book, collectionName, templateStyles]
+  );
 
-  const doExportPDF = useCallback(async () => {
-    const htmlContent = buildHtmlContent();
-    if (!htmlContent) return;
+  const doExportPDF = useCallback(
+    async (isBlind: boolean) => {
+      const htmlContent = buildHtmlContent(isBlind);
+      if (!htmlContent) return;
 
-    setExporting(true);
-    try {
-      const result = await ExportBookPDFWithParts(collectionId, false, htmlContent);
+      setExporting(true);
+      try {
+        const result = await ExportBookPDFWithParts(collectionId, false, htmlContent, isBlind);
 
-      if (result?.success) {
-        Log(`PDF exported to: ${result.outputPath}`);
-        notifications.show({
-          title: 'PDF Export Complete',
-          message: `Exported ${result.workCount} works in ${result.duration}`,
-          color: 'green',
-          autoClose: 8000,
-        });
-      } else {
+        if (result?.success) {
+          Log(`PDF exported to: ${result.outputPath}`);
+          notifications.show({
+            title: isBlind ? 'Blind Copy Complete' : 'PDF Export Complete',
+            message: `Exported ${result.workCount} works in ${result.duration}`,
+            color: 'green',
+            autoClose: 8000,
+          });
+        } else {
+          notifications.show({
+            title: 'PDF Export Failed',
+            message: result?.error || 'Unknown error',
+            color: 'red',
+            autoClose: 8000,
+          });
+        }
+      } catch (err) {
+        LogErr('PDF export failed:', err);
         notifications.show({
           title: 'PDF Export Failed',
-          message: result?.error || 'Unknown error',
+          message: String(err),
           color: 'red',
           autoClose: 8000,
         });
+      } finally {
+        setExporting(false);
       }
-    } catch (err) {
-      LogErr('PDF export failed:', err);
-      notifications.show({
-        title: 'PDF Export Failed',
-        message: String(err),
-        color: 'red',
-        autoClose: 8000,
-      });
-    } finally {
-      setExporting(false);
-    }
-  }, [buildHtmlContent, collectionId]);
+    },
+    [buildHtmlContent, collectionId]
+  );
 
   const handleExportPDF = useCallback(async () => {
     // Always show part modal - required for cache invalidation on any build
@@ -266,11 +276,13 @@ export function MatterView({
       <PartSelectionModal
         opened={partModalOpen}
         onClose={() => setPartModalOpen(false)}
-        onConfirm={() => {
+        onConfirm={(isBlind: boolean) => {
           setPartModalOpen(false);
-          doExportPDF();
+          doExportPDF(isBlind);
         }}
+        onBookChange={(updated) => setBook(updated)}
         collectionId={collectionId}
+        book={book}
       />
 
       <Tabs value={activeSubTab} onChange={onSubTabChange}>
@@ -391,7 +403,7 @@ export function MatterView({
               leftSection={<IconExternalLink size={12} />}
               onClick={handleOpenPDF}
             >
-              Open Galley
+              {book.identityHidden ? 'Open Blind Galley' : 'Open Galley'}
             </Button>
             <Button
               size="xs"

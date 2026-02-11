@@ -127,7 +127,7 @@ export function ExportAllCSV():Promise<Array<app.ExportResult>>;
 
 export function ExportAllTables():Promise<Array<app.ExportResult>>;
 
-export function ExportBookPDFWithParts(arg1:number,arg2:boolean,arg3:app.FrontBackMatterHTML):Promise<app.BookExportResult>;
+export function ExportBookPDFWithParts(arg1:number,arg2:boolean,arg3:app.FrontBackMatterHTML,arg4:boolean):Promise<app.BookExportResult>;
 
 export function ExportCollectionFolder(arg1:number):Promise<number>;
 

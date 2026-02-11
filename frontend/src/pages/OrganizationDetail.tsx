@@ -27,7 +27,7 @@ import {
 import { models, db } from '@models';
 import { OrganizationDetailPanel } from './OrganizationDetailPanel';
 import { NotesPortal, SubmissionsPortal } from '@/portals';
-import { ConfirmDeleteModal } from '@/modals';
+import { ConfirmDeleteModal, CreateSubmissionModal } from '@/modals';
 import { DetailHeader, EditableField, EntityFieldSelect } from '@trueblocks/ui';
 import { orgStatusColors } from '@/types';
 
@@ -53,6 +53,7 @@ export function OrganizationDetail({
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<db.DeleteConfirmation | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
 
   const {
     notes,
@@ -471,6 +472,7 @@ export function OrganizationDetail({
           <Stack gap="md">
             <SubmissionsPortal
               submissions={submissions}
+              onAdd={() => setSubmissionModalOpen(true)}
               onRowClick={(sub) =>
                 navigate(`/submissions/${sub.submissionID}`, {
                   state: { returnTo: `/organizations/${organizationId}` },
@@ -481,10 +483,24 @@ export function OrganizationDetail({
                   state: { returnTo: `/organizations/${organizationId}` },
                 })
               }
+              onCollectionClick={(collId) =>
+                navigate(`/collections/${collId}`, {
+                  state: { returnTo: `/organizations/${organizationId}` },
+                })
+              }
               onDelete={handleDeleteSubmission}
               onUndelete={handleUndeleteSubmission}
               onPermanentDelete={handlePermanentDeleteSubmissionDirect}
               displayField="work"
+            />
+            <CreateSubmissionModal
+              opened={submissionModalOpen}
+              onClose={() => setSubmissionModalOpen(false)}
+              orgID={organizationId}
+              onCreated={async () => {
+                const updated = await GetSubmissionViewsByOrg(organizationId);
+                setSubmissions(updated || []);
+              }}
             />
             <NotesPortal
               title="Journal Notes"

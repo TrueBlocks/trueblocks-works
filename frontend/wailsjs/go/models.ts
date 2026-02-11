@@ -1937,6 +1937,7 @@ export namespace models {
 	    kdpPublished: boolean;
 	    amazonUrl?: string;
 	    lastPublished?: string;
+	    identityHidden: boolean;
 	    createdAt: string;
 	    modifiedAt: string;
 	
@@ -1987,6 +1988,7 @@ export namespace models {
 	        this.kdpPublished = source["kdpPublished"];
 	        this.amazonUrl = source["amazonUrl"];
 	        this.lastPublished = source["lastPublished"];
+	        this.identityHidden = source["identityHidden"];
 	        this.createdAt = source["createdAt"];
 	        this.modifiedAt = source["modifiedAt"];
 	    }
@@ -2358,6 +2360,7 @@ export namespace models {
 	    submissionID: number;
 	    workID: number;
 	    orgID: number;
+	    isCollection: boolean;
 	    draft: string;
 	    submissionDate?: string;
 	    submissionType?: string;
@@ -2382,6 +2385,7 @@ export namespace models {
 	        this.submissionID = source["submissionID"];
 	        this.workID = source["workID"];
 	        this.orgID = source["orgID"];
+	        this.isCollection = source["isCollection"];
 	        this.draft = source["draft"];
 	        this.submissionDate = source["submissionDate"];
 	        this.submissionType = source["submissionType"];
@@ -2402,6 +2406,7 @@ export namespace models {
 	    submissionID: number;
 	    workID: number;
 	    orgID: number;
+	    isCollection: boolean;
 	    draft: string;
 	    submissionDate?: string;
 	    submissionType?: string;
@@ -2431,6 +2436,7 @@ export namespace models {
 	        this.submissionID = source["submissionID"];
 	        this.workID = source["workID"];
 	        this.orgID = source["orgID"];
+	        this.isCollection = source["isCollection"];
 	        this.draft = source["draft"];
 	        this.submissionDate = source["submissionDate"];
 	        this.submissionType = source["submissionType"];

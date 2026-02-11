@@ -43,6 +43,7 @@ type Book struct {
 	KdpPublished        bool    `json:"kdpPublished" db:"kdp_published"`
 	AmazonUrl           *string `json:"amazonUrl,omitempty" db:"amazon_url"`
 	LastPublished       *string `json:"lastPublished,omitempty" db:"last_published"`
+	IdentityHidden      bool    `json:"identityHidden" db:"identity_hidden"`
 	CreatedAt           string  `json:"createdAt" db:"created_at"`
 	ModifiedAt          string  `json:"modifiedAt" db:"updated_at"`
 }

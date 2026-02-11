@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	pdfcpuapi "github.com/pdfcpu/pdfcpu/pkg/api"
+
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/bookbuild"
 	"github.com/TrueBlocks/trueblocks-works/v2/internal/models"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -159,7 +161,11 @@ func (a *App) OpenBookPDF(collID int64) (*OpenBookPDFResult, error) {
 	if bookTitle == "" {
 		bookTitle = coll.CollectionName
 	}
-	filename := sanitizeFilename(bookTitle) + ".pdf"
+	suffix := ".pdf"
+	if book.IdentityHidden {
+		suffix = "-blind.pdf"
+	}
+	filename := sanitizeFilename(bookTitle) + suffix
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -403,12 +409,16 @@ func (a *App) buildManifestWithParts(collID int64, book *models.Book, coll *mode
 }
 
 // ExportBookPDFWithParts exports a collection using the part-based pipeline
-func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent FrontBackMatterHTML) (*BookExportResult, error) {
+func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent FrontBackMatterHTML, isBlind bool) (*BookExportResult, error) {
 	startTime := time.Now()
 
 	a.OpenStatusBar()
 	defer a.CloseStatusBar()
-	a.EmitStatus("progress", "Making galley...")
+	if isBlind {
+		a.EmitStatus("progress", "Making blind copy...")
+	} else {
+		a.EmitStatus("progress", "Making galley...")
+	}
 
 	book, err := a.db.GetBookByCollection(collID)
 	if err != nil || book == nil {
@@ -426,6 +436,9 @@ func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent 
 		bookTitle = coll.CollectionName
 	}
 	defaultFilename := sanitizeFilename(bookTitle) + ".pdf"
+	if isBlind {
+		defaultFilename = sanitizeFilename(bookTitle) + "-blind.pdf"
+	}
 
 	defaultDir := ""
 	if book.ExportPath != nil && *book.ExportPath != "" {
@@ -439,7 +452,12 @@ func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent 
 	}
 
 	outputPath, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:            "Export Book as PDF",
+		Title: func() string {
+			if isBlind {
+				return "Export Blind Copy as PDF"
+			}
+			return "Export Book as PDF"
+		}(),
 		DefaultDirectory: defaultDir,
 		DefaultFilename:  defaultFilename,
 		Filters: []runtime.FileFilter{
@@ -506,6 +524,12 @@ func (a *App) ExportBookPDFWithParts(collID int64, rebuildAll bool, htmlContent 
 
 	a.EmitStatus("success", "Galley created")
 
+	if isBlind {
+		if err := stripPDFMetadata(outputPath); err != nil {
+			runtime.LogWarningf(a.ctx, "Failed to strip PDF metadata: %v", err)
+		}
+	}
+
 	_ = exec.Command("open", outputPath).Start()
 
 	return &BookExportResult{
@@ -566,6 +590,26 @@ func sanitizeFilename(name string) string {
 	return result
 }
 
+// stripPDFMetadata removes identifying metadata from a PDF using pdfcpu
+func stripPDFMetadata(pdfPath string) error {
+	tmpPath := pdfPath + ".stripped"
+	props := map[string]string{
+		"Author":  "",
+		"Title":   "",
+		"Creator": "",
+		"Subject": "",
+	}
+	if err := pdfcpuapi.AddPropertiesFile(pdfPath, tmpPath, props, nil); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("strip metadata: %w", err)
+	}
+	if err := os.Rename(tmpPath, pdfPath); err != nil {
+		os.Remove(tmpPath)
+		return fmt.Errorf("rename stripped pdf: %w", err)
+	}
+	return nil
+}
+
 // generateFrontBackMatterPDFs creates individual PDFs from HTML for each front/back matter page.
 // Empty HTML strings are skipped (no PDF generated for that page).
 func (a *App) generateFrontBackMatterPDFs(buildDir string, html FrontBackMatterHTML) error {
@@ -573,36 +617,48 @@ func (a *App) generateFrontBackMatterPDFs(buildDir string, html FrontBackMatterH
 		return fmt.Errorf("create build dir: %w", err)
 	}
 
-	// Generate individual PDFs only for non-empty content
+	// Generate individual PDFs only for non-empty content; remove stale files otherwise
 	if html.TitlePage != "" {
 		if err := bookbuild.HTMLToPDFFile(html.TitlePage, filepath.Join(buildDir, "titlepage.pdf")); err != nil {
 			return fmt.Errorf("create titlepage pdf: %w", err)
 		}
+	} else {
+		os.Remove(filepath.Join(buildDir, "titlepage.pdf"))
 	}
 	if html.Copyright != "" {
 		if err := bookbuild.HTMLToPDFFile(html.Copyright, filepath.Join(buildDir, "copyright.pdf")); err != nil {
 			return fmt.Errorf("create copyright pdf: %w", err)
 		}
+	} else {
+		os.Remove(filepath.Join(buildDir, "copyright.pdf"))
 	}
 	if html.Dedication != "" {
 		if err := bookbuild.HTMLToPDFFile(html.Dedication, filepath.Join(buildDir, "dedication.pdf")); err != nil {
 			return fmt.Errorf("create dedication pdf: %w", err)
 		}
+	} else {
+		os.Remove(filepath.Join(buildDir, "dedication.pdf"))
 	}
 	if html.Afterword != "" {
 		if err := bookbuild.HTMLToPDFFile(html.Afterword, filepath.Join(buildDir, "afterword.pdf")); err != nil {
 			return fmt.Errorf("create afterword pdf: %w", err)
 		}
+	} else {
+		os.Remove(filepath.Join(buildDir, "afterword.pdf"))
 	}
 	if html.Acknowledgements != "" {
 		if err := bookbuild.HTMLToPDFFile(html.Acknowledgements, filepath.Join(buildDir, "ack.pdf")); err != nil {
 			return fmt.Errorf("create ack pdf: %w", err)
 		}
+	} else {
+		os.Remove(filepath.Join(buildDir, "ack.pdf"))
 	}
 	if html.AboutAuthor != "" {
 		if err := bookbuild.HTMLToPDFFile(html.AboutAuthor, filepath.Join(buildDir, "about.pdf")); err != nil {
 			return fmt.Errorf("create about pdf: %w", err)
 		}
+	} else {
+		os.Remove(filepath.Join(buildDir, "about.pdf"))
 	}
 
 	return nil

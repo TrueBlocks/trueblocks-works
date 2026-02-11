@@ -18,7 +18,6 @@ const (
 func (db *DB) validateSubmission(s *models.Submission) validation.ValidationResult {
 	result := validation.ValidationResult{}
 
-	// Required fields
 	if s.WorkID <= 0 {
 		result.AddError("workID", "workID is required")
 	}
@@ -26,8 +25,14 @@ func (db *DB) validateSubmission(s *models.Submission) validation.ValidationResu
 		result.AddError("orgID", "orgID is required")
 	}
 
-	// Validate foreign keys exist
-	if s.WorkID > 0 {
+	if s.WorkID > 0 && s.IsCollection {
+		coll, err := db.GetCollection(s.WorkID)
+		if err != nil {
+			result.AddError("workID", "Error validating collection: "+err.Error())
+		} else if coll == nil {
+			result.AddError("workID", "Collection does not exist")
+		}
+	} else if s.WorkID > 0 {
 		work, err := db.GetWork(s.WorkID)
 		if err != nil {
 			result.AddError("workID", "Error validating workID: "+err.Error())
@@ -73,13 +78,13 @@ func (db *DB) CreateSubmission(s *models.Submission) (*validation.ValidationResu
 
 	now := time.Now().Format(time.RFC3339)
 	query := `INSERT INTO Submissions (
-		workID, orgID, draft, submission_date, submission_type,
+		workID, orgID, is_collection, draft, submission_date, submission_type,
 		query_date, response_date, response_type, contest_name,
 		cost, user_id, password, web_address, attributes, created_at, modified_at
-	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	sqlResult, err := db.conn.Exec(query,
-		s.WorkID, s.OrgID, s.Draft, s.SubmissionDate, s.SubmissionType,
+		s.WorkID, s.OrgID, s.IsCollection, s.Draft, s.SubmissionDate, s.SubmissionType,
 		s.QueryDate, s.ResponseDate, s.ResponseType, s.ContestName,
 		s.Cost, s.UserID, s.Password, s.WebAddress, s.Attributes, now, now,
 	)
@@ -98,7 +103,7 @@ func (db *DB) CreateSubmission(s *models.Submission) (*validation.ValidationResu
 }
 
 func (db *DB) GetSubmission(id int64) (*models.Submission, error) {
-	query := `SELECT submissionID, workID, orgID, draft, submission_date,
+	query := `SELECT submissionID, workID, orgID, COALESCE(is_collection, 0), draft, submission_date,
 		submission_type, query_date, response_date, response_type,
 		contest_name, cost, user_id, password, web_address, attributes,
 		created_at, modified_at
@@ -106,7 +111,7 @@ func (db *DB) GetSubmission(id int64) (*models.Submission, error) {
 
 	s := &models.Submission{}
 	err := db.conn.QueryRow(query, id).Scan(
-		&s.SubmissionID, &s.WorkID, &s.OrgID, &s.Draft, &s.SubmissionDate,
+		&s.SubmissionID, &s.WorkID, &s.OrgID, &s.IsCollection, &s.Draft, &s.SubmissionDate,
 		&s.SubmissionType, &s.QueryDate, &s.ResponseDate, &s.ResponseType,
 		&s.ContestName, &s.Cost, &s.UserID, &s.Password, &s.WebAddress,
 		&s.Attributes, &s.CreatedAt, &s.ModifiedAt,
@@ -129,13 +134,13 @@ func (db *DB) UpdateSubmission(s *models.Submission) (*validation.ValidationResu
 
 	now := time.Now().Format(time.RFC3339)
 	query := `UPDATE Submissions SET
-		workID=?, orgID=?, draft=?, submission_date=?, submission_type=?,
+		workID=?, orgID=?, is_collection=?, draft=?, submission_date=?, submission_type=?,
 		query_date=?, response_date=?, response_type=?, contest_name=?,
 		cost=?, user_id=?, password=?, web_address=?, attributes=?, modified_at=?
 		WHERE submissionID=?`
 
 	_, err := db.conn.Exec(query,
-		s.WorkID, s.OrgID, s.Draft, s.SubmissionDate, s.SubmissionType,
+		s.WorkID, s.OrgID, s.IsCollection, s.Draft, s.SubmissionDate, s.SubmissionType,
 		s.QueryDate, s.ResponseDate, s.ResponseType, s.ContestName,
 		s.Cost, s.UserID, s.Password, s.WebAddress, s.Attributes, now, s.SubmissionID,
 	)
@@ -200,7 +205,7 @@ func (db *DB) UndeleteSubmission(id int64) (*validation.ValidationResult, error)
 }
 
 func (db *DB) ListSubmissions(showDeleted bool) ([]models.Submission, error) {
-	query := `SELECT submissionID, workID, orgID, draft, submission_date,
+	query := `SELECT submissionID, workID, orgID, COALESCE(is_collection, 0), draft, submission_date,
 		submission_type, query_date, response_date, response_type,
 		contest_name, cost, user_id, password, web_address, attributes,
 		created_at, modified_at
@@ -222,7 +227,7 @@ func (db *DB) ListSubmissions(showDeleted bool) ([]models.Submission, error) {
 	for rows.Next() {
 		var s models.Submission
 		err := rows.Scan(
-			&s.SubmissionID, &s.WorkID, &s.OrgID, &s.Draft, &s.SubmissionDate,
+			&s.SubmissionID, &s.WorkID, &s.OrgID, &s.IsCollection, &s.Draft, &s.SubmissionDate,
 			&s.SubmissionType, &s.QueryDate, &s.ResponseDate, &s.ResponseType,
 			&s.ContestName, &s.Cost, &s.UserID, &s.Password, &s.WebAddress,
 			&s.Attributes, &s.CreatedAt, &s.ModifiedAt,
@@ -236,11 +241,11 @@ func (db *DB) ListSubmissions(showDeleted bool) ([]models.Submission, error) {
 }
 
 func (db *DB) ListSubmissionsByWork(workID int64) ([]models.Submission, error) {
-	query := `SELECT submissionID, workID, orgID, draft, submission_date,
+	query := `SELECT submissionID, workID, orgID, COALESCE(is_collection, 0), draft, submission_date,
 		submission_type, query_date, response_date, response_type,
 		contest_name, cost, user_id, password, web_address, attributes,
 		created_at, modified_at
-		FROM Submissions WHERE workID = ? ORDER BY submission_date DESC`
+		FROM Submissions WHERE workID = ? AND COALESCE(is_collection, 0) = 0 ORDER BY submission_date DESC`
 
 	rows, err := db.conn.Query(query, workID)
 	if err != nil {
@@ -252,7 +257,7 @@ func (db *DB) ListSubmissionsByWork(workID int64) ([]models.Submission, error) {
 	for rows.Next() {
 		var s models.Submission
 		err := rows.Scan(
-			&s.SubmissionID, &s.WorkID, &s.OrgID, &s.Draft, &s.SubmissionDate,
+			&s.SubmissionID, &s.WorkID, &s.OrgID, &s.IsCollection, &s.Draft, &s.SubmissionDate,
 			&s.SubmissionType, &s.QueryDate, &s.ResponseDate, &s.ResponseType,
 			&s.ContestName, &s.Cost, &s.UserID, &s.Password, &s.WebAddress,
 			&s.Attributes, &s.CreatedAt, &s.ModifiedAt,
@@ -267,18 +272,22 @@ func (db *DB) ListSubmissionsByWork(workID int64) ([]models.Submission, error) {
 
 func (db *DB) ListSubmissionViewsByWork(workID int64, showDeleted bool) ([]models.SubmissionView, error) {
 	query := `SELECT 
-		s.submissionID, s.workID, s.orgID, s.draft, s.submission_date,
+		s.submissionID, s.workID, s.orgID, COALESCE(s.is_collection, 0), s.draft, s.submission_date,
 		s.submission_type, s.query_date, s.response_date, s.response_type,
 		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.attributes,
 		s.created_at, s.modified_at,
-		COALESCE(w.title, '') as title_of_work,
+		CASE WHEN s.is_collection = 1 THEN COALESCE(c.collection_name, '') ELSE COALESCE(w.title, '') END as title_of_work,
 		COALESCE(o.name, '') as journal_name,
 		COALESCE(o.status, 'Open') as journal_status,
 		CASE WHEN s.response_date IS NULL AND (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting') THEN 'yes' ELSE 'no' END as decision_pending
 	FROM Submissions s
-	LEFT JOIN Works w ON s.workID = w.workID
+	LEFT JOIN Works w ON s.is_collection = 0 AND s.workID = w.workID
+	LEFT JOIN Collections c ON s.is_collection = 1 AND s.workID = c.collID
 	LEFT JOIN Organizations o ON s.orgID = o.orgID
-	WHERE s.workID = ?`
+	WHERE (
+		(COALESCE(s.is_collection, 0) = 0 AND s.workID = ?)
+		OR (s.is_collection = 1 AND s.workID IN (SELECT cd.collID FROM CollectionDetails cd WHERE cd.workID = ?))
+	)`
 
 	if !showDeleted {
 		query += andSubmissionsNotDeleted
@@ -286,7 +295,7 @@ func (db *DB) ListSubmissionViewsByWork(workID int64, showDeleted bool) ([]model
 
 	query += orderBySubmissionDateDesc
 
-	rows, err := db.conn.Query(query, workID)
+	rows, err := db.conn.Query(query, workID, workID)
 	if err != nil {
 		return nil, fmt.Errorf("query submission views: %w", err)
 	}
@@ -296,7 +305,7 @@ func (db *DB) ListSubmissionViewsByWork(workID int64, showDeleted bool) ([]model
 	for rows.Next() {
 		var v models.SubmissionView
 		err := rows.Scan(
-			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.Draft, &v.SubmissionDate,
+			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.IsCollection, &v.Draft, &v.SubmissionDate,
 			&v.SubmissionType, &v.QueryDate, &v.ResponseDate, &v.ResponseType,
 			&v.ContestName, &v.Cost, &v.UserID, &v.Password, &v.WebAddress,
 			&v.Attributes, &v.CreatedAt, &v.ModifiedAt,
@@ -313,16 +322,17 @@ func (db *DB) ListSubmissionViewsByWork(workID int64, showDeleted bool) ([]model
 
 func (db *DB) ListAllSubmissionViews(showDeleted bool) ([]models.SubmissionView, error) {
 	query := `SELECT 
-		s.submissionID, s.workID, s.orgID, s.draft, s.submission_date,
+		s.submissionID, s.workID, s.orgID, COALESCE(s.is_collection, 0), s.draft, s.submission_date,
 		s.submission_type, s.query_date, s.response_date, s.response_type,
 		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.attributes,
 		s.created_at, s.modified_at,
-		COALESCE(w.title, '') as title_of_work,
+		CASE WHEN s.is_collection = 1 THEN COALESCE(c.collection_name, '') ELSE COALESCE(w.title, '') END as title_of_work,
 		COALESCE(o.name, '') as journal_name,
 		COALESCE(o.status, 'Open') as journal_status,
 		CASE WHEN s.response_date IS NULL AND (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting') THEN 'yes' ELSE 'no' END as decision_pending
 	FROM Submissions s
-	LEFT JOIN Works w ON s.workID = w.workID
+	LEFT JOIN Works w ON s.is_collection = 0 AND s.workID = w.workID
+	LEFT JOIN Collections c ON s.is_collection = 1 AND s.workID = c.collID
 	LEFT JOIN Organizations o ON s.orgID = o.orgID`
 
 	if !showDeleted {
@@ -341,7 +351,7 @@ func (db *DB) ListAllSubmissionViews(showDeleted bool) ([]models.SubmissionView,
 	for rows.Next() {
 		var v models.SubmissionView
 		err := rows.Scan(
-			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.Draft, &v.SubmissionDate,
+			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.IsCollection, &v.Draft, &v.SubmissionDate,
 			&v.SubmissionType, &v.QueryDate, &v.ResponseDate, &v.ResponseType,
 			&v.ContestName, &v.Cost, &v.UserID, &v.Password, &v.WebAddress,
 			&v.Attributes, &v.CreatedAt, &v.ModifiedAt,
@@ -358,16 +368,17 @@ func (db *DB) ListAllSubmissionViews(showDeleted bool) ([]models.SubmissionView,
 
 func (db *DB) ListSubmissionViewsByOrg(orgID int64, showDeleted bool) ([]models.SubmissionView, error) {
 	query := `SELECT 
-		s.submissionID, s.workID, s.orgID, s.draft, s.submission_date,
+		s.submissionID, s.workID, s.orgID, COALESCE(s.is_collection, 0), s.draft, s.submission_date,
 		s.submission_type, s.query_date, s.response_date, s.response_type,
 		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.attributes,
 		s.created_at, s.modified_at,
-		COALESCE(w.title, '') as title_of_work,
+		CASE WHEN s.is_collection = 1 THEN COALESCE(c.collection_name, '') ELSE COALESCE(w.title, '') END as title_of_work,
 		COALESCE(o.name, '') as journal_name,
 		COALESCE(o.status, 'Open') as journal_status,
 		CASE WHEN s.response_date IS NULL AND (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting') THEN 'yes' ELSE 'no' END as decision_pending
 	FROM Submissions s
-	LEFT JOIN Works w ON s.workID = w.workID
+	LEFT JOIN Works w ON s.is_collection = 0 AND s.workID = w.workID
+	LEFT JOIN Collections c ON s.is_collection = 1 AND s.workID = c.collID
 	LEFT JOIN Organizations o ON s.orgID = o.orgID
 	WHERE s.orgID = ?`
 
@@ -387,7 +398,7 @@ func (db *DB) ListSubmissionViewsByOrg(orgID int64, showDeleted bool) ([]models.
 	for rows.Next() {
 		var v models.SubmissionView
 		err := rows.Scan(
-			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.Draft, &v.SubmissionDate,
+			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.IsCollection, &v.Draft, &v.SubmissionDate,
 			&v.SubmissionType, &v.QueryDate, &v.ResponseDate, &v.ResponseType,
 			&v.ContestName, &v.Cost, &v.UserID, &v.Password, &v.WebAddress,
 			&v.Attributes, &v.CreatedAt, &v.ModifiedAt,
@@ -402,22 +413,24 @@ func (db *DB) ListSubmissionViewsByOrg(orgID int64, showDeleted bool) ([]models.
 	return views, rows.Err()
 }
 
-// ListSubmissionViewsByCollection returns submissions for all works in a collection
 func (db *DB) ListSubmissionViewsByCollection(collID int64, showDeleted bool) ([]models.SubmissionView, error) {
 	query := `SELECT 
-		s.submissionID, s.workID, s.orgID, s.draft, s.submission_date,
+		s.submissionID, s.workID, s.orgID, COALESCE(s.is_collection, 0), s.draft, s.submission_date,
 		s.submission_type, s.query_date, s.response_date, s.response_type,
 		s.contest_name, s.cost, s.user_id, s.password, s.web_address, s.attributes,
 		s.created_at, s.modified_at,
-		COALESCE(w.title, '') as title_of_work,
+		CASE WHEN s.is_collection = 1 THEN COALESCE(c.collection_name, '') ELSE COALESCE(w.title, '') END as title_of_work,
 		COALESCE(o.name, '') as journal_name,
 		COALESCE(o.status, 'Open') as journal_status,
 		CASE WHEN s.response_date IS NULL AND (s.response_type IS NULL OR s.response_type = '' OR s.response_type = 'Waiting') THEN 'yes' ELSE 'no' END as decision_pending
 	FROM Submissions s
-	LEFT JOIN Works w ON s.workID = w.workID
+	LEFT JOIN Works w ON s.is_collection = 0 AND s.workID = w.workID
+	LEFT JOIN Collections c ON s.is_collection = 1 AND s.workID = c.collID
 	LEFT JOIN Organizations o ON s.orgID = o.orgID
-	INNER JOIN CollectionDetails cd ON s.workID = cd.workID
-	WHERE cd.collID = ?`
+	WHERE (
+		(COALESCE(s.is_collection, 0) = 0 AND s.workID IN (SELECT cd.workID FROM CollectionDetails cd WHERE cd.collID = ?))
+		OR (s.is_collection = 1 AND s.workID = ?)
+	)`
 
 	if !showDeleted {
 		query += andSubmissionsNotDeleted
@@ -425,7 +438,7 @@ func (db *DB) ListSubmissionViewsByCollection(collID int64, showDeleted bool) ([
 
 	query += orderBySubmissionDateDesc
 
-	rows, err := db.conn.Query(query, collID)
+	rows, err := db.conn.Query(query, collID, collID)
 	if err != nil {
 		return nil, fmt.Errorf("query submission views by collection: %w", err)
 	}
@@ -435,7 +448,7 @@ func (db *DB) ListSubmissionViewsByCollection(collID int64, showDeleted bool) ([
 	for rows.Next() {
 		var v models.SubmissionView
 		err := rows.Scan(
-			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.Draft, &v.SubmissionDate,
+			&v.SubmissionID, &v.WorkID, &v.OrgID, &v.IsCollection, &v.Draft, &v.SubmissionDate,
 			&v.SubmissionType, &v.QueryDate, &v.ResponseDate, &v.ResponseType,
 			&v.ContestName, &v.Cost, &v.UserID, &v.Password, &v.WebAddress,
 			&v.Attributes, &v.CreatedAt, &v.ModifiedAt,
@@ -457,12 +470,18 @@ func (db *DB) GetSubmissionDeleteConfirmation(submissionID int64) (*DeleteConfir
 		return nil, err
 	}
 
-	// Get work title for display
-	work, _ := db.GetWork(sub.WorkID)
 	org, _ := db.GetOrganization(sub.OrgID)
 	displayName := "Submission"
-	if work != nil && org != nil {
-		displayName = work.Title + " → " + org.Name
+	if sub.IsCollection {
+		coll, _ := db.GetCollection(sub.WorkID)
+		if coll != nil && org != nil {
+			displayName = coll.CollectionName + " → " + org.Name
+		}
+	} else {
+		work, _ := db.GetWork(sub.WorkID)
+		if work != nil && org != nil {
+			displayName = work.Title + " → " + org.Name
+		}
 	}
 
 	conf := &DeleteConfirmation{
